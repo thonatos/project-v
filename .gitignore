@@ -52,9 +52,6 @@ jspm_packages/
 # dotenv environment variables file
 .env
 
-# next.js build output
-.next
-
 # OS X temporary files
 .DS_Store
 
@@ -74,4 +71,22 @@ common/autoinstallers/*/.npmrc
 .cache
 .heft
 
+# next.js 
+.next
+next-env.d.ts
+out/
+
+# remix.js
 build/
+
+# rush
+rush-logs
+
+# vercel
+.vercel
+
+# turbo
+turbo-*.log*
+
+# typescript
+*.tsbuildinfo
