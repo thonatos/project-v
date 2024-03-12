@@ -348,6 +348,11 @@
       "packageName": "artusx-api",
       "projectFolder": "packages/apps/artusx-api",
       "tags": ["apps"]
+    },
+    {
+      "packageName": "remix-web",
+      "projectFolder": "packages/apps/remix-web",
+      "tags": ["apps"]
     }
     // {
     //   /**
