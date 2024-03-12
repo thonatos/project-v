@@ -48,6 +48,7 @@
    * in common/config/rush/command-line.json.
    */
   // "phasedCommands": true,
+  "phasedCommands": true
 
   /**
    * If true, perform a clean install after when running `rush install` or `rush update` if the

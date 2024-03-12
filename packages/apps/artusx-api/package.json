@@ -1,0 +1,38 @@
+{
+  "name": "artusx-api",
+  "version": "0.0.0-dev.0",
+  "description": "artusx api powered by artusx",
+  "keywords": [
+    "artusx"
+  ],
+  "author": "Suyi <thonatos.yang@gmail.com>",
+  "main": "dist/index.js",
+  "scripts": {
+    "_phase:build": "npm run tsc && npm run build:view",
+    "build": "",
+    "build:view": "cp -r src/view dist/view",
+    "ci": "npm run lint",
+    "dev": "ARTUS_SERVER_ENV=development npx nodemon src/index.ts",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "start": "ARTUS_SERVER_ENV=production node dist/index.js",
+    "tsc": "rm -rf dist && tsc"
+  },
+  "dependencies": {
+    "@artusx/core": "latest",
+    "@artusx/utils": "latest",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@artusx/eslint-config": "latest",
+    "@artusx/tsconfig": "latest",
+    "@types/node": "^18.11.17",
+    "@typescript-eslint/eslint-plugin": "~6.19.1",
+    "eslint": "~8.56.0",
+    "eslint-plugin-import": "~2.29.1",
+    "nodemon": "~3.0.2",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.5.0",
+    "typescript": "^4.9.4"
+  }
+}
