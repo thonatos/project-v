@@ -353,6 +353,11 @@
       "packageName": "remix-web",
       "projectFolder": "packages/apps/remix-web",
       "tags": ["apps"]
+    },
+    {
+      "packageName": "next-web",
+      "projectFolder": "packages/apps/next-web",
+      "tags": ["apps"]
     }
     // {
     //   /**

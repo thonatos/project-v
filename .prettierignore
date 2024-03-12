@@ -27,4 +27,6 @@ lib
 # Prettier reformats code blocks inside Markdown, which affects rendered output
 *.md
 
+# Custom Config
+
 boilerplate
