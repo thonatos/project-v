@@ -1,6 +1,7 @@
 {
   "name": "artusx-api",
   "version": "0.0.0-dev.0",
+  "private": true,
   "description": "artusx api powered by artusx",
   "keywords": [
     "artusx"

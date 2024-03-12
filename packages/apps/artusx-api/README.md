@@ -12,6 +12,6 @@ rushx dev
 
 ```bash
 rush install
-rush build
+rush build -t artusx-api
 rush deploy -p artusx-api -s artusx-api --overwrite
 ```
