@@ -1,6 +1,8 @@
 {
   "name": "remix-web",
   "version": "1.0.0",
+  "private": true,
+  "description": "web app powered by remix",
   "sideEffects": false,
   "type": "module",
   "scripts": {
