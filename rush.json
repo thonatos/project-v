@@ -358,6 +358,11 @@
       "packageName": "next-web",
       "projectFolder": "packages/apps/next-web",
       "tags": ["apps"]
+    },
+    {
+      "packageName": "tauri-app",
+      "projectFolder": "packages/apps/tauri-app",
+      "tags": ["apps"]
     }
     // {
     //   /**
