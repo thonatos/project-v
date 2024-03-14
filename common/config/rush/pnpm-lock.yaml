@@ -179,7 +179,7 @@ importers:
         specifier: ^5.1.6
         version: 5.4.2
 
-  ../../packages/apps/tauri-app:
+  ../../packages/apps/rsshub:
     dependencies:
       '@tauri-apps/api':
         specifier: '>=2.0.0-beta.0'
@@ -193,6 +193,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
+      react-router-dom:
+        specifier: ~6.22.3
+        version: 6.22.3(react-dom@18.2.0)(react@18.2.0)
     devDependencies:
       '@tauri-apps/cli':
         specifier: '>=2.0.0-beta.0'
