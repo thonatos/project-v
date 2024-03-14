@@ -1,7 +1,7 @@
 {
-  "productName": "tauri-app",
+  "productName": "rsshub",
   "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.tauri.dev.rsshub",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -11,9 +11,9 @@
   "app": {
     "windows": [
       {
-        "title": "tauri-app",
-        "width": 800,
-        "height": 600
+        "title": "RSSHub",
+        "width": 960,
+        "height": 540
       }
     ],
     "security": {

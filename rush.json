@@ -360,8 +360,8 @@
       "tags": ["apps"]
     },
     {
-      "packageName": "tauri-app",
-      "projectFolder": "packages/apps/tauri-app",
+      "packageName": "rsshub",
+      "projectFolder": "packages/apps/rsshub",
       "tags": ["apps"]
     }
     // {
