@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import HomeIcon from '../assets/home.svg?react';
 
 export const Home: React.FC<{}> = () => {
   const [greetMsg, setGreetMsg] = useState('');
@@ -7,12 +8,16 @@ export const Home: React.FC<{}> = () => {
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke('greet', { name }));
+    const t: any = await invoke('get_channel', { name });
+    console.log('t', t);
+    setGreetMsg(t.title);
   }
 
   return (
     <div className="container">
-      <div className="row"></div>
+      <div className="row">
+        <HomeIcon />
+      </div>
 
       <form
         className="row"
