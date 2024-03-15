@@ -8,7 +8,7 @@ const sidebarTheme: CustomFlowbiteTheme['sidebar'] = {
       off: 'w-36',
     },
     inner:
-      'h-full overflow-y-auto overflow-x-hidden rounded-r-lg bg-gray-50 py-2 px-1 dark:bg-gray-800 flex flex-col justify-between',
+      'h-full overflow-y-auto overflow-x-hidden rounded-none bg-gray-50 py-2 px-1 dark:bg-gray-800 flex flex-col justify-between border-r-[0.5px] border-gray-700',
   },
 };
 
