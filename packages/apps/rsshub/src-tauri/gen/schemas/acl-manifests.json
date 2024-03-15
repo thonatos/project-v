@@ -646,6 +646,53 @@
       "type": "object"
     }
   },
+  "sql": {
+    "default_permission": null,
+    "permissions": {
+      "allow-close": {
+        "identifier": "allow-close",
+        "description": "Enables the close command without any pre-configured scope.",
+        "commands": { "allow": ["close"], "deny": [] }
+      },
+      "allow-execute": {
+        "identifier": "allow-execute",
+        "description": "Enables the execute command without any pre-configured scope.",
+        "commands": { "allow": ["execute"], "deny": [] }
+      },
+      "allow-load": {
+        "identifier": "allow-load",
+        "description": "Enables the load command without any pre-configured scope.",
+        "commands": { "allow": ["load"], "deny": [] }
+      },
+      "allow-select": {
+        "identifier": "allow-select",
+        "description": "Enables the select command without any pre-configured scope.",
+        "commands": { "allow": ["select"], "deny": [] }
+      },
+      "deny-close": {
+        "identifier": "deny-close",
+        "description": "Denies the close command without any pre-configured scope.",
+        "commands": { "allow": [], "deny": ["close"] }
+      },
+      "deny-execute": {
+        "identifier": "deny-execute",
+        "description": "Denies the execute command without any pre-configured scope.",
+        "commands": { "allow": [], "deny": ["execute"] }
+      },
+      "deny-load": {
+        "identifier": "deny-load",
+        "description": "Denies the load command without any pre-configured scope.",
+        "commands": { "allow": [], "deny": ["load"] }
+      },
+      "deny-select": {
+        "identifier": "deny-select",
+        "description": "Denies the select command without any pre-configured scope.",
+        "commands": { "allow": [], "deny": ["select"] }
+      }
+    },
+    "permission_sets": {},
+    "global_scope_schema": null
+  },
   "tray": {
     "default_permission": {
       "identifier": "default",

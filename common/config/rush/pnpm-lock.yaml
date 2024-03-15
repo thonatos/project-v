@@ -187,6 +187,9 @@ importers:
       '@tauri-apps/plugin-shell':
         specifier: '>=2.0.0-beta.0'
         version: 2.0.0-beta.2
+      '@tauri-apps/plugin-sql':
+        specifier: ~2.0.0-beta.2
+        version: 2.0.0-beta.2
       autoprefixer:
         specifier: ~10.4.18
         version: 10.4.18(postcss@8.4.35)
@@ -2841,6 +2844,12 @@ packages:
 
   /@tauri-apps/plugin-shell@2.0.0-beta.2:
     resolution: {integrity: sha512-9rWsfN7Wt+EuWmpmNnK8bCs+04fzhEYrHtWyLIAYxb9diFdcJrEoctCP9YM2v+Uf8/y8qFC7VCbZ/9VQHANymQ==}
+    dependencies:
+      '@tauri-apps/api': 2.0.0-beta.4
+    dev: false
+
+  /@tauri-apps/plugin-sql@2.0.0-beta.2:
+    resolution: {integrity: sha512-gNX/4VjGl0TD4Ct58ar4bLF82iRp2L5sS79FmtzKlXYj7tVbkxenIi+mGIBz3Ut1JQP5WNL4/5wq74bkDlBggA==}
     dependencies:
       '@tauri-apps/api': 2.0.0-beta.4
     dev: false
