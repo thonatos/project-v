@@ -8,3 +8,5 @@ export {
   default as ISequelizeClient,
   SequelizeConfig as ISequelizeConfig,
 } from '@artusx/plugin-sequelize/client';
+
+export { default as IOpenAIClient, OpenAIConfig as IOpenAIConfig } from '@artusx/plugin-openai/client';

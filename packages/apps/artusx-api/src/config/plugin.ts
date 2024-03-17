@@ -3,12 +3,16 @@ export default {
     enable: true,
     package: '@artusx/core',
   },
+  pptr: {
+    enable: true,
+    package: '@artusx/plugin-pptr',
+  },
   proxy: {
     enable: true,
     package: '@artusx/plugin-proxy',
   },
   openai: {
-    enable: true,
+    enable: false,
     package: '@artusx/plugin-openai',
   },
   telegram: {
@@ -16,7 +20,7 @@ export default {
     package: '@artusx/plugin-telegram',
   },
   redis: {
-    enable: false,
+    enable: true,
     package: '@artusx/plugin-redis',
   },
   sequelize: {

@@ -3,10 +3,8 @@ import path from 'path';
 import sharp from 'sharp';
 
 import { createHash } from 'node:crypto';
-
-import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
-
 import { ArtusXInjectEnum } from '@artusx/utils';
+import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
 
 import { TelegramClient } from '../types';
 import { ITelegramClient } from '../plugins';
@@ -23,21 +21,16 @@ export default class TelegramService {
     return this.telegramClient.getClient();
   }
 
-  async notify(to: string, data?: any, clear?: boolean) {
-    const { cacheDir } = this.config;
-
-    if (!data) {
-      return;
-    }
+  async processThumb(data: string) {
+    const { cacheDir } = this.config.cache;
 
     let file = '';
-    let fileThumb = '';
+    let thumb = '';
 
-    if (data.thumb) {
-      const buff = Buffer.from(data.thumb, 'base64');
+    if (data) {
+      const buff = Buffer.from(data, 'base64');
       const hash = createHash('sha256');
       const digest = hash.update(buff).digest('hex');
-
       const fileBuf = await sharp(buff).resize(800).toBuffer();
 
       const thumbBuff = await sharp(buff)
@@ -49,27 +42,43 @@ export default class TelegramService {
         .toBuffer();
 
       file = path.join(cacheDir, `${digest}.jpg`);
-      fileThumb = path.join(cacheDir, `${digest}_thumb.jpg`);
+      thumb = path.join(cacheDir, `${digest}_thumb.jpg`);
 
       fs.writeFileSync(file, fileBuf);
-      fs.writeFileSync(fileThumb, thumbBuff);
+      fs.writeFileSync(thumb, thumbBuff);
     }
+
+    return {
+      file,
+      thumb,
+    };
+  }
+
+  async clearCache(files: string[] = []) {
+    files.forEach((file) => {
+      if (!file) {
+        return;
+      }
+      fs.rmSync(file, { force: true });
+    });
+  }
+
+  async notify(to: string, data?: any, clear?: boolean) {
+    if (!data) {
+      return;
+    }
+
+    const { file, thumb } = await this.processThumb(data.thumb);
 
     const message = await this.telegram.sendMessage(to, {
       file: file,
-      thumb: fileThumb,
+      thumb: thumb,
       message: data.message,
       parseMode: 'html',
       silent: true,
     });
 
-    if (file) {
-      fs.rmSync(file, { force: true });
-    }
-
-    if (fileThumb) {
-      fs.rmSync(fileThumb, { force: true });
-    }
+    await this.clearCache([file, thumb]);
 
     if (!clear) {
       return;
