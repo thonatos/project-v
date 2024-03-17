@@ -1,12 +1,13 @@
 import path from 'path';
-import dotenv from 'dotenv';
 import { ArtusxConfig, NunjucksConfigureOptions } from '@artusx/core';
 import { getApiId, getProxy, getEnv } from '../util';
-import { IRedisConfig, ISequelizeConfig, ITelegramConfig, IPPTRConfig } from '../plugins';
-
-dotenv.config();
+import { IPPTRConfig, IOpenAIConfig, ITelegramConfig, IRedisConfig, ISequelizeConfig } from '../plugins';
 
 export default () => {
+  const cache = {
+    cacheDir: path.join(process.cwd(), '.cache'),
+  };
+
   const artusx: ArtusxConfig = {
     port: 7001,
     static: {
@@ -47,12 +48,12 @@ export default () => {
     alter: getEnv('MYSQL_ALTER', 'boolean') || false,
   };
 
-  const openai = {
-    key: process.env.OPENAI_KEY || '',
+  const openai: IOpenAIConfig = {
+    apiKey: getEnv('OPENAI_KEY', 'string') || '',
   };
 
   const proxy = {
-    proxyString: process.env.PROXY_STRING || '',
+    proxyString: getEnv('PROXY_STRING', 'string') || '',
   };
 
   const telegram: Record<string, any> & ITelegramConfig = {
@@ -68,27 +69,19 @@ export default () => {
   };
 
   const pptr: IPPTRConfig = {
-    launch: {
-      headless: false,
-      args: ['--window-size=1440,810'],
-      defaultViewport: {
-        width: 1440,
-        height: 810,
-        deviceScaleFactor: 1,
-      },
-
-      timeout: 30 * 1000,
-      // args: ['--no-sandbox --proxy-server=127.0.0.1:1024'],
+    connect: {
+      browserWSEndpoint: getEnv('BROWSERLESS_URL', 'string') || 'ws://localhost:3000',
     },
   };
 
   return {
-    artusx,
-    nunjucks,
     pptr,
     proxy,
+    cache,
+    artusx,
     openai,
     telegram,
+    nunjucks,
     redis,
     sequelize,
   };

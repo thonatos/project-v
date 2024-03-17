@@ -4,12 +4,12 @@ import { ArtusInjectEnum, Inject, Schedule } from '@artusx/core';
 import type { ArtusxSchedule, Log4jsClient } from '@artusx/core';
 
 import NewsService from './serivice.news';
-import TelegramService from 'src/service/telegram';
+import TelegramService from '../service/telegram';
 
 @Schedule({
   enable: true,
   cron: '0 9 * * *',
-  runOnInit: false,
+  runOnInit: true,
 })
 export default class RiliSchedule implements ArtusxSchedule {
   @Inject(ArtusInjectEnum.Config)

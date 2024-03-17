@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@artusx/core": "latest",
-    "@artusx/plugin-openai": "~1.0.23",
+    "@artusx/plugin-openai": "~1.0.27",
     "@artusx/plugin-pptr": "~1.0.25",
     "@artusx/plugin-proxy": "~1.0.23",
     "@artusx/plugin-redis": "~1.0.23",
