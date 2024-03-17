@@ -9,7 +9,7 @@ import TelegramService from '../service/telegram';
 @Schedule({
   enable: true,
   cron: '0 9 * * *',
-  runOnInit: true,
+  runOnInit: false,
 })
 export default class RiliSchedule implements ArtusxSchedule {
   @Inject(ArtusInjectEnum.Config)
@@ -32,12 +32,11 @@ export default class RiliSchedule implements ArtusxSchedule {
     return this.log4js.getLogger('default');
   }
 
-  async fetch() {
-    const targetChannel = this.channel;
+  async run() {
+    const channel = this.channel;
+    const rili = await this.newsService.fetchRiliDetail();
 
-    const rili = await this.newsService.fetchRili();
-
-    this.logger.info('schedule:fetch:rili', rili?.url);
+    this.logger.info('schedule:rili:url', rili?.url);
 
     if (!rili?.riliThumb) {
       return;
@@ -45,13 +44,9 @@ export default class RiliSchedule implements ArtusxSchedule {
 
     const message = `${dayjs().format('YYYY-MM-DD')} 财经日历 —— <a href="${rili.url}">点击查看</a)}`;
 
-    await this.telegramService.notify(targetChannel, {
+    await this.telegramService.notify(channel, {
       message,
       thumb: rili.riliThumb,
     });
-  }
-
-  async run() {
-    await this.fetch();
   }
 }

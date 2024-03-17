@@ -15,5 +15,8 @@ export const main = async () => {
   const cacheDir = app.config.cache.cacheDir;
   fs.ensureDirSync(cacheDir);
 
+  // empty cache dir
+  fs.emptyDirSync(cacheDir);
+
   return app;
 };

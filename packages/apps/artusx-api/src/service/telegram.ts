@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
+import type { Log4jsClient } from '@artusx/core';
 
 import { TelegramClient } from '../types';
 import { ITelegramClient } from '../plugins';
@@ -12,10 +13,17 @@ import { ITelegramClient } from '../plugins';
 @Injectable()
 export default class TelegramService {
   @Inject(ArtusInjectEnum.Config)
-  config: any;
+  config: Record<string, any>;
+
+  @Inject(ArtusXInjectEnum.Log4js)
+  log4js: Log4jsClient;
 
   @Inject(ArtusXInjectEnum.Telegram)
   telegramClient: ITelegramClient;
+
+  get logger() {
+    return this.log4js.getLogger('default');
+  }
 
   get telegram(): TelegramClient {
     return this.telegramClient.getClient();
@@ -69,6 +77,12 @@ export default class TelegramService {
     }
 
     const { file, thumb } = await this.processThumb(data.thumb);
+
+    this.logger.info(to, data?.message);
+
+    if (!clear) {
+      return;
+    }
 
     const message = await this.telegram.sendMessage(to, {
       file: file,

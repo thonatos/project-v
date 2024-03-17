@@ -71,6 +71,12 @@ export default () => {
   const pptr: IPPTRConfig = {
     connect: {
       browserWSEndpoint: getEnv('BROWSERLESS_URL', 'string') || 'ws://localhost:3000',
+      protocolTimeout: 30000,
+      defaultViewport: {
+        width: 1440,
+        height: 810,
+        deviceScaleFactor: 1,
+      },
     },
   };
 
