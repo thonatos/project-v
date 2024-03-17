@@ -1,3 +1,10 @@
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 export const getApiId = () => {
   const api_id = process.env.API_ID;
 
@@ -44,3 +51,5 @@ export const getEnv = <T>(key: string, type?: string): T => {
 
   return target as T;
 };
+
+export { dayjs };

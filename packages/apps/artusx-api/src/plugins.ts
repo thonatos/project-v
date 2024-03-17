@@ -1,4 +1,4 @@
-export { default as IPPTRClient, PPTRConfig as IPPTRConfig } from '@artusx/plugin-pptr/client';
+export { default as IPPTRClient, PPTRConfig as IPPTRConfig, KnownDevices } from '@artusx/plugin-pptr/client';
 export { default as IRedisClient, RedisConfig as IRedisConfig } from '@artusx/plugin-redis/client';
 export {
   default as ITelegramClient,

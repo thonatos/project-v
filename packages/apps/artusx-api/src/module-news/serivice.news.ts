@@ -1,76 +1,44 @@
-import { KnownDevices } from 'puppeteer-core';
-
 import { ArtusXInjectEnum } from '@artusx/utils';
-
 import { Inject, Injectable } from '@artusx/core';
+import type { Log4jsClient } from '@artusx/core';
 
-import { Browser } from '../types';
-import { IPPTRClient } from '../plugins';
+import { dayjs } from '../util';
+import { Redis, Browser } from '../types';
+import { IRedisClient, IPPTRClient, KnownDevices } from '../plugins';
 
 const iPhone13Pro = KnownDevices['iPhone 13 Pro Max'];
 
 @Injectable()
 export default class NewsService {
+  @Inject(ArtusXInjectEnum.Log4js)
+  log4js: Log4jsClient;
+
   @Inject(ArtusXInjectEnum.PPTR)
   pptrClient: IPPTRClient;
 
-  get pptr(): Browser {
-    return this.pptrClient.getClient();
+  @Inject(ArtusXInjectEnum.Redis)
+  redisClient: IRedisClient;
+
+  get redis(): Redis {
+    return this.redisClient.getClient();
   }
 
-  async dispose() {
-    await this.pptr?.close();
+  get logger() {
+    return this.log4js.getLogger('default');
   }
 
-  async clearPages() {
-    const browser = this.pptr;
+  async fetchNewsList() {
+    const browser = await this.pptrClient.getBrowser();
+    const newsList: NewsDetail[] = [];
 
     if (!browser) {
-      return;
-    }
-
-    const pages = await browser.pages();
-
-    await Promise.all(
-      pages.map(async (page) => {
-        const url = page.url();
-
-        if (url === 'about:blank' || url === 'https://rili.jin10.com/') {
-          return;
-        }
-
-        if (page.isClosed()) {
-          return;
-        }
-
-        await page.close();
-      })
-    );
-  }
-
-  async fetchNews() {
-    const browser = this.pptr;
-
-    if (!browser) {
-      return;
+      return newsList;
     }
 
     const page = await browser.newPage();
     await page.emulate(iPhone13Pro);
-    await page.goto('https://www.jin10.com', { waitUntil: 'networkidle0' });
+    await page.goto('https://www.jin10.com', { waitUntil: 'domcontentloaded', timeout: 30000 });
     const list = await page.$$('.jin-flash-item-container');
-
-    const listContent: Array<{
-      id: string;
-      time: string;
-      content: string;
-      dateTime: string;
-
-      isVip: boolean;
-      isRili: boolean;
-      isFlash: boolean;
-      isArticle: boolean;
-    }> = [];
 
     await Promise.all(
       list.map(async (item) => {
@@ -107,29 +75,96 @@ export default class NewsService {
 
         const itemData = await itemEvaluate.jsonValue();
 
-        listContent.push(itemData);
+        newsList.push(itemData);
       })
     );
-
-    await page.close();
-
-    return listContent;
+    return newsList;
   }
 
-  async fetchNewsDetail(id: string) {
-    const browser = this.pptr;
-
+  async batchFetchNewsDetail(items: NewsDetail[], callback: (data: any) => Promise<void>) {
+    const browser = await this.pptrClient.getBrowser();
     if (!browser) {
       return;
     }
 
+    const pLimit = (await import('p-limit')).default;
+    const limit = pLimit(5);
+    const tasks: any[] = [];
+
+    for (const item of items) {
+      const cached = await this.redis.get(item.id);
+
+      // skip
+      if (cached) {
+        continue;
+      }
+
+      // only fetch news in 1m
+      const current = dayjs().tz('Asia/Shanghai');
+      const created = dayjs.tz(item.dateTime, 'Asia/Shanghai');
+      const diff = current.diff(created, 'second');
+
+      if (item.isVip || item.isArticle || diff > 60) {
+        await this.redis.set(item.id, item.id, 'EX', 120);
+        continue;
+      }
+
+      this.redis.set(item.id, item.id, 'EX', 120);
+
+      const task = limit(async () => {
+        try {
+          const detail = await this.fetchNewsDetail(item.id, browser);
+
+          if (!detail) {
+            return;
+          }
+
+          // rili
+          if (item.isRili) {
+            if (!item.content || !detail.thumb) {
+              return;
+            }
+
+            callback({
+              message: item.content,
+              thumb: detail.thumb,
+            });
+
+            return;
+          }
+
+          if (!detail.title) {
+            return;
+          }
+
+          let message = detail.title;
+
+          if (detail.flashRemarkUrl) {
+            message += ` —— <a href="${detail.flashRemarkUrl}">相关链接</a>`;
+          }
+
+          await callback({
+            message,
+            thumb: detail.thumb,
+          });
+        } catch (error) {
+          this.logger.error('task:error', item);
+        }
+      });
+
+      tasks.push(task);
+    }
+
+    await Promise.all(tasks);
+  }
+
+  async fetchNewsDetail(id: string, browser: Browser) {
     const detailId = id.replaceAll('flash', '');
     const targetUrl = `https://flash.jin10.com/detail/${detailId}`;
 
     const page = await browser.newPage();
     await page.emulate(iPhone13Pro);
-    await page.goto(targetUrl, { waitUntil: 'networkidle0' });
-
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
     const detailHandler = await page.$('.detail-content');
 
     const detailEvaluate = await page.evaluateHandle((detailHandler) => {
@@ -161,8 +196,6 @@ export default class NewsService {
 
     const detailObject = await detailEvaluate.jsonValue();
 
-    await page.close();
-
     return {
       id,
       url: targetUrl,
@@ -173,8 +206,8 @@ export default class NewsService {
     };
   }
 
-  async fetchRili() {
-    const browser = this.pptr;
+  async fetchRiliDetail() {
+    const browser = await this.pptrClient.getBrowser();
 
     if (!browser) {
       return;
@@ -230,11 +263,21 @@ export default class NewsService {
       },
     })) as Buffer | undefined;
 
-    await page.close();
-
     return {
       url: targetUrl,
       riliThumb: riliThumb?.toString('base64'),
     };
   }
+}
+
+export interface NewsDetail {
+  id: string;
+  time: string;
+  content: string;
+  dateTime: string;
+
+  isVip: boolean;
+  isRili: boolean;
+  isFlash: boolean;
+  isArticle: boolean;
 }
