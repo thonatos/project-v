@@ -33,7 +33,8 @@
     "fs-extra": "~11.2.0",
     "puppeteer-core": "~22.5.0",
     "reflect-metadata": "^0.1.13",
-    "sharp": "~0.33.2"
+    "sharp": "~0.33.2",
+    "tslib": "^2.5.0"
   },
   "devDependencies": {
     "@artusx/eslint-config": "latest",
@@ -45,7 +46,6 @@
     "eslint-plugin-import": "~2.29.1",
     "nodemon": "~3.0.2",
     "ts-node": "^10.9.1",
-    "tslib": "^2.5.0",
     "typescript": "^4.9.4"
   }
 }
