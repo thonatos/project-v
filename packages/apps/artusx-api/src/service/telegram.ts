@@ -78,12 +78,6 @@ export default class TelegramService {
 
     const { file, thumb } = await this.processThumb(data.thumb);
 
-    this.logger.info(to, data?.message);
-
-    if (!clear) {
-      return;
-    }
-
     const message = await this.telegram.sendMessage(to, {
       file: file,
       thumb: thumb,
