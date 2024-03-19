@@ -36,12 +36,12 @@ export default class NewsSchedule implements ArtusxSchedule {
 
     try {
       const newsList = await this.newsService.fetchNewsList();
-      this.logger.info('schedule:news:newsList', newsList.length);
-
       await this.newsService.batchFetchNewsDetail(newsList, async (data: any) => {
         if (!data) {
           return;
         }
+
+        this.logger.info('schedule:news:data', data?.message);
         await this.telegramService.notify(channel, data);
       });
     } catch (error) {

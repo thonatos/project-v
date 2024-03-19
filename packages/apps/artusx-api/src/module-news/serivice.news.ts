@@ -2,8 +2,10 @@ import { ArtusXInjectEnum } from '@artusx/utils';
 import { Inject, Injectable } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
 
+import { TZ_ASIA_SHANGHAI } from '../constants';
+
 import { dayjs } from '../util';
-import { Redis, Browser } from '../types';
+import { Redis } from '../types';
 import { IRedisClient, IPPTRClient, KnownDevices } from '../plugins';
 
 const iPhone13Pro = KnownDevices['iPhone 13 Pro Max'];
@@ -78,17 +80,14 @@ export default class NewsService {
         newsList.push(itemData);
       })
     );
+
+    // this.logger.info('fetchNewsList:newsList:total', newsList.length);
     return newsList;
   }
 
   async batchFetchNewsDetail(items: NewsDetail[], callback: (data: any) => Promise<void>) {
-    const browser = await this.pptrClient.getBrowser();
-    if (!browser) {
-      return;
-    }
-
     const pLimit = (await import('p-limit')).default;
-    const limit = pLimit(5);
+    const limit = pLimit(1);
     const tasks: any[] = [];
 
     for (const item of items) {
@@ -100,8 +99,8 @@ export default class NewsService {
       }
 
       // only fetch news in 1m
-      const current = dayjs().tz('Asia/Shanghai');
-      const created = dayjs.tz(item.dateTime, 'Asia/Shanghai');
+      const current = dayjs().tz(TZ_ASIA_SHANGHAI);
+      const created = dayjs.tz(item.dateTime, TZ_ASIA_SHANGHAI);
       const diff = current.diff(created, 'second');
 
       if (item.isVip || item.isArticle || diff > 60) {
@@ -113,7 +112,7 @@ export default class NewsService {
 
       const task = limit(async () => {
         try {
-          const detail = await this.fetchNewsDetail(item.id, browser);
+          const detail = await this.fetchNewsDetail(item.id);
 
           if (!detail) {
             return;
@@ -148,17 +147,24 @@ export default class NewsService {
             thumb: detail.thumb,
           });
         } catch (error) {
-          this.logger.error('task:error', item);
+          this.logger.error('task:error', item, error);
         }
       });
 
       tasks.push(task);
     }
 
+    this.logger.info('batchFetchNewsDetail:task:total', tasks.length);
+
     await Promise.all(tasks);
   }
 
-  async fetchNewsDetail(id: string, browser: Browser) {
+  async fetchNewsDetail(id: string) {
+    const browser = await this.pptrClient.getBrowser();
+    if (!browser) {
+      return;
+    }
+
     const detailId = id.replaceAll('flash', '');
     const targetUrl = `https://flash.jin10.com/detail/${detailId}`;
 
