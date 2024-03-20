@@ -1,6 +1,6 @@
 import path from 'path';
+import { getApiId, getProxy, getEnv } from '@artusx/utils';
 import { ArtusxConfig, NunjucksConfigureOptions } from '@artusx/core';
-import { getApiId, getProxy, getEnv } from '../util';
 import { IPPTRConfig, IOpenAIConfig, ITelegramConfig, IRedisConfig, ISequelizeConfig } from '../plugins';
 
 export default () => {
@@ -62,7 +62,7 @@ export default () => {
     app_title: getEnv('APP_TITLE', 'string') || '',
     session_string: getEnv('SESSION_STRING', 'string') || '',
 
-    proxy: getProxy(),
+    proxy: getProxy() || undefined,
 
     channel: getEnv('TELEGRAM_CHANNEL', 'string') || '',
     bot_auth_token: getEnv('BOT_AUTH_TOKEN', 'string') || '',
