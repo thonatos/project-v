@@ -4,10 +4,11 @@ export default {
   },
   openai: {
     enable: false,
-    package: '@artusx/plugin-openai',
   },
   sequelize: {
     enable: false,
-    package: '@artusx/plugin-sequelize',
+  },
+  schedule: {
+    enable: false,
   },
 };

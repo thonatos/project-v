@@ -1,11 +1,11 @@
 import { ArtusXInjectEnum } from '@artusx/utils';
-import { Controller, POST, GET, Inject, MW, ArtusInjectEnum } from '@artusx/core';
+import { Controller, POST, Inject, MW, ArtusInjectEnum } from '@artusx/core';
 import type { ArtusxContext, Log4jsClient, NunjucksClient } from '@artusx/core';
 
 import TelegramService from '../service/telegram';
 import checkAuthToken from './auth.middleware';
 
-@Controller('/api/webhook')
+@Controller('/webhook')
 export default class WebhookController {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, any>;
@@ -23,21 +23,17 @@ export default class WebhookController {
     return this.log4js.getLogger('default');
   }
 
-  get channel() {
-    return this.config.channels.info;
-  }
-
   @MW([checkAuthToken])
   @POST('/madrid')
   async madrid(ctx: ArtusxContext) {
     const body = ctx.request.body;
-    const channel = this.channel;
+    const channel = this.config.channels.info;
 
     try {
-      const message = this.nunjucks.render('tmpl/madrid.html', body);
+      const message = this.nunjucks.render('template/madrid.html', body);
       this.telegramService.sendMessage(channel, {
         message,
-        parseMode: 'Markdown',
+        parseMode: 'html',
       });
     } catch (error) {
       this.logger.error(error);
@@ -46,16 +42,17 @@ export default class WebhookController {
     ctx.body = 'done';
   }
 
-  @POST('/information')
-  async information(ctx: ArtusxContext) {
+  @MW([checkAuthToken])
+  @POST('/info')
+  async info(ctx: ArtusxContext) {
     const body = ctx.request.body;
-    const channel = this.channel;
+    const channel = this.config.channels.info;
 
     try {
-      const message = this.nunjucks.render('tmpl/information.html', body);
+      const message = this.nunjucks.render('template/info.html', body);
       this.telegramService.sendMessage(channel, {
         message,
-        parseMode: 'Markdown',
+        parseMode: 'html',
       });
     } catch (error) {
       this.logger.error(error);
@@ -64,16 +61,23 @@ export default class WebhookController {
     ctx.body = 'done';
   }
 
-  @GET('/notify')
-  async notify(ctx: ArtusxContext) {
+  @MW([checkAuthToken])
+  @POST('/idea')
+  async idea(ctx: ArtusxContext) {
     const channel = this.config.channels.idea;
-    await this.telegramService.sendMessage(
-      channel,
-      {
-        message: 'Health Check',
-      },
-      true
-    );
-    ctx.body = 'OK';
+    const { message } = ctx.request.body;
+
+    try {
+      if (message) {
+        this.telegramService.sendMessage(channel, {
+          message,
+          parseMode: 'html',
+        });
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+
+    ctx.body = 'done';
   }
 }
