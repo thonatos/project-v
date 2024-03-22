@@ -56,16 +56,13 @@ export default () => {
     proxyString: getEnv('PROXY_STRING', 'string') || '',
   };
 
-  const telegram: Record<string, any> & ITelegramConfig = {
+  const telegram: ITelegramConfig = {
     api_id: getApiId() || 0,
     api_hash: getEnv('API_HASH', 'string') || '',
     app_title: getEnv('APP_TITLE', 'string') || '',
     session_string: getEnv('SESSION_STRING', 'string') || '',
-
-    proxy: getProxy() || undefined,
-
-    channel: getEnv('TELEGRAM_CHANNEL', 'string') || '',
     bot_auth_token: getEnv('BOT_AUTH_TOKEN', 'string') || '',
+    proxy: getProxy() || undefined,
   };
 
   const pptr: IPPTRConfig = {
@@ -80,6 +77,12 @@ export default () => {
     },
   };
 
+  const channels = {
+    news: getEnv('TELEGRAM_CHANNEL_NEWS', 'string') || '',
+    info: getEnv('TELEGRAM_CHANNEL_INFO', 'string') || '',
+    idea: getEnv('TELEGRAM_CHANNEL_IDEA', 'string') || '',
+  };
+
   return {
     pptr,
     proxy,
@@ -90,5 +93,8 @@ export default () => {
     nunjucks,
     redis,
     sequelize,
+
+    // custom
+    channels,
   };
 };

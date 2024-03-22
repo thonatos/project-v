@@ -25,7 +25,7 @@ export default class RiliSchedule implements ArtusxSchedule {
   telegramService: TelegramService;
 
   get channel() {
-    return this.config.telegram.channel;
+    return this.config.channels.news;
   }
 
   get logger() {
@@ -44,7 +44,7 @@ export default class RiliSchedule implements ArtusxSchedule {
 
     const message = `${dayjs().format('YYYY-MM-DD')} 财经日历 —— <a href="${rili.url}">点击查看</a)}`;
 
-    await this.telegramService.notify(channel, {
+    await this.telegramService.sendMessage(channel, {
       message,
       thumb: rili.riliThumb,
     });

@@ -24,7 +24,7 @@ export default class NewsSchedule implements ArtusxSchedule {
   telegramService: TelegramService;
 
   get channel() {
-    return this.config.telegram.channel;
+    return this.config.channels.news;
   }
 
   get logger() {
@@ -42,7 +42,7 @@ export default class NewsSchedule implements ArtusxSchedule {
         }
 
         this.logger.info('schedule:news:data', data?.message);
-        await this.telegramService.notify(channel, data);
+        await this.telegramService.sendMessage(channel, data);
       });
     } catch (error) {
       this.logger.error('schedule:news:error', error);
