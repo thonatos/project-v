@@ -29,7 +29,7 @@ export default class TelegramService {
     return this.telegramClient.getClient();
   }
 
-  async processThumb(data: string) {
+  async processThumb(data?: string) {
     const { cacheDir } = this.config.cache;
 
     let file = '';
@@ -71,19 +71,20 @@ export default class TelegramService {
     });
   }
 
-  async notify(to: string, data?: any, clear?: boolean) {
+  async sendMessage(to: string, data?: Message, clear?: boolean) {
     if (!data) {
       return;
     }
 
+    const { message, parseMode = 'html', silent = true } = data;
     const { file, thumb } = await this.processThumb(data.thumb);
 
-    const message = await this.telegram.sendMessage(to, {
-      file: file,
-      thumb: thumb,
-      message: data.message,
-      parseMode: 'html',
-      silent: true,
+    const msg = await this.telegram.sendMessage(to, {
+      file,
+      thumb,
+      message,
+      silent,
+      parseMode,
     });
 
     await this.clearCache([file, thumb]);
@@ -93,9 +94,16 @@ export default class TelegramService {
     }
 
     setTimeout(() => {
-      message.delete({
+      msg.delete({
         revoke: true,
       });
     }, 5 * 1000);
   }
+}
+
+export interface Message {
+  message: string;
+  thumb?: string;
+  silent?: boolean;
+  parseMode?: 'html' | 'Markdown';
 }
