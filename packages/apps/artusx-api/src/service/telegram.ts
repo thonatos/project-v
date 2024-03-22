@@ -6,7 +6,6 @@ import { createHash } from 'node:crypto';
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
-
 import { TelegramClient } from '../types';
 import { ITelegramClient } from '../plugins';
 
@@ -102,8 +101,9 @@ export default class TelegramService {
 }
 
 export interface Message {
+  title?: string;
   message: string;
   thumb?: string;
   silent?: boolean;
-  parseMode?: 'html' | 'Markdown';
+  parseMode?: 'html' | 'markdown' | 'markdownv2';
 }

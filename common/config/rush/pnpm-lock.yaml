@@ -12,28 +12,28 @@ importers:
     dependencies:
       '@artusx/core':
         specifier: latest
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       '@artusx/plugin-openai':
         specifier: ~1.0.27
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       '@artusx/plugin-pptr':
         specifier: ~1.0.25
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       '@artusx/plugin-proxy':
         specifier: ~1.0.23
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       '@artusx/plugin-redis':
         specifier: ~1.0.23
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       '@artusx/plugin-sequelize':
         specifier: ~1.0.23
-        version: 1.0.37(@types/node@18.19.26)(reflect-metadata@0.1.14)
+        version: 1.0.38(@types/node@18.19.26)(reflect-metadata@0.1.14)
       '@artusx/plugin-telegram':
         specifier: ~1.0.23
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       '@artusx/utils':
         specifier: latest
-        version: 1.0.37(reflect-metadata@0.1.14)
+        version: 1.0.38(reflect-metadata@0.1.14)
       dayjs:
         specifier: ~1.11.10
         version: 1.11.10
@@ -61,10 +61,10 @@ importers:
     devDependencies:
       '@artusx/eslint-config':
         specifier: latest
-        version: 1.0.37(eslint@8.56.0)(typescript@4.9.5)
+        version: 1.0.38(eslint@8.56.0)(typescript@4.9.5)
       '@artusx/tsconfig':
         specifier: latest
-        version: 1.0.37
+        version: 1.0.38
       '@types/fs-extra':
         specifier: ~11.0.4
         version: 11.0.4
@@ -255,7 +255,7 @@ importers:
         version: 3.4.1
       vite-plugin-svgr:
         specifier: ~4.2.0
-        version: 4.2.0(typescript@5.4.3)(vite@5.2.2)
+        version: 4.2.0(typescript@5.4.3)(vite@5.2.3)
     devDependencies:
       '@tauri-apps/cli':
         specifier: '>=2.0.0-beta.0'
@@ -268,13 +268,13 @@ importers:
         version: 18.2.22
       '@vitejs/plugin-react':
         specifier: ^4.2.1
-        version: 4.2.1(vite@5.2.2)
+        version: 4.2.1(vite@5.2.3)
       typescript:
         specifier: ^5.0.2
         version: 5.4.3
       vite:
         specifier: ^5.0.0
-        version: 5.2.2
+        version: 5.2.3
 
 packages:
 
@@ -332,21 +332,22 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@artusx/core@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-wrcLMKjEtau5JIr/gWd0nLOVkeljq2g/SgApOEMMxHSXBpYiPQtOo2+1Fs5ChD+y7OOagk+UhEjKLQWhpPhiaQ==}
+  /@artusx/core@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-w6kcW06sR7hSjYBYh7uoQIbmEymms6yASpdvfXMcu8KtZrbrySF5aIuTfWJTjJGTrkq7T9UWugwhXKtmSXMp4Q==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
       '@artus/core': 2.2.3(reflect-metadata@0.1.14)
       '@artus/pipeline': 0.2.3
-      '@artusx/plugin-koa': 1.0.37(reflect-metadata@0.1.14)
-      '@artusx/plugin-log4js': 1.0.37(reflect-metadata@0.1.14)
-      '@artusx/plugin-nunjucks': 1.0.37(reflect-metadata@0.1.14)
-      '@artusx/plugin-schedule': 1.0.37(reflect-metadata@0.1.14)
-      '@artusx/plugin-xtransit': 1.0.37(reflect-metadata@0.1.14)
+      '@artusx/plugin-koa': 1.0.38(reflect-metadata@0.1.14)
+      '@artusx/plugin-log4js': 1.0.38(reflect-metadata@0.1.14)
+      '@artusx/plugin-nunjucks': 1.0.38(reflect-metadata@0.1.14)
+      '@artusx/plugin-schedule': 1.0.38(reflect-metadata@0.1.14)
+      '@artusx/plugin-xtransit': 1.0.38(reflect-metadata@0.1.14)
       '@koa/bodyparser': 5.0.0
       '@koa/cors': 5.0.0
       ajv: 8.12.0
+      koa-compose: 4.1.0
       koa-compress: 5.1.1
       koa-range: 0.3.0
       koa-static-cache: 5.1.4
@@ -361,8 +362,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@artusx/eslint-config@1.0.37(eslint@8.56.0)(typescript@4.9.5):
-    resolution: {integrity: sha512-laWhmOoSm153vQdZSluQLbGxrbBYVbVhgvkgbYMHlabA67UpolSxN2Ff7LdiJy6MCQlHoCmHsRPiKRybDCvwdA==}
+  /@artusx/eslint-config@1.0.38(eslint@8.56.0)(typescript@4.9.5):
+    resolution: {integrity: sha512-uOMgHZ8R/Egy8MpC7OsbON9N1SHPWRAxJ8waJj4nS4A2dwm5d2V1uSySrId8JUcfTASlphoWRvIEcb65diHlEg==}
     peerDependencies:
       eslint: ~8.56.0
       typescript: ^4.9.4
@@ -380,8 +381,8 @@ packages:
       - supports-color
     dev: true
 
-  /@artusx/plugin-koa@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-FsLnPo4iQvZBDYSGUQcv9jK/WDtj83oa5JgI/MufP/0AmDVozust+njbFjlRT5tZIp9CkDghI5E1hWuVO4Fahw==}
+  /@artusx/plugin-koa@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-emo1rXU3HZuATRx5Y+0UD5JPu/GCAnigj/1lhUznYP3Lv2pIkyK8pCB+OeI4v6gs0DHYskRcrBTEoVWvpT7C0w==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -394,8 +395,8 @@ packages:
       - supports-color
     dev: false
 
-  /@artusx/plugin-log4js@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-2teGa6E5BsJTxzSDq+6r8PYcDzT+LQ+M7q8CneQkVtZPVxx+gH2guymNYnksj3Bwi5Rp4qI8SoP3tKwCIYvEsA==}
+  /@artusx/plugin-log4js@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-k5PFdhsLegt2MZV/FZmRAwb/NkHO+N2HxEXJqJYdJh4evWBg7wpDU5uLbZZ6cAFXi468MjOzCAiVHKGFtYdtBQ==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -407,8 +408,8 @@ packages:
       - supports-color
     dev: false
 
-  /@artusx/plugin-nunjucks@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-qsDYZ4NB5/ZUo9zUIQ/LIPPtPTGyPvL86x0Lc6nPg4Jj9gcdmY0YfcJkAd6bU8Hxa1ZVLZlKikL8DuHeGo9S1w==}
+  /@artusx/plugin-nunjucks@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-Ncw1ygf342jUxvb5UD37mtvCTBCbS05gAdS339JXbh1X3Zsfw7oGvAD/tt3DjS63rPwDE59thXIfLQ1jm79bXg==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -420,8 +421,8 @@ packages:
       - chokidar
     dev: false
 
-  /@artusx/plugin-openai@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-EJKCHJdTa5IPCBZiSAUd2nJqzxcR9hwUrCWazDjPs0pnJ6qvaRTk9q9BR2U2OGoHTxMbmO/IQ8/f/Y/mf80Zpg==}
+  /@artusx/plugin-openai@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-fRXZz4LvIn6SkRNaPDg/nOXi75rxLf8Jug+xddOq5myxri6F543fbYyhUjM0j3M4eOWNOQz1UT/MyQaIXRv41A==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -433,8 +434,8 @@ packages:
       - encoding
     dev: false
 
-  /@artusx/plugin-pptr@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-80U2kX3CWGhG0/8DGcWy7nUpmKUJSVdhDU25gqjfIRPWzmg76BT9oU8o/sptws224CCaQJdI+SkAS+NAfOopVw==}
+  /@artusx/plugin-pptr@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-0J1boWdPK7jXZqI6ORP2QhRqmRNz2emyIF90R95hRIEecDdIaKlT9mxWqLPUAlQSkBEreymmtmGlDb/ntd4qig==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -453,8 +454,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@artusx/plugin-proxy@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-fDYO80t/AEpfFdzUk++XgAiGdY+5+Brdq+zRTDFywU08CovCaFC1wST7sM21Lv2WPqQFhVpgSNCN1e0kzcomFg==}
+  /@artusx/plugin-proxy@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-BTHRW4AnhHX8VykJrr/5pV8erhai5XoOF/kwNp90DkQWxA+TsDvomdGiut38bxaEKLsNTsr8jsF4v4lNxPEl/A==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -466,8 +467,8 @@ packages:
       - supports-color
     dev: false
 
-  /@artusx/plugin-redis@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-yo/n/Ph0Unr5iYOZ1A5ar96aXmp/ZrXgbLXZ4vXcNF8kuiFsBHAyyJ5pMI6iKuToaa8NXX8OZwurePJMKZToIQ==}
+  /@artusx/plugin-redis@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-r2Y51s95RZD3IBt39HoUY9dfdJFY9Vpg6b3NX2irefi+VpZ5rjKVKAe6d6cpcHRpVSTEpVYPXzu44cDL+0sSwQ==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -479,8 +480,8 @@ packages:
       - supports-color
     dev: false
 
-  /@artusx/plugin-schedule@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-cJjYrFCO40HaSebWMqjxiftsxkC4L+mCIfx5Nc4QtmK05gvl7U2OA8TkCE3dk+CqRC7L4no1pJokzhi3KJaZnQ==}
+  /@artusx/plugin-schedule@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-BVOOAnQ7aFiEG4ik+Re/nkoQLMRTl1v4YWTw61FiWJcJLubwLg4gwGMkXzQ3NGU7Ao5ZYNceHHn9Omc4DoJuyA==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -490,8 +491,8 @@ packages:
       reflect-metadata: 0.1.14
     dev: false
 
-  /@artusx/plugin-sequelize@1.0.37(@types/node@18.19.26)(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-s8f2+oyPQWRXy5YUrJvHUju3cuyobdJ/yc1MhP8jXdMHeGvu2n8LDRpUd+auWgz3mbJEFhRhbZvVApAh8yDuWw==}
+  /@artusx/plugin-sequelize@1.0.38(@types/node@18.19.26)(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-F2YEcTvDdLqiGdyQ640pHboDydkIuOBoym2nhPYD0lEdhMt8+3cUWqkse8yj/z+u7DvxtOkC82V3lhB11OFlnQ==}
     peerDependencies:
       '@types/validator': ^13.7.12
       reflect-metadata: ^0.1.13
@@ -515,8 +516,8 @@ packages:
       - tedious
     dev: false
 
-  /@artusx/plugin-telegram@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-j9N+26r+iwiAazHmhZumXkv+tyj1YT35uI0XXIAsvA+kCN+yDb0I9PEgibVCM2vdqm9l6t/o1mXaclU12ZOVQg==}
+  /@artusx/plugin-telegram@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-X/bUYk/Cn/KYkr75+ipd++mucWMbTmZZcbfK31aSeXboo8KspoHg1zqer0s64VCLZC6UaqYgONTWp2Uqh6vq1g==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -526,8 +527,8 @@ packages:
       telegram: 2.20.2
     dev: false
 
-  /@artusx/plugin-xtransit@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-fztxmCLcDB/fHIgx+9BebCVa+dWtlPu/CzmgCVzJ5AsRNfa010R4yJhRe+xJJlfe8JHXCj479GG/hPt4P4+oiA==}
+  /@artusx/plugin-xtransit@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-Mh4MQbb6FIjFYJAQk0Y/2llN5TTeTDx+x+xMahUfGufd77ZF3R7jcxDpQhFMmqBqIqWOkwztq9VUM4GCtKle6Q==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -544,12 +545,12 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@artusx/tsconfig@1.0.37:
-    resolution: {integrity: sha512-xgVCXXzWxZ82SUEi8CIjAExIs+QVCKgXmSH1HSDtH8V8LBVXCRRYGfoBuTc7ngaTNFTXgganXtTpmX63cbGFYg==}
+  /@artusx/tsconfig@1.0.38:
+    resolution: {integrity: sha512-ivrV6AIlzW2kBHAqO9mUIryxJ4JLr4tMjgozgMZzj5Obclr6/WDJyCzaI3Fp53siTGVImxtD6s0Nc88IS3rQaQ==}
     dev: true
 
-  /@artusx/utils@1.0.37(reflect-metadata@0.1.14):
-    resolution: {integrity: sha512-jy04ED4u2l9wc+r3NSSc4AvPjy80C/Xq9vGFtFlARPTJ7ycrtjTf8Mle/NOKE0AYxrg2ePj0LZd0sV9JtjZgRA==}
+  /@artusx/utils@1.0.38(reflect-metadata@0.1.14):
+    resolution: {integrity: sha512-TDRZYRvQ9WXccaJcnq3dCeCM6k7P6oEJP1eBq2NvPHgeSYwQ4PSnnpLnwl9L1Wcb9hW4cykV88IDdo2SJ2XHyg==}
     peerDependencies:
       reflect-metadata: ^0.1.13
     dependencies:
@@ -1683,7 +1684,7 @@ packages:
     resolution: {integrity: sha512-jLuwRlz8DQfQNiUCJR50Y09CGPq3fLtmtUQfVrj79E0JWu3dvsVcxVIcfhR5h0iXu+/z++zDrYeiJqifRynJkA==}
     dependencies:
       '@types/estree-jsx': 1.0.5
-      '@types/mdx': 2.0.11
+      '@types/mdx': 2.0.12
       estree-util-build-jsx: 2.2.2
       estree-util-is-identifier-name: 2.1.0
       estree-util-to-js: 1.2.0
@@ -1935,7 +1936,7 @@ packages:
       '@remix-run/router': 1.15.3-pre.0
       '@remix-run/serve': 2.8.1(typescript@5.4.3)
       '@remix-run/server-runtime': 2.8.1(typescript@5.4.3)
-      '@types/mdx': 2.0.11
+      '@types/mdx': 2.0.12
       '@vanilla-extract/integration': 6.5.0
       arg: 5.0.2
       cacache: 17.1.4
@@ -2682,8 +2683,8 @@ packages:
     dependencies:
       '@types/unist': 2.0.10
 
-  /@types/mdx@2.0.11:
-    resolution: {integrity: sha512-HM5bwOaIQJIQbAYfax35HCKxx7a3KrK3nBtIqJgSOitivTD1y3oW9P3rxY9RkXYPUk7y/AjAohfHKmFpGE79zw==}
+  /@types/mdx@2.0.12:
+    resolution: {integrity: sha512-H9VZ9YqE+H28FQVchC83RCs5xQ2J7mAAv6qdDEaWmXEVl3OpdH+xfrSUzQ1lp7U7oSTRZ0RvW08ASPJsYBi7Cw==}
 
   /@types/ms@0.7.34:
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
@@ -3227,7 +3228,7 @@ packages:
       lodash: 4.17.21
       mlly: 1.6.1
       outdent: 0.8.0
-      vite: 5.2.2
+      vite: 5.2.3
       vite-node: 1.4.0
     transitivePeerDependencies:
       - '@types/node'
@@ -3284,7 +3285,7 @@ packages:
       ts-morph: 12.0.0
     dev: false
 
-  /@vitejs/plugin-react@4.2.1(vite@5.2.2):
+  /@vitejs/plugin-react@4.2.1(vite@5.2.3):
     resolution: {integrity: sha512-oojO9IDc4nCUUi8qIR11KoQm0XFFLIwsRBwHRR4d/88IWghn1y6ckz/bJ8GHDCsYEJee8mDzqtJxh15/cisJNQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
@@ -3295,7 +3296,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.24.1(@babel/core@7.24.3)
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.0
-      vite: 5.2.2
+      vite: 5.2.3
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -10226,7 +10227,7 @@ packages:
       debug: 4.3.4(supports-color@5.5.0)
       pathe: 1.1.2
       picocolors: 1.0.0
-      vite: 5.2.2
+      vite: 5.2.3
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -10237,7 +10238,7 @@ packages:
       - supports-color
       - terser
 
-  /vite-plugin-svgr@4.2.0(typescript@5.4.3)(vite@5.2.2):
+  /vite-plugin-svgr@4.2.0(typescript@5.4.3)(vite@5.2.3):
     resolution: {integrity: sha512-SC7+FfVtNQk7So0XMjrrtLAbEC8qjFPifyD7+fs/E6aaNdVde6umlVVh0QuwDLdOMu7vp5RiGFsB70nj5yo0XA==}
     peerDependencies:
       vite: ^2.6.0 || 3 || 4 || 5
@@ -10245,15 +10246,15 @@ packages:
       '@rollup/pluginutils': 5.1.0
       '@svgr/core': 8.1.0(typescript@5.4.3)
       '@svgr/plugin-jsx': 8.1.0(@svgr/core@8.1.0)
-      vite: 5.2.2
+      vite: 5.2.3
     transitivePeerDependencies:
       - rollup
       - supports-color
       - typescript
     dev: false
 
-  /vite@5.2.2:
-    resolution: {integrity: sha512-FWZbz0oSdLq5snUI0b6sULbz58iXFXdvkZfZWR/F0ZJuKTSPO7v72QPXt6KqYeMFb0yytNp6kZosxJ96Nr/wDQ==}
+  /vite@5.2.3:
+    resolution: {integrity: sha512-+i1oagbvkVIhEy9TnEV+fgXsng13nZM90JQbrcPrf6DvW2mXARlz+DK7DLiDP+qeKoD1FCVx/1SpFL1CLq9Mhw==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:

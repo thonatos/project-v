@@ -14,6 +14,11 @@ export default () => {
       prefix: '/public/',
       dir: path.resolve(__dirname, '../public'),
     },
+    cors: {
+      origin: '*',
+      credentials: true,
+      allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
+    },
   };
 
   const nunjucks: NunjucksConfigureOptions = {
