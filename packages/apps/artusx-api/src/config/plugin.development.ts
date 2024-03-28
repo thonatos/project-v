@@ -1,4 +1,7 @@
 export default {
+  pptr: {
+    enable: false,
+  },
   proxy: {
     enable: false,
   },

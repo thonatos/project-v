@@ -1,16 +1,17 @@
+import dayjs from 'dayjs';
 import { ArtusXInjectEnum } from '@artusx/utils';
-import { Inject, Schedule, ArtusInjectEnum } from '@artusx/core';
+import { ArtusInjectEnum, Inject, Schedule } from '@artusx/core';
 import type { ArtusxSchedule, Log4jsClient } from '@artusx/core';
 
-import NewsService from './serivice.news';
+import NewsService from './news.serivice';
 import TelegramService from '../service/telegram';
 
 @Schedule({
   enable: true,
-  cron: '*/30 * * * * *',
+  cron: '0 9 * * *',
   runOnInit: false,
 })
-export default class NewsSchedule implements ArtusxSchedule {
+export default class RiliSchedule implements ArtusxSchedule {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, any>;
 
@@ -33,19 +34,19 @@ export default class NewsSchedule implements ArtusxSchedule {
 
   async run() {
     const channel = this.channel;
+    const rili = await this.newsService.fetchRiliDetail();
 
-    try {
-      const newsList = await this.newsService.fetchNewsList();
-      await this.newsService.batchFetchNewsDetail(newsList, async (data: any) => {
-        if (!data) {
-          return;
-        }
+    this.logger.info('schedule:rili:url', rili?.url);
 
-        this.logger.info('schedule:news:data', data?.message);
-        await this.telegramService.sendMessage(channel, data);
-      });
-    } catch (error) {
-      this.logger.error('schedule:news:error', error);
+    if (!rili?.riliThumb) {
+      return;
     }
+
+    const message = `${dayjs().format('YYYY-MM-DD')} 财经日历 —— <a href="${rili.url}">点击查看</a)}`;
+
+    await this.telegramService.sendMessage(channel, {
+      message,
+      thumb: rili.riliThumb,
+    });
   }
 }
