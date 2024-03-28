@@ -360,8 +360,8 @@
       "tags": ["apps"]
     },
     {
-      "packageName": "rsshub",
-      "projectFolder": "packages/apps/rsshub",
+      "packageName": "rsshub-app",
+      "projectFolder": "packages/apps/rsshub-app",
       "tags": ["apps"]
     }
     // {
