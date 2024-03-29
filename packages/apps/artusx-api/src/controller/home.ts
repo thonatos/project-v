@@ -1,6 +1,6 @@
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { Controller, GET, Inject } from '@artusx/core';
-import type { ArtusxContext, NunjucksClient } from '@artusx/core';
+import type { ArtusXContext, NunjucksClient } from '@artusx/core';
 
 const content = `
 User-agent: *
@@ -13,12 +13,12 @@ export default class HomeController {
   nunjucks: NunjucksClient;
 
   @GET('/')
-  async home(ctx: ArtusxContext) {
+  async home(ctx: ArtusXContext) {
     ctx.body = this.nunjucks.render('index.html', { title: 'ArtusX', message: 'Hello ArtusX!' });
   }
 
   @GET('/Robots.txt')
-  async robots(ctx: ArtusxContext) {
+  async robots(ctx: ArtusXContext) {
     ctx.body = content;
   }
 }

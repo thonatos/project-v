@@ -1,6 +1,6 @@
 import path from 'path';
 import { getApiId, getProxy, getEnv } from '@artusx/utils';
-import { ArtusxConfig, NunjucksConfigureOptions } from '@artusx/core';
+import { ArtusXConfig, NunjucksConfigureOptions } from '@artusx/core';
 import { IPPTRConfig, IOpenAIConfig, ITelegramConfig, IRedisConfig, ISequelizeConfig } from '../plugins';
 
 export default () => {
@@ -8,7 +8,7 @@ export default () => {
     cacheDir: path.join(process.cwd(), '.cache'),
   };
 
-  const artusx: ArtusxConfig = {
+  const artusx: ArtusXConfig = {
     port: 7001,
     static: {
       prefix: '/public/',
