@@ -1,6 +1,6 @@
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { Controller, POST, Inject, MW, ArtusInjectEnum } from '@artusx/core';
-import type { ArtusxContext, Log4jsClient, NunjucksClient } from '@artusx/core';
+import type { ArtusXContext, Log4jsClient, NunjucksClient } from '@artusx/core';
 
 import TelegramService from '../service/telegram';
 import checkAuthToken from './auth.middleware';
@@ -25,7 +25,7 @@ export default class WebhookController {
 
   @MW([checkAuthToken])
   @POST('/madrid')
-  async madrid(ctx: ArtusxContext) {
+  async madrid(ctx: ArtusXContext) {
     const body = ctx.request.body;
     const channel = this.config.channels.info;
 
@@ -44,7 +44,7 @@ export default class WebhookController {
 
   @MW([checkAuthToken])
   @POST('/info')
-  async info(ctx: ArtusxContext) {
+  async info(ctx: ArtusXContext) {
     const body = ctx.request.body;
     const channel = this.config.channels.info;
 
@@ -63,7 +63,7 @@ export default class WebhookController {
 
   @MW([checkAuthToken])
   @POST('/idea')
-  async idea(ctx: ArtusxContext) {
+  async idea(ctx: ArtusXContext) {
     const channel = this.config.channels.idea;
     const { message } = ctx.request.body;
 

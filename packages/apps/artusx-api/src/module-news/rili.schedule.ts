@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { ArtusInjectEnum, Inject, Schedule } from '@artusx/core';
-import type { ArtusxSchedule, Log4jsClient } from '@artusx/core';
+import type { ArtusXSchedule, Log4jsClient } from '@artusx/core';
 
 import NewsService from './news.serivice';
 import TelegramService from '../service/telegram';
@@ -11,7 +11,7 @@ import TelegramService from '../service/telegram';
   cron: '0 9 * * *',
   runOnInit: false,
 })
-export default class RiliSchedule implements ArtusxSchedule {
+export default class RiliSchedule implements ArtusXSchedule {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, any>;
 

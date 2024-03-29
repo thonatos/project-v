@@ -1,6 +1,6 @@
 import { ArtusXInjectEnum } from '@artusx/utils';
 import { Inject, Schedule, ArtusInjectEnum } from '@artusx/core';
-import type { ArtusxSchedule, Log4jsClient } from '@artusx/core';
+import type { ArtusXSchedule, Log4jsClient } from '@artusx/core';
 
 import NewsService from './news.serivice';
 import TelegramService from '../service/telegram';
@@ -10,7 +10,7 @@ import TelegramService from '../service/telegram';
   cron: '*/30 * * * * *',
   runOnInit: false,
 })
-export default class NewsSchedule implements ArtusxSchedule {
+export default class NewsSchedule implements ArtusXSchedule {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, any>;
 
