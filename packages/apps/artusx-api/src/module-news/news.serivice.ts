@@ -1,4 +1,4 @@
-import { ArtusXInjectEnum } from '@artusx/utils';
+import { PluginInjectEnum } from '@artusx/utils';
 import { Inject, Injectable } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
 
@@ -12,13 +12,13 @@ const iPhone13Pro = KnownDevices['iPhone 13 Pro Max'];
 
 @Injectable()
 export default class NewsService {
-  @Inject(ArtusXInjectEnum.Log4js)
+  @Inject(PluginInjectEnum.Log4js)
   log4js: Log4jsClient;
 
-  @Inject(ArtusXInjectEnum.PPTR)
+  @Inject(PluginInjectEnum.PPTR)
   pptrClient: IPPTRClient;
 
-  @Inject(ArtusXInjectEnum.Redis)
+  @Inject(PluginInjectEnum.Redis)
   redisClient: IRedisClient;
 
   get redis(): Redis {

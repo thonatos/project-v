@@ -1,4 +1,4 @@
-import { ArtusXInjectEnum } from '@artusx/utils';
+import { PluginInjectEnum } from '@artusx/utils';
 import { Controller, GET, Inject } from '@artusx/core';
 import type { ArtusXContext, NunjucksClient } from '@artusx/core';
 
@@ -9,7 +9,7 @@ Disallow: /
 
 @Controller()
 export default class HomeController {
-  @Inject(ArtusXInjectEnum.Nunjucks)
+  @Inject(PluginInjectEnum.Nunjucks)
   nunjucks: NunjucksClient;
 
   @GET('/')

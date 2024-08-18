@@ -3,7 +3,7 @@ import path from 'path';
 import sharp from 'sharp';
 
 import { createHash } from 'node:crypto';
-import { ArtusXInjectEnum } from '@artusx/utils';
+import { PluginInjectEnum } from '@artusx/utils';
 import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
 import { TelegramClient } from '../types';
@@ -14,10 +14,10 @@ export default class TelegramService {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, any>;
 
-  @Inject(ArtusXInjectEnum.Log4js)
+  @Inject(PluginInjectEnum.Log4js)
   log4js: Log4jsClient;
 
-  @Inject(ArtusXInjectEnum.Telegram)
+  @Inject(PluginInjectEnum.Telegram)
   telegramClient: ITelegramClient;
 
   get logger() {
