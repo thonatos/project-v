@@ -1,4 +1,4 @@
-import { ArtusXInjectEnum } from '@artusx/utils';
+import { PluginInjectEnum } from '@artusx/utils';
 import { Controller, POST, Inject, MW, ArtusInjectEnum } from '@artusx/core';
 import type { ArtusXContext, Log4jsClient, NunjucksClient } from '@artusx/core';
 
@@ -10,10 +10,10 @@ export default class WebhookController {
   @Inject(ArtusInjectEnum.Config)
   config: Record<string, any>;
 
-  @Inject(ArtusXInjectEnum.Log4js)
+  @Inject(PluginInjectEnum.Log4js)
   log4js: Log4jsClient;
 
-  @Inject(ArtusXInjectEnum.Nunjucks)
+  @Inject(PluginInjectEnum.Nunjucks)
   nunjucks: NunjucksClient;
 
   @Inject(TelegramService)

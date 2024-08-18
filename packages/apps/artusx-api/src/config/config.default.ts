@@ -21,6 +21,10 @@ export default () => {
     },
   };
 
+  const socketio = {
+    path: '/socket.io',
+  };
+
   const nunjucks: NunjucksConfigureOptions = {
     path: path.resolve(__dirname, '../view'),
     options: {
@@ -98,6 +102,7 @@ export default () => {
     nunjucks,
     redis,
     sequelize,
+    socketio,
 
     // custom
     channels,

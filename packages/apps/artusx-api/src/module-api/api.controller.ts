@@ -1,10 +1,10 @@
-import { ArtusXInjectEnum } from '@artusx/utils';
+import { PluginInjectEnum } from '@artusx/utils';
 import { Controller, GET, Inject } from '@artusx/core';
 import type { ArtusXContext, NunjucksClient } from '@artusx/core';
 
 @Controller('/api')
 export default class ApiController {
-  @Inject(ArtusXInjectEnum.Nunjucks)
+  @Inject(PluginInjectEnum.Nunjucks)
   nunjucks: NunjucksClient;
 
   @GET('/')

@@ -27,4 +27,8 @@ export default {
     enable: false,
     package: '@artusx/plugin-sequelize',
   },
+  socketio: {
+    enable: true,
+    package: '@artusx/plugin-socketio',
+  },
 };
