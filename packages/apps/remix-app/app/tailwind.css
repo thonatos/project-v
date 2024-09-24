@@ -38,6 +38,7 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --site-primary: #8264ff;
   }
   .dark {
     --background: 224 71.4% 4.1%;
@@ -74,4 +75,214 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* https://github.com/sofish/typo.css/blob/master/typo.css */
+
+/* 代码片断 */
+.typo pre,
+.typo code,
+.typo pre tt {
+  font-family: Courier, 'Courier New', monospace;
+}
+
+.typo pre {
+  color: #ddd;
+  background: #303030;
+  padding: 1em 1.5em;
+  display: block;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 4px;
+}
+
+.typo hr {
+  border: none;
+  border-bottom: 1px solid #cfcfcf;
+  margin-bottom: 0.8em;
+  height: 10px;
+  opacity: 0.5;
+}
+
+/* 保证块/段落之间的空白隔行 */
+.typo p,
+.typo pre,
+.typo ul,
+.typo ol,
+.typo dl,
+.typo form,
+.typo hr,
+.typo table,
+.typo-p,
+.typo-pre,
+.typo-ul,
+.typo-ol,
+.typo-dl,
+.typo-form,
+.typo-hr,
+.typo-table,
+.typo blockquote {
+  margin-bottom: 1.2em;
+}
+
+/* 块/段落引用 */
+.typo blockquote {
+  position: relative;
+  color: #999;
+  font-weight: 400;
+  border-left: 1px solid #1abc9c;
+  padding-left: 1em;
+  margin: 1em 3em 1em 2em;
+}
+
+@media only screen and (max-width: 640px) {
+  .typo blockquote {
+    margin: 1em 0;
+  }
+}
+
+.typo h1,
+.typo h2,
+.typo h3,
+.typo h4,
+.typo h5,
+.typo h6 {
+  font-family: PingFang SC, Verdana, Helvetica Neue, Microsoft Yahei, Hiragino Sans GB, Microsoft Sans Serif,
+    WenQuanYi Micro Hei, sans-serif;
+  font-weight: 100;
+  color: #000;
+  line-height: 1.35;
+}
+
+/* 标题应该更贴紧内容，并与其他块区分，margin 值要相应做优化 */
+.typo h1,
+.typo h2,
+.typo h3,
+.typo h4,
+.typo h5,
+.typo h6,
+.typo-h1,
+.typo-h2,
+.typo-h3,
+.typo-h4,
+.typo-h5,
+.typo-h6 {
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  line-height: 1.35;
+}
+
+.typo h1,
+.typo-h1 {
+  font-size: 2em;
+}
+
+.typo h2,
+.typo-h2 {
+  font-size: 1.8em;
+}
+
+.typo h3,
+.typo-h3 {
+  font-size: 1.6em;
+}
+
+.typo h4,
+.typo-h4 {
+  font-size: 1.4em;
+}
+
+.typo h5,
+.typo h6,
+.typo-h5,
+.typo-h6 {
+  font-size: 1.2em;
+}
+
+/* 在文章中，应该还原 ul 和 ol 的样式 */
+.typo ul,
+.typo-ul {
+  margin-left: 1.3em;
+  list-style: disc;
+}
+
+.typo ol,
+.typo-ol {
+  list-style: decimal;
+  margin-left: 1.9em;
+}
+
+.typo li ul,
+.typo li ol,
+.typo-ul ul,
+.typo-ul ol,
+.typo-ol ul,
+.typo-ol ol {
+  margin-bottom: 0.8em;
+  margin-left: 2em;
+}
+
+.typo li ul,
+.typo-ul ul,
+.typo-ol ul {
+  list-style: circle;
+}
+
+/* 同 ul/ol，在文章中应用 table 基本格式 */
+.typo table th,
+.typo table td,
+.typo-table th,
+.typo-table td,
+.typo table caption {
+  border: 1px solid #ddd;
+  padding: 0.5em 1em;
+  color: #666;
+}
+
+.typo table th,
+.typo-table th {
+  background: #fbfbfb;
+}
+
+.typo table thead th,
+.typo-table thead th {
+  background: #f1f1f1;
+}
+
+.typo table caption {
+  border-bottom: none;
+}
+
+/* 去除 webkit 中 input 和 textarea 的默认样式  */
+.typo-input,
+.typo-textarea {
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+.typo-em,
+.typo em,
+.typo legend,
+.typo caption {
+  color: #000;
+  font-weight: inherit;
+}
+
+/* 着重号，只能在少量（少于100个字符）且全是全角字符的情况下使用 */
+.typo-em {
+  position: relative;
+}
+
+.typo-em:after {
+  position: absolute;
+  top: 0.65em;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  content: '・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・';
+}
+
+/* Responsive images */
+.typo img {
+  max-width: 100%;
 }

@@ -89,7 +89,7 @@ export const Header: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
           </Navbar.Brand>
         </div>
 
-        <div className="flex md:order-2">
+        {/* <div className="flex md:order-2">
           <Dropdown
             arrowIcon={false}
             inline
@@ -112,6 +112,7 @@ export const Header: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
             <Dropdown.Item>Sign out</Dropdown.Item>
           </Dropdown>
         </div>
+         */}
         <Navbar.Collapse>
           {NavLinks.map((link, index) => {
             return (

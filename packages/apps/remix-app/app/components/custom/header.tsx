@@ -1,27 +1,18 @@
 import React from 'react';
-import { Link } from '@remix-run/react';
-import { PanelLeft, Package2, Search, Home, ShoppingCart, Package, Users2, LineChart } from 'lucide-react';
-import { Button } from '~/components/ui/button';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '~/components/ui/breadcrumb';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
-import { Input } from '~/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet';
+import { NavLink } from '@remix-run/react';
+import { PanelLeft } from 'lucide-react';
 
-export const Header: React.FC = () => {
+import { Button } from '~/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet';
+import { Logo } from './header-logo';
+import { SearchBar } from './header-search-bar';
+import { Breadcrumbs } from './header-breadcrumbs';
+import { DropdownMenus } from './header-dropdown-menus';
+
+export const Header: React.FC<{
+  navLinks?: { icon: any; label: string; pathname: string }[];
+  dropdownMenus?: { label?: string; type?: string }[];
+}> = ({ navLinks = [], dropdownMenus = [] }) => {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       <Sheet>
@@ -32,88 +23,47 @@ export const Header: React.FC = () => {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="sm:max-w-xs">
-          <nav className="grid gap-6 text-lg font-medium">
-            <Link
-              to="#"
-              className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-            >
-              <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-              <span className="sr-only">Acme Inc</span>
-            </Link>
-            <NavLink icon={Home} label="Dashboard" />
-            <NavLink icon={ShoppingCart} label="Orders" />
-            <NavLink icon={Package} label="Products" isActive />
-            <NavLink icon={Users2} label="Customers" />
-            <NavLink icon={LineChart} label="Analytics" />
+          <nav className="grid gap-4 text-lg font-medium">
+            <Logo title="ρV" />
+
+            {navLinks.map((nav, index) => (
+              <NavLinkItem key={index} icon={nav.icon} label={nav.label} pathname={nav.pathname} />
+            ))}
           </nav>
         </SheetContent>
       </Sheet>
-      <Breadcrumb className="hidden md:flex">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="#">Dashboard</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="#">Products</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>All Products</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="relative ml-auto flex-1 md:grow-0">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search..."
-          className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-        />
-      </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-            <img
-              src="/logo-dark.jpg"
-              width={36}
-              height={36}
-              alt="Avatar"
-              className="overflow-hidden rounded-full"
-            />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+      <Breadcrumbs />
+
+      <SearchBar />
+
+      <DropdownMenus dropdownMenus={dropdownMenus} />
     </header>
   );
 };
 
-const NavLink: React.FC<{ icon: any; label: string; isActive?: boolean }> = ({
-  icon: Icon,
-  label,
-  isActive = false,
-}) => {
+interface NavLinkItemProps {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  label: string;
+  pathname: string;
+}
+
+const NavLinkItem: React.FC<NavLinkItemProps> = ({ icon: Icon, label, pathname }) => {
   return (
-    <Link
-      to="#"
-      className={`flex items-center gap-4 px-2.5 ${
-        isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-      }`}
+    <NavLink
+      to={pathname}
+      className={(props) => {
+        const { isActive, isPending } = props;
+        const defaultStyle = 'flex items-center gap-4 px-2.5 ';
+        return isPending
+          ? defaultStyle
+          : isActive
+          ? `${defaultStyle} text-foreground`
+          : `${defaultStyle} text-muted-foreground hover:text-foreground`;
+      }}
     >
       <Icon className="h-5 w-5" />
       {label}
-    </Link>
+    </NavLink>
   );
 };
