@@ -1,7 +1,10 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
-import type { LinksFunction } from '@remix-run/node';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from '@remix-run/react';
+import type { LinksFunction } from '@remix-run/cloudflare';
 
+import { Provider } from 'jotai';
+import { Toaster } from '~/components/ui/toaster';
 import { TooltipProvider } from '~/components/ui/tooltip';
+import { LayoutDashboard } from '~/components/custom/layout-dashboard';
 
 import './tailwind.css';
 
@@ -28,9 +31,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <TooltipProvider>{children}</TooltipProvider>
-        <ScrollRestoration />
-        <Scripts />
+        <Provider>
+          <TooltipProvider>
+            <LayoutDashboard>{children}</LayoutDashboard>
+          </TooltipProvider>
+          <Toaster />
+          <ScrollRestoration />
+          <Scripts />
+        </Provider>
       </body>
     </html>
   );
@@ -38,4 +46,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return <Outlet />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  console.error(error);
+  return (
+    <html>
+      <head>
+        <title>Oh no!</title>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        {/* add the UI you want your users to see */}
+        <Scripts />
+      </body>
+    </html>
+  );
 }

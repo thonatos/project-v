@@ -1,8 +1,9 @@
 // import colors from 'tailwindcss/colors';
 import type { Config } from 'tailwindcss';
+import flowbite from 'flowbite-react/tailwind';
 
 export default {
-  content: ['./app/**/*.{js,jsx,ts,tsx}', './node_modules/flowbite-react/**/*.js'],
+  content: ['./app/**/*.{js,jsx,ts,tsx}', flowbite.content()],
   theme: {
     colors: {
       // primary: {
@@ -75,5 +76,5 @@ export default {
     },
   },
   darkMode: 'class',
-  plugins: [require('flowbite/plugin')],
+  plugins: [flowbite.plugin()],
 } satisfies Config;
