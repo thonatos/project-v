@@ -64,7 +64,9 @@
   "projectSettings": [
     {
       "projectName": "remix-app",
-      "additionalDependenciesToInclude": [],
+      "additionalDependenciesToInclude": [
+        "@remix-run/serve"
+      ],
       "dependenciesToExclude": []
     }
     // {
