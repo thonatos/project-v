@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Link } from '@remix-run/react';
-import type { MetaFunction } from '@remix-run/cloudflare';
+import type { MetaFunction } from '@vercel/remix';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { StrategyList } from '~/components/biz/strategy-list';

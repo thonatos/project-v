@@ -7,12 +7,10 @@
   "scripts": {
     "_phase:build": "remix vite:build",
     "build": "remix vite:build",
-    "deploy": "wrangler deploy",
-    "dev": "remix vite:dev",
+    "dev": "remix vite:dev --host 0.0.0.0 --port 3000",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "wrangler dev",
     "typecheck": "tsc",
-    "typegen": "wrangler types",
     "ui:add": "pnpx shadcn@latest add"
   },
   "dependencies": {
@@ -30,10 +28,9 @@
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-toast": "^1.2.1",
     "@radix-ui/react-tooltip": "^1.1.2",
-    "@remix-run/cloudflare": "*",
-    "@remix-run/cloudflare-pages": "*",
     "@remix-run/react": "^2.12.1",
     "@ts-ghost/content-api": "~4.1.0",
+    "@vercel/remix": "~2.12.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "debug": "~4.3.7",

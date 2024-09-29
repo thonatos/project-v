@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLoaderData } from '@remix-run/react';
-import { json } from '@remix-run/cloudflare';
-import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { json } from '@vercel/remix';
+import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
 import { PostCard } from '~/components/biz/post-card';
 import { api, Post } from '~/model/ghost';
