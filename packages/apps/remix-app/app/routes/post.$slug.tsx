@@ -1,10 +1,10 @@
 import React, { Suspense } from 'react';
 import invariant from 'tiny-invariant';
 import { Link } from '@remix-run/react';
-import { json } from '@remix-run/cloudflare';
+import { json } from '@vercel/remix';
 import { useLoaderData } from '@remix-run/react';
 
-import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/cloudflare';
+import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
 import { api, Post } from '~/model/ghost';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';

@@ -1,5 +1,5 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from '@remix-run/react';
-import type { LinksFunction } from '@remix-run/cloudflare';
+import type { LinksFunction } from '@vercel/remix';
 
 import { Provider } from 'jotai';
 import { Toaster } from '~/components/ui/toaster';
@@ -43,6 +43,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
   );
 }
+
+export const config = { runtime: 'edge' };
 
 export default function App() {
   return <Outlet />;
