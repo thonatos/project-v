@@ -44,8 +44,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const config = { runtime: 'edge' };
-
 export default function App() {
   return <Outlet />;
 }
