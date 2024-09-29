@@ -350,11 +350,6 @@
       "tags": ["apps"]
     },
     {
-      "packageName": "remix-web",
-      "projectFolder": "packages/apps/remix-web",
-      "tags": ["apps"]
-    },
-    {
       "packageName": "remix-app",
       "projectFolder": "packages/apps/remix-app",
       "tags": ["apps"]
@@ -362,11 +357,6 @@
     {
       "packageName": "next-web",
       "projectFolder": "packages/apps/next-web",
-      "tags": ["apps"]
-    },
-    {
-      "packageName": "rsshub-app",
-      "projectFolder": "packages/apps/rsshub-app",
       "tags": ["apps"]
     }
     // {
