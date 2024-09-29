@@ -7,16 +7,17 @@
   "scripts": {
     "_phase:build": "remix vite:build",
     "build": "remix vite:build",
-    "deploy": "wrangler pages deploy ./build/client",
-    "dev": "remix vite:dev --host 0.0.0.0 --port 3000",
+    "deploy": "wrangler deploy",
+    "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "wrangler pages dev ./build/client",
+    "start": "wrangler dev",
     "typecheck": "tsc",
     "typegen": "wrangler types",
     "ui:add": "pnpx shadcn@latest add"
   },
   "dependencies": {
     "@apollo/client": "~3.11.8",
+    "@cloudflare/kv-asset-handler": "~0.3.4",
     "@emotion/react": "~11.13.3",
     "@emotion/styled": "~11.13.0",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -65,7 +66,7 @@
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "3.57.1"
+    "wrangler": "3.78.12"
   },
   "engines": {
     "node": ">=20.0.0"

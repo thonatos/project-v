@@ -1,0 +1,13 @@
+name = "project-v-remix-app"
+
+main = "./server.ts"
+workers_dev = true
+
+compatibility_date = "2024-09-29"
+compatibility_flags = ["nodejs_compat"]
+
+[site]
+bucket = "./build/client"
+
+[build]
+command = "pnpm run build"
