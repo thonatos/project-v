@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLoaderData } from '@remix-run/react';
-import { json } from '@vercel/remix';
+import { defer } from '@vercel/remix';
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
 import { PostCard } from '~/components/biz/post-card';
@@ -30,7 +30,7 @@ export const loader = async (_params: LoaderFunctionArgs) => {
     })
     .fetch();
 
-  return json({
+  return defer({
     posts: posts.success ? (posts.data as Post[]) : [],
   });
 };

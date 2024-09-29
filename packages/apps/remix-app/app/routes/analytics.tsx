@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Link } from '@remix-run/react';
+import { Link, Await, useAsyncValue } from '@remix-run/react';
 import type { MetaFunction } from '@vercel/remix';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
@@ -15,6 +15,7 @@ export const handle = {
 };
 
 export const AnalyticsPage: React.FC<{}> = () => {
+  const value = useAsyncValue();
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <Card>
@@ -24,7 +25,9 @@ export const AnalyticsPage: React.FC<{}> = () => {
         </CardHeader>
         <CardContent>
           <Suspense fallback={<StrategySkeleton />}>
-            <StrategyList />
+            <Await resolve={value}>
+              <StrategyList />
+            </Await>
           </Suspense>
         </CardContent>
       </Card>

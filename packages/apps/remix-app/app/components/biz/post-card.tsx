@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Link } from '@remix-run/react';
+import { Await, Link, useAsyncValue } from '@remix-run/react';
 
 import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
@@ -25,7 +25,11 @@ export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, r
             />
           }
         >
-          <Image src={feature_image} className="object-cover h-36 md:h-48 w-full rounded-xl" />
+          <Await resolve={feature_image}>
+            {(feature_image) => (
+              <Image src={feature_image} className="object-cover h-36 md:h-48 w-full rounded-xl" />
+            )}
+          </Await>
         </Suspense>
       </CardHeader>
       <CardContent className="p-2">

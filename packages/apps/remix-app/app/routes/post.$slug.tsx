@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react';
 import invariant from 'tiny-invariant';
 import { Link } from '@remix-run/react';
-import { json } from '@vercel/remix';
-import { useLoaderData } from '@remix-run/react';
+import { defer } from '@vercel/remix';
+import { Await, useLoaderData } from '@remix-run/react';
 
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
@@ -38,7 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     throw new Error(response.errors.join(', '));
   }
 
-  return json({ post: response.data as Post });
+  return defer({ post: response.data as Post });
 };
 
 const PostDetailPage: React.FC<{}> = () => {
@@ -58,14 +58,20 @@ const PostDetailPage: React.FC<{}> = () => {
       </CardHeader>
       <CardContent>
         <Suspense fallback={<div>loading</div>}>
-          <div className="post-content py-0">
-            {post.html && (
-              <div
-                className="gh-content typo text-base tracking-wide break-words"
-                dangerouslySetInnerHTML={{ __html: post.html }}
-              />
-            )}
-          </div>
+          <Await resolve={post}>
+            {(post) => {
+              return (
+                <div className="post-content py-0">
+                  {post.html && (
+                    <div
+                      className="gh-content typo text-base tracking-wide break-words"
+                      dangerouslySetInnerHTML={{ __html: post.html }}
+                    />
+                  )}
+                </div>
+              );
+            }}
+          </Await>
         </Suspense>
       </CardContent>
     </Card>
