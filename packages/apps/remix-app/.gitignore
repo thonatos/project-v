@@ -4,3 +4,5 @@ node_modules
 /build
 .wrangler/
 .env
+
+.dev.vars
