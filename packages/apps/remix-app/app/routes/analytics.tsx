@@ -21,7 +21,7 @@ export const AnalyticsPage: React.FC<{}> = () => {
       <Card>
         <CardHeader className="bg-muted/50">
           <CardTitle>Strategy</CardTitle>
-          <CardDescription>trading strategies</CardDescription>
+          <CardDescription>Stock and cryptocurrency trading strategies.</CardDescription>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<StrategySkeleton />}>

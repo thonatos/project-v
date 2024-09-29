@@ -2,12 +2,18 @@ import React, { useEffect } from 'react';
 import { useAtom } from 'jotai';
 import { appAtom } from '~/store/appAtom';
 
+import { StrategySkeleton } from '~/components/biz/strategy-skeleton';
+
 export const StrategyList: React.FC<{}> = () => {
   const [{ strategies = [] }, dispach] = useAtom(appAtom);
 
   useEffect(() => {
     dispach();
   }, []);
+
+  if (!strategies?.length) {
+    return <StrategySkeleton />;
+  }
 
   return (
     <div className="grid grid-cols-1 gap-8 py-4">
