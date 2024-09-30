@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/com
 import { StrategyList } from '~/components/biz/strategy-list';
 import { StrategySkeleton } from '~/components/biz/strategy-skeleton';
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Analytics' }, { name: 'ρV', content: 'undefined project - ρV' }];
-};
-
 export const handle = {
   breadcrumb: () => <Link to="/analytics">Analytics</Link>,
+};
+
+export const meta: MetaFunction = () => {
+  return [{ title: 'Analytics' }, { name: 'ρV', content: 'undefined project - ρV' }];
 };
 
 export const AnalyticsPage: React.FC<{}> = () => {

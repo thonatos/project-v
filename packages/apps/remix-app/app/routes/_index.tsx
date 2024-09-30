@@ -4,39 +4,28 @@ import { defer } from '@vercel/remix';
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
 import { PostCard } from '~/components/biz/post-card';
-import { api, Post } from '~/model/ghost';
-
-export const meta: MetaFunction = () => {
-  return [{ title: 'Home' }, { name: 'ρV', content: 'undefined project - ρV' }];
-};
+import { listPost, Post } from '~/model/ghost';
 
 export const handle = {
   breadcrumb: () => <Link to="/">Home</Link>,
 };
 
+export const meta: MetaFunction = () => {
+  return [{ title: 'Home' }, { name: 'ρV', content: 'undefined project - ρV' }];
+};
+
 export const loader = async (_params: LoaderFunctionArgs) => {
-  const posts = await api.posts
-    .browse({
-      limit: 15,
-      filter: 'featured:true+visibility:public',
-    })
-    .fields({
-      id: true,
-      slug: true,
-      title: true,
-      feature_image: true,
-      published_at: true,
-      excerpt: true,
-    })
-    .fetch();
+  const posts = await listPost({
+    limit: 15,
+  });
 
   return defer({
-    posts: posts.success ? (posts.data as Post[]) : [],
+    posts,
   });
 };
 
 const IndexPage: React.FC<{}> = () => {
-  const { posts } = useLoaderData<typeof loader>();
+  const { posts } = useLoaderData<{ posts: Post[] }>();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">

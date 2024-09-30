@@ -33,6 +33,7 @@
     "@remix-run/serve": "^2.x",
     "@remix-run/server-runtime": "2.10.0",
     "@ts-ghost/content-api": "~4.1.0",
+    "@vercel/kv": "~3.0.0",
     "@vercel/remix": "^2.x",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

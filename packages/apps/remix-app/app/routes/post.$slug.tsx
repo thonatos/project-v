@@ -6,43 +6,27 @@ import { Await, useLoaderData } from '@remix-run/react';
 
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
-import { api, Post } from '~/model/ghost';
+import { getPost, Post } from '~/model/ghost';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { formatDateTime } from '~/lib/utils';
+
+export const handle = {
+  breadcrumb: () => <Link to="/">Home</Link>,
+};
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const title = data?.post.title || 'Post';
   return [{ title: `${title} - ρV` }, { name: 'description', content: 'undefined project - ρV' }];
 };
 
-export const handle = {
-  breadcrumb: () => <Link to="/">Home</Link>,
-};
-
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   invariant(params.slug, 'Missing slug param');
-
-  const response = await api.posts
-    .read({
-      slug: params.slug,
-    })
-    .fields({
-      id: true,
-      html: true,
-      title: true,
-      feature_image: true,
-      published_at: true,
-    })
-    .fetch();
-  if (!response.success) {
-    throw new Error(response.errors.join(', '));
-  }
-
-  return defer({ post: response.data as Post });
+  const post = await getPost(params.slug);
+  return defer({ post });
 };
 
 const PostDetailPage: React.FC<{}> = () => {
-  const { post } = useLoaderData<typeof loader>();
+  const { post } = useLoaderData<{ post: Post }>();
 
   return (
     <Card>
