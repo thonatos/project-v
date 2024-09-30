@@ -29,7 +29,7 @@ const PostDetailPage: React.FC<{}> = () => {
   const { post } = useLoaderData<{ post: Post }>();
 
   return (
-    <Card>
+    <Card className="max-w-full overflow-hidden">
       <CardHeader className="bg-muted/50">
         <CardTitle>{post.title}</CardTitle>
         <CardDescription>
