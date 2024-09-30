@@ -14,6 +14,9 @@
   display: block;
   -webkit-overflow-scrolling: touch;
   border-radius: 4px;
+
+  max-width: 100%;
+  overflow: scroll;
 }
 
 .typo hr {
