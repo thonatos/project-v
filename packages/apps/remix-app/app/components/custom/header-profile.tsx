@@ -10,14 +10,14 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 
-export const DropdownMenus: React.FC<{
+export const Profile: React.FC<{
   dropdownMenus?: { label?: string; type?: string }[];
 }> = ({ dropdownMenus = [] }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-          <Avatar style={{ width: '36px', height: '36px' }}>
+          <Avatar className="w-6 h-6">
             <AvatarImage src="https://avatars.githubusercontent.com/u/958063?v=4" alt="Avatar" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
@@ -40,4 +40,4 @@ export const DropdownMenus: React.FC<{
   );
 };
 
-export default DropdownMenus;
+export default Profile;

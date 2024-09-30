@@ -13,7 +13,7 @@ export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, r
   const postLink = `/post/${slug}`;
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="p-0">
         <Suspense
           fallback={
