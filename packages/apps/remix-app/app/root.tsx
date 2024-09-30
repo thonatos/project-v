@@ -1,12 +1,32 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from '@remix-run/react';
-import type { LinksFunction } from '@vercel/remix';
+import clsx from 'clsx';
+import React, { useMemo } from 'react';
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useRouteError,
+} from '@remix-run/react';
+import type { LinksFunction, LoaderFunctionArgs } from '@vercel/remix';
+import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes';
 
 import { Provider } from 'jotai';
 import { Toaster } from '~/components/ui/toaster';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import { LayoutDashboard } from '~/components/custom/layout-dashboard';
+import { themeSessionResolver } from './sessions.server';
 
 import './tailwind.css';
+import './typo.css';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { getTheme } = await themeSessionResolver(request);
+  return {
+    theme: getTheme(),
+  };
+}
 
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -21,19 +41,29 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export const App: React.FC<{}> = () => {
+  const data = useLoaderData<typeof loader>();
+  const [theme] = useTheme();
+
+  const colorScheme = useMemo(() => {
+    return theme === 'dark' ? 'dark' : 'light';
+  }, [theme]);
+
   return (
-    <html lang="en">
+    <html lang="en" className={clsx(theme)} style={{ colorScheme }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
       <body>
         <Provider>
           <TooltipProvider>
-            <LayoutDashboard>{children}</LayoutDashboard>
+            <LayoutDashboard>
+              <Outlet />
+            </LayoutDashboard>
           </TooltipProvider>
           <Toaster />
           <ScrollRestoration />
@@ -42,10 +72,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </body>
     </html>
   );
-}
+};
 
-export default function App() {
-  return <Outlet />;
+export default function AppWithProviders() {
+  const data = useLoaderData<typeof loader>();
+
+  return (
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+      <App />
+    </ThemeProvider>
+  );
 }
 
 export function ErrorBoundary() {

@@ -5,9 +5,10 @@ import { PanelLeft } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet';
 import { Logo } from './header-logo';
+import { Profile } from './header-profile';
 import { SearchBar } from './header-search-bar';
+import { ModeToggle } from './header-mode-toggle';
 import { Breadcrumbs } from './header-breadcrumbs';
-import { DropdownMenus } from './header-dropdown-menus';
 
 export const Header: React.FC<{
   navLinks?: { icon: any; label: string; pathname: string }[];
@@ -37,7 +38,9 @@ export const Header: React.FC<{
 
       <SearchBar />
 
-      <DropdownMenus dropdownMenus={dropdownMenus} />
+      <Profile dropdownMenus={dropdownMenus} />
+
+      <ModeToggle />
     </header>
   );
 };
