@@ -17,7 +17,7 @@ export const listPost = async (options: ListPostOptions): Promise<Post[]> => {
   const posts = await api.posts
     .browse({
       limit,
-      filter: 'featured:true+visibility:public',
+      filter: 'visibility:public', // featured:true+visibility:public
     })
     .fields({
       id: true,
