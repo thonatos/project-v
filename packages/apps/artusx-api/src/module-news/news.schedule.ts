@@ -2,7 +2,7 @@ import { PluginInjectEnum } from '@artusx/utils';
 import { Inject, Schedule, ArtusInjectEnum } from '@artusx/core';
 import type { ArtusXSchedule, Log4jsClient } from '@artusx/core';
 
-import NewsService from './news.serivice';
+import NewsService from './news.service';
 import TelegramService from '../service/telegram';
 
 @Schedule({
