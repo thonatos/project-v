@@ -26,9 +26,18 @@ export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, r
           }
         >
           <Await resolve={feature_image}>
-            {(feature_image) => (
-              <Image src={feature_image} className="object-cover h-36 md:h-48 w-full rounded-xl" />
-            )}
+            {(feature_image) =>
+              feature_image ? (
+                <Image src={feature_image} className="object-cover h-36 md:h-48 w-full rounded-xl" />
+              ) : (
+                <Skeleton
+                  className="h-36 md:h-48 w-full rounded-xl"
+                  style={{
+                    marginTop: 0,
+                  }}
+                />
+              )
+            }
           </Await>
         </Suspense>
       </CardHeader>
