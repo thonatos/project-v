@@ -6,8 +6,9 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 RUN \
-  sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources \
-  && apt update \
+  # sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources \
+  # && apt update \
+  apt update \
   && apt install -y tzdata \
   && echo "${TIME_ZONE}" > /etc/timezone \ 
   && ln -sf /usr/share/zoneinfo/${TIME_ZONE} /etc/localtime \
