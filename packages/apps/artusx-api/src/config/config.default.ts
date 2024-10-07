@@ -1,7 +1,7 @@
 import path from 'path';
 import { getApiId, getProxy, getEnv } from '@artusx/utils';
 import { ArtusXConfig, NunjucksConfigureOptions } from '@artusx/core';
-import { IPPTRConfig, IOpenAIConfig, ITelegramConfig, IRedisConfig, ISequelizeConfig } from '../plugins';
+import { IPPTRConfig, IOpenAIConfig, ITelegramConfig, IRedisConfig, IClickHouseConfig } from '../plugins';
 
 export default () => {
   const cache = {
@@ -42,19 +42,11 @@ export default () => {
     password: getEnv('REDIS_PASSWORD', 'string') || '',
   };
 
-  const sequelize: ISequelizeConfig = {
-    port: getEnv('MYSQL_PORT', 'number') || 3306,
-    host: getEnv('MYSQL_HOST', 'string') || 'localhost',
-
-    database: getEnv('MYSQL_DATABASE', 'string') || 'mysql',
-    username: getEnv('MYSQL_USERNAME', 'string') || 'root',
-    password: getEnv('MYSQL_PASSWORD', 'string') || 'root',
-
-    dialect: 'mysql',
-    models: [path.join(__dirname, '../model')],
-
-    force: getEnv('MYSQL_FORCE', 'boolean') || false,
-    alter: getEnv('MYSQL_ALTER', 'boolean') || false,
+  const clickhouse: IClickHouseConfig = {
+    url: getEnv('CLICKHOUSE_URL', 'string') || '',
+    username: getEnv('CLICKHOUSE_USERNAME', 'string') || 'default',
+    password: getEnv('CLICKHOUSE_PASSWORD', 'string') || '',
+    database: getEnv('CLICKHOUSE_DATABASE', 'string') || 'default',
   };
 
   const openai: IOpenAIConfig = {
@@ -101,8 +93,8 @@ export default () => {
     telegram,
     nunjucks,
     redis,
-    sequelize,
     socketio,
+    clickhouse,
 
     // custom
     channels,

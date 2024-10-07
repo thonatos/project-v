@@ -16,16 +16,12 @@ export default {
     package: '@artusx/plugin-openai',
   },
   telegram: {
-    enable: true,
+    enable: false,
     package: '@artusx/plugin-telegram',
   },
   redis: {
     enable: true,
     package: '@artusx/plugin-redis',
-  },
-  sequelize: {
-    enable: false,
-    package: '@artusx/plugin-sequelize',
   },
   socketio: {
     enable: true,
