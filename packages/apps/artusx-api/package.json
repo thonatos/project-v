@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@artusx/core": "latest",
+    "@artusx/plugin-clickhouse": "latest",
     "@artusx/plugin-openai": "latest",
     "@artusx/plugin-pptr": "latest",
     "@artusx/plugin-proxy": "latest",
@@ -35,7 +36,6 @@
     "p-limit": "~5.0.0",
     "puppeteer-core": "~22.5.0",
     "reflect-metadata": "^0.1.13",
-    "rsshub": "~1.0.0-master.0526c2c",
     "sharp": "~0.33.2",
     "tslib": "^2.5.0"
   },

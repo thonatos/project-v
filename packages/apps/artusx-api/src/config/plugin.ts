@@ -19,13 +19,13 @@ export default {
     enable: true,
     package: '@artusx/plugin-telegram',
   },
+  clickhouse: {
+    enable: true,
+    package: '@artusx/plugin-clickhouse',
+  },
   redis: {
     enable: true,
     package: '@artusx/plugin-redis',
-  },
-  sequelize: {
-    enable: false,
-    package: '@artusx/plugin-sequelize',
   },
   socketio: {
     enable: true,

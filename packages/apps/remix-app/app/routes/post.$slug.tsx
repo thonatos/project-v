@@ -48,7 +48,7 @@ const PostDetailPage: React.FC<{}> = () => {
                 <div className="post-content py-0">
                   {post.html && (
                     <div
-                      className="gh-content typo text-base tracking-wide break-words"
+                      className="gh-content typo text-sm tracking-wide break-words"
                       dangerouslySetInnerHTML={{ __html: post.html }}
                     />
                   )}

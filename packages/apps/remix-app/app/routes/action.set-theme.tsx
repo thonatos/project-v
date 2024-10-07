@@ -3,4 +3,8 @@ import { themeSessionResolver } from '../sessions.server';
 
 export const action = createThemeAction(themeSessionResolver);
 
-export default action;
+export const ActionSetThemePage: React.FC<{}> = () => {
+  return null;
+};
+
+export default ActionSetThemePage;
