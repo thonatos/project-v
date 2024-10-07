@@ -3,10 +3,12 @@ import { Inject, Injectable } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
 
 import { TZ_ASIA_SHANGHAI } from '../constants';
-
 import { dayjs } from '../util';
-import { Redis } from '../types';
-import { IRedisClient, IPPTRClient, KnownDevices } from '../plugins';
+
+import type { Redis } from '@artusx/plugin-redis/types';
+import type PluginRedis from '@artusx/plugin-redis/client';
+import type PPTRClient from '@artusx/plugin-pptr/client';
+import { KnownDevices } from '@artusx/plugin-pptr/client';
 
 const iPhone13Pro = KnownDevices['iPhone 13 Pro Max'];
 
@@ -16,10 +18,10 @@ export default class NewsService {
   log4js: Log4jsClient;
 
   @Inject(PluginInjectEnum.PPTR)
-  pptrClient: IPPTRClient;
+  pptrClient: PPTRClient;
 
   @Inject(PluginInjectEnum.Redis)
-  redisClient: IRedisClient;
+  redisClient: PluginRedis;
 
   get redis(): Redis {
     return this.redisClient.getClient();

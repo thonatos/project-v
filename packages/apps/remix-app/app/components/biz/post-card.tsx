@@ -1,13 +1,20 @@
 import React, { Suspense } from 'react';
-import { Await, Link, useAsyncValue } from '@remix-run/react';
-
+import { Await, Link } from '@remix-run/react';
+import { AsyncImage } from 'loadable-image';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
 
 import { Post } from '~/model/ghost';
 import { formatDateTime, formatReadTime } from '~/lib/utils';
 
-const Image = React.lazy(() => import('~/components/custom/image'));
+const ImagePlaceholder = () => (
+  <Skeleton
+    className="h-36 md:h-48 w-full rounded-xl"
+    style={{
+      marginTop: 0,
+    }}
+  />
+);
 
 export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, reading_time, slug }) => {
   const postLink = `/post/${slug}`;
@@ -15,27 +22,17 @@ export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, r
   return (
     <Card className="overflow-hidden">
       <CardHeader className="p-0">
-        <Suspense
-          fallback={
-            <Skeleton
-              className="h-36 md:h-48 w-full rounded-xl"
-              style={{
-                marginTop: 0,
-              }}
-            />
-          }
-        >
+        <Suspense fallback={<ImagePlaceholder />}>
           <Await resolve={feature_image}>
             {(feature_image) =>
               feature_image ? (
-                <Image src={feature_image} className="object-cover h-36 md:h-48 w-full rounded-xl" />
-              ) : (
-                <Skeleton
-                  className="h-36 md:h-48 w-full rounded-xl"
-                  style={{
-                    marginTop: 0,
-                  }}
+                <AsyncImage
+                  src={feature_image}
+                  className="object-cover h-36 md:h-48 w-full rounded-xl"
+                  loader={<ImagePlaceholder />}
                 />
+              ) : (
+                <ImagePlaceholder />
               )
             }
           </Await>

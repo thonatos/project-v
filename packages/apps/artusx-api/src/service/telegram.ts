@@ -6,8 +6,8 @@ import { createHash } from 'node:crypto';
 import { PluginInjectEnum } from '@artusx/utils';
 import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
-import { TelegramClient } from '../types';
-import { ITelegramClient } from '../plugins';
+import type PluginTelegram from '@artusx/plugin-telegram/client';
+import type { TelegramClient } from '@artusx/plugin-telegram/types';
 
 @Injectable()
 export default class TelegramService {
@@ -18,7 +18,7 @@ export default class TelegramService {
   log4js: Log4jsClient;
 
   @Inject(PluginInjectEnum.Telegram)
-  telegramClient: ITelegramClient;
+  telegramClient: PluginTelegram;
 
   get logger() {
     return this.log4js.getLogger('default');

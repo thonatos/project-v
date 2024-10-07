@@ -1,7 +1,12 @@
 import path from 'path';
 import { getApiId, getProxy, getEnv } from '@artusx/utils';
 import { ArtusXConfig, NunjucksConfigureOptions } from '@artusx/core';
-import { IPPTRConfig, IOpenAIConfig, ITelegramConfig, IRedisConfig, ISequelizeConfig } from '../plugins';
+
+import type { PPTRConfig } from '@artusx/plugin-pptr/client';
+import type { RedisConfig } from '@artusx/plugin-redis/client';
+import type { OpenAIConfig } from '@artusx/plugin-openai/client';
+import type { TelegramConfig } from '@artusx/plugin-telegram/client';
+import type { ClickHouseConfig } from '@artusx/plugin-clickhouse/client';
 
 export default () => {
   const cache = {
@@ -33,7 +38,7 @@ export default () => {
     },
   };
 
-  const redis: IRedisConfig = {
+  const redis: RedisConfig = {
     db: getEnv('REDIS_DATABASE', 'number') || 0,
     port: getEnv('REDIS_PORT', 'number') || 6379,
     host: getEnv('REDIS_HOST', 'string') || 'localhost',
@@ -42,22 +47,14 @@ export default () => {
     password: getEnv('REDIS_PASSWORD', 'string') || '',
   };
 
-  const sequelize: ISequelizeConfig = {
-    port: getEnv('MYSQL_PORT', 'number') || 3306,
-    host: getEnv('MYSQL_HOST', 'string') || 'localhost',
-
-    database: getEnv('MYSQL_DATABASE', 'string') || 'mysql',
-    username: getEnv('MYSQL_USERNAME', 'string') || 'root',
-    password: getEnv('MYSQL_PASSWORD', 'string') || 'root',
-
-    dialect: 'mysql',
-    models: [path.join(__dirname, '../model')],
-
-    force: getEnv('MYSQL_FORCE', 'boolean') || false,
-    alter: getEnv('MYSQL_ALTER', 'boolean') || false,
+  const clickhouse: ClickHouseConfig = {
+    url: getEnv('CLICKHOUSE_URL', 'string') || 'clickhouse:8123',
+    username: getEnv('CLICKHOUSE_USERNAME', 'string') || 'default',
+    password: getEnv('CLICKHOUSE_PASSWORD', 'string') || '',
+    database: getEnv('CLICKHOUSE_DATABASE', 'string') || 'default',
   };
 
-  const openai: IOpenAIConfig = {
+  const openai: OpenAIConfig = {
     apiKey: getEnv('OPENAI_KEY', 'string') || '',
   };
 
@@ -65,7 +62,7 @@ export default () => {
     proxyString: getEnv('PROXY_STRING', 'string') || '',
   };
 
-  const telegram: ITelegramConfig = {
+  const telegram: TelegramConfig = {
     api_id: getApiId() || 0,
     api_hash: getEnv('API_HASH', 'string') || '',
     app_title: getEnv('APP_TITLE', 'string') || '',
@@ -74,7 +71,7 @@ export default () => {
     proxy: getProxy() || undefined,
   };
 
-  const pptr: IPPTRConfig = {
+  const pptr: PPTRConfig = {
     connect: {
       browserWSEndpoint: getEnv('BROWSERLESS_URL', 'string') || 'ws://localhost:3000',
       protocolTimeout: 30000,
@@ -101,8 +98,8 @@ export default () => {
     telegram,
     nunjucks,
     redis,
-    sequelize,
     socketio,
+    clickhouse,
 
     // custom
     channels,

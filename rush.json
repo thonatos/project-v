@@ -26,7 +26,7 @@
    * Specify one of: "pnpmVersion", "npmVersion", or "yarnVersion".  See the Rush documentation
    * for details about these alternatives.
    */
-  "pnpmVersion": "9.11.0",
+  "pnpmVersion": "9.12.1",
 
   // "npmVersion": "6.14.15",
   // "yarnVersion": "1.9.4",
@@ -355,9 +355,9 @@
       "tags": ["apps"]
     },
     {
-      "packageName": "next-web",
-      "projectFolder": "packages/apps/next-web",
-      "tags": ["apps"]
+      "packageName": "react-component",
+      "projectFolder": "packages/libs/react-component",
+      "tags": ["libs"]
     }
     // {
     //   /**
