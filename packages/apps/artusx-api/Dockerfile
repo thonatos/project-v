@@ -1,5 +1,6 @@
 # layer: base
-FROM --platform=linux/amd64 node:20 AS base
+# FROM --platform=linux/amd64 node:20 AS base
+FROM node:20 AS base
 
 ENV TIME_ZONE=Asia/Shanghai
 ENV PNPM_HOME="/pnpm"
@@ -31,4 +32,4 @@ FROM base
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 EXPOSE 7001
-CMD pnpm run start
+CMD ["pnpm", "start"]
