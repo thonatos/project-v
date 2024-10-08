@@ -1,15 +1,17 @@
 import { Inject, Injectable, ArtusXInjectEnum, ArtusApplication } from '@artusx/core';
-import ClickHouseClient from '../plugin/clickhouse';
+import { PluginInjectEnum } from '@artusx/utils';
+import type PluginClickHouse from '@artusx/plugin-clickhouse/client';
+import type { ClickHouseClient } from '@artusx/plugin-clickhouse/types';
 
 @Injectable()
 export default class StrategyService {
   @Inject(ArtusXInjectEnum.Application)
   app: ArtusApplication;
 
-  @Inject('ARTUSX_CLICKHOUSE')
-  clickhouseClient: ClickHouseClient;
+  @Inject(PluginInjectEnum.ClickHouse)
+  clickhouseClient: PluginClickHouse;
 
-  get clickhouse() {
+  get clickhouse(): ClickHouseClient {
     return this.clickhouseClient.getClient();
   }
 

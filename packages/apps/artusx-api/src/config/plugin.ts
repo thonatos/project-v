@@ -16,8 +16,12 @@ export default {
     package: '@artusx/plugin-openai',
   },
   telegram: {
-    enable: false,
+    enable: true,
     package: '@artusx/plugin-telegram',
+  },
+  clickhouse: {
+    enable: true,
+    package: '@artusx/plugin-clickhouse',
   },
   redis: {
     enable: true,
