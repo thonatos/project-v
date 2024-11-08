@@ -23,7 +23,7 @@ export const AnalyticsPage: React.FC<{}> = () => {
           <CardTitle>Strategy</CardTitle>
           <CardDescription>Stock and cryptocurrency trading strategies.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <Suspense fallback={<StrategySkeleton />}>
             <Await resolve={value}>
               <StrategyList />

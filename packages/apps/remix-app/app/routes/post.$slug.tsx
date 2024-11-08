@@ -1,12 +1,11 @@
 import React, { Suspense } from 'react';
 import invariant from 'tiny-invariant';
 import { Link } from '@remix-run/react';
-import { defer } from '@vercel/remix';
 import { Await, useLoaderData } from '@remix-run/react';
 
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
-import { getPost, Post } from '~/model/ghost';
+import { getPost, Post } from '~/ghost-module';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { formatDateTime } from '~/lib/utils';
 
@@ -22,7 +21,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   invariant(params.slug, 'Missing slug param');
   const post = await getPost(params.slug);
-  return defer({ post });
+  return { post };
 };
 
 const PostDetailPage: React.FC<{}> = () => {

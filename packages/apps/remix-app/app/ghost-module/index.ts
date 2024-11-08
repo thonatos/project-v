@@ -40,7 +40,7 @@ export const getPost = async (slug: string): Promise<Post> => {
   const _cache = await getValue(slug);
 
   if (_cache) {
-    console.log('get post from cache:', slug);
+    console.log('[ghost-module] get post from cache:', slug);
     return _cache as Post;
   }
 

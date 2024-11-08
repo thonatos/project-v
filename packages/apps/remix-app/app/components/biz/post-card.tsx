@@ -4,7 +4,7 @@ import { AsyncImage } from 'loadable-image';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
 
-import { Post } from '~/model/ghost';
+import { Post } from '~/ghost-module';
 import { formatDateTime, formatReadTime } from '~/lib/utils';
 
 const ImagePlaceholder = () => (
