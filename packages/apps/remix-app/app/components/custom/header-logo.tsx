@@ -17,6 +17,7 @@ const Description = styled.p`
   color: #8264ff !important;
   opacity: 0.55;
   margin: 0 0 0 0.4em;
+  font-size: 12px;
 `;
 
 export const Logo: React.FC<Props> = ({ title, description }) => (

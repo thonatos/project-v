@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Links,
   Meta,
@@ -12,10 +12,11 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from '@vercel/remix';
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes';
 
+import { toast } from 'sonner';
 import { Provider as JotaiProvider } from 'jotai';
 import { Toaster } from '~/components/ui/toaster';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { LayoutDashboard } from '~/components/custom/layout-dashboard';
+import { DefaultLayout } from '~/components/custom/layout';
 import { createProvider, composeProviders } from '~/lib/provider-util';
 import { themeSessionResolver } from './sessions.server';
 
@@ -50,6 +51,25 @@ export const App: React.FC<{}> = () => {
     return theme === 'dark' ? 'dark' : 'light';
   }, [theme]);
 
+  // useSWEffect();
+
+  // const { swUpdate } = usePWAManager();
+
+  // useEffect(() => {
+  //   if (swUpdate) {
+  //     toast('Update available', {
+  //       description: 'New version available. Click to update.',
+  //       action: {
+  //         label: 'Update',
+  //         onClick: () => {
+  //           sendSkipWaitingMessage(swUpdate.newWorker!);
+  //           window.location.reload();
+  //         },
+  //       },
+  //     });
+  //   }
+  // }, [swUpdate.isUpdateAvailable]);
+
   return (
     <html lang="en" className={clsx(theme)} style={{ colorScheme }}>
       <head>
@@ -60,9 +80,9 @@ export const App: React.FC<{}> = () => {
         <Links />
       </head>
       <body>
-        <LayoutDashboard>
+        <DefaultLayout>
           <Outlet />
-        </LayoutDashboard>
+        </DefaultLayout>
         <Toaster />
         <ScrollRestoration />
         <Scripts />

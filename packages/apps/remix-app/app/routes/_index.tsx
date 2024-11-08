@@ -1,10 +1,9 @@
 import React from 'react';
 import { Link, useLoaderData } from '@remix-run/react';
-import { defer } from '@vercel/remix';
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 
 import { PostCard } from '~/components/biz/post-card';
-import { listPost, Post } from '~/model/ghost';
+import { listPost, Post } from '~/ghost-module/';
 
 export const handle = {
   breadcrumb: () => <Link to="/">Home</Link>,
@@ -19,9 +18,9 @@ export const loader = async (_params: LoaderFunctionArgs) => {
     limit: 15,
   });
 
-  return defer({
+  return {
     posts,
-  });
+  };
 };
 
 const IndexPage: React.FC<{}> = () => {

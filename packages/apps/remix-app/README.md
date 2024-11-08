@@ -39,6 +39,17 @@ Make sure to deploy the output of `npm run build`
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
 
+## Customization
+
+```bash
+# generate service worker
+pnpx remix-pwa sw
+pnpx remix-pwa manifest
+
+# add shadcn components
+pnpx dlx shadcn@latest add {component}
+```
+
 ## Links
 
 - https://lucide.dev/
