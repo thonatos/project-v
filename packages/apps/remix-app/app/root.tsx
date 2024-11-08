@@ -15,7 +15,7 @@ import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes'
 import { Provider as JotaiProvider } from 'jotai';
 import { Toaster } from '~/components/ui/toaster';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { LayoutDashboard } from '~/components/custom/layout-dashboard';
+import { DefaultLayout } from '~/components/custom/layout';
 import { createProvider, composeProviders } from '~/lib/provider-util';
 import { themeSessionResolver } from './sessions.server';
 
@@ -60,9 +60,9 @@ export const App: React.FC<{}> = () => {
         <Links />
       </head>
       <body>
-        <LayoutDashboard>
+        <DefaultLayout>
           <Outlet />
-        </LayoutDashboard>
+        </DefaultLayout>
         <Toaster />
         <ScrollRestoration />
         <Scripts />

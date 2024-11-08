@@ -1,14 +1,16 @@
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+import { defineConfig } from 'vite';
+import { remixPWA } from '@remix-pwa/dev';
 import { vitePlugin as remix } from '@remix-run/dev';
 import { installGlobals } from '@remix-run/node';
-import { defineConfig } from 'vite';
 import { vercelPreset } from '@vercel/remix/vite';
-
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 installGlobals();
 
 export default defineConfig({
   plugins: [
+    remixPWA(),
     remix({
       presets: [vercelPreset()],
       future: {
