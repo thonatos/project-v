@@ -18,12 +18,12 @@ export const RepositoryCard: React.FC<{
       <CardHeader>
         <CardTitle className="text-xl">
           <div className="flex justify-between gap-2">
-            <Link to={repo.html_url} target="_blank">
+            <Link to={repo.html_url} target="_blank" rel="noreferrer">
               <div className="flex items-center gap-2">
                 <Badge className="p-0.5 size-5">
                   <Github className="size-fit" />
                 </Badge>
-                <div className="text-sm font-semibold">{repo.name}</div>
+                <div className="text-sm font-semibold">{repo.full_name}</div>
               </div>
             </Link>
 
