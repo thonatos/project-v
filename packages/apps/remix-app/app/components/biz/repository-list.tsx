@@ -16,7 +16,7 @@ export const RepositoryList: React.FC<{}> = () => {
     }
 
     sw.addEventListener('message', (event) => {
-      logger.log('sw:message from worker', event);
+      logger.log('[pwa] sw:message from worker', event);
 
       const { type, payload } = event.data;
 

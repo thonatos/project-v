@@ -18,12 +18,12 @@ const DEV_DOMAINS = ['localhost', '127.0.0.1'];
 const ASSET_DEST_TYPES = ['font', 'image', 'script', 'style'];
 
 self.addEventListener('install', (event) => {
-  console.log(`sw:installed, ${SW_VERSION} - ${SW_BUILD_DATE}`, SW_MANIFEST);
+  console.log(`[sw] installed, ${SW_VERSION} - ${SW_BUILD_DATE}`, SW_MANIFEST);
   event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('sw:activated');
+  console.log('[sw] activated');
 
   // Get all the currently active `Cache` instances.
   const cleanCache = async () => {
@@ -52,7 +52,7 @@ self.addEventListener('activate', (event) => {
 const starredRepoMessageHandler = new StarredRepoMessageHandler();
 
 self.addEventListener('message', async (event) => {
-  console.log('sw:message: ', event);
+  console.log('[sw] message: ', event);
 
   if (event?.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -63,7 +63,7 @@ self.addEventListener('message', async (event) => {
 });
 
 self.addEventListener('statechange', (event) => {
-  console.log('sw:statechange', event?.target);
+  console.log('[sw] statechange', event?.target);
 });
 
 self.addEventListener('fetch', (event) => {
