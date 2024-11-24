@@ -4,7 +4,34 @@ import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-};
+}
+
+export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...args: Parameters<T>) => void {
+  let lastFunc: NodeJS.Timeout | null;
+  let lastRan: number | null = null;
+  return (...args: Parameters<T>) => {
+    if (!lastRan) {
+      func(...args);
+      lastRan = Date.now();
+    } else {
+      if (lastFunc) clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - (lastRan as number)) >= limit) {
+          func(...args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - (lastRan as number)));
+    }
+  };
+}
 
 export const logger = debug('remix:web');
 
@@ -31,3 +58,4 @@ export const sendMessageToSW = (event: string, payload: any) => {
     navigator.serviceWorker.controller.postMessage({ type: event, payload });
   }
 };
+

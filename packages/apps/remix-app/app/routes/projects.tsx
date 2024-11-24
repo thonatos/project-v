@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { Link, Await, useAsyncValue } from '@remix-run/react';
 import type { MetaFunction } from '@vercel/remix';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import { RepositoryFilter } from '~/components/biz/repository-filter';
 import { RepositoryList } from '~/components/biz/repository-list';
 import { RepositorySkeleton } from '~/components/biz/repository-skeleton';
 
@@ -18,19 +18,13 @@ export const ProjectsPage: React.FC<{}> = () => {
   const value = useAsyncValue();
   return (
     <div className="grid grid-cols-1">
-      <Card>
-        <CardHeader className="bg-muted/50">
-          <CardTitle>Starred github repositories.</CardTitle>
-          <CardDescription>Information of the 100 most recently starred repos.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-4">
-          <Suspense fallback={<RepositorySkeleton />}>
-            <Await resolve={value}>
-              <RepositoryList />
-            </Await>
-          </Suspense>
-        </CardContent>
-      </Card>
+      <h2 className="text-sm font-bold mb-6">Starred github repositories.</h2>
+      <RepositoryFilter />
+      <Suspense fallback={<RepositorySkeleton />}>
+        <Await resolve={value}>
+          <RepositoryList />
+        </Await>
+      </Suspense>
     </div>
   );
 };

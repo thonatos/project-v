@@ -57,7 +57,27 @@ export const getRepoById = async (db: IDBPDatabase<GithubDB>, id: string) => {
 
 export const getRepoList = async (db: IDBPDatabase<GithubDB>) => {
   const list = await db.getAllFromIndex(DATABASE_STORE_NAME, 'pushed_at');
-  return list.sort((a, b) => {
+
+  const sortedList = list.sort((a, b) => {
     return new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime();
   });
+
+  const langMap = new Map<string, number>();
+
+  sortedList.forEach((item) => {
+    if (!item.language) {
+      return;
+    }
+
+    const count = langMap.get(item.language) || 0;
+    langMap.set(item.language, count + 1);
+  });
+
+  const langList = Array.from(langMap, ([name, value]) => ({ name, value }));
+
+  return {
+    langMap,
+    langList,
+    repoList: sortedList,
+  };
 };

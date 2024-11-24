@@ -1,7 +1,7 @@
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 import { defineConfig } from 'vite';
-import { RemixVitePWA } from '@vite-pwa/remix';
+import { VitePWA } from 'vite-plugin-pwa';
 import { vitePlugin as remix } from '@remix-run/dev';
 import { installGlobals } from '@remix-run/node';
 import { vercelPreset } from '@vercel/remix/vite';
@@ -9,8 +9,6 @@ import { vercelPreset } from '@vercel/remix/vite';
 installGlobals({
   nativeFetch: true,
 });
-
-const { RemixVitePWAPlugin, RemixPWAPreset } = RemixVitePWA();
 
 process.env.VITE_BUILD_DATE = new Date().getTime().toString();
 
@@ -25,7 +23,7 @@ export default defineConfig({
   },
   plugins: [
     remix({
-      presets: [vercelPreset(), RemixPWAPreset()],
+      presets: [vercelPreset()],
       future: {
         v3_singleFetch: true,
         v3_fetcherPersist: true,
@@ -35,12 +33,12 @@ export default defineConfig({
       },
     }),
     tsconfigPaths(),
-    RemixVitePWAPlugin({
+    VitePWA({
       srcDir: 'app',
       // outDir: 'public',
       filename: 'sw.ts',
       strategies: 'injectManifest',
-      registerType: 'prompt',
+      registerType: 'prompt', // prompt || autoUpdate
       manifest: {
         short_name: 'ρV',
         name: 'undefined project - ρV',

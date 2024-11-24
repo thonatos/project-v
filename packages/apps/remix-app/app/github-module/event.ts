@@ -27,7 +27,7 @@ export class StarredRepoMessageHandler {
 
   private async messageHandler(event: ExtendableMessageEvent) {
     const { data } = event;
-    console.log('[sw] StarredRepoMessageHandler', data);
+    console.log('[sw] StarredRepoMessageHandler:data', data);
 
     let hasNext = true;
     let nextUrl = undefined;
