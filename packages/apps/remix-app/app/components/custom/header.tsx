@@ -4,7 +4,7 @@ import { SidebarTrigger } from '~/components/ui/sidebar';
 
 import { Profile } from './header-profile';
 import { SearchBar } from './header-search-bar';
-import { ModeToggle } from './header-mode-toggle';
+// import { ModeToggle } from './header-mode-toggle';
 import { Breadcrumbs } from './header-breadcrumbs';
 
 export const Header: React.FC<{
@@ -24,7 +24,7 @@ export const Header: React.FC<{
 
       <Profile dropdownMenus={dropdownMenus} />
 
-      <ModeToggle />
+      {/* <ModeToggle /> */}
     </header>
   );
 };

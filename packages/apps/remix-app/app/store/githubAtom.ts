@@ -5,8 +5,8 @@ import { sendMessageToSW } from '~/lib/utils';
 import {
   initDB,
   getRepoList,
-  EVENT_FETCH_STARRED_REPO_LIST,
   TIME_FETCH_STARRED_REPO_LIST,
+  EVENT_FETCH_STARRED_REPO_LIST,
 } from '~/github-module';
 
 import type { GithubRepository } from '~/github-module';
@@ -21,25 +21,31 @@ export const recordAtom = atomWithStorage<number | undefined>(
     getOnInit: true,
   }
 );
-export const repoAtom = atom<GithubRepository[]>([]);
 
-export const githubAtom = atom<
-  Promise<{ repositories: GithubRepository[] }>,
-  [
-    | {
-        pageNumber: number;
-        pageSize?: number;
-      }
-    | undefined
-  ],
-  void
->(
-  async (get) => {
+// repo
+const repoLangAtom = atom<
+  Array<{
+    name: string;
+    value: number;
+  }>
+>([]);
+const repoListAtom = atom<GithubRepository[]>([]);
+
+export const loadRepoAtom = atom(
+  (get) => {
     return {
-      repositories: get(repoAtom),
+      languages: get(repoLangAtom),
+      repositories: get(repoListAtom),
     };
   },
-  async (get, set, options) => {
+  async (
+    get,
+    set,
+    options?: {
+      pageNumber: number;
+      pageSize?: number;
+    }
+  ) => {
     const current_time = Date.now();
     const last_reqeust_time = get(recordAtom);
 
@@ -55,12 +61,51 @@ export const githubAtom = atom<
     set(loadingAtom, true);
 
     const db = await initDB();
-    const data = await getRepoList(db);
+    const { repoList, langList } = await getRepoList(db);
 
-    logger('githubAtom:data', data.length);
+    logger('githubAtom:repoList', repoList.length);
 
-    set(repoAtom, data);
+    set(repoListAtom, repoList);
+    set(repoLangAtom, langList);
     set(loadingAtom, false);
     set(recordAtom, current_time);
+  }
+);
+
+// filter
+const filterNameAtom = atom('');
+const filterLangAtom = atom('');
+
+export const filterRepoAtom = atom(
+  (get) => {
+    const name = get(filterNameAtom);
+    const lang = get(filterLangAtom);
+    const repos = get(repoListAtom);
+
+    const filtered = repos.filter((repo) => {
+      if (
+        name &&
+        !repo.name.toLowerCase().includes(name) &&
+        !repo.description?.toLowerCase().includes(name)
+      ) {
+        return false;
+      }
+
+      if (lang && repo.language !== lang) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return {
+      name,
+      lang,
+      repositories: filtered,
+    };
+  },
+  (_get, set, value: { name?: string; lang?: string }) => {
+    set(filterNameAtom, value.name || '');
+    set(filterLangAtom, value.lang || '');
   }
 );

@@ -1,37 +1,24 @@
 import { registerSW } from 'virtual:pwa-register';
 
-const intervalMS = 60 * 60 * 1000;
-
-registerSW({
+const updateSW = registerSW({
   immediate: true,
+  onNeedRefresh() {
+    console.log('[pwa] pwa need refresh');
+    updateSW(true);
+  },
   onOfflineReady() {
     console.log('[pwa] pwa ready to work offline');
   },
-  onRegisteredSW(swUrl, swReg) {
-    console.log('[pwa] sw registered: ', swUrl);
+  onRegisteredSW(swUrl, r) {
+    console.log('[pwa] swUrl: ', swUrl, r);
 
-    if (!swReg) {
+    if (!r?.installing) {
       return;
     }
 
-    setInterval(async () => {
-      if (swReg.installing || !navigator) {
-        return;
-      }
-
-      if ('connection' in navigator && !navigator.onLine) {
-        return;
-      }
-
-      const resp = await fetch(swUrl, {
-        cache: 'no-store',
-        headers: {
-          cache: 'no-store',
-          'cache-control': 'no-cache',
-        },
-      });
-
-      if (resp?.status === 200) await swReg.update();
-    }, intervalMS);
+    r.installing.addEventListener('statechange', (e) => {
+      const sw = e.target as ServiceWorker;
+      console.log('[pwa] statechange: ', sw.state, sw);
+    });
   },
 });

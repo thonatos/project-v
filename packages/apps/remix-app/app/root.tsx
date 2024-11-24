@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import React, { useEffect, useMemo } from 'react';
+import React from 'react';
 import {
   Links,
   Meta,
@@ -10,23 +10,28 @@ import {
   useRouteError,
 } from '@remix-run/react';
 import type { LinksFunction, LoaderFunctionArgs } from '@vercel/remix';
-import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes';
+import {
+  Theme,
+  ThemeProvider,
+  // useTheme,
+  PreventFlashOnWrongTheme,
+} from 'remix-themes';
 
-import { toast } from 'sonner';
 import { Provider as JotaiProvider } from 'jotai';
 import { Toaster } from '~/components/ui/toaster';
 import { TooltipProvider } from '~/components/ui/tooltip';
 import { DefaultLayout } from '~/components/custom/layout';
 import { createProvider, composeProviders } from '~/lib/provider-util';
-import { themeSessionResolver } from './sessions.server';
+// import { themeSessionResolver } from './sessions.server';
 
 import './tailwind.css';
 import './typo.css';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { getTheme } = await themeSessionResolver(request);
+  // const { getTheme } = await themeSessionResolver(request);
   return {
-    theme: getTheme(),
+    // theme: getTheme(),
+    theme: Theme.LIGHT,
   };
 }
 
@@ -45,30 +50,13 @@ export const links: LinksFunction = () => [
 
 export const App: React.FC<{}> = () => {
   const data = useLoaderData<typeof loader>();
-  const [theme] = useTheme();
+  const theme = Theme.LIGHT;
+  const colorScheme = Theme.LIGHT;
 
-  const colorScheme = useMemo(() => {
-    return theme === 'dark' ? 'dark' : 'light';
-  }, [theme]);
-
-  // useSWEffect();
-
-  // const { swUpdate } = usePWAManager();
-
-  // useEffect(() => {
-  //   if (swUpdate) {
-  //     toast('Update available', {
-  //       description: 'New version available. Click to update.',
-  //       action: {
-  //         label: 'Update',
-  //         onClick: () => {
-  //           sendSkipWaitingMessage(swUpdate.newWorker!);
-  //           window.location.reload();
-  //         },
-  //       },
-  //     });
-  //   }
-  // }, [swUpdate.isUpdateAvailable]);
+  // const [theme] = useTheme();
+  // const colorScheme = useMemo(() => {
+  //   return theme === 'dark' ? 'dark' : 'light';
+  // }, [theme]);
 
   return (
     <html lang="en" className={clsx(theme)} style={{ colorScheme }}>
