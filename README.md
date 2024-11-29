@@ -2,6 +2,15 @@
 
 > undefined project - ρV.
 
+## development
+
+```bash
+## npm
+npm install -g @microsoft/rush
+## or pnpm
+pnpm add -g @microsoft/rush
+```
+
 ## deploy
 
 ```bash
