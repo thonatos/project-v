@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, LineChart, FolderGit } from 'lucide-react';
+import { Home, LineChart, FolderGit, Link } from 'lucide-react';
 import { useAtom } from 'jotai';
 
 import { searchAtom } from '~/store/appAtom';
@@ -12,6 +12,7 @@ const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
   { icon: FolderGit, label: 'Projects', pathname: '/projects' },
   { icon: LineChart, label: 'Analytics', pathname: '/analytics' },
+  { icon: Link, label: 'Links', pathname: '/links' },
 ];
 
 const DropdownMenus = [{ label: 'Profile', type: 'Label' }, { type: 'Separator' }, { label: 'Support' }];
