@@ -25,6 +25,7 @@ import { createProvider, composeProviders } from '~/lib/provider-util';
 // import { themeSessionResolver } from './sessions.server';
 
 import './tailwind.css';
+import './global.css';
 import './typo.css';
 
 export async function loader({ request }: LoaderFunctionArgs) {
