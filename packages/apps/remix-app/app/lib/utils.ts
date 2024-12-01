@@ -43,6 +43,7 @@ export const formatDateTime = (locales: string | string[], date: number | string
   const _options = options || {
     month: 'long',
     day: 'numeric',
+    timeZone: 'Asia/Hong_Kong',
   };
 
   return new Intl.DateTimeFormat(locales, _options).format(new Date(date));
