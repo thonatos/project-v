@@ -5,7 +5,7 @@ export const OSS_PROJECTS = [
     href: 'https://remix.run/',
   },
   {
-    name: 'shadcn/ui',
+    name: 'Shadcn/ui',
     desc: 'Beautifully designed components that you can copy and paste into your apps. Made with Tailwind CSS. Open source.',
     href: 'https://ui.shadcn.com/',
   },
@@ -13,5 +13,15 @@ export const OSS_PROJECTS = [
     name: 'Lucide',
     desc: 'Beautiful & consistent icons, Made by the community.',
     href: 'https://lucide.dev/',
+  },
+  {
+    name: 'Tailwind CSS',
+    desc: 'A utility-first CSS framework packed with classes like flex, pt-4, text-center and rotate-90 that can be composed to build any design, directly in your markup.',
+    href: 'https://tailwindcss.com/',
+  },
+  {
+    name: 'Jotai',
+    desc: 'Primitive and flexible state management for React',
+    href: 'https://jotai.org/',
   },
 ];
