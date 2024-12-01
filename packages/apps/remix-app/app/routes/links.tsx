@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from '@remix-run/react';
 import type { MetaFunction } from '@vercel/remix';
 
-import { ProjectList } from '~/components/biz/project-list';
+import { LinkList } from '~/components/biz/link-list';
 import { OSS_PROJECTS } from '~/constants';
 
 export const handle = {
@@ -17,7 +17,7 @@ export const LinksPage: React.FC<{}> = () => {
   return (
     <div className="grid grid-cols-1">
       <h2 className="text-sm font-bold mb-6">OSS Project Links</h2>
-      <ProjectList projects={OSS_PROJECTS} />
+      <LinkList projects={OSS_PROJECTS} />
     </div>
   );
 };
