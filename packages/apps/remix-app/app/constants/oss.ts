@@ -24,4 +24,9 @@ export const OSS_PROJECTS = [
     desc: 'Primitive and flexible state management for React',
     href: 'https://jotai.org/',
   },
+  {
+    name: 'MicroStrategy Portfolio Tracker',
+    desc: 'Michael Saylor ⚡ (MicroStrategy) Portfolio Tracker.',
+    href: 'https://saylortracker.com/',
+  },
 ];
