@@ -75,6 +75,11 @@ export const App: React.FC<{}> = () => {
         <Toaster />
         <ScrollRestoration />
         <Scripts />
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "9da4afd7938f4ddb875cab11b8e56c8e"}'
+        ></script>
       </body>
     </html>
   );
