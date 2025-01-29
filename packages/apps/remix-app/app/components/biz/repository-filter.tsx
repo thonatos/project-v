@@ -26,7 +26,7 @@ export const RepositoryFilter: React.FC<{}> = () => {
       dispach({
         name: value && value.trim().toLowerCase(),
       });
-    }, 100),
+    }, 200),
     []
   );
 
