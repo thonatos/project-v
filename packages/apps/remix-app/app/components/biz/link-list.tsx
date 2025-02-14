@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
 export const LinkList: React.FC<{
   projects: Project[];
@@ -9,7 +9,7 @@ export const LinkList: React.FC<{
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {projects.map((project) => (
         <Card key={project.name} className="flex flex-col">
           <CardHeader className="bg-muted/50">

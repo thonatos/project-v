@@ -9,7 +9,7 @@ export const StrategyList: React.FC<{}> = () => {
     dispach();
   }, []);
 
-  if (!strategies?.length) {
+  if (!strategies.length) {
     return null;
   }
 

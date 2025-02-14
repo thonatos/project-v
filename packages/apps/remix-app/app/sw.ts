@@ -164,11 +164,11 @@ if (homePageIndex === -1) {
 precacheAndRoute([
   ...manifest,
   {
-    url: '/analytics',
+    url: '/finances',
     revision: SW_VERSION,
   },
   {
-    url: '/projects',
+    url: '/github/stars',
     revision: SW_VERSION,
   },
   {

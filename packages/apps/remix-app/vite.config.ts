@@ -21,6 +21,9 @@ export default defineConfig({
       '~': '/app',
     },
   },
+  server: {
+    allowedHosts: ['localhost', '8mm84wkk-6ch4glel-5vzqgn5dikzc.vcd1.mcprev.cn'],
+  },
   plugins: [
     remix({
       presets: [vercelPreset()],
