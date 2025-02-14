@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink, useLocation } from '@remix-run/react';
 
 import {

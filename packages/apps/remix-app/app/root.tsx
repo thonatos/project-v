@@ -9,7 +9,9 @@ import {
   useLoaderData,
   useRouteError,
 } from '@remix-run/react';
+
 import type { LinksFunction, LoaderFunctionArgs } from '@vercel/remix';
+
 import {
   Theme,
   ThemeProvider,
@@ -20,7 +22,7 @@ import {
 import { Provider as JotaiProvider } from 'jotai';
 import { Toaster } from '~/components/ui/toaster';
 import { TooltipProvider } from '~/components/ui/tooltip';
-import { DefaultLayout } from '~/components/custom/layout';
+import { DefaultLayout } from '~/components/layout';
 import { createProvider, composeProviders } from '~/lib/provider-util';
 // import { themeSessionResolver } from './sessions.server';
 
@@ -30,8 +32,8 @@ import './typo.css';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   // const { getTheme } = await themeSessionResolver(request);
+
   return {
-    // theme: getTheme(),
     theme: Theme.LIGHT,
   };
 }
@@ -50,8 +52,8 @@ export const links: LinksFunction = () => [
 ];
 
 export const App: React.FC<{}> = () => {
-  const data = useLoaderData<typeof loader>();
-  const theme = Theme.LIGHT;
+  const { theme } = useLoaderData<typeof loader>();
+  const lightTheme = Theme.LIGHT;
   const colorScheme = Theme.LIGHT;
 
   // const [theme] = useTheme();
@@ -60,12 +62,12 @@ export const App: React.FC<{}> = () => {
   // }, [theme]);
 
   return (
-    <html lang="en" className={clsx(theme)} style={{ colorScheme }}>
+    <html lang="en" className={clsx(lightTheme)} style={{ colorScheme }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
-        <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
+        <PreventFlashOnWrongTheme ssrTheme={Boolean(theme)} />
         <Links />
       </head>
       <body>
@@ -108,7 +110,9 @@ export default function AppWithProviders() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  console.error(error);
+  try {
+    console.error(error);
+  } catch (error) {}
   return (
     <html>
       <head>

@@ -54,7 +54,7 @@ pnpx remix-pwa manifest
 
 # add shadcn components
 pnpx shadcn@latest add {component}
-pnpx dlx shadcn@latest add {component}
+pnpm dlx shadcn@latest add {component}
 ```
 
 ## Links

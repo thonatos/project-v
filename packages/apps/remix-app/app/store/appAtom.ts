@@ -7,8 +7,8 @@ import { queryAppConfig } from './service/hasura';
 
 export const logger = debug('store:appAtom');
 
-export const loadingAtom = atom<boolean>(false);
 export const searchAtom = atom<string>('');
+export const loadingAtom = atom<boolean>(false);
 export const strategiesAtom = atom<Strategy[]>([]);
 export const referralLinksAtom = atom<ReferralLink[]>([]);
 export const sponsorAccountsAtom = atom<SponsorAccounts[]>([]);
