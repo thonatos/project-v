@@ -30,6 +30,23 @@ export const craeteOrUpdatePost = async (value: any) => {
   }
 };
 
+export const deletePost = async (id: string) => {
+  try {
+    const res = await fetch('/action/delete-post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getProfile = async () => {
   try {
     const res = await fetch('/action/get-profile', {

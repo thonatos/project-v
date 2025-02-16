@@ -39,7 +39,7 @@ import { slashSuggestion } from './slash-suggestion';
 const lowlight = createLowlight(common);
 
 export const Tiptap: React.FC<{
-  content: string;
+  content?: string;
   editable?: boolean;
   onChange?: (content: string) => void;
 }> = ({ content, editable, onChange }) => {
@@ -63,7 +63,7 @@ export const Tiptap: React.FC<{
       TextStyle,
       Color,
       Placeholder.configure({
-        placeholder: '开始写作...',
+        placeholder: 'Write something …',
       }),
       CodeBlockLowlight.configure({
         lowlight,

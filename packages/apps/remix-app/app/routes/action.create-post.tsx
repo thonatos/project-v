@@ -15,10 +15,11 @@ export async function action({ request }: ActionFunctionArgs) {
       ...post,
       user_id: user?.id,
     })
-    .select();
+    .select()
+    .single();
 
   return Response.json({
-    data: (data && data[0]) || {},
+    data,
     error,
   });
 }
