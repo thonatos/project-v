@@ -14,13 +14,13 @@ import {
   CommandList,
 } from '~/components/ui/command';
 
-interface PostTagProps {
+interface PostEditorTagProps {
   tags: string[];
   values: string[];
   onValueChange: (tags: string[]) => void;
 }
 
-export const PostTag: React.FC<PostTagProps> = ({ tags, values, onValueChange }) => {
+export const PostEditorTag: React.FC<PostEditorTagProps> = ({ tags, values, onValueChange }) => {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
 

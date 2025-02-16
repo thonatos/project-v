@@ -3,9 +3,10 @@ import { Await, Link } from '@remix-run/react';
 import { AsyncImage } from 'loadable-image';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
+import { Badge } from '~/components/ui/badge';
 
-import { Post } from '~/ghost-module';
 import { formatDateTime, formatReadTime } from '~/lib/utils';
+import type { Post } from '~/types';
 
 const ImagePlaceholder = () => (
   <Skeleton
@@ -16,8 +17,8 @@ const ImagePlaceholder = () => (
   />
 );
 
-export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, reading_time, slug }) => {
-  const postLink = `/post/${slug}`;
+export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_image, updated_at }) => {
+  const postLink = `/post/${id}`;
 
   return (
     <Card className="overflow-hidden">
@@ -44,8 +45,17 @@ export const PostCard: React.FC<Post> = ({ title, feature_image, published_at, r
         </div>
       </CardContent>
       <CardFooter className="flex justify-between bg-muted/50 py-2">
-        <div className="text-xs text-muted-foreground">{formatDateTime('en-US', published_at)}</div>
-        <div className="text-sm text-muted-foreground">{formatReadTime(reading_time)}</div>
+        <div className="text-xs text-muted-foreground">
+          {updated_at && formatDateTime('en-US', updated_at)}
+        </div>
+        {/* <div className="text-sm text-muted-foreground">{formatReadTime(reading_time)}</div> */}
+        <div className="text-sm text-muted-foreground space-x-2">
+          {tags.map((tag) => (
+            <Badge key={tag} variant="outline">
+              {tag}
+            </Badge>
+          ))}
+        </div>
       </CardFooter>
     </Card>
   );

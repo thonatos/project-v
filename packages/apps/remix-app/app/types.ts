@@ -45,7 +45,13 @@ export interface Post {
   title: string;
   content: string;
   tags: string[];
+
+  id?: string;
   slug?: string;
   except?: string;
   category?: string;
+  category_id?: string;
+  feature_image?: string;
+  created_at?: number;
+  updated_at?: number;
 }
