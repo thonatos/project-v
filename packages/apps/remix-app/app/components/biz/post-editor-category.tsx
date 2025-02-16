@@ -3,13 +3,13 @@ import React from 'react';
 import { Label } from '~/components/ui/label';
 import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '~/components/ui/select';
 
-interface PostCategoryProps {
+interface PostEditorCategoryProps {
   categories: string[];
   value?: string;
   onChange: (category: string) => void;
 }
 
-export const PostCategory: React.FC<PostCategoryProps> = ({ categories, value, onChange }) => {
+export const PostEditorCategory: React.FC<PostEditorCategoryProps> = ({ categories, value, onChange }) => {
   return (
     <div className="space-y-2">
       <Label>分类</Label>
@@ -29,4 +29,4 @@ export const PostCategory: React.FC<PostCategoryProps> = ({ categories, value, o
   );
 };
 
-export default PostCategory;
+export default PostEditorCategory;

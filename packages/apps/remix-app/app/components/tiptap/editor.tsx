@@ -75,7 +75,7 @@ export const Tiptap: React.FC<{
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose prose-slate prose-sm sm:prose-base max-w-none focus:outline-none p-4',
+        class: 'prose prose-slate prose-sm sm:prose-base max-w-none focus:outline-none',
       },
     },
     onUpdate: ({ editor }) => {
@@ -106,6 +106,10 @@ export const Tiptap: React.FC<{
       setImageUrl('');
     }
   };
+
+  if (!editable) {
+    return <EditorContent editor={editor} className="pt-4" />;
+  }
 
   return (
     <div className="relative border rounded-lg">
@@ -273,7 +277,7 @@ export const Tiptap: React.FC<{
         </Popover>
       </div>
 
-      <EditorContent editor={editor} />
+      <EditorContent editor={editor} className="p-4" />
 
       <div className="text-sm text-gray-500 p-2 text-right border-t">
         {editor.storage.characterCount.words()} words

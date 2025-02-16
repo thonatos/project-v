@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useNavigate } from '@remix-run/react';
 
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
@@ -10,14 +11,17 @@ import { Tiptap } from '~/components/tiptap/editor';
 import {
   tagsAtom,
   postAtom,
-  publishPostAtom,
   submittingAtom,
+  resetPostAtom,
+  publishPostAtom,
   categoriesAtom,
   ListCategoryAtom,
 } from '~/store/blogAtom';
+
 import { useToast } from '~/hooks/use-toast';
-import { PostTag } from './post-editor-tag';
-import { PostCategory } from './post-editor-category';
+
+import { PostEditorTag } from './post-editor-tag';
+import { PostEditorCategory } from './post-editor-category';
 
 import type { Post } from '~/types';
 
@@ -29,9 +33,11 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
   const submitting = useAtomValue(submittingAtom);
   const categories = useAtomValue(categoriesAtom);
 
-  const listCategory = useSetAtom(ListCategoryAtom);
+  const navigate = useNavigate();
   const savePost = useSetAtom(postAtom);
+  const resetPost = useSetAtom(resetPostAtom);
   const publishPost = useSetAtom(publishPostAtom);
+  const listCategory = useSetAtom(ListCategoryAtom);
 
   const { title, content, tags: selectedTags, category } = post;
 
@@ -73,7 +79,27 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
   const handlePublish = async () => {
     if (!validateForm()) return;
 
-    publishPost();
+    const res = await publishPost();
+
+    if (res?.data) {
+      toast({
+        title: '发布成功',
+        description: '文章发布成功, 正在跳转...',
+      });
+
+      setTimeout(() => {
+        resetPost();
+        navigate(`/post/${res.data.id}`);
+      }, 1000);
+      return;
+    }
+
+    if (res?.error) {
+      toast({
+        title: '发布失败',
+        variant: 'destructive',
+      });
+    }
   };
 
   useEffect(() => {
@@ -120,7 +146,7 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
               />
             </div>
 
-            <PostCategory
+            <PostEditorCategory
               categories={categories.map((c) => c.name)}
               value={category}
               onChange={(value) => {
@@ -130,7 +156,7 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
               }}
             />
 
-            <PostTag
+            <PostEditorTag
               tags={tags}
               values={selectedTags}
               onValueChange={(values) => {

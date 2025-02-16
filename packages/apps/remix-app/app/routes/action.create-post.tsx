@@ -18,7 +18,7 @@ export async function action({ request }: ActionFunctionArgs) {
     .select();
 
   return Response.json({
-    data,
+    data: (data && data[0]) || {},
     error,
   });
 }
