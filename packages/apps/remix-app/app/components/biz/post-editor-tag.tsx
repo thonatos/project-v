@@ -62,7 +62,7 @@ export const PostEditorTag: React.FC<PostEditorTagProps> = ({ tags, values, onVa
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
-            添加标签...
+            添加文章标签...
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">

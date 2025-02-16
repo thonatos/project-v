@@ -23,8 +23,7 @@ CREATE POLICY select_categories
 -- 2. posts
 
 CREATE TABLE public.posts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 文章唯一标识符      
-  slug varchar NOT NULL, -- 文章别名  
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- 文章唯一标识符
   title TEXT NOT NULL, -- 文章标题
   excerpt TEXT NOT NULL, -- 文章摘要  
   content TEXT NOT NULL, -- 文章内容

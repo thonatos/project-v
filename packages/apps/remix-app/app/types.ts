@@ -42,16 +42,22 @@ export interface Category {
 }
 
 export interface Post {
+  id?: string;
+  post_id?: string;
+
   title: string;
   content: string;
+  except?: string;
   tags: string[];
 
-  id?: string;
-  slug?: string;
-  except?: string;
-  category?: string;
+  user_id?: string;
+  user_email?: string;
+
   category_id?: string;
+  category_name?: string;
+
   feature_image?: string;
+
   created_at?: number;
   updated_at?: number;
 }

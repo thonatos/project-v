@@ -25,7 +25,7 @@ import { PostEditorCategory } from './post-editor-category';
 
 import type { Post } from '~/types';
 
-export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultContent }) => {
+export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultContent }) => {
   const { toast } = useToast();
 
   const tags = useAtomValue(tagsAtom);
@@ -39,7 +39,7 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
   const publishPost = useSetAtom(publishPostAtom);
   const listCategory = useSetAtom(ListCategoryAtom);
 
-  const { title, content, tags: selectedTags, category } = post;
+  const { title, content, tags: selectedTags, category_name } = post;
 
   const validateForm = () => {
     if (!title.trim()) {
@@ -58,7 +58,7 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
       return false;
     }
 
-    if (!category) {
+    if (!category_name) {
       toast({
         title: '分类不能为空',
         variant: 'destructive',
@@ -148,10 +148,10 @@ export const PostEditorForm: React.FC<{ defaultContent: string }> = ({ defaultCo
 
             <PostEditorCategory
               categories={categories.map((c) => c.name)}
-              value={category}
+              value={category_name}
               onChange={(value) => {
                 handleSave({
-                  category: value,
+                  category_name: value,
                 });
               }}
             />

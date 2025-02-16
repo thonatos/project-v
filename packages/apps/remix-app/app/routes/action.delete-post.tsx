@@ -9,17 +9,25 @@ export async function action({ request }: ActionFunctionArgs) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
-    .from('posts')
-    .insert({
-      ...post,
-      user_id: user?.id,
-    })
-    .select()
-    .single();
+  if (!user) {
+    return Response.json({
+      error: 'Unauthorized',
+    });
+  }
+
+  if (!post.id) {
+    return Response.json({
+      error: 'Missing post id',
+    });
+  }
+
+  const { status, error } = await supabase.from('posts').delete().match({
+    id: post.id,
+    user_id: user.id,
+  });
 
   return Response.json({
-    data,
+    status,
     error,
   });
 }

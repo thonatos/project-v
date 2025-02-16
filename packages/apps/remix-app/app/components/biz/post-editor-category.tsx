@@ -15,7 +15,7 @@ export const PostEditorCategory: React.FC<PostEditorCategoryProps> = ({ categori
       <Label>分类</Label>
       <Select value={value} onValueChange={onChange} required>
         <SelectTrigger>
-          <SelectValue placeholder="选择分类..." />
+          <SelectValue placeholder="选择文章分类..." />
         </SelectTrigger>
         <SelectContent>
           {categories.map((category) => (
