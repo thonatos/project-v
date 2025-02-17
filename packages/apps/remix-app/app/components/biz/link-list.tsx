@@ -1,6 +1,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
+interface Project {
+  name: string;
+  desc: string;
+  href: string;
+}
+
 export const LinkList: React.FC<{
   projects: Project[];
 }> = ({ projects }) => {
@@ -27,9 +33,3 @@ export const LinkList: React.FC<{
     </div>
   );
 };
-
-interface Project {
-  name: string;
-  desc: string;
-  href: string;
-}

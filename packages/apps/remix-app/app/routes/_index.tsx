@@ -1,12 +1,13 @@
 import React from 'react';
-import { Link, useLoaderData, useNavigate } from '@remix-run/react';
-import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
-
-import { PostCard } from '~/components/biz/post-card';
-import { createClient } from '~/supabase-module';
-import { PostCategory } from '~/components/biz/post-category';
 import { useAtomValue } from 'jotai';
+import { Link, useLoaderData, useNavigate } from '@remix-run/react';
+
+import { PostCategory } from '~/components/biz/post-category';
 import { categoriesAtom } from '~/store/blogAtom';
+import { createClient } from '~/supabase-module';
+
+import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
+import { PostList } from '~/components/biz/post-list';
 
 export const handle = {
   breadcrumb: () => <Link to="/">Home</Link>,
@@ -70,11 +71,8 @@ const IndexPage: React.FC<{}> = () => {
           handleCategoryChange(category);
         }}
       />
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {data.map((post) => (
-          <PostCard key={post.id} {...post} />
-        ))}
-      </div>
+
+      <PostList data={data} />
     </div>
   );
 };

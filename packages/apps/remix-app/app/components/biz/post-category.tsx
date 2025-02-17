@@ -5,8 +5,8 @@ import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '~
 import { useIsMobile } from '~/hooks/use-mobile';
 
 interface PostCategoryProps {
-  categories: string[];
   value?: string;
+  categories: string[];
   onChange: (category: string) => void;
 }
 
