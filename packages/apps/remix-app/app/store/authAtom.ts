@@ -12,6 +12,10 @@ export const profileAtom = atomWithStorage<Profile | undefined>('remix_auth_prof
   getOnInit: true,
 });
 
+export const resetProfileAtom = atom(null, (_get, set) => {
+  set(profileAtom, undefined);
+});
+
 export const loadProfileAtom = atom(null, async (_get, set) => {
   try {
     const { data } = await getProfile();

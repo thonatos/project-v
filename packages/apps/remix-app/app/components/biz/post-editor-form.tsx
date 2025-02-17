@@ -90,7 +90,7 @@ export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultC
       setTimeout(() => {
         resetPost();
         navigate(`/post/${res.data.id}`);
-      }, 1000);
+      }, 3000);
       return;
     }
 

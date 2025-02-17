@@ -58,7 +58,7 @@ const PostDetailPage: React.FC<{}> = () => {
     if (status !== 204) {
       toast({
         title: '删除失败',
-        description: '文章删除失败',
+        description: '文章删除失败, 请稍后再试',
         variant: 'destructive',
       });
       return;
@@ -66,7 +66,7 @@ const PostDetailPage: React.FC<{}> = () => {
 
     toast({
       title: '删除成功',
-      description: '文章已删除',
+      description: '文章已删除, 正在跳转...',
     });
 
     setTimeout(() => {
