@@ -2,6 +2,8 @@ import debug from "debug";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export const logger = debug('remix:web');
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -32,8 +34,6 @@ export function throttle<T extends (...args: any[]) => any>(func: T, limit: numb
     }
   };
 }
-
-export const logger = debug('remix:web');
 
 export const formatDateTime = (locales: string | string[], date: number | string, options?: Intl.DateTimeFormatOptions) => {
   if (!date) {

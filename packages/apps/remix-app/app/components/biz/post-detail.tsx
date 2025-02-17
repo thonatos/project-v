@@ -9,7 +9,6 @@ import { Tiptap } from '~/components/tiptap/editor';
 import { formatDateTime } from '~/lib/utils';
 
 import type { Post } from '~/types';
-import { on } from 'events';
 
 interface PostDetailProps {
   post: Post;
@@ -53,10 +52,6 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onDelete 
 
         {isOwner && (
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={() => {}}>
-              <Pencil className="w-4 h-4 mr-1" />
-              编辑
-            </Button>
             <Button
               variant="destructive"
               size="sm"

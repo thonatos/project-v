@@ -4,8 +4,8 @@ import { Label } from '~/components/ui/label';
 import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '~/components/ui/select';
 
 interface PostEditorCategoryProps {
-  categories: string[];
   value?: string;
+  categories: string[];
   onChange: (category: string) => void;
 }
 

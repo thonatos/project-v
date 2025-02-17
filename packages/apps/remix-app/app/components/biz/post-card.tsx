@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react';
 import { Await, Link } from '@remix-run/react';
 import { AsyncImage } from 'loadable-image';
+import { Badge } from '~/components/ui/badge';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
-import { Badge } from '~/components/ui/badge';
 
 import { formatDateTime, formatReadTime } from '~/lib/utils';
 import type { Post } from '~/types';
@@ -48,7 +48,6 @@ export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_imag
         <div className="text-xs text-muted-foreground">
           {updated_at && formatDateTime('en-US', updated_at)}
         </div>
-        {/* <div className="text-sm text-muted-foreground">{formatReadTime(reading_time)}</div> */}
         <div className="text-sm text-muted-foreground space-x-2">
           {tags.map((tag) => (
             <Badge key={tag} variant="outline">

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useLocation, useNavigate } from '@remix-run/react';
-import { Home, LineChart, FolderGit, EditIcon, UserIcon } from 'lucide-react';
+import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
 import { Header } from './header';
 import { CustomSidebar } from './sidebar';
@@ -12,6 +12,7 @@ const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
   { icon: FolderGit, label: 'Github Stars', pathname: '/github/stars' },
   { icon: LineChart, label: 'Finances', pathname: '/finances' },
+  { icon: HelpCircleIcon, label: 'Support', pathname: '/support' },
 ];
 
 const AuthedNavLinks = [{ icon: EditIcon, label: 'Editor', pathname: '/dash/add-post' }];
@@ -19,10 +20,10 @@ const AuthedNavLinks = [{ icon: EditIcon, label: 'Editor', pathname: '/dash/add-
 const DropdownMenus = [
   { label: 'Account', type: 'Label' },
   { type: 'Separator' },
-  { label: 'Profile', key: 'profile' },
-  { label: 'Logout', key: 'logout' },
+  { label: 'Profile', key: 'profile', href: '/auth/profile' },
+  { label: 'Logout', key: 'logout', href: '/auth/logout' },
   { type: 'Separator' },
-  { label: 'Support', key: 'support' },
+  { label: 'Support', key: 'support', href: '/support' },
 ];
 
 export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -35,9 +36,8 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
   const [value, setValue] = useAtom(searchAtom);
 
   useEffect(() => {
-    if (profile) return;
     loadProfile();
-  }, [profile]);
+  }, []);
 
   if (location.pathname === '/auth/login') {
     return (
@@ -48,20 +48,19 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
   }
 
   const handleHeaderDropdownMenuClick = (key: string) => {
+    const targetHref = DropdownMenus.find((menu) => menu.key === key)?.href;
+
     if (key === 'login') {
       navigate('/auth/login');
       return;
     }
 
-    if (key === 'profile') {
-      navigate('/auth/profile');
-      return;
-    }
-
     if (key === 'logout') {
       resetProfile();
-      navigate('/auth/logout');
-      return;
+    }
+
+    if (targetHref) {
+      navigate(targetHref);
     }
   };
 

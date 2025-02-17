@@ -1,12 +1,12 @@
 import React from 'react';
 import { Form } from '@remix-run/react';
-
+import { GithubIcon } from 'lucide-react';
 import { Button } from '~/components/ui/button';
-import { Card, CardContent } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
+import { Card, CardContent } from '~/components/ui/card';
+
 import { cn } from '~/lib/utils';
-import { GithubIcon } from 'lucide-react';
 
 const Intro: React.FC<{}> = () => {
   return (

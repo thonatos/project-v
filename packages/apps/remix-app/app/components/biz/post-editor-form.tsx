@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from '@remix-run/react';
+import { useAtomValue, useSetAtom } from 'jotai';
 
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
