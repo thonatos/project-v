@@ -6,7 +6,7 @@ import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
 import { Header } from './header';
 import { CustomSidebar } from './sidebar';
 import { searchAtom } from '~/store/appAtom';
-import { profileAtom, loadProfileAtom } from '~/store/authAtom';
+import { profileAtom, loadProfileAtom, resetProfileAtom } from '~/store/authAtom';
 
 const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
@@ -31,6 +31,7 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
 
   const profile = useAtomValue(profileAtom);
   const loadProfile = useSetAtom(loadProfileAtom);
+  const resetProfile = useSetAtom(resetProfileAtom);
   const [value, setValue] = useAtom(searchAtom);
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
     }
 
     if (key === 'logout') {
+      resetProfile();
       navigate('/auth/logout');
       return;
     }
