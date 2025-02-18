@@ -23,8 +23,8 @@ export const categoriesAtom = atomWithStorage<Category[]>('remix_blog_categories
 
 export const ListCategoryAtom = atom(null, async (_get, set) => {
   try {
-    const { data } = await listCategory();
-    logger('list category', data);
+    const { data, error } = await listCategory();
+    logger('list category', data, error);
     set(categoriesAtom, data);
   } catch (error) {
     logger('list category error', error);
@@ -73,10 +73,11 @@ export const publishPostAtom = atom(null, async (get, set) => {
 
   try {
     set(submittingAtom, true);
-    const { data } = await craeteOrUpdatePost(postData);
-    logger('publish post success', data);
+    const { data, error } = await craeteOrUpdatePost(postData);
+    logger('publish post success', data, error);
     return {
       data,
+      error,
     };
   } catch (error) {
     logger('publish post error', error);
