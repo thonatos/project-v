@@ -68,11 +68,11 @@ export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         <div className="flex items-center space-x-4">
           <Avatar className="w-20 h-20">
-            <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name} />
-            <AvatarFallback>{user.user_metadata.full_name}</AvatarFallback>
+            <AvatarImage src={user.avatar_url} alt={user.name} />
+            <AvatarFallback>{user.name}</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-bold">{user.user_metadata.full_name}</h1>
+            <h1 className="text-2xl font-bold">{user.name}</h1>
             <p className="text-sm text-muted-foreground">
               Created at {new Date(user.created_at).toLocaleDateString()}
             </p>
@@ -96,18 +96,8 @@ export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
               <Label htmlFor="username">User Name</Label>
               <Input
                 id="username"
-                value={user.user_metadata.user_name}
+                value={user.name}
                 onChange={(e) => handleChange('username', e.target.value)}
-                disabled={!isEditing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={user.user_metadata.full_name}
-                onChange={(e) => handleChange('fullName', e.target.value)}
                 disabled={!isEditing}
               />
             </div>
