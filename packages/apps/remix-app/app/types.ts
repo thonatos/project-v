@@ -25,12 +25,10 @@ export interface SponsorAccounts {
 export interface Profile {
   id: string;
   role: string;
+  name: string;
   email: string;
-  user_metadata: {
-    user_name: string;
-    full_name: string;
-    avatar_url: string;
-  };
+  avatar_url: string;
+
   created_at: string;
   updated_at: string;
 }

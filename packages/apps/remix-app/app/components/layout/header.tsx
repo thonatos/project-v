@@ -25,7 +25,7 @@ export const Header: React.FC<{
 
       <SearchBar value={searchValue} onSearch={onSearch} />
 
-      <Dropdown avatarUrl={profile?.user_metadata.avatar_url} menus={menus} onSelect={onSelect} />
+      <Dropdown avatarUrl={profile?.avatar_url} menus={menus} onSelect={onSelect} />
 
       {/* <ModeToggle /> */}
     </header>

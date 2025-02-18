@@ -11,11 +11,16 @@ const testSupabaseAuth = (str: string) => {
   return pattern.test(str);
 };
 
+export const tokenAtom = atomWithStorage<string | undefined>('remix_auth_token', undefined, undefined, {
+  getOnInit: true,
+});
+
 export const profileAtom = atomWithStorage<Profile | undefined>('remix_auth_profile', undefined, undefined, {
   getOnInit: true,
 });
 
 export const resetProfileAtom = atom(null, (_get, set) => {
+  set(tokenAtom, undefined);
   set(profileAtom, undefined);
 });
 
@@ -35,9 +40,9 @@ export const loadProfileAtom = atom(null, async (get, set) => {
       return;
     }
 
-    const { data } = await getProfile();
-    logger('loadProfileAtom', data);
-
+    const { data, token } = await getProfile();
+    logger('loadProfileAtom', data, token);
+    set(tokenAtom, token);
     set(profileAtom, data);
   } catch (error) {
     logger('error', error);

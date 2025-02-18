@@ -62,6 +62,7 @@
     "idb": "~8.0.0",
     "isbot": "^4.1.0",
     "jotai": "~2.10.0",
+    "jsonwebtoken": "~9.0.2",
     "loadable-image": "~3.2.6",
     "lowlight": "~3.3.0",
     "lucide-react": "^0.441.0",
@@ -78,6 +79,7 @@
   "devDependencies": {
     "@remix-run/dev": "^2.x",
     "@types/debug": "~4.1.12",
+    "@types/jsonwebtoken": "~9.0.8",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.4",

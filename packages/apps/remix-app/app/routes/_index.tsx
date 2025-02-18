@@ -1,9 +1,9 @@
-import React from 'react';
-import { useAtomValue } from 'jotai';
+import React, { useEffect } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 
 import { PostCategory } from '~/components/biz/post-category';
-import { categoriesAtom } from '~/store/blogAtom';
+import { categoriesAtom, ListCategoryAtom } from '~/store/blogAtom';
 import { createClient } from '~/supabase-module';
 
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
@@ -56,11 +56,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 const IndexPage: React.FC<{}> = () => {
   const nagivate = useNavigate();
   const categories = useAtomValue(categoriesAtom);
+  const listCategory = useSetAtom(ListCategoryAtom);
   const { data, category } = useLoaderData<typeof loader>();
 
   const handleCategoryChange = (category: string) => {
     nagivate(`?category=${category}`);
   };
+
+  useEffect(() => {
+    if (categories.length !== 0) {
+      return;
+    }
+
+    listCategory();
+  }, []);
 
   return (
     <div className="space-y-4">
