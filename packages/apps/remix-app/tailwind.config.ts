@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 
+/** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
   content: ['./app/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}'],
@@ -77,6 +78,18 @@ export default {
           ring: 'hsl(var(--sidebar-ring))',
         },
       },
+      typography: (_theme: any) => ({
+        DEFAULT: {
+          css: {
+            'blockquote p:first-of-type::before': {
+              content: '',
+            },
+            'blockquote p:last-of-type::after': {
+              content: '',
+            },
+          },
+        },
+      }),
     },
   },
   plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],

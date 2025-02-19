@@ -3,10 +3,12 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useLocation, useNavigate } from '@remix-run/react';
 import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
+import { AsistantCard } from '~/components/biz/asistant-card';
 import { Header } from './header';
 import { CustomSidebar } from './sidebar';
 import { searchAtom } from '~/store/appAtom';
 import { profileAtom, loadProfileAtom, resetProfileAtom } from '~/store/authAtom';
+import { messagesAtom, sendMessageAtom } from '~/store/aiAtom';
 
 const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
@@ -34,6 +36,9 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
   const loadProfile = useSetAtom(loadProfileAtom);
   const resetProfile = useSetAtom(resetProfileAtom);
   const [value, setValue] = useAtom(searchAtom);
+
+  const messages = useAtomValue(messagesAtom);
+  const sendMessage = useSetAtom(sendMessageAtom);
 
   useEffect(() => {
     loadProfile();
@@ -66,7 +71,17 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <CustomSidebar navLinks={profile ? [...NavLinks, ...AuthedNavLinks] : NavLinks} />
+      <CustomSidebar
+        navLinks={profile ? [...NavLinks, ...AuthedNavLinks] : NavLinks}
+        asistant={
+          <AsistantCard
+            messages={messages}
+            onSendMessage={(message) => {
+              sendMessage(message);
+            }}
+          />
+        }
+      />
       <SidebarInset>
         <div className="flex flex-col sm:gap-4 sm:py-4">
           <Header
