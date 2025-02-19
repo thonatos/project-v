@@ -59,3 +59,8 @@ export interface Post {
   created_at?: number;
   updated_at?: number;
 }
+
+export interface Message {
+  role: string;
+  content: string;
+}

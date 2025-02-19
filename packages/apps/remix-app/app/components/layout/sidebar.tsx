@@ -11,10 +11,12 @@ import {
 } from '~/components/ui/sidebar';
 
 import { Logo } from './header-logo';
+import React from 'react';
 
 export const CustomSidebar: React.FC<{
   navLinks?: { icon: any; label: string; pathname: string }[];
-}> = ({ navLinks = [] }) => {
+  asistant?: React.ReactNode;
+}> = ({ navLinks = [], asistant }) => {
   const location = useLocation();
 
   return (
@@ -44,6 +46,7 @@ export const CustomSidebar: React.FC<{
             <Logo title="ρV" description="undefined project" />
           </div>
         </SidebarHeader>
+        <SidebarContent className="p-4 py-2">{asistant}</SidebarContent>
       </Sidebar>
     </Sidebar>
   );

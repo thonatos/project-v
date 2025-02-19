@@ -75,9 +75,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onDelete 
         ))}
       </div>
 
-      <div>
-        <Tiptap content={post.content} editable={false} />
-      </div>
+      <Tiptap content={post.content} editable={false} />
     </Card>
   );
 };
