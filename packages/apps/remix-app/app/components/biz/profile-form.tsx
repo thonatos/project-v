@@ -73,9 +73,7 @@ export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">{user.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              Created at {new Date(user.created_at).toLocaleDateString()}
-            </p>
+            <p className="text-sm text-muted-foreground">{user.id}</p>
           </div>
         </div>
 

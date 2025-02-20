@@ -1,10 +1,14 @@
-export const fetchEventStream = async (
-  url: string,
+import { REMIX_WORKER_URL } from '~/constants';
+
+export const chat = async (
   value: any,
-  options: { token: string; onMessage: (data: string) => void }
+  options: {
+    token: string;
+    onMessage: (data: string) => void;
+  }
 ) => {
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${REMIX_WORKER_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,6 +39,11 @@ export const fetchEventStream = async (
       for (const line of lines) {
         if (line.startsWith('data:')) {
           const data = line.slice(5).trim();
+
+          if (data === '[DONE]') {
+            break;
+          }
+
           options.onMessage(data);
         }
       }

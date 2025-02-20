@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from '@remix-run/react';
 
+import Logo from '~/components/biz/logo';
 import Tiptap from '~/components/tiptap/editor';
 
 import type { MetaFunction } from '@vercel/remix';
@@ -16,6 +17,7 @@ export const meta: MetaFunction = () => {
 export const SupportPage: React.FC<{}> = () => {
   return (
     <div className="grid grid-cols-1 gap-4">
+      <Logo title="ρV" description="undefined project" />
       <Tiptap
         content={`
           <blockquote>

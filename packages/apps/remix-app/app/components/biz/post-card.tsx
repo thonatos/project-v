@@ -5,7 +5,7 @@ import { Badge } from '~/components/ui/badge';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
 
-import { formatDateTime, formatReadTime } from '~/lib/utils';
+import { formatDateTime } from '~/lib/utils';
 import type { Post } from '~/types';
 
 const ImagePlaceholder = () => (
