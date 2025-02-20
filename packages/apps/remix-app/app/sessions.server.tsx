@@ -1,6 +1,6 @@
 import { createThemeSessionResolver } from 'remix-themes';
 import { createCookieSessionStorage } from '@vercel/remix';
-import { SITE_DOMAIN } from './constants';
+import { REMIX_WEB_DOMAIN } from './constants';
 
 // You can default to 'development' if process.env.NODE_ENV is not set
 const isProduction = process.env.NODE_ENV === 'production';
@@ -13,7 +13,7 @@ const sessionStorage = createCookieSessionStorage({
     httpOnly: true,
     sameSite: 'lax',
     secrets: [sessionSecret],
-    ...(isProduction ? { domain: SITE_DOMAIN, secure: true } : {}),
+    ...(isProduction ? { domain: REMIX_WEB_DOMAIN, secure: true } : {}),
   },
 });
 

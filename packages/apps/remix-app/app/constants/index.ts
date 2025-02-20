@@ -1,5 +1,7 @@
-export const SITE_DOMAIN = 'remix.implements.io';
-export const GRAPHQL_API_HASURA = 'https://hasura.implements.io/v1/graphql';
+export const REMIX_WEB_DOMAIN = 'remix.implements.io';
+
+export const REMIX_WORKER_URL = 'https://remix-worker.implements.io';
+export const REMIX_HASURA_URL = 'https://hasura.implements.io/v1/graphql';
 
 export const POST_TAGS = ['Linux', 'Node.js', 'React.js', 'JavaScript'];
 export const POST_CONTENT = `

@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import CharacterCount from '@tiptap/extension-character-count';
-import Underline from '@tiptap/extension-underline';
-import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
-import TextStyle from '@tiptap/extension-text-style';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import { Color } from '@tiptap/extension-color';
-import { common, createLowlight } from 'lowlight';
-
 import {
   Bold,
   Italic,
@@ -27,6 +16,20 @@ import {
   Heading3,
   Palette,
 } from 'lucide-react';
+
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import CharacterCount from '@tiptap/extension-character-count';
+import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import Placeholder from '@tiptap/extension-placeholder';
+import TextStyle from '@tiptap/extension-text-style';
+import TaskItem from '@tiptap/extension-task-item';
+import TaskList from '@tiptap/extension-task-list';
+import Youtube from '@tiptap/extension-youtube';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { Color } from '@tiptap/extension-color';
+import { common, createLowlight } from 'lowlight';
 
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
@@ -52,23 +55,31 @@ export const Tiptap: React.FC<{
       StarterKit.configure({
         // options
       }),
+      Image,
+      Underline,
+      TextStyle,
+      Color,
+      CharacterCount,
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
       CustomCommand.configure({
         suggestion: slashSuggestion,
       }),
-      Underline,
       Link.configure({
         openOnClick: false,
       }),
-      Image,
-      TextStyle,
-      Color,
       Placeholder.configure({
         placeholder: 'Write something …',
+      }),
+      Youtube.configure({
+        controls: false,
+        nocookie: true,
       }),
       CodeBlockLowlight.configure({
         lowlight,
       }),
-      CharacterCount,
     ],
     content,
     editable,
@@ -108,7 +119,7 @@ export const Tiptap: React.FC<{
   };
 
   if (!editable) {
-    return <EditorContent editor={editor} className="pt-4" />;
+    return <EditorContent editor={editor} />;
   }
 
   return (

@@ -1,14 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useLocation, useNavigate } from '@remix-run/react';
 import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
-import { AsistantCard } from '~/components/biz/asistant-card';
+import { ChatCard } from '~/components/biz/chat-card';
 import { Header } from './header';
 import { CustomSidebar } from './sidebar';
 import { searchAtom } from '~/store/appAtom';
-import { profileAtom, loadProfileAtom, resetProfileAtom } from '~/store/authAtom';
-import { messagesAtom, sendMessageAtom } from '~/store/aiAtom';
+import { profileAtom, loadProfileAtom, resetProfileAtom, tokenAtom } from '~/store/authAtom';
+import { messagesAtom, sendMessageAtom } from '~/store/workerAtom';
 
 const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
@@ -29,9 +29,12 @@ const DropdownMenus = [
 ];
 
 export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const location = useLocation();
   const navigate = useNavigate();
 
+  const token = useAtomValue(tokenAtom);
   const profile = useAtomValue(profileAtom);
   const loadProfile = useSetAtom(loadProfileAtom);
   const resetProfile = useSetAtom(resetProfileAtom);
@@ -70,14 +73,15 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
   };
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={false} open={isOpen} onOpenChange={(isOpen) => setIsOpen(isOpen)}>
       <CustomSidebar
         navLinks={profile ? [...NavLinks, ...AuthedNavLinks] : NavLinks}
         asistant={
-          <AsistantCard
+          <ChatCard
+            isOpen={isOpen}
             messages={messages}
             onSendMessage={(message) => {
-              sendMessage(message);
+              sendMessage(message, token || '');
             }}
           />
         }

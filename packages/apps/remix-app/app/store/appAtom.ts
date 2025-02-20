@@ -1,7 +1,7 @@
 import debug from 'debug';
 import { atom } from 'jotai';
 
-import { GRAPHQL_API_HASURA } from '~/constants';
+import { REMIX_HASURA_URL } from '~/constants';
 import { ReferralLink, SponsorAccounts, Strategy } from '~/types';
 import { queryAppConfig } from './service/hasura';
 
@@ -33,7 +33,7 @@ export const appAtom = atom(
 
       set(loadingAtom, true);
 
-      const res = await fetch(GRAPHQL_API_HASURA, params);
+      const res = await fetch(REMIX_HASURA_URL, params);
       const { data } = await res.json();
       logger('appAtom:data', data);
 

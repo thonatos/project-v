@@ -2,7 +2,7 @@ import { NavLink, useLocation } from '@remix-run/react';
 
 import {
   Sidebar,
-  SidebarHeader,
+  // SidebarHeader,
   SidebarContent,
   SidebarGroup,
   SidebarMenu,
@@ -10,7 +10,6 @@ import {
   SidebarMenuButton,
 } from '~/components/ui/sidebar';
 
-import { Logo } from './header-logo';
 import React from 'react';
 
 export const CustomSidebar: React.FC<{
@@ -41,12 +40,13 @@ export const CustomSidebar: React.FC<{
       </Sidebar>
 
       <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-        <SidebarHeader>
+        {/* <SidebarHeader>
           <div className="flex justify-center items-center">
             <Logo title="ρV" description="undefined project" />
           </div>
-        </SidebarHeader>
-        <SidebarContent className="p-4 py-2">{asistant}</SidebarContent>
+        </SidebarHeader> */}
+
+        <SidebarContent className="p-2">{asistant}</SidebarContent>
       </Sidebar>
     </Sidebar>
   );
