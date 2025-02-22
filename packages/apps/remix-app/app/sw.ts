@@ -4,7 +4,7 @@ import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, Route } from 'workbox-routing';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { StarredRepoMessageHandler } from './github-module/event';
+import { StarredRepoMessageHandler } from './modules/github/event';
 
 declare const self: ServiceWorkerGlobalScope;
 

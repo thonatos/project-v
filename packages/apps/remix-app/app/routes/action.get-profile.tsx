@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { createClient } from '~/supabase-module';
+import { createClient } from '~/modules/supabase';
 import type { LoaderFunctionArgs } from '@vercel/remix';
 
 export async function loader({ request }: LoaderFunctionArgs) {

@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react';
 import invariant from 'tiny-invariant';
-import { Link, useNavigate } from '@remix-run/react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { Await, useLoaderData } from '@remix-run/react';
-import { createClient } from '~/supabase-module';
+import { Link, Await, useLoaderData, useNavigate, ClientLoaderFunctionArgs } from '@remix-run/react';
+
+import { createClient } from '~/modules/supabase';
 import { PostDetail } from '~/components/biz/post-detail';
 import { PostDetailSkeleton } from '~/components/biz/post-detail-skeleton';
 import { profileAtom } from '~/store/authAtom';
@@ -42,6 +42,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       ...rest,
     },
   };
+};
+
+export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) => {
+  const serverData = await serverLoader();
+  return serverData;
 };
 
 const PostDetailPage: React.FC<{}> = () => {

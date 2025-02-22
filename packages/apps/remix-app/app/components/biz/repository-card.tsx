@@ -4,7 +4,7 @@ import { Star, GitFork, Eye, CircleDot, Github } from 'lucide-react';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
 
-import { GithubRepository } from '~/github-module';
+import { GithubRepository } from '~/modules/github';
 
 function formatNumber(num: number): string {
   return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num?.toString();
