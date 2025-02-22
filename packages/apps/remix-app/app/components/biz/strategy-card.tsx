@@ -10,7 +10,7 @@ export const StrategyCard: React.FC<{}> = () => {
 
   return (
     <Card>
-      <CardHeader className="bg-muted/50">
+      <CardHeader className="p-4 bg-muted/50">
         <CardTitle>Strategy</CardTitle>
         <CardDescription>Stock and cryptocurrency trading strategies.</CardDescription>
       </CardHeader>
