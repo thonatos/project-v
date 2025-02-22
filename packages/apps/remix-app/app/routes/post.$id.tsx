@@ -49,6 +49,10 @@ export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) =
   return serverData;
 };
 
+export const HydrateFallback = () => {
+  return <p>Loading ...</p>;
+};
+
 const PostDetailPage: React.FC<{}> = () => {
   const { post } = useLoaderData<typeof loader>();
   const { toast } = useToast();
