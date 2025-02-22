@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAtom } from 'jotai';
 import { logger } from '~/lib/utils';
-import { EVENT_FETCH_STARRED_REPO_LIST, GithubRepository } from '~/github-module';
+import { EVENT_FETCH_STARRED_REPO_LIST, GithubRepository } from '~/modules/github';
 import { filterRepoAtom, loadRepoAtom } from '~/store/githubAtom';
 import { useServiceWorker } from '~/hooks/use-service-worker';
 import { RepositoryCard } from './repository-card';

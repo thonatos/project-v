@@ -1,4 +1,4 @@
-import { createClient } from '~/supabase-module';
+import { createClient } from '~/modules/supabase';
 
 import type { ActionFunctionArgs } from '@vercel/remix';
 

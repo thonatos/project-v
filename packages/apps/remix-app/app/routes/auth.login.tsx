@@ -1,6 +1,6 @@
 import { Link, useActionData, useNavigate } from '@remix-run/react';
 import { LoginForm } from '~/components/biz/login-form';
-import { createClient } from '~/supabase-module';
+import { createClient } from '~/modules/supabase';
 
 import type { MetaFunction, ActionFunctionArgs } from '@vercel/remix';
 

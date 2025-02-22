@@ -4,7 +4,7 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 
 import { PostCategory } from '~/components/biz/post-category';
 import { categoriesAtom, ListCategoryAtom } from '~/store/blogAtom';
-import { createClient } from '~/supabase-module';
+import { createClient } from '~/modules/supabase';
 
 import type { MetaFunction, LoaderFunctionArgs } from '@vercel/remix';
 import { PostList } from '~/components/biz/post-list';

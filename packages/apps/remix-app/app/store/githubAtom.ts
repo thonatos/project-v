@@ -7,9 +7,9 @@ import {
   getRepoList,
   TIME_FETCH_STARRED_REPO_LIST,
   EVENT_FETCH_STARRED_REPO_LIST,
-} from '~/github-module';
+} from '~/modules/github';
 
-import type { GithubRepository } from '~/github-module';
+import type { GithubRepository } from '~/modules/github';
 
 export const logger = debug('store:githubAtom');
 export const loadingAtom = atom<boolean>(false);
