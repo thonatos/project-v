@@ -14,7 +14,7 @@ export const StrategyList: React.FC<{}> = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 py-4">
+    <div className="grid grid-cols-1 gap-4">
       {strategies.map(({ id, title, description }) => (
         <div key={id} className="grid gap-2">
           <div className="text-sm font-semibold">{title}</div>

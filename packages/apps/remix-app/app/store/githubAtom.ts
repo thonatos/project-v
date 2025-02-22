@@ -49,10 +49,13 @@ export const loadRepoAtom = atom(
     const current_time = Date.now();
     const last_reqeust_time = get(recordAtom);
 
+    logger('githubAtom:loadingAtom', get(loadingAtom));
+
     if (!!get(loadingAtom)) {
       return;
     }
 
+    logger('githubAtom:time', current_time, last_reqeust_time);
     if (!last_reqeust_time || current_time - last_reqeust_time > 1000 * 60 * 60) {
       sendMessageToSW(EVENT_FETCH_STARRED_REPO_LIST, options);
       set(recordAtom, current_time);

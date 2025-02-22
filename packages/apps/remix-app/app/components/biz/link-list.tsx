@@ -15,18 +15,18 @@ export const LinkList: React.FC<{
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4">
       {projects.map((project) => (
         <Card key={project.name} className="flex flex-col">
-          <CardHeader className="bg-muted/50">
+          <CardHeader className="p-4 bg-muted/50">
             <CardTitle>
               <a href={project.href} target="_blank" rel="noopener noreferrer">
                 {project.name}
               </a>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="pt-2">{project.desc}</p>
+          <CardContent className="p-4 pt-2 flex-grow">
+            <p>{project.desc}</p>
           </CardContent>
         </Card>
       ))}
