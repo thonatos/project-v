@@ -8,7 +8,7 @@ import { Header } from './header';
 import { CustomSidebar } from './sidebar';
 import { searchAtom } from '~/store/appAtom';
 import { profileAtom, loadProfileAtom, resetProfileAtom, tokenAtom } from '~/store/authAtom';
-import { messagesAtom, sendMessageAtom } from '~/store/workerAtom';
+import { clearMessagesAtom, messagesAtom, sendMessageAtom } from '~/store/workerAtom';
 
 const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
@@ -38,22 +38,12 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
   const profile = useAtomValue(profileAtom);
   const loadProfile = useSetAtom(loadProfileAtom);
   const resetProfile = useSetAtom(resetProfileAtom);
-  const [value, setValue] = useAtom(searchAtom);
 
   const messages = useAtomValue(messagesAtom);
   const sendMessage = useSetAtom(sendMessageAtom);
+  const clearMessages = useSetAtom(clearMessagesAtom);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  if (location.pathname === '/auth/login') {
-    return (
-      <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-4 md:p-8">
-        {children}
-      </div>
-    );
-  }
+  const [searchValue, setSearchValue] = useAtom(searchAtom);
 
   const handleHeaderDropdownMenuClick = (key: string) => {
     const targetHref = DropdownMenus.find((menu) => menu.key === key)?.href;
@@ -72,16 +62,31 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
     }
   };
 
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  if (location.pathname === '/auth/login') {
+    return (
+      <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-4 md:p-8">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider defaultOpen={false} open={isOpen} onOpenChange={(isOpen) => setIsOpen(isOpen)}>
       <CustomSidebar
         navLinks={profile ? [...NavLinks, ...AuthedNavLinks] : NavLinks}
         asistant={
           <ChatCard
-            isOpen={isOpen}
+            disabled={!isOpen || !profile}
             messages={messages}
             onSendMessage={(message) => {
               sendMessage(message, token || '');
+            }}
+            onClearMessages={() => {
+              clearMessages();
             }}
           />
         }
@@ -90,9 +95,9 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
         <div className="flex flex-col sm:gap-4 sm:py-4">
           <Header
             profile={profile}
-            searchValue={value}
+            searchValue={searchValue}
             menus={DropdownMenus}
-            onSearch={setValue}
+            onSearch={setSearchValue}
             onSelect={handleHeaderDropdownMenuClick}
           />
           <main className="grid flex-1 items-start gap-4 p-4 md:gap-8 sm:border-t">{children}</main>

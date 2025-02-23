@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, TrashIcon } from 'lucide-react';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { ScrollArea } from '~/components/ui/scroll-area';
@@ -9,10 +9,11 @@ import { cn } from '~/lib/utils';
 import { Message } from '~/types';
 
 export const ChatCard: React.FC<{
-  isOpen?: boolean;
+  disabled?: boolean;
   messages: Message[];
   onSendMessage: (message: string) => void;
-}> = ({ isOpen = false, messages, onSendMessage }) => {
+  onClearMessages?: () => void;
+}> = ({ disabled = false, messages, onSendMessage, onClearMessages }) => {
   const [input, setInput] = React.useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -33,6 +34,13 @@ export const ChatCard: React.FC<{
     setInput('');
   };
 
+  const handleClearMessages = () => {
+    if (!onClearMessages) {
+      return;
+    }
+    onClearMessages();
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -47,7 +55,7 @@ export const ChatCard: React.FC<{
   return (
     <Card
       className={cn('h-full flex flex-col', {
-        hidden: !isOpen,
+        hidden: disabled,
       })}
     >
       {/* Header */}
@@ -59,9 +67,14 @@ export const ChatCard: React.FC<{
           </Avatar>
           <div>
             <p className="text-sm font-medium leading-none">AI Assistant</p>
-            <p className="text-sm text-muted-foreground">worker@cloudflare.com</p>
+            <p className="text-sm text-muted-foreground">Powered by CF Workers AI</p>
           </div>
         </div>
+
+        <Button size="icon" disabled={messages.length === 1} onClick={handleClearMessages}>
+          <TrashIcon />
+          <span className="sr-only">Clear</span>
+        </Button>
       </div>
 
       {/* Messages */}

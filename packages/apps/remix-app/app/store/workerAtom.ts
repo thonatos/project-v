@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import { atomWithStorage } from 'jotai/utils';
 import { chat } from './service/worker';
 import { Message } from '~/types';
 
@@ -9,7 +10,9 @@ const defaultMessages: Message[] = [
   },
 ];
 
-export const messagesAtom = atom<Message[]>(defaultMessages);
+export const messagesAtom = atomWithStorage<Message[]>('remix_worker_messages', defaultMessages, undefined, {
+  getOnInit: true,
+});
 
 export const sendMessageAtom = atom(null, async (get, set, message: string, token: string) => {
   const messages = get(messagesAtom);
@@ -48,4 +51,8 @@ export const sendMessageAtom = atom(null, async (get, set, message: string, toke
       },
     }
   );
+});
+
+export const clearMessagesAtom = atom(null, (_get, set) => {
+  set(messagesAtom, defaultMessages);
 });
