@@ -13,6 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     let data = null;
     let token = null;
+    let payload = null;
 
     if (user) {
       const { data: userData, error } = await supabase.from('users').select().eq('user_id', user.id).single();
@@ -27,12 +28,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
         };
 
         token = jwt.sign(data, privateKey, { algorithm: 'HS256', expiresIn: '1d' });
+        payload = jwt.decode(token);
       }
     }
 
     return Response.json({
       data,
       token,
+      payload,
     });
   } catch (error) {
     return Response.json({

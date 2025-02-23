@@ -9,7 +9,7 @@ export const handle = {
 };
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Tiptap' }, { name: 'ρV', content: 'undefined project - ρV' }];
+  return [{ title: 'Add Post' }, { name: 'ρV', content: 'undefined project - ρV' }];
 };
 
 export const PostNewPage: React.FC<{}> = () => {
