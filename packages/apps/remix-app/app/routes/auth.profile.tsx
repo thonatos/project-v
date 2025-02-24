@@ -18,12 +18,14 @@ export const AuthProfilePage: React.FC<{}> = () => {
   const profile = useAtomValue(profileAtom);
 
   return (
-    <div className="grid grid-cols-2">
-      <Suspense fallback={<div>Loading...</div>}>
-        <Await resolve={profile}>
-          <ProfileForm profile={profile as any} />
-        </Await>
-      </Suspense>
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="md:col-span-2">
+        <Suspense fallback={<div>Loading...</div>}>
+          <Await resolve={profile}>
+            <ProfileForm profile={profile as any} />
+          </Await>
+        </Suspense>
+      </div>
     </div>
   );
 };
