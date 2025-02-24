@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 
 import { Card } from '~/components/ui/card';
-import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Textarea } from '~/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { useToast } from '~/hooks/use-toast';
 
@@ -91,12 +92,35 @@ export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="username">User Name</Label>
+              <Label htmlFor="username">Name</Label>
               <Input
                 id="username"
                 value={user.name}
                 onChange={(e) => handleChange('username', e.target.value)}
-                disabled={!isEditing}
+                disabled={isEditing}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                value={user.location}
+                placeholder="Type your location here"
+                onChange={(e) => handleChange('location', e.target.value)}
+                disabled={isEditing}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={user.bio}
+                className="min-h-[100px]"
+                placeholder="Tell us a little bit about yourself"
+                onChange={(e) => handleChange('bio', e.target.value)}
+                disabled={isEditing}
               />
             </div>
           </div>

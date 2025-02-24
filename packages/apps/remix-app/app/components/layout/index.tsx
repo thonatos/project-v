@@ -23,9 +23,9 @@ const DropdownMenus = [
   { label: 'Account', type: 'Label' },
   { type: 'Separator' },
   { label: 'Profile', key: 'profile', href: '/auth/profile' },
-  { label: 'Logout', key: 'logout', href: '/auth/logout' },
-  { type: 'Separator' },
   { label: 'Support', key: 'support', href: '/support' },
+  { type: 'Separator' },
+  { label: 'Logout', key: 'logout', href: '/auth/logout' },
 ];
 
 export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) => {

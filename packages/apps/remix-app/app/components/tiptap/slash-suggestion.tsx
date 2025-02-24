@@ -92,7 +92,7 @@ export const SlashComponent = forwardRef((props: any, ref) => {
   );
 });
 
-export const slashSuggestion = {
+export const SlashSuggestion = {
   items: ({ query }: { query: string }) => {
     return [
       'Lea Thompson',

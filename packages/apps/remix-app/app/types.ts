@@ -31,6 +31,9 @@ export interface Profile {
 
   created_at: string;
   updated_at: string;
+
+  bio?: string;
+  location?: string;
 }
 
 export interface Category {
