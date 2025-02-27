@@ -51,15 +51,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export const AuthLoginPage: React.FC<{}> = () => {
   const actionData = useActionData<typeof action>();
-  const navigate = useNavigate();
-
-  const handleOAuth = () => {
-    navigate('/auth/oauth');
-  };
 
   return (
     <div className="w-full max-w-sm md:max-w-4xl">
-      <LoginForm onClickOAuth={handleOAuth} />
+      <LoginForm />
     </div>
   );
 };

@@ -1,4 +1,7 @@
+import React from 'react';
+import { useAtomValue } from 'jotai';
 import { NavLink, useLocation } from '@remix-run/react';
+import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon } from 'lucide-react';
 
 import {
   Sidebar,
@@ -10,13 +13,23 @@ import {
   SidebarMenuButton,
 } from '~/components/ui/sidebar';
 
-import React from 'react';
+import { profileAtom } from '~/store/authAtom';
+
+const NavLinks = [
+  { icon: Home, label: 'Home', pathname: '/' },
+  { icon: FolderGit, label: 'Github Stars', pathname: '/github/stars' },
+  { icon: LineChart, label: 'Finances', pathname: '/finances' },
+  { icon: HelpCircleIcon, label: 'Support', pathname: '/support' },
+];
+
+const AuthedNavLinks = [{ icon: EditIcon, label: 'Editor', pathname: '/dash/add-post' }];
 
 export const CustomSidebar: React.FC<{
-  navLinks?: { icon: any; label: string; pathname: string }[];
   asistant?: React.ReactNode;
-}> = ({ navLinks = [], asistant }) => {
+}> = ({ asistant }) => {
   const location = useLocation();
+  const profile = useAtomValue(profileAtom);
+  const navLinks = profile ? [...NavLinks, ...AuthedNavLinks] : NavLinks;
 
   return (
     <Sidebar collapsible="icon" className="overflow-hidden [&>[data-sidebar=sidebar]]:flex-row">

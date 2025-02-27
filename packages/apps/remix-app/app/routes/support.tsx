@@ -1,13 +1,11 @@
 import React from 'react';
 import { Link } from '@remix-run/react';
-
-import Logo from '~/components/biz/logo';
-import Tiptap from '~/components/tiptap/editor';
-import { LinkList } from '~/components/biz/link-list';
-
-import { OSS_PROJECTS } from '~/constants';
-
 import type { MetaFunction } from '@vercel/remix';
+
+import { Logo } from '~/components/custom/logo';
+import { Tiptap } from '~/components/tiptap/editor';
+import { ProjectList } from '~/components/biz/project-list';
+import { OSS_PROJECTS } from '~/constants';
 
 export const handle = {
   breadcrumb: () => <Link to="/support">Support</Link>,
@@ -35,7 +33,7 @@ export const SupportPage: React.FC<{}> = () => {
         />
       </div>
 
-      <LinkList projects={OSS_PROJECTS} />
+      <ProjectList projects={OSS_PROJECTS} />
     </div>
   );
 };

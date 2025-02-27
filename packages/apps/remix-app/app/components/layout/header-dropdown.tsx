@@ -1,5 +1,8 @@
 import React from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useNavigate } from '@remix-run/react';
 import { Github } from 'lucide-react';
+
 import { Button } from '~/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar';
 import {
@@ -11,14 +14,39 @@ import {
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 
-export const Dropdown: React.FC<{
-  avatarUrl?: string;
-  menus?: { label?: string; type?: string; key?: string }[];
-  onSelect?: (key: string) => void;
-}> = ({ avatarUrl, menus = [], onSelect }) => {
+import { profileAtom, resetProfileAtom } from '~/store/authAtom';
+
+const menus = [
+  { label: 'Account', type: 'Label' },
+  { type: 'Separator' },
+  { label: 'Profile', key: 'profile', href: '/auth/profile' },
+  { label: 'Support', key: 'support', href: '/support' },
+  { type: 'Separator' },
+  { label: 'Logout', key: 'logout', href: '/auth/logout' },
+];
+
+export const Dropdown: React.FC<{}> = () => {
+  const navigate = useNavigate();
+  const profile = useAtomValue(profileAtom);
+  const resetProfile = useSetAtom(resetProfileAtom);
+
+  const avatarUrl = profile?.avatar_url;
+
   const handleClick = (key?: string) => {
-    if (!key || !onSelect) return;
-    onSelect(key);
+    const targetHref = menus.find((menu) => menu.key === key)?.href;
+
+    if (key === 'login') {
+      navigate('/auth/login');
+      return;
+    }
+
+    if (key === 'logout') {
+      resetProfile();
+    }
+
+    if (targetHref) {
+      navigate(targetHref);
+    }
   };
 
   if (!avatarUrl) {
