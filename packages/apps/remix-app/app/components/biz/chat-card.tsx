@@ -1,21 +1,25 @@
 import React, { useEffect, useRef } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { Send, TrashIcon } from 'lucide-react';
+
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { ScrollArea } from '~/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
-import { Message } from '~/types';
 
-export const ChatCard: React.FC<{
-  disabled?: boolean;
-  messages: Message[];
-  onSendMessage: (message: string) => void;
-  onClearMessages?: () => void;
-}> = ({ disabled = false, messages, onSendMessage, onClearMessages }) => {
+import { tokenAtom } from '~/store/authAtom';
+import { clearMessagesAtom, messagesAtom, sendMessageAtom } from '~/store/workerAtom';
+
+export const ChatCard: React.FC<{ disabled?: boolean }> = ({ disabled = false }) => {
   const [input, setInput] = React.useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const token = useAtomValue(tokenAtom);
+  const messages = useAtomValue(messagesAtom);
+  const sendMessage = useSetAtom(sendMessageAtom);
+  const clearMessages = useSetAtom(clearMessagesAtom);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,15 +34,12 @@ export const ChatCard: React.FC<{
       return;
     }
 
-    onSendMessage(input);
+    sendMessage(input, token || '');
     setInput('');
   };
 
   const handleClearMessages = () => {
-    if (!onClearMessages) {
-      return;
-    }
-    onClearMessages();
+    clearMessages();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

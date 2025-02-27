@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useMatches } from '@remix-run/react';
 
 import {
@@ -9,7 +10,7 @@ import {
   BreadcrumbSeparator,
 } from '~/components/ui/breadcrumb';
 
-export const Breadcrumbs = () => {
+export const Breadcrumbs: React.FC<{}> = () => {
   const matches: Array<any> = useMatches();
   const matchesBreadcrumbs = matches.filter((match) => match.handle && match.handle.breadcrumb);
   const lastMatchBreadcrumbIndex = matchesBreadcrumbs.length - 1;

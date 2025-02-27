@@ -7,7 +7,7 @@ interface Project {
   href: string;
 }
 
-export const LinkList: React.FC<{
+export const ProjectList: React.FC<{
   projects: Project[];
 }> = ({ projects }) => {
   if (projects.length === 0) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form } from '@remix-run/react';
+import { Form, useNavigate } from '@remix-run/react';
 import { GithubIcon } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -29,10 +29,13 @@ const Terms: React.FC<{}> = () => {
   );
 };
 
-export const LoginForm: React.FC<{
-  className?: string;
-  onClickOAuth?: () => void;
-}> = ({ className, onClickOAuth, ...props }) => {
+export const LoginForm: React.FC<{ className?: string }> = ({ className, ...props }) => {
+  const navigate = useNavigate();
+
+  const handleOAuth = () => {
+    navigate('/auth/oauth');
+  };
+
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden">
@@ -75,7 +78,7 @@ export const LoginForm: React.FC<{
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                <Button type="button" variant="outline" className="w-full" onClick={onClickOAuth}>
+                <Button type="button" variant="outline" className="w-full" onClick={handleOAuth}>
                   <GithubIcon />
                   <span className="sr-only">Login with Github</span>
                 </Button>
