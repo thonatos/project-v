@@ -1,7 +1,7 @@
 {
   "compatibility_date": "2024-11-01",
   "main": "src/index.tsx",
-  "name": "remix",
+  "name": "remix-api",
   "upload_source_maps": true,
   "ai": {
     "binding": "AI"
@@ -14,7 +14,7 @@
   },
   "routes": [
     {
-      "pattern": "remix-worker.implements.io",
+      "pattern": "remix-api.implements.io",
       "custom_domain": true
     }
   ],
