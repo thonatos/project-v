@@ -1,20 +1,16 @@
 import { Hono } from 'hono';
-import { jwt } from 'hono/jwt';
 import { cors } from 'hono/cors';
 import { timing } from 'hono/timing';
 import { logger } from 'hono/logger';
-import { css, Style } from 'hono/css';
-import { HTTPException } from 'hono/http-exception';
+
+import { CORS_ORIGINS } from './constants';
+import { Home } from './components/home';
+import { apiJwt } from './middlewares/api-jwt';
+import { apiAuth } from './middlewares/api-auth';
+import api from './routes/api';
 
 import type { JwtVariables } from 'hono/jwt';
 import type { TimingVariables } from 'hono/timing';
-
-const AI_MODEL = {
-  DEEPSEEK_AI: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b',
-  STABILITY_AI: '@cf/stabilityai/stable-diffusion-xl-base-1.0',
-};
-
-const CORS_ORIGINS = ['localhost', 'implements.io'];
 
 export type Variables = JwtVariables & TimingVariables;
 
@@ -23,15 +19,11 @@ export interface Env {
 }
 
 export type Bindings = {
-  JWT_SECRET: string;
+  AUTH_JWT_SECRET: string;
   AI: {
     run: (model: string, inputs: any) => Promise<any>;
   };
 };
-
-const headerClass = css`
-  padding: 1rem 2rem;
-`;
 
 const app = new Hono<{
   Bindings: Bindings;
@@ -56,82 +48,17 @@ app.use(
 );
 
 app.get('/', async (c) => {
-  return c.html(
-    <html>
-      <head>
-        <Style />
-      </head>
-      <body>
-        <div className={headerClass}>
-          <h2>remix-worker</h2>
-          <p>worker for remix-app, powered by cloudflare workers.</p>
-        </div>
-      </body>
-    </html>
-  );
+  return c.html(<Home />);
 });
 
-app.use('/api/*', (c, next) => {
-  const jwtMiddleware = jwt({
-    secret: c.env.JWT_SECRET || 'it-is-very-secret',
-  });
-  return jwtMiddleware(c, next);
-});
+// api
+// middleware
+app.use('/api/*', apiJwt);
+app.use('/api/*', apiAuth);
 
-app.use('/api/*', async (c, next) => {
-  const payload = c.get('jwtPayload');
-  if (payload?.email !== 'thonatos.yang@gmail.com') {
-    throw new HTTPException(401, { message: 'unauthorized' });
-  }
-  await next();
-});
-
-app.get('/api/info', (c) => {
-  const payload = c.get('jwtPayload');
-  // eg: { 'sub': '1234567890', 'name': 'John Doe', 'iat': 1516239022 }
-  return c.json(payload);
-});
-
-app.post('/api/chat', async (c) => {
-  const { messages } = await c.req.json<{
-    messages: { role: string; content: string }[];
-  }>();
-
-  // console.log('messages', messages);
-
-  const inputs = {
-    stream: true,
-    max_tokens: 512,
-    messages: [{ role: 'system', content: 'You are a helpful assistant' }, ...messages],
-  };
-
-  const stream = await c.env.AI.run(AI_MODEL.DEEPSEEK_AI, inputs);
-
-  return new Response(stream, {
-    headers: { 'content-type': 'text/event-stream' },
-  });
-});
-
-app.get('/api/text2image', async (c) => {
-  const prompt = c.req.query('prompt');
-
-  if (!prompt) {
-    return c.json({ error: 'prompt is required' }, 400);
-  }
-
-  const inputs = {
-    prompt,
-    width: 800,
-    height: 400,
-  };
-
-  const response = await c.env.AI.run(AI_MODEL.STABILITY_AI, inputs);
-
-  return new Response(response, {
-    headers: {
-      'content-type': 'image/png',
-    },
-  });
-});
+// api routes
+app.get('/api/info', api.info);
+app.get('/api/text2image', api.text2image);
+app.post('/api/chat', api.chat);
 
 export default app;
