@@ -10,7 +10,7 @@ import { Card } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
 
 import { tokenAtom } from '~/store/authAtom';
-import { clearMessagesAtom, messagesAtom, sendMessageAtom } from '~/store/workerAtom';
+import { clearMessagesAtom, messagesAtom, sendMessageAtom } from '~/store/chatAtom';
 
 export const ChatCard: React.FC<{ disabled?: boolean }> = ({ disabled = false }) => {
   const [input, setInput] = React.useState('');

@@ -1,0 +1,43 @@
+# Project Configuration
+
+## Tech Stack
+- Remix v2
+- Tailwind CSS for styling
+- Jotai for state management
+- Rush.js for monorepo manager
+- Supabase for backend
+- Vercel for deployment
+- GitHub for version control
+
+## Project Structure
+/app
+  /routes                   # Remix router
+    /action.{action}.tsx    # Remix Api router
+    /{page.subpage}.tsx     # Remix Page router
+  /components               # React components
+  /lib                      # Utility functions
+  /store                    # Jotai store
+    /service                # Service for request api
+    /(?)+atom.ts
+  types.ts                  # TypeScript types
+/docs
+  /sql                      # SQL files
+/public                     # Static assets
+
+## Database Migrations
+SQL files in /docs/sql should:
+- Use postgres as database
+- Use sequential numbering: 001, 002, etc.
+- Include descriptive names
+- Be reviewed by Cline before execution
+Example: 001_table_users.sql
+
+## Development Workflow
+- Cline helps write and review code changes
+- Vercel automatically deploys from main branch
+- Database migrations reviewed by Cline before execution
+
+## Security
+DO NOT read or modify:
+- .env files
+- Any file containing API keys or credentials

@@ -52,6 +52,3 @@ BEGIN
     WHERE ct.post_id = post_uuid; -- 按文章 ID 过滤
 END;
 $$ LANGUAGE plpgsql;
-
-SELECT * FROM public.get_comment_tree('9668a2b4-ddc1-4dbf-a2d9-0abcc4373856') 
-ORDER BY depth, created_at ASC;

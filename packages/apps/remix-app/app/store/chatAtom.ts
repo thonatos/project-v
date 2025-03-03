@@ -1,7 +1,11 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { chat } from './service/worker';
-import { Message } from '~/types';
+
+export interface Message {
+  role: string;
+  content: string;
+}
 
 const defaultMessages: Message[] = [
   {
