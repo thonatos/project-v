@@ -17,7 +17,7 @@
    * If the main project should include other unrelated Rush projects, add it to the "projectSettings" section,
    * and then specify those projects in the "additionalProjectsToInclude" list.
    */
-  "deploymentProjectNames": ["remix-web"],
+  "deploymentProjectNames": ["remix-api"],
 
   /**
    * When deploying a local Rush project, the package.json "devDependencies" are normally excluded.
@@ -68,13 +68,8 @@
    */
   "projectSettings": [
     {
-       "projectName": "remix-web",        
-        "additionalDependenciesToInclude": [          
-          "jotai",
-          "flowbite-react",
-          "@rust-nostr/nostr-sdk",
-          "react-tagcloud",
-          "classnames"
+       "projectName": "remix-api",        
+        "additionalDependenciesToInclude": [            
         ],
         "dependenciesToExclude": []
     }

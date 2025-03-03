@@ -1,0 +1,23 @@
+{
+  "name": "remix-api",
+  "version": "0.0.0-dev.0",
+  "private": true,
+  "description": "remix api powered by hono",
+  "keywords": [
+    "hono"
+  ],
+  "author": "Suyi <thonatos.yang@gmail.com>",
+  "scripts": {
+    "_phase:build": "npm run build",
+    "build": "",
+    "deploy": "wrangler deploy --minify",
+    "dev": "wrangler dev --local"
+  },
+  "dependencies": {
+    "hono": "^4.7.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0",
+    "wrangler": "^3.109.2"
+  }
+}
