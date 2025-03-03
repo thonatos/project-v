@@ -8,9 +8,9 @@ import { Textarea } from '~/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { useToast } from '~/hooks/use-toast';
 
-import { Profile } from '~/types';
+import { User } from '~/types';
 
-export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
+export const ProfileForm: React.FC<{ profile: User }> = ({ profile }) => {
   const [user, setUser] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

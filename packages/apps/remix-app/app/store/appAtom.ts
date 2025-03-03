@@ -2,11 +2,33 @@ import debug from 'debug';
 import { atom } from 'jotai';
 
 import { REMIX_HASURA_URL } from '~/constants';
-import { ReferralLink, SponsorAccounts, Strategy } from '~/types';
 import { queryAppConfig } from './service/hasura';
 
-export const logger = debug('store:appAtom');
+export interface Strategy {
+  id: number;
+  title: string;
+  description: string;
+  thumb: string;
+  url: string;
+}
 
+export interface ReferralLink {
+  id: number;
+  title: string;
+  description?: string;
+  thumb?: string;
+  url: string;
+}
+
+export interface SponsorAccounts {
+  network: string;
+  chain_id: string;
+  address: string;
+  symbol: string;
+  values: string[];
+}
+
+export const logger = debug('store:appAtom');
 export const searchAtom = atom<string>('');
 export const loadingAtom = atom<boolean>(false);
 export const strategiesAtom = atom<Strategy[]>([]);
