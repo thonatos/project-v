@@ -10,14 +10,18 @@
   "scripts": {
     "_phase:build": "npm run build",
     "build": "",
-    "deploy": "wrangler deploy --minify",
-    "dev": "wrangler dev --local"
+    "check": "tsc && wrangler --experimental-json-config deploy --dry-run",
+    "deploy": "wrangler --experimental-json-config deploy --minify",
+    "dev": "wrangler --experimental-json-config dev --local",
+    "types": "wrangler --experimental-json-config types",
+    "wrangler": "wrangler"
   },
   "dependencies": {
     "hono": "^4.7.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
+    "typescript": "5.7.2",
     "wrangler": "^3.109.2"
   }
 }
