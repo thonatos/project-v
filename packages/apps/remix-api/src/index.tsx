@@ -5,9 +5,14 @@ import { logger } from 'hono/logger';
 
 import { CORS_ORIGINS } from './constants';
 import { Home } from './components/home';
-import { apiJwt } from './middlewares/api-jwt';
-import { apiAuth } from './middlewares/api-auth';
-import api from './routes/api';
+
+import { IsAdmin } from './middlewares/is-admin';
+import { Supabase } from './middlewares/supabase';
+import { JSonWebToken } from './middlewares/jwt';
+
+import * as ai from './routes/ai';
+import * as auth from './routes/auth';
+import * as blog from './routes/blog';
 
 import type { JwtVariables } from 'hono/jwt';
 import type { TimingVariables } from 'hono/timing';
@@ -19,7 +24,13 @@ export interface Env {
 }
 
 export type Bindings = {
+  AUTH_APP_URL: string;
   AUTH_JWT_SECRET: string;
+  AUTH_ADMIN_EMAIL: string;
+
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+
   AI: {
     run: (model: string, inputs: any) => Promise<any>;
   };
@@ -51,14 +62,34 @@ app.get('/', async (c) => {
   return c.html(<Home />);
 });
 
-// api
-// middleware
-app.use('/api/*', apiJwt);
-app.use('/api/*', apiAuth);
+// auth
+app.use('*', Supabase());
 
-// api routes
-app.get('/api/info', api.info);
-app.get('/api/text2image', api.text2image);
-app.post('/api/chat', api.chat);
+app.get('/auth/oauth', auth.oauth);
+app.get('/auth/callback', auth.callback);
+app.get('/auth/profile', auth.profile);
+
+// app.get('/auth/info', (c) => {
+//   const payload = c.get('jwtPayload');
+//   return c.json(payload);
+// });
+
+// api
+// app.use('/api/*', JSonWebToken());
+
+// ai
+app.use('/ai/*', IsAdmin());
+app.post('/ai/chat', ai.chat);
+app.post('/ai/text2image', ai.text2image);
+
+// blog
+app.get('/blog/category/list', blog.listCategory);
+
+app.get('/blog/post/list', blog.listPost);
+app.post('/blog/post/create', blog.createPost);
+app.post('/blog/post/delete', blog.deletePost);
+
+app.post('/blog/comment/create', blog.createComment);
+app.post('/blog/comment/delete', blog.deleteComment);
 
 export default app;

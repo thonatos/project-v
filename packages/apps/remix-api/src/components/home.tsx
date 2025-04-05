@@ -14,6 +14,7 @@ export const Home = () => {
         <div className={headerClass}>
           <h2>remix-worker</h2>
           <p>worker for remix-app, powered by cloudflare workers.</p>
+          <a href="/auth/oauth">OAuth</a>
         </div>
       </body>
     </html>
