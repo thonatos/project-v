@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import { createComment, deleteComment } from './service/supabase';
+import { createComment, deleteComment } from './service/blog';
 
 export const createCommentAtom = atom(
   null,

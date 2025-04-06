@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, useNavigate } from 'react-router';
+import { Form } from 'react-router';
 import { GithubIcon } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -7,6 +7,7 @@ import { Label } from '~/components/ui/label';
 import { Card, CardContent } from '~/components/ui/card';
 
 import { cn } from '~/lib/utils';
+import { REMIX_WORKER_URL } from '~/constants';
 
 const Intro: React.FC<{}> = () => {
   return (
@@ -30,15 +31,13 @@ const Terms: React.FC<{}> = () => {
 };
 
 export const LoginForm: React.FC<{ className?: string }> = ({ className, ...props }) => {
-  const navigate = useNavigate();
-
   const handleOAuth = () => {
-    navigate('/auth/oauth');
+    window.location.href = `${REMIX_WORKER_URL}/auth/oauth`;
   };
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden py-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form className="p-6 md:p-8" method="post">
             <div className="flex flex-col gap-6">

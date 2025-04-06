@@ -4,7 +4,7 @@ import { Skeleton } from '~/components/ui/skeleton';
 
 export const PostCardSkeleton: React.FC<{}> = () => {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden py-0 justify-between">
       <CardHeader className="p-0">
         <Skeleton
           className="h-36 md:h-48 w-full rounded-xl"

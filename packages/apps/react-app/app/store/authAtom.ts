@@ -1,7 +1,7 @@
 import debug from 'debug';
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { getProfile } from './service/supabase';
+import { getProfile } from './service/auth';
 import type { Profile } from '~/types';
 
 type Payload = Omit<Profile, 'created_at' | 'updated_at'> & { iat: number; exp: number };

@@ -1,6 +1,7 @@
 export const REMIX_WEB_DOMAIN = 'remix.implements.io';
 
-export const REMIX_WORKER_URL = 'https://remix-api.implements.io';
+export const REMIX_WORKER_URL = 'http://localhost:8787';
+// export const REMIX_WORKER_URL = 'https://remix-api.implements.io';
 export const REMIX_HASURA_URL = 'https://hasura.implements.io/v1/graphql';
 
 export const POST_TAGS = ['Linux', 'MacOS', 'Node.js', 'React.js', 'JavaScript'];

@@ -1,14 +1,63 @@
+import React, { useEffect } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { Link, useLoaderData, useNavigate } from 'react-router';
+
+import { PostList } from '~/components/biz/post-list';
+import { PostCategory } from '~/components/biz/post-category';
+import { listPost } from '~/store/service/blog';
+import { categoriesAtom, ListCategoryAtom } from '~/store/blogAtom';
+
 import type { Route } from './+types/home';
-import { Button } from '~/components/ui/button';
+
+export const handle = {
+  breadcrumb: () => <Link to="/">Home</Link>,
+};
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const url = new URL(request.url);
+  const searchParams = new URLSearchParams(url.search);
+
+  const category = searchParams.get('category') ?? 'all';
+  const data = await listPost(category);
+
+  return data;
+};
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'New React Router App' }, { name: 'description', content: 'Welcome to React Router!' }];
+  return [{ title: 'Home' }, { name: 'ρV', content: 'undefined project - ρV' }];
 }
 
-export default function Home() {
+const IndexPage: React.FC<{}> = () => {
+  const nagivate = useNavigate();
+  const categories = useAtomValue(categoriesAtom);
+  const listCategory = useSetAtom(ListCategoryAtom);
+  const { data, category } = useLoaderData<typeof loader>();
+
+  const handleCategoryChange = (category: string) => {
+    nagivate(`?category=${category}`);
+  };
+
+  useEffect(() => {
+    if (categories.length !== 0) {
+      return;
+    }
+
+    listCategory();
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-svh">
-      <Button>Click me</Button>
+    <div className="space-y-4">
+      <PostCategory
+        categories={['all', ...categories.map((c) => c.name)]}
+        value={category}
+        onChange={(category) => {
+          handleCategoryChange(category);
+        }}
+      />
+
+      <PostList data={data} />
     </div>
   );
-}
+};
+
+export default IndexPage;

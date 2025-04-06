@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router';
-import type { Route } from './+types/support';
 
+import { OSS_PROJECTS } from '~/constants';
 import { Logo } from '~/components/custom/logo';
 import { Tiptap } from '~/components/tiptap/editor';
 import { ProjectList } from '~/components/biz/project-list';
-import { OSS_PROJECTS } from '~/constants';
+
+import type { Route } from './+types/support';
 
 export const handle = {
   breadcrumb: () => <Link to="/support">Support</Link>,

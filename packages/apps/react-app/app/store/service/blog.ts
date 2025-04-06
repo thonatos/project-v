@@ -1,3 +1,5 @@
+import { REMIX_WORKER_URL } from '~/constants';
+
 /**
  * Categories Service
  *
@@ -9,7 +11,37 @@
  */
 export const listCategory = async () => {
   try {
-    const res = await fetch('/action/list-category', {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/category/list`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const listPost = async (category: string) => {
+  try {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/post/list?category=${category}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPost = async (id: string) => {
+  try {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/post/get?id=${id}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -38,7 +70,7 @@ export const listCategory = async () => {
  */
 export const craeteOrUpdatePost = async (value: any) => {
   try {
-    const res = await fetch('/action/create-post', {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/post/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -55,37 +87,12 @@ export const craeteOrUpdatePost = async (value: any) => {
 
 export const deletePost = async (id: string) => {
   try {
-    const res = await fetch('/action/delete-post', {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/post/delete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ id }),
-    });
-
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * Users Service
- *
- * Table Schema:
- * - id: UUID PRIMARY KEY
- * - name: varchar NOT NULL UNIQUE
- * - email: varchar NOT NULL
- * - user_id: UUID NOT NULL (references auth.users)
- * - created_at: TIMESTAMP DEFAULT NOW()
- */
-export const getProfile = async () => {
-  try {
-    const res = await fetch('/action/get-profile', {
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     const data = await res.json();
@@ -116,7 +123,7 @@ export const createComment = async ({
   parentId?: string;
 }): Promise<{ status: number }> => {
   try {
-    const res = await fetch('/action/comment-post', {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/comment/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -137,7 +144,7 @@ export const createComment = async ({
 
 export const deleteComment = async (id: string): Promise<{ status: number }> => {
   try {
-    const res = await fetch('/action/delete-comment', {
+    const res = await fetch(`${REMIX_WORKER_URL}/blog/comment/delete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

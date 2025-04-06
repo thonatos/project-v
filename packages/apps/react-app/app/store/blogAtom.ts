@@ -3,7 +3,7 @@ import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
 import { POST_TAGS, POST_CONTENT } from '~/constants';
-import { craeteOrUpdatePost, deletePost, listCategory } from './service/supabase';
+import { craeteOrUpdatePost, deletePost, listCategory } from './service/blog';
 import type { Category, Post } from '~/types';
 
 export const logger = debug('store:blogAtom');

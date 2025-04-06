@@ -2,7 +2,7 @@ import React from 'react';
 import { PostCard } from './post-card';
 import { PostCardSkeleton } from './post-card-skeleton';
 
-import { Post } from '~/types';
+import { type Post } from '~/types';
 
 export const PostList: React.FC<{ data: Post[] }> = ({ data }) => {
   if (data.length === 0) {

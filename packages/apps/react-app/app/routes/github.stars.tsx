@@ -1,10 +1,11 @@
 import React, { Suspense } from 'react';
 import { Link, Await, useAsyncValue } from 'react-router';
-import type { Route } from './+types/github.stars';
 
 import { RepositoryFilter } from '~/components/biz/repository-filter';
 import { RepositoryList } from '~/components/biz/repository-list';
 import { RepositorySkeleton } from '~/components/biz/repository-skeleton';
+
+import type { Route } from './+types/github.stars';
 
 export const handle = {
   breadcrumb: () => <Link to="/github/stars">Github Stars</Link>,

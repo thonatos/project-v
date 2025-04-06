@@ -8,7 +8,7 @@ export const chat = async (
   }
 ) => {
   try {
-    const response = await fetch(`${REMIX_WORKER_URL}/api/chat`, {
+    const response = await fetch(`${REMIX_WORKER_URL}/ai/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

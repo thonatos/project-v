@@ -9,7 +9,7 @@ export const StrategyCard: React.FC<{}> = () => {
   const value = useAsyncValue();
 
   return (
-    <Card>
+    <Card className="overflow-hidden py-0">
       <CardHeader className="p-4 bg-muted/50">
         <CardTitle>Strategy</CardTitle>
         <CardDescription>Stock and cryptocurrency trading strategies.</CardDescription>

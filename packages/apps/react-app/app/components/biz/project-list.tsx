@@ -17,7 +17,7 @@ export const ProjectList: React.FC<{
   return (
     <div className="grid grid-cols-1 gap-4">
       {projects.map((project) => (
-        <Card key={project.name} className="flex flex-col">
+        <Card key={project.name} className="flex flex-col py-0">
           <CardHeader className="p-4 bg-muted/50">
             <CardTitle>
               <a href={project.href} target="_blank" rel="noopener noreferrer">

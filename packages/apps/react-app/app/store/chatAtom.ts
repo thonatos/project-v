@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { chat } from './service/worker';
+import { chat } from './service/ai';
 
 export interface Message {
   role: string;

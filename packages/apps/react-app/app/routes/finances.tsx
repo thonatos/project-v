@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router';
-import type { Route } from './+types/finances';
 
 import { StrategyCard } from '~/components/biz/strategy-card';
+
+import type { Route } from './+types/finances';
 
 export const handle = {
   breadcrumb: () => <Link to="/finances">Finances</Link>,

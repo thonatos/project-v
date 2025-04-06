@@ -21,7 +21,7 @@ export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_imag
   const postLink = `/post/${id}`;
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden py-0 justify-between">
       <CardHeader className="p-0">
         <Suspense fallback={<ImagePlaceholder />}>
           <Await resolve={feature_image}>
