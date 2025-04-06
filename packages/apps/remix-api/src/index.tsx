@@ -25,6 +25,8 @@ export interface Env {
 
 export type Bindings = {
   AUTH_APP_URL: string;
+  AUTH_CALLBACK_URL: string;
+
   AUTH_JWT_SECRET: string;
   AUTH_ADMIN_EMAIL: string;
 
@@ -68,16 +70,10 @@ app.use('*', Supabase());
 app.get('/auth/oauth', auth.oauth);
 app.get('/auth/callback', auth.callback);
 app.get('/auth/profile', auth.profile);
-
-// app.get('/auth/info', (c) => {
-//   const payload = c.get('jwtPayload');
-//   return c.json(payload);
-// });
-
-// api
-// app.use('/api/*', JSonWebToken());
+app.post('/auth/login', auth.login);
 
 // ai
+app.use('/ai/*', JSonWebToken());
 app.use('/ai/*', IsAdmin());
 app.post('/ai/chat', ai.chat);
 app.post('/ai/text2image', ai.text2image);
@@ -85,6 +81,7 @@ app.post('/ai/text2image', ai.text2image);
 // blog
 app.get('/blog/category/list', blog.listCategory);
 
+app.get('/blog/post/get', blog.getPost);
 app.get('/blog/post/list', blog.listPost);
 app.post('/blog/post/create', blog.createPost);
 app.post('/blog/post/delete', blog.deletePost);

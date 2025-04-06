@@ -1,22 +1,58 @@
 import { Context } from 'hono';
 import { sign, decode } from 'hono/jwt';
 
+export const login = async (c: Context) => {
+  const supabase = c.get('supabase');
+  const { email, password } = await c.req.json<{
+    email: string;
+    password: string;
+  }>();
+
+  const errors: any = {};
+
+  // params validation
+  if (!email.includes('@')) {
+    errors.email = 'Invalid email address';
+  }
+
+  if (password.length < 8) {
+    errors.password = 'Password should be at least 12 characters';
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return c.json({ errors });
+  }
+
+  // auth with supabase
+  const { data, error: AuthError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (AuthError) {
+    errors.auth = AuthError;
+    return c.json({ errors });
+  }
+
+  return c.json({
+    data,
+  });
+};
+
 export const oauth = async (c: Context) => {
   const supabase = c.get('supabase');
   const appUrl = c.env.AUTH_APP_URL || '';
-  const redirectUrl = new URL(appUrl);
-  redirectUrl.pathname = '/auth/callback';
+  const callbackUrl = c.env.AUTH_CALLBACK_URL || '';
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: redirectUrl.toString(),
+      redirectTo: callbackUrl,
     },
   });
 
   if (error) {
-    redirectUrl.pathname = '/';
-    return c.redirect(redirectUrl.toString());
+    return c.redirect(appUrl);
   }
 
   return c.redirect(data.url);

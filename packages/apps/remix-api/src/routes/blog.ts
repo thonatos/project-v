@@ -1,5 +1,4 @@
 import { Context } from 'hono';
-import { env } from 'hono/adapter';
 
 export const listCategory = async (c: Context) => {
   const supabase = c.get('supabase');
@@ -46,7 +45,7 @@ export const listPost = async (c: Context) => {
 };
 
 export const getPost = async (c: Context) => {
-  const id = c.req.param('id');
+  const id = c.req.query('id');
   const supabase = c.get('supabase');
 
   const { data } = await supabase.from('posts_with_users').select().eq('post_id', id).single();
