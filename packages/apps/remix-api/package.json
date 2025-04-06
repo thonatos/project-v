@@ -17,8 +17,10 @@
     "wrangler": "wrangler"
   },
   "dependencies": {
+    "@passwordless-id/webauthn": "~2.3.0",
     "@supabase/ssr": "~0.6.1",
     "@supabase/supabase-js": "~2.49.4",
+    "dayjs": "~1.11.13",
     "hono": "^4.7.2"
   },
   "devDependencies": {

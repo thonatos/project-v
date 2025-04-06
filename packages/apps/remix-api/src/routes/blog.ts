@@ -1,13 +1,20 @@
-import { Context } from 'hono';
+import { Context, Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
+import { getUserId, setUserId } from '../util';
+
+export const app = new Hono();
 
 export const listCategory = async (c: Context) => {
   const supabase = c.get('supabase');
 
   const { data, error } = await supabase.from('categories').select();
 
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+
   return c.json({
     data,
-    error,
   });
 };
 
@@ -23,7 +30,7 @@ export const listPost = async (c: Context) => {
   }
 
   if (category_id) {
-    const { data } = await supabase
+    const { data = [] } = await supabase
       .from('posts')
       .select()
       .eq('category_id', category_id)
@@ -31,15 +38,19 @@ export const listPost = async (c: Context) => {
       .limit(15);
 
     return c.json({
-      data: data ?? [],
+      data,
       category: category,
     });
   }
 
-  const { data } = await supabase.from('posts').select().order('created_at', { ascending: false }).limit(15);
+  const { data = [] } = await supabase
+    .from('posts')
+    .select()
+    .order('created_at', { ascending: false })
+    .limit(15);
 
   return c.json({
-    data: data ?? [],
+    data,
     category: category,
   });
 };
@@ -51,10 +62,7 @@ export const getPost = async (c: Context) => {
   const { data } = await supabase.from('posts_with_users').select().eq('post_id', id).single();
 
   if (!data) {
-    return c.json({
-      post: null,
-      error: 'Post not found',
-    });
+    throw new HTTPException(400, { message: 'Post not found' });
   }
 
   const { post_id, ...rest } = data;
@@ -70,54 +78,54 @@ export const getPost = async (c: Context) => {
 export const createPost = async (c: Context) => {
   const post = await c.req.json<{}>();
   const supabase = c.get('supabase');
+  const user_id = await getUserId(c);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!user_id) {
+    throw new HTTPException(403, { message: 'Unauthorized' });
+  }
 
   const { data, error } = await supabase
     .from('posts')
     .insert({
       ...post,
-      user_id: user?.id,
+      user_id,
     })
     .select()
     .single();
 
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+
   return c.json({
     data,
-    error,
   });
 };
 
 export const deletePost = async (c: Context) => {
   const post = await c.req.json<{ id: string }>();
   const supabase = c.get('supabase');
+  const user_id = await getUserId(c);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({
-      error: 'Unauthorized',
-    });
+  if (!user_id) {
+    throw new HTTPException(401, { message: 'Unauthorized' });
   }
 
   if (!post.id) {
-    return Response.json({
-      error: 'Missing post id',
-    });
+    throw new HTTPException(400, { message: 'Missing post id' });
   }
 
   const { status, error } = await supabase.from('posts').delete().match({
     id: post.id,
-    user_id: user.id,
+    user_id,
   });
 
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+
   return c.json({
-    status,
-    error,
+    data: status,
   });
 };
 
@@ -129,35 +137,29 @@ export const createComment = async (c: Context) => {
   }>();
 
   const supabase = c.get('supabase');
+  const user_id = await getUserId(c);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({
-      status: 401,
-      error: 'Unauthorized',
-    });
+  if (!user_id) {
+    throw new HTTPException(401, { message: 'Unauthorized' });
   }
 
   if (!content || !postId) {
-    return Response.json({
-      status: 400,
-      error: 'Missing required fields',
-    });
+    throw new HTTPException(400, { message: 'Missing required fields' });
   }
 
   const { status, error } = await supabase.from('comments').insert({
     content,
     post_id: postId,
     parent_id: parentId || null,
-    user_id: user.id,
+    user_id,
   });
 
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+
   return c.json({
-    status,
-    error,
+    data: status,
   });
 };
 
@@ -167,32 +169,38 @@ export const deleteComment = async (c: Context) => {
   }>();
 
   const supabase = c.get('supabase');
+  const user_id = await getUserId(c);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({
-      status: 401,
-      error: 'Unauthorized',
-    });
+  if (!user_id) {
+    throw new HTTPException(401, { message: 'Unauthorized' });
   }
 
   if (!id) {
-    return Response.json({
-      status: 400,
-      error: 'Missing comment id',
-    });
+    throw new HTTPException(400, { message: 'Missing comment id' });
   }
 
   const { status, error } = await supabase.from('comments').delete().match({
     id,
-    user_id: user.id,
+    user_id,
   });
 
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+
   return c.json({
-    status,
-    error,
+    data: status,
   });
 };
+
+app.get('/posts', listPost);
+app.get('/categories', listCategory);
+
+app.get('/post', getPost);
+app.post('/post', createPost);
+app.delete('/post', deletePost);
+
+app.post('/comment', createComment);
+app.delete('/comment', deleteComment);
+
+export default app;

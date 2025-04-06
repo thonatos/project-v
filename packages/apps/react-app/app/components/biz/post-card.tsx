@@ -21,7 +21,7 @@ export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_imag
   const postLink = `/post/${id}`;
 
   return (
-    <Card className="overflow-hidden py-0 justify-between">
+    <Card className="overflow-hidden py-0 justify-between gap-2">
       <CardHeader className="p-0">
         <Suspense fallback={<ImagePlaceholder />}>
           <Await resolve={feature_image}>
@@ -40,11 +40,11 @@ export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_imag
         </Suspense>
       </CardHeader>
       <CardContent className="p-2">
-        <div className="p-2">
+        <div>
           <Link to={postLink}>{title}</Link>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between bg-muted/50 py-2">
+      <CardFooter className="flex justify-between bg-muted/50 py-2 px-2">
         <div className="text-xs text-muted-foreground">
           {updated_at && formatDateTime('en-US', updated_at)}
         </div>

@@ -1,10 +1,8 @@
-export const DATABASE_NAME = 'github';
-export const DATABASE_STORE_NAME = 'starred_repositories';
+export const GITHUB_DATABASE_NAME = 'github';
+export const GITHUB_DATABASE_STORE_NAME = 'starred_repositories';
+export const GITHUB_FETCH_STARRED_REPO_LIST_EVENT = 'github_fetch_starred_repo_list_event';
 
-export const TIME_FETCH_STARRED_REPO_LIST = 'fetch_starred_repo_list_time';
-export const EVENT_FETCH_STARRED_REPO_LIST = 'fetch_starred_repo_list_event';
-
-export interface GithubRepository {
+export interface GithubRepo {
   id: string;
 
   description: string;

@@ -4,7 +4,6 @@ import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute, Route } from 'workbox-routing';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { StarredRepoMessageHandler } from './modules/github/event';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -84,16 +83,12 @@ self.addEventListener('activate', (event) => {
   registerPeriodicSync(SW_PERIOD, self.serviceWorker.scriptURL);
 });
 
-const starredRepoMessageHandler = new StarredRepoMessageHandler();
-
 self.addEventListener('message', (event) => {
   console.log('[sw] message: ', event);
 
   if (event.data && event.data.type === 'SKIP_WAITING') {
     console.log('[sw] message: ', 'SKIP_WAITING');
     self.skipWaiting();
-  } else {
-    event.waitUntil(Promise.all([starredRepoMessageHandler.handleMessage(event)]));
   }
 });
 
@@ -165,6 +160,10 @@ precacheAndRoute([
   ...manifest,
   {
     url: '/finances',
+    revision: SW_VERSION,
+  },
+  {
+    url: '/support',
     revision: SW_VERSION,
   },
   {

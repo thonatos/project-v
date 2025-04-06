@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
-import { useAtom } from 'jotai';
-import { appAtom } from '~/store/appAtom';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { loadConfAtom, strategiesAtom } from '~/store/appAtom';
 
 export const StrategyList: React.FC<{}> = () => {
-  const [{ strategies = [] }, dispach] = useAtom(appAtom);
+  const strategies = useAtomValue(strategiesAtom);
+  const loadConf = useSetAtom(loadConfAtom);
 
   useEffect(() => {
-    dispach();
+    loadConf();
   }, []);
 
   if (!strategies.length) {

@@ -1,8 +1,6 @@
 import { Link, useActionData } from 'react-router';
-
 import { LoginForm } from '~/components/biz/login-form';
-
-import { loginWithPassword } from '~/store/service/auth';
+import { loginWithPassword } from '~/service/auth';
 
 import type { Route } from './+types/auth.login';
 
@@ -24,7 +22,7 @@ export async function action({ request }: Route.ActionArgs) {
   return data;
 }
 
-export const AuthLoginPage: React.FC<{}> = () => {
+export default function ({}: Route.ComponentProps) {
   const actionData = useActionData<typeof action>();
 
   return (
@@ -32,6 +30,4 @@ export const AuthLoginPage: React.FC<{}> = () => {
       <LoginForm />
     </div>
   );
-};
-
-export default AuthLoginPage;
+}

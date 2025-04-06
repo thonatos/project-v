@@ -53,9 +53,11 @@ export const ChatCard: React.FC<{ disabled?: boolean }> = ({ disabled = false })
     return null;
   }
 
+  console.log('messages', messages);
+
   return (
     <Card
-      className={cn('h-full flex flex-col', {
+      className={cn('h-full flex flex-col py-0', {
         hidden: disabled,
       })}
     >

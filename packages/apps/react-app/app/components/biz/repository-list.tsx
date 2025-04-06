@@ -1,41 +1,74 @@
-import React, { useEffect } from 'react';
-import { useAtom } from 'jotai';
-import { logger } from '~/lib/utils';
-import { EVENT_FETCH_STARRED_REPO_LIST, type GithubRepository } from '~/modules/github';
-import { filterRepoAtom, loadRepoAtom } from '~/store/githubAtom';
-import { useServiceWorker } from '~/hooks/use-service-worker';
-import { RepositoryCard } from './repository-card';
+import { useEffect, useState, useRef } from 'react';
+import { useSetAtom, useAtomValue } from 'jotai';
 
-export const RepositoryList: React.FC<{}> = () => {
-  const { sw } = useServiceWorker();
-  const [_, dispach] = useAtom(loadRepoAtom);
-  const [{ repositories }] = useAtom(filterRepoAtom);
+import { RepositoryCard } from './repository-card';
+import { GITHUB_FETCH_STARRED_REPO_LIST_EVENT, type GithubRepo } from '~/modules/github';
+import { loadRepoAtom, recordAtom, filterRepoAtom } from '~/store/githubAtom';
+
+export const RepositoryList = () => {
+  const worker = useRef<Worker | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+
+  const loadRepo = useSetAtom(loadRepoAtom);
+  const lastReqeustTime = useAtomValue(recordAtom);
+  const updateLastReqeustTime = useSetAtom(recordAtom);
+  const { repositories } = useAtomValue(filterRepoAtom);
+
+  const shouldUpdate = () => {
+    const current_time = Date.now();
+    if (!lastReqeustTime || current_time - lastReqeustTime > 1000 * 60 * 60) {
+      return true;
+    }
+    return false;
+  };
+
+  const refreshRepoAtom = () => {
+    setLoading(false);
+    loadRepo();
+  };
 
   useEffect(() => {
-    if (!sw) {
+    if (worker.current) {
       return;
     }
 
-    sw.addEventListener('message', (event) => {
-      logger.log('[pwa] sw:message from worker', event);
+    worker.current = new Worker(new URL('~/worker.ts', import.meta.url), { type: 'module' });
 
-      const { type, payload } = event.data;
-
-      if (type === EVENT_FETCH_STARRED_REPO_LIST && payload?.status === 'done') {
-        dispach({
-          pageNumber: 1,
-        });
+    worker.current.onmessage = (e) => {
+      const { type, payload } = e.data;
+      if (type === GITHUB_FETCH_STARRED_REPO_LIST_EVENT && payload?.status === 'done') {
+        refreshRepoAtom();
       }
-    });
-
-    return () => {
-      sw.removeEventListener('message', () => {});
     };
-  }, [sw]);
+
+    worker.current.onerror = (e) => {
+      console.error('worker:error', e);
+    };
+  }, []);
 
   useEffect(() => {
-    dispach({
-      pageNumber: 1,
+    console.debug('GithubStarsPage useEffect');
+    if (!worker.current || loading) {
+      return;
+    }
+
+    const current_time = Date.now();
+    const _shouldUpdate = shouldUpdate();
+    console.log('GithubStarsPage useEffect: shouldUpdate', _shouldUpdate);
+
+    // check if we should update the starred repo list
+    if (!_shouldUpdate) {
+      refreshRepoAtom();
+      return;
+    }
+
+    // use web worker to fetch starred repo list
+    updateLastReqeustTime(current_time);
+    setLoading(true);
+
+    worker.current.postMessage({
+      type: GITHUB_FETCH_STARRED_REPO_LIST_EVENT,
+      payload: {},
     });
   }, []);
 
@@ -45,7 +78,7 @@ export const RepositoryList: React.FC<{}> = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4">
-      {repositories.map((item: GithubRepository) => {
+      {repositories.map((item: GithubRepo) => {
         return <RepositoryCard key={item.id} repo={item} />;
       })}
     </div>

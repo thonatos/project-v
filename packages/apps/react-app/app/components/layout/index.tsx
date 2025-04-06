@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useSetAtom } from 'jotai';
 import { useLocation } from 'react-router';
 
-import { ChatCard } from '~/components/biz/chat-card';
 import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
 import { Header } from './header';
 import { CustomSidebar } from './sidebar';
-import { profileAtom, loadProfileAtom } from '~/store/authAtom';
+import { loadProfileAtom } from '~/store/authAtom';
 
 export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const location = useLocation();
-  const profile = useAtomValue(profileAtom);
   const loadProfile = useSetAtom(loadProfileAtom);
 
   useEffect(() => {
@@ -29,7 +27,7 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
 
   return (
     <SidebarProvider defaultOpen={false} open={isOpen} onOpenChange={(isOpen) => setIsOpen(isOpen)}>
-      <CustomSidebar asistant={<ChatCard disabled={!isOpen || !profile} />} />
+      <CustomSidebar />
       <SidebarInset>
         <div className="flex flex-col sm:gap-4 sm:py-4">
           <Header />

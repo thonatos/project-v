@@ -10,20 +10,23 @@ declare module 'hono' {
   }
 }
 
-export const Supabase = (): MiddlewareHandler => {
+export const SupabaseMiddleware = (): MiddlewareHandler => {
   return async (c, next) => {
     const supabaseUrl = c.env.SUPABASE_URL || '';
-    const supabaseAnonKey = c.env.SUPABASE_ANON_KEY || '';
+    // const supabaseAnonKey = c.env.SUPABASE_ANON_KEY || '';
+    // const supabaseServiceRoleKey = c.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    // const supabaseKey = c.env.SUPABASE_ANON_KEY || '';
+    const supabaseKey = c.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
     if (!supabaseUrl) {
       throw new Error('SUPABASE_URL missing!');
     }
 
-    if (!supabaseAnonKey) {
-      throw new Error('SUPABASE_ANON_KEY missing!');
+    if (!supabaseKey) {
+      throw new Error('SUPABASE_KEY missing!');
     }
 
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return parseCookieHeader(c.req.header('Cookie') ?? '') as any;

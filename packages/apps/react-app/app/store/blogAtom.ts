@@ -3,7 +3,7 @@ import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
 import { POST_TAGS, POST_CONTENT } from '~/constants';
-import { craeteOrUpdatePost, deletePost, listCategory } from './service/blog';
+import { craeteOrUpdatePost, deletePost, listCategory, createComment, deleteComment } from '~/service/blog';
 import type { Category, Post } from '~/types';
 
 export const logger = debug('store:blogAtom');
@@ -38,11 +38,10 @@ export const resetPostAtom = atom(null, async (_get, set) => {
 export const deletePostAtom = atom(null, async (_get, _set, id: string) => {
   logger('delete post', id);
   try {
-    const { status, error } = await deletePost(id);
-    logger('delete post success', status, error);
+    const { data } = await deletePost(id);
+    logger('delete post success', data);
     return {
-      status,
-      error,
+      data,
     };
   } catch (error) {
     logger('delete post error', error);
@@ -87,4 +86,15 @@ export const publishPostAtom = atom(null, async (get, set) => {
   } finally {
     set(submittingAtom, false);
   }
+});
+
+export const createCommentAtom = atom(
+  null,
+  async (get, set, { content, postId, parentId }: { content: string; postId: string; parentId?: string }) => {
+    return await createComment({ content, postId, parentId });
+  }
+);
+
+export const deleteCommentAtom = atom(null, async (get, set, id: string) => {
+  return await deleteComment(id);
 });

@@ -4,7 +4,7 @@ const headerClass = css`
   padding: 1rem 2rem;
 `;
 
-export const Home = () => {
+export const HomePage = () => {
   return (
     <html>
       <head>

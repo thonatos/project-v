@@ -1,8 +1,11 @@
+import clsx from 'clsx';
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
-
-import { Provider as JotaiProvider } from 'jotai';
+import { Provider as JotaiProvider, useAtomValue } from 'jotai';
 import { createProvider, composeProviders } from '~/lib/provider-util';
+import { Toaster } from '~/components/ui/sonner';
 import { DefaultLayout } from '~/components/layout';
+
+import { themeAtom } from '~/store/appAtom';
 
 import type { Route } from './+types/root';
 import './app.css';
@@ -21,8 +24,10 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const theme = useAtomValue(themeAtom);
+
   return (
-    <html lang="en">
+    <html lang="en" className={clsx(theme)} style={{ colorScheme: theme }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,13 +36,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <DefaultLayout>{children}</DefaultLayout>
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
-        <script
+        {/* <script
           defer
           src="https://static.cloudflareinsights.com/beacon.min.js"
           data-cf-beacon='{"token": "9da4afd7938f4ddb875cab11b8e56c8e"}'
-        ></script>
+        ></script> */}
       </body>
     </html>
   );

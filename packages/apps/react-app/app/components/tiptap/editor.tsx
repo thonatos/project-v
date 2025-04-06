@@ -33,6 +33,7 @@ export const Tiptap: React.FC<{
     extensions: [
       StarterKit.configure({
         // options
+        codeBlock: false,
       }),
       Image,
       Underline,
@@ -65,7 +66,8 @@ export const Tiptap: React.FC<{
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose prose-slate prose-sm sm:prose-base max-w-none min-h-[400px] focus:outline-none ',
+        class:
+          'prose prose-slate prose-sm sm:prose-base max-w-none min-h-[400px] focus:outline-none dark:prose-invert',
       },
     },
     onUpdate: ({ editor }) => {

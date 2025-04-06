@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Link, useLoaderData, useNavigate } from 'react-router';
 
 import { PostList } from '~/components/biz/post-list';
 import { PostCategory } from '~/components/biz/post-category';
-import { listPost } from '~/store/service/blog';
+import { listPost } from '~/service/blog';
 import { categoriesAtom, ListCategoryAtom } from '~/store/blogAtom';
 
-import type { Route } from './+types/home';
+import type { Route } from './+types/_index';
 
 export const handle = {
   breadcrumb: () => <Link to="/">Home</Link>,
@@ -27,7 +27,7 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: 'Home' }, { name: 'ρV', content: 'undefined project - ρV' }];
 }
 
-const IndexPage: React.FC<{}> = () => {
+export default function ({}: Route.ComponentProps) {
   const nagivate = useNavigate();
   const categories = useAtomValue(categoriesAtom);
   const listCategory = useSetAtom(ListCategoryAtom);
@@ -58,6 +58,4 @@ const IndexPage: React.FC<{}> = () => {
       <PostList data={data} />
     </div>
   );
-};
-
-export default IndexPage;
+}

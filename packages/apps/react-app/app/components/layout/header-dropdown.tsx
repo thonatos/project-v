@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { useNavigate } from 'react-router';
-import { Github } from 'lucide-react';
 
 import { Button } from '~/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar';
@@ -15,14 +14,15 @@ import {
 } from '~/components/ui/dropdown-menu';
 
 import { profileAtom, resetProfileAtom } from '~/store/authAtom';
+import { REMIX_WORKER_URL } from '~/constants';
 
 const menus = [
   { label: 'Account', type: 'Label' },
   { type: 'Separator' },
-  { label: 'Profile', key: 'profile', href: '/auth/profile' },
+  { label: 'Profile', key: 'profile', href: '/dash/profile' },
   { label: 'Support', key: 'support', href: '/support' },
   { type: 'Separator' },
-  { label: 'Logout', key: 'logout', href: '/auth/logout' },
+  { label: 'Logout', key: 'logout' },
 ];
 
 export const Dropdown: React.FC<{}> = () => {
@@ -42,6 +42,8 @@ export const Dropdown: React.FC<{}> = () => {
 
     if (key === 'logout') {
       resetProfile();
+      window.location.href = `${REMIX_WORKER_URL}/auth/logout`;
+      return;
     }
 
     if (targetHref) {
@@ -52,12 +54,13 @@ export const Dropdown: React.FC<{}> = () => {
   if (!avatarUrl) {
     return (
       <Button
+        className="px-4"
         size="sm"
         onClick={() => {
           handleClick('login');
         }}
       >
-        <Github /> Login with Github
+        Login
       </Button>
     );
   }

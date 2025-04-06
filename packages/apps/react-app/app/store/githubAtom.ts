@@ -1,20 +1,14 @@
 import debug from 'debug';
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { sendMessageToSW } from '~/lib/utils';
-import {
-  initDB,
-  getRepoList,
-  TIME_FETCH_STARRED_REPO_LIST,
-  EVENT_FETCH_STARRED_REPO_LIST,
-} from '~/modules/github';
+import { initDB, getRepoList } from '~/modules/github';
 
-import type { GithubRepository } from '~/modules/github';
+import type { GithubRepo } from '~/modules/github';
 
 export const logger = debug('store:githubAtom');
-export const loadingAtom = atom<boolean>(false);
+
 export const recordAtom = atomWithStorage<number | undefined>(
-  TIME_FETCH_STARRED_REPO_LIST,
+  'github_fetch_starred_repo_list_time',
   undefined,
   undefined,
   {
@@ -23,13 +17,8 @@ export const recordAtom = atomWithStorage<number | undefined>(
 );
 
 // repo
-const repoLangAtom = atom<
-  Array<{
-    name: string;
-    value: number;
-  }>
->([]);
-const repoListAtom = atom<GithubRepository[]>([]);
+const repoLangAtom = atom<Array<{ name: string; value: number }>>([]);
+const repoListAtom = atom<GithubRepo[]>([]);
 
 export const loadRepoAtom = atom(
   (get) => {
@@ -38,31 +27,7 @@ export const loadRepoAtom = atom(
       repositories: get(repoListAtom),
     };
   },
-  async (
-    get,
-    set,
-    options?: {
-      pageNumber: number;
-      pageSize?: number;
-    }
-  ) => {
-    const current_time = Date.now();
-    const last_reqeust_time = get(recordAtom);
-
-    logger('githubAtom:loadingAtom', get(loadingAtom));
-
-    if (!!get(loadingAtom)) {
-      return;
-    }
-
-    logger('githubAtom:time', current_time, last_reqeust_time);
-    if (!last_reqeust_time || current_time - last_reqeust_time > 1000 * 60 * 60) {
-      sendMessageToSW(EVENT_FETCH_STARRED_REPO_LIST, options);
-      set(recordAtom, current_time);
-    }
-
-    set(loadingAtom, true);
-
+  async (_get, set) => {
     const db = await initDB();
     const { repoList, langList } = await getRepoList(db);
 
@@ -70,8 +35,6 @@ export const loadRepoAtom = atom(
 
     set(repoListAtom, repoList);
     set(repoLangAtom, langList);
-    set(loadingAtom, false);
-    set(recordAtom, current_time);
   }
 );
 

@@ -4,14 +4,14 @@ import { Star, GitFork, Eye, CircleDot, Github } from 'lucide-react';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
 
-import { type GithubRepository } from '~/modules/github';
+import { type GithubRepo } from '~/modules/github';
 
 function formatNumber(num: number): string {
   return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num?.toString();
 }
 
 export const RepositoryCard: React.FC<{
-  repo: GithubRepository;
+  repo: GithubRepo;
 }> = ({ repo }) => {
   return (
     <Card key={repo.name} className="flex flex-col">

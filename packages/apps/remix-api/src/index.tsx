@@ -3,16 +3,19 @@ import { cors } from 'hono/cors';
 import { timing } from 'hono/timing';
 import { logger } from 'hono/logger';
 
+import { JwtMiddleware } from './middlewares/jwt';
+import { IsAdminMiddleware } from './middlewares/is-admin';
+import { SupabaseMiddleware } from './middlewares/supabase';
+
+import conf from './routes/conf';
+import chat from './routes/chat';
+import blog from './routes/blog';
+import auth from './routes/auth';
+import passkey from './routes/passkey';
+
+import { HomePage } from './components/home';
+
 import { CORS_ORIGINS } from './constants';
-import { Home } from './components/home';
-
-import { IsAdmin } from './middlewares/is-admin';
-import { Supabase } from './middlewares/supabase';
-import { JSonWebToken } from './middlewares/jwt';
-
-import * as ai from './routes/ai';
-import * as auth from './routes/auth';
-import * as blog from './routes/blog';
 
 import type { JwtVariables } from 'hono/jwt';
 import type { TimingVariables } from 'hono/timing';
@@ -30,8 +33,11 @@ export type Bindings = {
   AUTH_JWT_SECRET: string;
   AUTH_ADMIN_EMAIL: string;
 
+  AUTH_COOKIE_SRCRET: string;
+
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
 
   AI: {
     run: (model: string, inputs: any) => Promise<any>;
@@ -49,7 +55,7 @@ app.use(
   cors({
     maxAge: 600,
     credentials: true,
-    allowMethods: ['HEAD', 'POST', 'GET', 'OPTIONS'],
+    allowMethods: ['HEAD', 'POST', 'GET', 'OPTIONS', 'PUT', 'DELETE'],
     origin: (origin) => {
       if (CORS_ORIGINS.some((o) => origin.includes(o))) {
         return origin;
@@ -60,33 +66,18 @@ app.use(
   })
 );
 
+app.use('*', SupabaseMiddleware());
+app.use('/chat/*', JwtMiddleware());
+app.use('/chat/*', IsAdminMiddleware());
+
 app.get('/', async (c) => {
-  return c.html(<Home />);
+  return c.html(<HomePage />);
 });
 
-// auth
-app.use('*', Supabase());
-
-app.get('/auth/oauth', auth.oauth);
-app.get('/auth/callback', auth.callback);
-app.get('/auth/profile', auth.profile);
-app.post('/auth/login', auth.login);
-
-// ai
-app.use('/ai/*', JSonWebToken());
-app.use('/ai/*', IsAdmin());
-app.post('/ai/chat', ai.chat);
-app.post('/ai/text2image', ai.text2image);
-
-// blog
-app.get('/blog/category/list', blog.listCategory);
-
-app.get('/blog/post/get', blog.getPost);
-app.get('/blog/post/list', blog.listPost);
-app.post('/blog/post/create', blog.createPost);
-app.post('/blog/post/delete', blog.deletePost);
-
-app.post('/blog/comment/create', blog.createComment);
-app.post('/blog/comment/delete', blog.deleteComment);
+app.route('/conf', conf);
+app.route('/auth', auth);
+app.route('/blog', blog);
+app.route('/chat', chat);
+app.route('/passkey', passkey);
 
 export default app;

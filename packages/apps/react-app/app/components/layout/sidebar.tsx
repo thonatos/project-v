@@ -1,35 +1,35 @@
 import React from 'react';
 import { useAtomValue } from 'jotai';
 import { NavLink, useLocation } from 'react-router';
-import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon } from 'lucide-react';
+import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon, BotIcon } from 'lucide-react';
 
 import {
   Sidebar,
-  // SidebarHeader,
+  SidebarHeader,
   SidebarContent,
   SidebarGroup,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from '~/components/ui/sidebar';
-
+import Logo from '~/components/custom/logo';
 import { profileAtom } from '~/store/authAtom';
 
 const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
   { icon: FolderGit, label: 'Github Stars', pathname: '/github/stars' },
   { icon: LineChart, label: 'Finances', pathname: '/finances' },
+  { icon: EditIcon, label: 'Editor', pathname: '/dash/add-post', needLogin: true },
+  { icon: BotIcon, label: 'Chat', pathname: '/dash/chat', needLogin: true },
   { icon: HelpCircleIcon, label: 'Support', pathname: '/support' },
 ];
 
-const AuthedNavLinks = [{ icon: EditIcon, label: 'Editor', pathname: '/dash/add-post' }];
-
-export const CustomSidebar: React.FC<{
-  asistant?: React.ReactNode;
-}> = ({ asistant }) => {
+export const CustomSidebar: React.FC<{}> = () => {
   const location = useLocation();
   const profile = useAtomValue(profileAtom);
-  const navLinks = profile ? [...NavLinks, ...AuthedNavLinks] : NavLinks;
+  const navLinks = NavLinks.filter((item) => {
+    return item?.needLogin ? !!profile : true;
+  });
 
   return (
     <Sidebar collapsible="icon" className="overflow-hidden [&>[data-sidebar=sidebar]]:flex-row">
@@ -53,13 +53,13 @@ export const CustomSidebar: React.FC<{
       </Sidebar>
 
       <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-        {/* <SidebarHeader>
+        <SidebarHeader>
           <div className="flex justify-center items-center">
             <Logo title="ρV" description="undefined project" />
           </div>
-        </SidebarHeader> */}
+        </SidebarHeader>
 
-        <SidebarContent className="p-2">{asistant}</SidebarContent>
+        <SidebarContent className="p-2"></SidebarContent>
       </Sidebar>
     </Sidebar>
   );

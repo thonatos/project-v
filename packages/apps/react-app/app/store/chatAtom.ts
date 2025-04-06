@@ -1,6 +1,6 @@
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { chat } from './service/ai';
+import { chatText } from '~/service/chat';
 
 export interface Message {
   role: string;
@@ -33,7 +33,7 @@ export const sendMessageAtom = atom(null, async (get, set, message: string, toke
 
   let newMessage = '';
 
-  await chat(
+  await chatText(
     {
       messages: newMessages,
     },

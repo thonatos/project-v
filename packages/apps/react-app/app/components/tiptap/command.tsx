@@ -2,7 +2,7 @@ import { Extension } from '@tiptap/core';
 import { Suggestion } from '@tiptap/suggestion';
 
 export const CustomCommand = Extension.create({
-  name: 'commands',
+  name: 'custom_commands',
 
   addOptions() {
     return {

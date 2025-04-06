@@ -1,15 +1,13 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import invariant from 'tiny-invariant';
 import { toast } from 'sonner';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Link, Await, useLoaderData, useNavigate } from 'react-router';
-
-import { getPost } from '~/store/service/blog';
-
 import { PostDetail } from '~/components/biz/post-detail';
 import { PostDetailSkeleton } from '~/components/biz/post-detail-skeleton';
 import { profileAtom } from '~/store/authAtom';
 import { deletePostAtom } from '~/store/blogAtom';
+import { getPost } from '~/service/blog';
 
 import type { Route } from './+types/post.$id';
 
@@ -23,24 +21,24 @@ export const meta = ({ data }: Route.MetaArgs) => {
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  invariant(params.id, 'Missing slug param');
+  invariant(params.id, 'id is required');
+
   const data = await getPost(params.id);
   return data;
 };
 
-const PostDetailPage: React.FC<{}> = () => {
-  const { post } = useLoaderData<typeof loader>();
-
-  console.log('post', post);
+export default function ({}: Route.ComponentProps) {
+  const loaderData = useLoaderData<typeof loader>();
+  // console.log('loaderData', loaderData);
 
   const navigate = useNavigate();
   const profile = useAtomValue(profileAtom);
   const deletePost = useSetAtom(deletePostAtom);
 
   const handleDeletePost = async (id: string) => {
-    const { status } = await deletePost(id);
+    const { data } = await deletePost(id);
 
-    if (status !== 204) {
+    if (data !== 204) {
       toast.warning('文章删除失败, 请稍后再试');
       return;
     }
@@ -55,14 +53,11 @@ const PostDetailPage: React.FC<{}> = () => {
   return (
     <div className="max-w-full overflow-hidden">
       <Suspense fallback={<PostDetailSkeleton />}>
-        <Await resolve={post}>
-          {(postData) => {
-            return postData ? (
-              <PostDetail
-                post={postData}
-                isOwner={profile?.id === postData.user_id}
-                onDelete={handleDeletePost}
-              />
+        <Await resolve={loaderData}>
+          {(loaderData) => {
+            const isOwner = !!profile && profile.id === loaderData?.post?.user_id;
+            return loaderData ? (
+              <PostDetail post={loaderData.post} isOwner={isOwner} onDelete={handleDeletePost} />
             ) : (
               <PostDetailSkeleton />
             );
@@ -71,6 +66,4 @@ const PostDetailPage: React.FC<{}> = () => {
       </Suspense>
     </div>
   );
-};
-
-export default PostDetailPage;
+}

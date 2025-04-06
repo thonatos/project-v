@@ -1,6 +1,4 @@
-import React from 'react';
 import { Link } from 'react-router';
-
 import { OSS_PROJECTS } from '~/constants';
 import { Logo } from '~/components/custom/logo';
 import { Tiptap } from '~/components/tiptap/editor';
@@ -16,7 +14,7 @@ export const meta = ({}: Route.MetaArgs) => {
   return [{ title: 'Support' }, { name: 'ρV', content: 'undefined project - ρV' }];
 };
 
-export const SupportPage: React.FC<{}> = () => {
+export default function ({}: Route.ComponentProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
       <div className="md:col-span-4 space-y-4">
@@ -37,6 +35,4 @@ export const SupportPage: React.FC<{}> = () => {
       <ProjectList projects={OSS_PROJECTS} />
     </div>
   );
-};
-
-export default SupportPage;
+}

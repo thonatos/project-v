@@ -63,6 +63,18 @@ export interface Post {
   updated_at?: number;
 }
 
+export interface Comment {
+  id: string;
+  post_id: string;
+  parent_id?: string;
+  user_id: string;
+  user_email: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  replies?: Comment[];
+}
+
 export interface Message {
   role: string;
   content: string;

@@ -1,6 +1,6 @@
 import { REMIX_WORKER_URL } from '~/constants';
 
-export const chat = async (
+export const chatText = async (
   value: any,
   options: {
     token: string;
@@ -8,7 +8,7 @@ export const chat = async (
   }
 ) => {
   try {
-    const response = await fetch(`${REMIX_WORKER_URL}/ai/chat`, {
+    const response = await fetch(`${REMIX_WORKER_URL}/chat/text`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

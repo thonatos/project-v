@@ -1,13 +1,17 @@
 import React from 'react';
-import { Form } from 'react-router';
-import { GithubIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { useSetAtom } from 'jotai';
+import { Form, useNavigate } from 'react-router';
+import { GithubIcon, KeySquareIcon } from 'lucide-react';
+
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Card, CardContent } from '~/components/ui/card';
-
 import { cn } from '~/lib/utils';
 import { REMIX_WORKER_URL } from '~/constants';
+
+import { authPasskeyAtom } from '~/store/authAtom';
 
 const Intro: React.FC<{}> = () => {
   return (
@@ -31,8 +35,21 @@ const Terms: React.FC<{}> = () => {
 };
 
 export const LoginForm: React.FC<{ className?: string }> = ({ className, ...props }) => {
+  const navigate = useNavigate();
+  const authPasskey = useSetAtom(authPasskeyAtom);
+
   const handleOAuth = () => {
     window.location.href = `${REMIX_WORKER_URL}/auth/oauth`;
+  };
+
+  const handlePasskey = async () => {
+    const res = await authPasskey();
+    if (!res) {
+      toast('登录失败，请重试...');
+      return;
+    }
+
+    navigate('/');
   };
 
   return (
@@ -76,7 +93,12 @@ export const LoginForm: React.FC<{ className?: string }> = ({ className, ...prop
                   Or continue with
                 </span>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Button type="button" variant="outline" className="w-full" onClick={handlePasskey}>
+                  <KeySquareIcon />
+                  <span className="sr-only">Login with Passkey</span>
+                </Button>
+
                 <Button type="button" variant="outline" className="w-full" onClick={handleOAuth}>
                   <GithubIcon />
                   <span className="sr-only">Login with Github</span>

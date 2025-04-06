@@ -1,5 +1,5 @@
+import { useSetAtom } from 'jotai';
 import { Moon, Sun } from 'lucide-react';
-import { Theme, useTheme } from 'remix-themes';
 
 import { Button } from '~/components/ui/button';
 import {
@@ -8,9 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import { THEME, themeAtom } from '~/store/appAtom';
 
 export const ModeToggle: React.FC<{}> = () => {
-  const [, setTheme] = useTheme();
+  const setTheme = useSetAtom(themeAtom);
+
+  const handleChange = (theme: string) => {
+    setTheme(theme);
+  };
 
   return (
     <DropdownMenu>
@@ -22,8 +27,8 @@ export const ModeToggle: React.FC<{}> = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme(Theme.LIGHT)}>Light</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme(Theme.DARK)}>Dark</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleChange(THEME.LIGHT)}>Light</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleChange(THEME.DARK)}>Dark</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

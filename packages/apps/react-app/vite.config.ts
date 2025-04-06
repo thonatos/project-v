@@ -5,6 +5,9 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  define: {
+    VITE_BUILD_DATE: process.env.VITE_BUILD_DATE,
+  },
   resolve: {
     alias: {
       '~': '/app',
