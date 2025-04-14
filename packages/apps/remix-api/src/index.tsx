@@ -33,6 +33,7 @@ export type Bindings = {
   AUTH_JWT_SECRET: string;
   AUTH_ADMIN_EMAIL: string;
 
+  AUTH_COOKIE_DOMAIN: string;
   AUTH_COOKIE_SRCRET: string;
 
   SUPABASE_URL: string;
