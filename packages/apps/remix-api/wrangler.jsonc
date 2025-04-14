@@ -18,5 +18,21 @@
       "custom_domain": true
     }
   ],
-  "workers_dev": true
+  "workers_dev": true,
+  "env": {
+    "dev": {
+      "vars": {
+        "AUTH_APP_URL": "http://localhost:5173",
+        "AUTH_CALLBACK_URL": "http://localhost:8787/auth/callback",
+        "AUTH_COOKIE_DOMAIN": "localhost"
+      }
+    },
+    "production": {
+      "vars": {
+        "AUTH_APP_URL": "https://remix.implements.io/",
+        "AUTH_CALLBACK_URL": "https://remix-api.implements.io/auth/callback",
+        "AUTH_COOKIE_DOMAIN": ".implements.io"
+      }
+    }
+  }
 }

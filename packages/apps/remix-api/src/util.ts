@@ -32,7 +32,6 @@ export const setUserId = async (c: Context, userId: string) => {
 };
 
 export const removeUserId = async (c: Context) => {
-  const referer = c.req.header('Referer') || 'localhost';
   const domain = c.env.AUTH_COOKIE_DOMAIN || 'localhost';
 
   deleteCookie(c, 'remix_user_id', {

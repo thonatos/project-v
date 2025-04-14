@@ -14,4 +14,7 @@ rushx dev
 rush install
 rush build -t remix-api
 rush deploy -p remix-api -s remix-api --overwrite
+
+# or
+npx wrangler deploy --env production
 ```

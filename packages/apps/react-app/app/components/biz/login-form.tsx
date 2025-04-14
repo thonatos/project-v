@@ -11,7 +11,7 @@ import { Card, CardContent } from '~/components/ui/card';
 import { cn } from '~/lib/utils';
 import { REMIX_WORKER_URL } from '~/constants';
 
-import { authPasskeyAtom } from '~/store/authAtom';
+import { authPasskeyAtom, loadProfileAtom } from '~/store/authAtom';
 
 const Intro: React.FC<{}> = () => {
   return (
@@ -37,6 +37,7 @@ const Terms: React.FC<{}> = () => {
 export const LoginForm: React.FC<{ className?: string }> = ({ className, ...props }) => {
   const navigate = useNavigate();
   const authPasskey = useSetAtom(authPasskeyAtom);
+  const loadProfile = useSetAtom(loadProfileAtom);
 
   const handleOAuth = () => {
     window.location.href = `${REMIX_WORKER_URL}/auth/oauth`;
@@ -48,6 +49,8 @@ export const LoginForm: React.FC<{ className?: string }> = ({ className, ...prop
       toast('登录失败，请重试...');
       return;
     }
+
+    await loadProfile();
 
     navigate('/');
   };
