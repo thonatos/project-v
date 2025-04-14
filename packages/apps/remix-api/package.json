@@ -17,11 +17,15 @@
     "wrangler": "wrangler"
   },
   "dependencies": {
+    "@passwordless-id/webauthn": "~2.3.0",
+    "@supabase/ssr": "~0.6.1",
+    "@supabase/supabase-js": "~2.49.4",
+    "dayjs": "~1.11.13",
     "hono": "^4.7.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
     "typescript": "5.7.2",
-    "wrangler": "^3.109.2"
+    "wrangler": "^4"
   }
 }

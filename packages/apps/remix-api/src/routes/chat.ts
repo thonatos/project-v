@@ -1,13 +1,11 @@
-import { Context } from 'hono';
+import { Context, Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
+
 import { AI_MODEL } from '../constants';
 
-export const info = async (c: Context) => {
-  const payload = c.get('jwtPayload');
-  // eg: { 'sub': '1234567890', 'name': 'John Doe', 'iat': 1516239022 }
-  return c.json(payload);
-};
+export const app = new Hono();
 
-export const chat = async (c: Context) => {
+export const text = async (c: Context) => {
   const { messages } = await c.req.json<{
     messages: { role: string; content: string }[];
   }>();
@@ -29,7 +27,7 @@ export const text2image = async (c: Context) => {
   const prompt = c.req.query('prompt');
 
   if (!prompt) {
-    return c.json({ error: 'prompt is required' }, 400);
+    throw new HTTPException(400, { message: 'prompt is required' });
   }
 
   const inputs = {
@@ -47,8 +45,7 @@ export const text2image = async (c: Context) => {
   });
 };
 
-export default {
-  info,
-  chat,
-  text2image,
-};
+app.post('/text', text);
+app.post('/text2image', text2image);
+
+export default app;

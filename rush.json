@@ -355,6 +355,11 @@
       "tags": ["apps"]
     },
     {
+      "packageName": "react-app",
+      "projectFolder": "packages/apps/react-app",
+      "tags": ["apps"]
+    },
+    {
       "packageName": "remix-api",
       "projectFolder": "packages/apps/remix-api",
       "tags": ["apps"]
