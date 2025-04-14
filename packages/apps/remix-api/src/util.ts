@@ -16,13 +16,12 @@ export const getUserId = async (c: Context) => {
 
 export const setUserId = async (c: Context, userId: string) => {
   const secret = c.env.AUTH_COOKIE_SRCRET || 'secret';
-  const referer = c.req.header('Referer') || 'localhost';
-  const { hostname } = new URL(referer);
+  const domain = c.env.AUTH_COOKIE_DOMAIN || 'localhost';
 
   const options: CookieOptions = {
     path: '/',
     secure: true,
-    domain: hostname,
+    domain,
     // httpOnly: true,
     sameSite: 'Strict',
     maxAge: 3600,
@@ -34,12 +33,12 @@ export const setUserId = async (c: Context, userId: string) => {
 
 export const removeUserId = async (c: Context) => {
   const referer = c.req.header('Referer') || 'localhost';
-  const { hostname } = new URL(referer);
+  const domain = c.env.AUTH_COOKIE_DOMAIN || 'localhost';
 
   deleteCookie(c, 'remix_user_id', {
     path: '/',
     secure: true,
-    domain: hostname,
+    domain,
     // httpOnly: true,
     sameSite: 'Strict',
   });
