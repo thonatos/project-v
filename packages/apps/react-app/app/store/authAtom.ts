@@ -76,7 +76,7 @@ export const loadProfileAtom = atom(null, async (get, set) => {
       return;
     }
 
-    console.log('loadProfileAtom:fetching profile');
+    logger('loadProfileAtom:fetching profile');
     const { data, token, payload, credential } = await getProfile();
     logger('loadProfileAtom', data, token, payload);
 

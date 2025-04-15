@@ -16,9 +16,6 @@ import {
 } from '~/components/ui/command';
 
 export const SlashComponent = forwardRef((props: any, ref) => {
-  // props.items
-  console.log('SlashComponent', props);
-
   const upHandler = () => {};
 
   const downHandler = () => {};
@@ -29,8 +26,6 @@ export const SlashComponent = forwardRef((props: any, ref) => {
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
-      console.log('onKeyDown', event.key);
-
       if (event.key === 'ArrowUp') {
         upHandler();
         return true;

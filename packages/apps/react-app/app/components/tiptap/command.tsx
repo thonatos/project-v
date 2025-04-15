@@ -9,7 +9,6 @@ export const CustomCommand = Extension.create({
       suggestion: {
         char: '/',
         command: ({ editor, range, props }: any) => {
-          console.log('commands.command', props, range);
           editor.chain().focus().deleteRange(range).run();
         },
       },

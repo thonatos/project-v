@@ -12,7 +12,7 @@ interface PostEditorCategoryProps {
 export const PostEditorCategory: React.FC<PostEditorCategoryProps> = ({ categories, value, onChange }) => {
   return (
     <div className="space-y-2">
-      <Label>分类</Label>
+      <Label>Category</Label>
       <Select value={value} onValueChange={onChange} required>
         <SelectTrigger>
           <SelectValue placeholder="选择文章分类..." />

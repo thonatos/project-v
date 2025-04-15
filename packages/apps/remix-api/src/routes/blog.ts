@@ -102,6 +102,34 @@ export const createPost = async (c: Context) => {
   });
 };
 
+export const updatePost = async (c: Context) => {
+  const post = await c.req.json<{ id: string }>();
+  const supabase = c.get('supabase');
+  const user_id = await getUserId(c);
+
+  if (!user_id) {
+    throw new HTTPException(403, { message: 'Unauthorized' });
+  }
+
+  const { data, error } = await supabase
+    .from('posts')
+    .update({
+      ...post,
+    })
+    .eq('id', post.id)
+    .eq('user_id', user_id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new HTTPException(400, { message: error.message });
+  }
+
+  return c.json({
+    data,
+  });
+};
+
 export const deletePost = async (c: Context) => {
   const post = await c.req.json<{ id: string }>();
   const supabase = c.get('supabase');
@@ -197,6 +225,7 @@ app.get('/posts', listPost);
 app.get('/categories', listCategory);
 
 app.get('/post', getPost);
+app.put('/post', updatePost);
 app.post('/post', createPost);
 app.delete('/post', deletePost);
 

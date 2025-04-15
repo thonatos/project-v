@@ -15,7 +15,11 @@ const defaultPost = {
 };
 
 export const tagsAtom = atom<string[]>(POST_TAGS);
-export const postAtom = atom<Post>(defaultPost);
+// export const postAtom = atom<Post>(defaultPost);
+export const postAtom = atomWithStorage<Post>('remix_blog_post', defaultPost, undefined, {
+  getOnInit: true,
+});
+
 export const submittingAtom = atom<boolean>(false);
 export const categoriesAtom = atomWithStorage<Category[]>('remix_blog_categories', [], undefined, {
   getOnInit: true,
@@ -29,6 +33,17 @@ export const ListCategoryAtom = atom(null, async (_get, set) => {
   } catch (error) {
     logger('list category error', error);
   }
+});
+
+export const updatePostAtom = atom(null, async (get, set, post: Post) => {
+  logger('update post', post);
+  set(postAtom, {
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    tags: post.tags,
+    category_name: post.category_name,
+  });
 });
 
 export const resetPostAtom = atom(null, async (_get, set) => {

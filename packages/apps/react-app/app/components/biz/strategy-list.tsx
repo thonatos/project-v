@@ -7,6 +7,11 @@ export const StrategyList: React.FC<{}> = () => {
   const loadConf = useSetAtom(loadConfAtom);
 
   useEffect(() => {
+    if (strategies.length > 0) {
+      return;
+    }
+
+    // Load configuration only if strategies are empty
     loadConf();
   }, []);
 

@@ -6,7 +6,7 @@ import { Link, Await, useLoaderData, useNavigate } from 'react-router';
 import { PostDetail } from '~/components/biz/post-detail';
 import { PostDetailSkeleton } from '~/components/biz/post-detail-skeleton';
 import { profileAtom } from '~/store/authAtom';
-import { deletePostAtom } from '~/store/blogAtom';
+import { deletePostAtom, updatePostAtom } from '~/store/blogAtom';
 import { getPost } from '~/service/blog';
 
 import type { Route } from './+types/post.$id';
@@ -20,7 +20,7 @@ export const meta = ({ data }: Route.MetaArgs) => {
   return [{ title: `${title} - ρV` }, { name: 'description', content: 'undefined project - ρV' }];
 };
 
-export const loader = async ({ params, request }: Route.LoaderArgs) => {
+export const loader = async ({ params }: Route.LoaderArgs) => {
   invariant(params.id, 'id is required');
 
   const data = await getPost(params.id);
@@ -28,12 +28,23 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 };
 
 export default function ({}: Route.ComponentProps) {
-  const loaderData = useLoaderData<typeof loader>();
-  // console.log('loaderData', loaderData);
-
   const navigate = useNavigate();
+  const loaderData = useLoaderData<typeof loader>();
+
   const profile = useAtomValue(profileAtom);
   const deletePost = useSetAtom(deletePostAtom);
+  const updatePost = useSetAtom(updatePostAtom);
+
+  const handleEditPost = async (id: string) => {
+    if (!id || !loaderData?.post) {
+      toast.error('文章不存在');
+      return;
+    }
+
+    await updatePost(loaderData.post);
+
+    navigate(`/dash/post?id=${id}`);
+  };
 
   const handleDeletePost = async (id: string) => {
     const { data } = await deletePost(id);
@@ -57,7 +68,12 @@ export default function ({}: Route.ComponentProps) {
           {(loaderData) => {
             const isOwner = !!profile && profile.id === loaderData?.post?.user_id;
             return loaderData ? (
-              <PostDetail post={loaderData.post} isOwner={isOwner} onDelete={handleDeletePost} />
+              <PostDetail
+                post={loaderData.post}
+                isOwner={isOwner}
+                onEdit={handleEditPost}
+                onDelete={handleDeletePost}
+              />
             ) : (
               <PostDetailSkeleton />
             );

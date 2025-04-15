@@ -1,23 +1,12 @@
 import React from 'react';
+import { OSS_PROJECTS } from '~/constants';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
-interface Project {
-  name: string;
-  desc: string;
-  href: string;
-}
-
-export const ProjectList: React.FC<{
-  projects: Project[];
-}> = ({ projects }) => {
-  if (projects.length === 0) {
-    return null;
-  }
-
+export const ProjectList: React.FC<{}> = () => {
   return (
-    <div className="grid grid-cols-1 gap-4">
-      {projects.map((project) => (
-        <Card key={project.name} className="flex flex-col py-0">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      {OSS_PROJECTS.map((project) => (
+        <Card key={project.name} className="flex flex-col py-0 gap-0">
           <CardHeader className="p-4 bg-muted/50">
             <CardTitle>
               <a href={project.href} target="_blank" rel="noopener noreferrer">
@@ -25,8 +14,8 @@ export const ProjectList: React.FC<{
               </a>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-2 flex-grow">
-            <p>{project.desc}</p>
+          <CardContent className="p-4 pt-2">
+            <p className="text-sm text-muted-foreground">{project.desc}</p>
           </CardContent>
         </Card>
       ))}

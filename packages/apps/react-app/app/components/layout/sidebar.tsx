@@ -18,8 +18,7 @@ import { profileAtom } from '~/store/authAtom';
 const NavLinks = [
   { icon: Home, label: 'Home', pathname: '/' },
   { icon: FolderGit, label: 'Github Stars', pathname: '/github/stars' },
-  { icon: LineChart, label: 'Finances', pathname: '/finances' },
-  { icon: EditIcon, label: 'Editor', pathname: '/dash/add-post', needLogin: true },
+  { icon: EditIcon, label: 'Editor', pathname: '/dash/post', needLogin: true },
   { icon: BotIcon, label: 'Chat', pathname: '/dash/chat', needLogin: true },
   { icon: HelpCircleIcon, label: 'Support', pathname: '/support' },
 ];

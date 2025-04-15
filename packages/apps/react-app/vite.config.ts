@@ -21,6 +21,19 @@ export default defineConfig({
       ],
     },
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    // sourcemap: true,
+    rollupOptions: {
+      onLog(level, log, handler) {
+        // @ts-ignore
+        if (log.cause && log.cause.message === `Can't resolve original location of error.`) {
+          return;
+        }
+        handler(level, log);
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     reactRouter(),

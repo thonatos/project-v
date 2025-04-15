@@ -29,6 +29,8 @@
     "@react-router/node": "^7.5.0",
     "@react-router/serve": "^7.5.0",
     "@tailwindcss/typography": "~0.5.16",
+    "@tiptap-pro/extension-table-of-contents": "~2.17.8",
+    "@tiptap-pro/extension-unique-id": "~2.17.8",
     "@tiptap/core": "~2.11.5",
     "@tiptap/extension-bubble-menu": "~2.11.5",
     "@tiptap/extension-character-count": "~2.11.4",
@@ -43,6 +45,7 @@
     "@tiptap/extension-text-style": "~2.11.5",
     "@tiptap/extension-underline": "~2.11.5",
     "@tiptap/extension-youtube": "~2.11.5",
+    "@tiptap/pm": "~2.11.7",
     "@tiptap/react": "~2.11.5",
     "@tiptap/starter-kit": "~2.11.5",
     "@tiptap/suggestion": "~2.11.5",
@@ -89,6 +92,5 @@
     "workbox-routing": "~7.3.0",
     "workbox-strategies": "~7.3.0",
     "workbox-window": "~7.3.0"
-  },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  }
 }

@@ -24,8 +24,8 @@ export const setUserId = async (c: Context, userId: string) => {
     domain,
     // httpOnly: true,
     sameSite: 'Strict',
-    maxAge: 3600,
-    expires: dayjs().utc().add(1, 'h').toDate(),
+    maxAge: 86400,
+    expires: dayjs().utc().add(1, 'd').toDate(),
   };
 
   await setSignedCookie(c, 'remix_user_id', userId, secret, options);

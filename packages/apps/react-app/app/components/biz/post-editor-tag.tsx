@@ -48,7 +48,7 @@ export const PostEditorTag: React.FC<PostEditorTagProps> = ({ tags, values, onVa
 
   return (
     <div className="space-y-2">
-      <Label>标签</Label>
+      <Label>Tags</Label>
       <div className="flex flex-wrap gap-2 mb-2">
         {values.map((tag) => (
           <Badge key={tag} variant="secondary" className="px-3 py-1">
