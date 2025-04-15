@@ -54,7 +54,6 @@ export const RepositoryList = () => {
 
     const current_time = Date.now();
     const _shouldUpdate = shouldUpdate();
-    console.log('GithubStarsPage useEffect: shouldUpdate', _shouldUpdate);
 
     // check if we should update the starred repo list
     if (!_shouldUpdate) {

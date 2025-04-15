@@ -167,7 +167,7 @@ export const EditorTopMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
             {['#000000', '#ef4444', '#22c55e', '#3b82f6', '#a855f7'].map((color) => (
               <button
                 key={color}
-                className="w-6 h-6 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+                className="w-6 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-offset-0"
                 style={{ backgroundColor: color }}
                 onClick={() => editor.chain().focus().setColor(color).run()}
               />

@@ -14,7 +14,9 @@ const SW_WB_MANIFEST = self.__WB_MANIFEST || [];
 const SW_PERIOD = import.meta.env.DEV ? 0.3 * 60 * 1000 : 5 * 60 * 1000;
 const SW_VERSION = import.meta.env.VITE_BUILD_DATE || new Date().toLocaleString();
 
-const API_DOMAINS = ['hasura.implements.io', 'remix-api.implements.io'];
+const API_DOMAINS: string[] = [
+  // 'remix-api.implements.io'
+];
 const DEV_DOMAINS = ['localhost', '127.0.0.1'];
 
 const ASSET_DEST_TYPES = ['font', 'image', 'script', 'style'];
@@ -158,10 +160,6 @@ if (homePageIndex === -1) {
 
 precacheAndRoute([
   ...manifest,
-  {
-    url: '/finances',
-    revision: SW_VERSION,
-  },
   {
     url: '/support',
     revision: SW_VERSION,

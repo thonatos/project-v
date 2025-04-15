@@ -24,7 +24,10 @@ import { PostEditorCategory } from './post-editor-category';
 
 import type { Post } from '~/types';
 
-export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultContent }) => {
+export const PostEditorForm: React.FC<{
+  id?: string;
+  defaultContent?: string;
+}> = ({ id, defaultContent }) => {
   const tags = useAtomValue(tagsAtom);
   const post = useAtomValue(postAtom);
   const submitting = useAtomValue(submittingAtom);
@@ -57,6 +60,15 @@ export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultC
     return true;
   };
 
+  const handleReset = () => {
+    if (submitting) {
+      return;
+    }
+
+    resetPost();
+    navigate('/');
+  };
+
   const handleSave = (values: Partial<Post>) => {
     savePost({
       ...post,
@@ -70,7 +82,7 @@ export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultC
     const res = await publishPost();
 
     if (res?.data) {
-      toast('文章发布成功, 正在跳转...');
+      toast('发布成功, 正在跳转...');
 
       setTimeout(() => {
         navigate(`/post/${res.data.id}`);
@@ -112,8 +124,15 @@ export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultC
 
       {/* controls */}
       <Card className="p-4">
+        {id && (
+          <div className="space-y-2">
+            <Label htmlFor="id">ID</Label>
+            <Input id="id" value={id} readOnly disabled />
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Label htmlFor="title">标题</Label>
+          <Label htmlFor="title">Title</Label>
           <Input
             id="title"
             placeholder="输入文章标题..."
@@ -147,6 +166,16 @@ export const PostEditorForm: React.FC<{ defaultContent?: string }> = ({ defaultC
         />
 
         <div className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleReset}
+            className="mr-2"
+            disabled={submitting}
+          >
+            取消
+          </Button>
+
           <Button onClick={handlePublish} disabled={submitting}>
             发布文章
           </Button>

@@ -1,15 +1,5 @@
 import { REMIX_WORKER_URL } from '~/constants';
 
-/**
- * Users Service
- *
- * Table Schema:
- * - id: UUID PRIMARY KEY
- * - name: varchar NOT NULL UNIQUE
- * - email: varchar NOT NULL
- * - user_id: UUID NOT NULL (references auth.users)
- * - created_at: TIMESTAMP DEFAULT NOW()
- */
 export const getProfile = async () => {
   const res = await fetch(`${REMIX_WORKER_URL}/auth/profile`, {
     headers: {

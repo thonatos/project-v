@@ -17,7 +17,7 @@ interface PostDetailProps {
   onDelete?: (id: string) => void;
 }
 
-export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onDelete }) => {
+export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, onDelete }) => {
   return (
     <Card className="p-4">
       <div className="flex justify-between items-start mb-4">
@@ -52,6 +52,18 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onDelete 
 
         {isOwner && (
           <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (!onEdit || !post.id) return;
+                onEdit(post.id);
+              }}
+            >
+              <Pencil className="w-4 h-4 mr-1" />
+              编辑
+            </Button>
+
             <Button
               variant="destructive"
               size="sm"

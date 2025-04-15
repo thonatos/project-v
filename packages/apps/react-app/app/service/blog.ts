@@ -1,14 +1,5 @@
 import { REMIX_WORKER_URL } from '~/constants';
 
-/**
- * Categories Service
- *
- * Table Schema:
- * - id: UUID PRIMARY KEY
- * - name: varchar NOT NULL UNIQUE
- * - type: category_type NOT NULL DEFAULT 'public'
- * - created_at: TIMESTAMP DEFAULT NOW()
- */
 export const listCategory = async () => {
   const res = await fetch(`${REMIX_WORKER_URL}/blog/categories`, {
     headers: {
@@ -42,23 +33,11 @@ export const getPost = async (id: string) => {
   return data;
 };
 
-/**
- * Posts Service
- *
- * Table Schema:
- * - id: UUID PRIMARY KEY
- * - title: TEXT NOT NULL
- * - excerpt: TEXT NOT NULL
- * - content: TEXT NOT NULL
- * - tags: varchar[]
- * - category_id: UUID (references categories)
- * - user_id: UUID NOT NULL (references users)
- * - created_at: TIMESTAMP DEFAULT NOW()
- * - updated_at: TIMESTAMP DEFAULT NOW()
- */
 export const craeteOrUpdatePost = async (value: any) => {
+  const method = value.id ? 'PUT' : 'POST';
+
   const res = await fetch(`${REMIX_WORKER_URL}/blog/post`, {
-    method: 'POST',
+    method,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -84,17 +63,6 @@ export const deletePost = async (id: string) => {
   return data;
 };
 
-/**
- * Comments Service
- *
- * Table Schema:
- * - id: UUID PRIMARY KEY
- * - content: TEXT NOT NULL
- * - parent_id: UUID (references comments)
- * - post_id: UUID NOT NULL (references posts)
- * - user_id: UUID NOT NULL (references users)
- * - created_at: TIMESTAMP DEFAULT NOW()
- */
 export const createComment = async ({
   content,
   postId,
