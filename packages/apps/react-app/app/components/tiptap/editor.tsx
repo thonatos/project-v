@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { common, createLowlight } from 'lowlight';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import CharacterCount from '@tiptap/extension-character-count';
-import Underline from '@tiptap/extension-underline';
+import { all, createLowlight } from 'lowlight';
+import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react';
+
 import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
+import StarterKit from '@tiptap/starter-kit';
+import Youtube from '@tiptap/extension-youtube';
+import Underline from '@tiptap/extension-underline';
 import TextStyle from '@tiptap/extension-text-style';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
-import Youtube from '@tiptap/extension-youtube';
+import Placeholder from '@tiptap/extension-placeholder';
+import CharacterCount from '@tiptap/extension-character-count';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+
 import { UniqueID } from '@tiptap-pro/extension-unique-id';
 import { Color } from '@tiptap/extension-color';
 import {
@@ -20,13 +22,23 @@ import {
   type TableOfContentData,
 } from '@tiptap-pro/extension-table-of-contents';
 
+import css from 'highlight.js/lib/languages/css';
+import html from 'highlight.js/lib/languages/xml';
+import js from 'highlight.js/lib/languages/javascript';
+import ts from 'highlight.js/lib/languages/typescript';
+
 import { EditorTopMenu } from './editor-top-menu';
 import { EditorFloatMenu } from './editor-float-menu';
+// import { CustomCommand } from './command';
+// import { SlashSuggestion } from './slash-suggestion';
+import { CodeBlockComponent } from './code-block-component';
 
-import { CustomCommand } from './command';
-import { SlashSuggestion } from './slash-suggestion';
-
-const lowlight = createLowlight(common);
+const lowlight = createLowlight(all);
+// you can also register individual languages
+lowlight.register('js', js);
+lowlight.register('ts', ts);
+lowlight.register('css', css);
+lowlight.register('html', html);
 
 import { ToC } from './editor-toc';
 
@@ -76,7 +88,11 @@ export const Tiptap: React.FC<{
         controls: false,
         nocookie: true,
       }),
-      CodeBlockLowlight.configure({
+      CodeBlockLowlight.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlockComponent);
+        },
+      }).configure({
         lowlight,
       }),
     ],

@@ -1,10 +1,10 @@
 import React from 'react';
-import { useSetAtom } from 'jotai';
 import { toast } from 'sonner';
+import { useSetAtom } from 'jotai';
 
 import { Button } from '~/components/ui/button';
 import { Textarea } from '~/components/ui/textarea';
-import { createCommentAtom } from '~/store/commentAtom';
+import { createCommentAtom } from '~/store/blogAtom';
 
 interface CommentFormProps {
   postId: string;

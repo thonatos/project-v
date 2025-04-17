@@ -85,9 +85,9 @@ export const PostEditorForm: React.FC<{
       toast('发布成功, 正在跳转...');
 
       setTimeout(() => {
-        navigate(`/post/${res.data.id}`);
         resetPost();
-      }, 3000);
+        navigate(`/post/${res.data.id}`);
+      }, 2000);
       return;
     }
 
@@ -111,7 +111,7 @@ export const PostEditorForm: React.FC<{
         <div className="space-y-2">
           {/* <Label>内容</Label> */}
           <Tiptap
-            editable={!submitting}
+            editable={true}
             content={content || defaultContent}
             onChange={(value) => {
               handleSave({
@@ -166,18 +166,12 @@ export const PostEditorForm: React.FC<{
         />
 
         <div className="flex justify-end space-x-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleReset}
-            className="mr-2"
-            disabled={submitting}
-          >
+          <Button variant="outline" onClick={handleReset} disabled={submitting}>
             取消
           </Button>
 
           <Button onClick={handlePublish} disabled={submitting}>
-            发布文章
+            发布
           </Button>
         </div>
       </Card>

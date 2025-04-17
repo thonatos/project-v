@@ -10,10 +10,10 @@ type Payload = Omit<Profile, 'created_at' | 'updated_at'> & { iat: number; exp: 
 
 const logger = debug('app:store:authAtom');
 
-const testSupabaseAuth = (str: string) => {
-  const pattern = /sb-[^-]+-auth-token\.\d+/;
-  return pattern.test(str);
-};
+// const testSupabaseAuth = (str: string) => {
+//   const pattern = /sb-[^-]+-auth-token\.\d+/;
+//   return pattern.test(str);
+// };
 
 export const tokenAtom = atomWithStorage<string | undefined>('remix_auth_token', undefined, undefined, {
   getOnInit: true,
@@ -44,13 +44,13 @@ export const resetProfileAtom = atom(null, (_get, set) => {
 export const loadProfileAtom = atom(null, async (get, set) => {
   try {
     // check if authed with supabase
-    const authedWithSupabase = document.cookie.split(';').some((cookie) => {
-      const [cookieName] = cookie.split('=');
-      return testSupabaseAuth(cookieName);
-    });
+    // const authedWithSupabase = document.cookie.split(';').some((cookie) => {
+    //   const [cookieName] = cookie.split('=');
+    //   return testSupabaseAuth(cookieName);
+    // });
 
     // check if authed with our app
-    const authedWithRemix = document.cookie.split(';').find((cookie) => {
+    const authedWithHono = document.cookie.split(';').find((cookie) => {
       const [cookieName] = cookie.split('=');
       return cookieName.trim() === 'remix_user_id';
     });
@@ -61,10 +61,11 @@ export const loadProfileAtom = atom(null, async (get, set) => {
       exp,
       now: Date.now(),
       isExpired,
-      authed: !authedWithSupabase,
+      authedWithRemix: authedWithHono,
+      // authedWithSupabase,
     });
 
-    if (isExpired || (!authedWithSupabase && !authedWithRemix)) {
+    if (isExpired || !authedWithHono) {
       set(tokenAtom, undefined);
       set(profileAtom, undefined);
       set(payloadAtom, undefined);

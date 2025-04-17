@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { formatDateTime } from '~/lib/utils';
-import { User, Clock, Delete } from 'lucide-react';
 import { useAtomValue } from 'jotai';
+import { User, Clock, Delete } from 'lucide-react';
 
-import { Button } from '~/components/ui/button';
+import { formatDateTime } from '~/lib/utils';
 import { Card } from '~/components/ui/card';
+import { Button } from '~/components/ui/button';
 import { CommentReply } from './comment-reply';
 import { Separator } from '~/components/ui/separator';
 import { profileAtom } from '~/store/authAtom';
+
 import type { Comment } from '~/types';
 
 interface CommentListProps {
