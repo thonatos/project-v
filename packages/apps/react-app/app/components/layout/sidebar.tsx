@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAtomValue } from 'jotai';
 import { NavLink, useLocation } from 'react-router';
-import { Home, LineChart, FolderGit, EditIcon, HelpCircleIcon, BotIcon } from 'lucide-react';
+import { Home, FolderGit, EditIcon, HelpCircleIcon, BotIcon } from 'lucide-react';
 
 import {
   Sidebar,
