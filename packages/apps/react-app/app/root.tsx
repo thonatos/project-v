@@ -51,7 +51,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const providers = [createProvider(JotaiProvider)];
-
   const AllInOneProvider = composeProviders(providers);
 
   return (

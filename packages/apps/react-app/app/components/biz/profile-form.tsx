@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useAtomValue, useSetAtom } from 'jotai';
 
 import { Card } from '~/components/ui/card';
 import { Label } from '~/components/ui/label';
@@ -7,10 +8,9 @@ import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Textarea } from '~/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { bindPasskeyAtom, credentialAtom } from '~/store/authAtom';
 
 import type { Profile } from '~/types';
-import { useAtomValue, useSetAtom } from 'jotai';
-import { bindPasskeyAtom, credentialAtom } from '~/store/authAtom';
 
 export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
   const [user, setUser] = useState(profile);

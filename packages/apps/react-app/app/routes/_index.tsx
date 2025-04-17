@@ -24,7 +24,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 };
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Home' }, { name: 'ρV', content: 'undefined project - ρV' }];
+  return [
+    { title: 'Home' },
+    { name: 'ρV', content: 'undefined project - ρV' },
+    { property: 'og:title', content: 'undefined project - ρV' },
+  ];
 }
 
 export default function ({}: Route.ComponentProps) {

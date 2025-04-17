@@ -4,8 +4,8 @@ import { CommentForm } from './comment-form';
 interface CommentReplyProps {
   postId: string;
   parentId: string;
-  onSuccess?: () => void;
   onCancel: () => void;
+  onSuccess?: () => void;
 }
 
 export const CommentReply: React.FC<CommentReplyProps> = ({ postId, parentId, onSuccess, onCancel }) => {

@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Send, TrashIcon } from 'lucide-react';
 
+import { cn } from '~/lib/utils';
+import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { ScrollArea } from '~/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import { Card } from '~/components/ui/card';
-import { cn } from '~/lib/utils';
 
 import { tokenAtom } from '~/store/authAtom';
 import { clearMessagesAtom, messagesAtom, sendMessageAtom } from '~/store/chatAtom';
