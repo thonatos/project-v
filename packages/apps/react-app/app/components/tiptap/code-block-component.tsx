@@ -32,7 +32,7 @@ export const CodeBlockComponent: React.FC<any> = ({ editor, node, updateAttribut
         </Select>
       </div>
 
-      <pre>
+      <pre className="px-[1rem] pt-[2.8rem] pb-[1rem] mt-1 md:pt-[3rem]">
         <NodeViewContent as="code" />
       </pre>
     </NodeViewWrapper>

@@ -36,9 +36,12 @@ export const logger = debug('store:appAtom');
 
 export const searchAtom = atom<string>('');
 export const loadingAtom = atom<boolean>(false);
-export const strategiesAtom = atom<Strategy[]>([]);
 export const referralLinksAtom = atom<ReferralLink[]>([]);
 export const sponsorAccountsAtom = atom<SponsorAccounts[]>([]);
+
+export const strategiesAtom = atomWithStorage<Strategy[]>('remix_app_strategy', [], undefined, {
+  getOnInit: true,
+});
 
 export const themeAtom = atomWithStorage<string | undefined>('remix_app_theme', 'light', undefined, {
   getOnInit: true,
