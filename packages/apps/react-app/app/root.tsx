@@ -52,11 +52,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Toaster />
         <ScrollRestoration />
         <Scripts />
-        {/* <script
+        <script
           defer
           src="https://static.cloudflareinsights.com/beacon.min.js"
           data-cf-beacon='{"token": "9da4afd7938f4ddb875cab11b8e56c8e"}'
-        ></script> */}
+        ></script>
       </body>
     </html>
   );
