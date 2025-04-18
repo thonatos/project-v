@@ -7,6 +7,7 @@ import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
+import { Textarea } from '~/components/ui/textarea';
 import { Tiptap } from '~/components/tiptap/editor';
 
 import {
@@ -39,7 +40,7 @@ export const PostEditorForm: React.FC<{
   const publishPost = useSetAtom(publishPostAtom);
   const listCategory = useSetAtom(ListCategoryAtom);
 
-  const { title, content, tags: selectedTags, category_name } = post;
+  const { title, content, excerpt, tags: selectedTags, category_name } = post;
 
   const validateForm = () => {
     if (!title.trim()) {
@@ -137,9 +138,24 @@ export const PostEditorForm: React.FC<{
             id="title"
             placeholder="输入文章标题..."
             value={title}
+            required
             onChange={(e) =>
               handleSave({
                 title: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="excerpt">Excerpt</Label>
+          <Textarea
+            id="excerpt"
+            placeholder="输入文章摘要..."
+            value={excerpt}
+            onChange={(e) =>
+              handleSave({
+                excerpt: e.target.value,
               })
             }
           />

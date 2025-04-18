@@ -7,8 +7,8 @@ interface ViteTypeOptions {
 }
 
 interface ImportMetaEnv {
-  readonly REMIX_WEB_DOMAIN: string;
-  readonly REMIX_WORKER_URL: string;
+  readonly VITE_REMIX_URL: string;
+  readonly VITE_REMIX_API: string;
 }
 
 interface ImportMeta {

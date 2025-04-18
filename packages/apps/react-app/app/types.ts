@@ -48,7 +48,7 @@ export interface Post {
 
   title: string;
   content: string;
-  except?: string;
+  excerpt?: string;
   tags: string[];
 
   user_id?: string;

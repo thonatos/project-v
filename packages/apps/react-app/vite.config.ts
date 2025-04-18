@@ -22,7 +22,7 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 2000,
     // sourcemap: true,
     rollupOptions: {
       onLog(level, log, handler) {

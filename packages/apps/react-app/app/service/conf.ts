@@ -1,7 +1,7 @@
-import { REMIX_WORKER_URL } from '~/constants';
+import { REMIX_API } from '~/constants';
 
 export const listConf = async () => {
-  const res = await fetch(`${REMIX_WORKER_URL}/conf`, {
+  const res = await fetch(`${REMIX_API}/conf`, {
     headers: {
       'Content-Type': 'application/json',
     },
