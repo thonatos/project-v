@@ -14,7 +14,7 @@ import {
 } from '~/components/ui/dropdown-menu';
 
 import { profileAtom, resetProfileAtom } from '~/store/authAtom';
-import { REMIX_WORKER_URL } from '~/constants';
+import { REMIX_API } from '~/constants';
 
 const menus = [
   { label: 'Account', type: 'Label' },
@@ -42,7 +42,7 @@ export const Dropdown: React.FC<{}> = () => {
 
     if (key === 'logout') {
       resetProfile();
-      window.location.href = `${REMIX_WORKER_URL}/auth/logout`;
+      window.location.href = `${REMIX_API}/auth/logout`;
       return;
     }
 

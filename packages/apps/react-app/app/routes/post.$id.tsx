@@ -7,6 +7,7 @@ import { PostDetail } from '~/components/biz/post-detail';
 import { PostDetailSkeleton } from '~/components/biz/post-detail-skeleton';
 import { profileAtom } from '~/store/authAtom';
 import { deletePostAtom, updatePostAtom } from '~/store/blogAtom';
+import { getMeta } from '~/lib/seo-util';
 import { getPost } from '~/service/blog';
 
 import type { Route } from './+types/post.$id';
@@ -15,9 +16,18 @@ export const handle = {
   breadcrumb: () => <Link to="/">Home</Link>,
 };
 
-export const meta = ({ data }: Route.MetaArgs) => {
-  const title = data?.post?.title || 'Post';
-  return [{ title: `${title} - ρV` }, { name: 'description', content: 'undefined project - ρV' }];
+export const meta = ({ location, data }: Route.MetaArgs) => {
+  const title = data?.post?.title;
+  const description = data?.post?.excerpt;
+  const pathname = location.pathname;
+
+  const props = getMeta({
+    pathname,
+    title,
+    description,
+  });
+
+  return [...props, { title }];
 };
 
 export const loader = async ({ params }: Route.LoaderArgs) => {

@@ -18,7 +18,6 @@ export async function action({ request }: Route.ActionArgs) {
   const password = String(formData.get('password'));
 
   const data = await loginWithPassword(email, password);
-
   return data;
 }
 

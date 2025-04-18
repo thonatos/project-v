@@ -17,9 +17,29 @@ const SW_VERSION = import.meta.env.VITE_BUILD_DATE || new Date().toLocaleString(
 const API_DOMAINS: string[] = [
   // 'remix-api.implements.io'
 ];
+
 const DEV_DOMAINS = ['localhost', '127.0.0.1'];
 
 const ASSET_DEST_TYPES = ['font', 'image', 'script', 'style'];
+
+const ASSET_IGNORE = [
+  'apple-touch-icon-180x180.png',
+  'apple-touch-icon-192x192.png',
+  'apple-touch-icon-512x512.png',
+  'apple-touch-icon.png',
+  'favicon-16x16.png',
+  'favicon-32x32.png',
+  'favicon-48x48.png',
+  'favicon.ico',
+  'favicon.svg',
+  'favicon.png',
+  'pwa-64x64.png',
+  'pwa-192x192.png',
+  'pwa-512x512.png',
+  'maskable-icon-512x512.png',
+  'manifest.webmanifest',
+  'og.png',
+];
 
 const reloadWindow = async () => {
   const windowClients = await self.clients.matchAll({
@@ -116,6 +136,10 @@ const assetsRoute = new Route(
     const _url = new URL(request.url);
 
     if (DEV_DOMAINS.includes(_url.hostname)) {
+      return false;
+    }
+
+    if (ASSET_IGNORE.some((item) => _url.pathname.includes(item))) {
       return false;
     }
 

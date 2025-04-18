@@ -1,35 +1,24 @@
-export const REMIX_WEB_DOMAIN = import.meta.env.VITE_REMIX_WEB_DOMAIN || 'remix.implements.io';
-export const REMIX_WORKER_URL = import.meta.env.VITE_REMIX_WORKER_URL || 'https://remix-api.implements.io';
+export const REMIX_URL = import.meta.env.VITE_REMIX_URL || 'https://remix.implements.io';
 
-export const POST_TAGS = ['Linux', 'MacOS', 'Node.js', 'React.js', 'JavaScript'];
-export const POST_CONTENT = `
-<h2>
-  Hi there,
-</h2>
-<p>
-  this is a basic <em>basic</em> example of <strong>Tiptap</strong>. Sure, there are all kind of basic text styles you’d probably expect from a text editor. But wait until you see the lists:
-</p>
-<ul>
-  <li>
-    That’s a bullet list with one …
-  </li>
-  <li>
-    … or two list items.
-  </li>
-</ul>
-<p>
-  Isn’t that great? And all of that is editable. But wait, there’s more. Let’s try a code block:
-</p>
-<pre><code class="language-css">body { display: none; }</code></pre>
-<p>
-  I know, I know, this is impressive. It’s only the tip of the iceberg though. Give it a try and click a little bit around. Don’t forget to check the other examples too.
-</p>
-<blockquote>
-  Wow, that’s amazing. Good work, boy! 👏
-  <br />
-  — Mom
-</blockquote>
-`;
+export const REMIX_API = import.meta.env.VITE_REMIX_API || 'https://remix-api.implements.io';
+
+export const REMIX_WEB = {
+  baseUrl: REMIX_URL,
+  base: {
+    name: 'ρV',
+    creator: 'ρV',
+    description: 'undefined project - ρV',
+    keywords: 'Remix, React, TypeScript, Tailwind CSS',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+  openGraph: {
+    image: `https://s.implements.io/remix/og.png`,
+    width: '800',
+    height: '400',
+  },
+};
 
 export const OSS_PROJECTS = [
   {

@@ -16,7 +16,7 @@ export const CodeBlockComponent: React.FC<any> = ({ editor, node, updateAttribut
 
   return (
     <NodeViewWrapper className="code-block relative">
-      <div className="absolute top-[.5em] right-[.5em] bg-white dark:bg-black rounded-md">
+      <div className="absolute top-[.5rem] right-[.5rem] bg-white dark:bg-black rounded-md">
         <Select defaultValue={defaultLanguage} onValueChange={handleLanguageChange} disabled={!editable}>
           <SelectTrigger className="w-[150px]" size="sm">
             <SelectValue placeholder="Select a language" />

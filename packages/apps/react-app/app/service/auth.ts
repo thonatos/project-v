@@ -1,7 +1,7 @@
-import { REMIX_WORKER_URL } from '~/constants';
+import { REMIX_API } from '~/constants';
 
 export const getProfile = async () => {
-  const res = await fetch(`${REMIX_WORKER_URL}/auth/profile`, {
+  const res = await fetch(`${REMIX_API}/auth/profile`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -13,7 +13,7 @@ export const getProfile = async () => {
 };
 
 export const loginWithPassword = async (email: string, password: string) => {
-  const res = await fetch(`${REMIX_WORKER_URL}/auth/login`, {
+  const res = await fetch(`${REMIX_API}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ export const loginWithPassword = async (email: string, password: string) => {
 };
 
 export const getChallenge = async () => {
-  const res = await fetch(`${REMIX_WORKER_URL}/passkey/challenge`, {
+  const res = await fetch(`${REMIX_API}/passkey/challenge`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export const registerPasskey = async ({
   registration: any;
   challenge: string;
 }) => {
-  const res = await fetch(`${REMIX_WORKER_URL}/passkey/register`, {
+  const res = await fetch(`${REMIX_API}/passkey/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const authenticatePasskey = async ({
   authentication: any;
   challenge: string;
 }) => {
-  const res = await fetch(`${REMIX_WORKER_URL}/passkey/authenticate`, {
+  const res = await fetch(`${REMIX_API}/passkey/authenticate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,11 +1,11 @@
 import React from 'react';
-import { Clock, Pencil, Trash2, User, Bookmark } from 'lucide-react';
+import { Clock, Pencil, Trash2, User, Bookmark, Terminal } from 'lucide-react';
 
 import { Card } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Tiptap } from '~/components/tiptap/editor';
-
+import { Alert, AlertTitle, AlertDescription } from '~/components/ui/alert';
 import { formatDateTime } from '~/lib/utils';
 
 import type { Post } from '~/types';
@@ -17,10 +17,22 @@ interface PostDetailProps {
   onDelete?: (id: string) => void;
 }
 
+const PostExcerpt: React.FC<{ content?: string }> = ({ content }) => {
+  if (!content) return null;
+
+  return (
+    <Alert>
+      <Terminal className="size-4" />
+      <AlertTitle>Summary:</AlertTitle>
+      <AlertDescription>{content}</AlertDescription>
+    </Alert>
+  );
+};
+
 export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, onDelete }) => {
   return (
-    <Card className="p-4">
-      <div className="flex justify-between items-start mb-4">
+    <Card className="p-4 gap-4">
+      <div className="flex justify-between items-start mb-2">
         <div className="space-y-4">
           <h2 className="text-3xl font-bold">{post.title}</h2>
           <div className="flex items-center space-x-4 text-muted-foreground">
@@ -79,13 +91,15 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-2">
         {post.tags.map((tag) => (
           <Badge key={tag} variant="secondary">
             {tag}
           </Badge>
         ))}
       </div>
+
+      <PostExcerpt content={post.excerpt} />
 
       <Tiptap content={post.content} editable={false} />
     </Card>

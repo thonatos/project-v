@@ -8,6 +8,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Youtube from '@tiptap/extension-youtube';
 import Underline from '@tiptap/extension-underline';
 import TextStyle from '@tiptap/extension-text-style';
+import TextAlign from '@tiptap/extension-text-align';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -27,10 +28,11 @@ import html from 'highlight.js/lib/languages/xml';
 import js from 'highlight.js/lib/languages/javascript';
 import ts from 'highlight.js/lib/languages/typescript';
 
-import { EditorTopMenu } from './editor-top-menu';
-import { EditorFloatMenu } from './editor-float-menu';
+// import { EditorTopMenu } from './editor-top-menu';
+import { EditorTopMenu, EditorFloatMenu } from './editor-menu';
 // import { CustomCommand } from './command';
 // import { SlashSuggestion } from './slash-suggestion';
+import { TabHandler } from './tab-handler';
 import { CodeBlockComponent } from './code-block-component';
 
 const lowlight = createLowlight(all);
@@ -69,6 +71,9 @@ export const Tiptap: React.FC<{
       Image,
       Underline,
       TextStyle,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
       Color,
       CharacterCount,
       TaskList,
@@ -78,6 +83,7 @@ export const Tiptap: React.FC<{
       // CustomCommand.configure({
       //   suggestion: SlashSuggestion,
       // }),
+      TabHandler,
       Link.configure({
         openOnClick: false,
       }),

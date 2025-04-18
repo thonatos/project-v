@@ -53,4 +53,3 @@ export const formatReadTime = (time?: number | undefined) => {
   const _time = time === 0 ? 1 : Math.ceil(time || 1);
   return `${_time} min read`;
 };
-

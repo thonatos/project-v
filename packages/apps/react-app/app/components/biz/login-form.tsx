@@ -11,7 +11,7 @@ import { Card, CardContent } from '~/components/ui/card';
 
 import { cn } from '~/lib/utils';
 import { authPasskeyAtom, loadProfileAtom } from '~/store/authAtom';
-import { REMIX_WORKER_URL } from '~/constants';
+import { REMIX_API } from '~/constants';
 
 const Intro: React.FC<{}> = () => {
   return (
@@ -40,7 +40,7 @@ export const LoginForm: React.FC<{ className?: string }> = ({ className, ...prop
   const loadProfile = useSetAtom(loadProfileAtom);
 
   const handleOAuth = () => {
-    window.location.href = `${REMIX_WORKER_URL}/auth/oauth`;
+    window.location.href = `${REMIX_API}/auth/oauth`;
   };
 
   const handlePasskey = async () => {

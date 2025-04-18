@@ -1,7 +1,7 @@
-import { REMIX_WORKER_URL } from '~/constants';
+import { REMIX_API } from '~/constants';
 
 export const listCategory = async () => {
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/categories`, {
+  const res = await fetch(`${REMIX_API}/blog/categories`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -12,7 +12,7 @@ export const listCategory = async () => {
 };
 
 export const listPost = async (category: string) => {
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/posts?category=${category}`, {
+  const res = await fetch(`${REMIX_API}/blog/posts?category=${category}`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -23,7 +23,7 @@ export const listPost = async (category: string) => {
 };
 
 export const getPost = async (id: string) => {
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/post?id=${id}`, {
+  const res = await fetch(`${REMIX_API}/blog/post?id=${id}`, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -36,7 +36,7 @@ export const getPost = async (id: string) => {
 export const craeteOrUpdatePost = async (value: any) => {
   const method = value.id ? 'PUT' : 'POST';
 
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/post`, {
+  const res = await fetch(`${REMIX_API}/blog/post`, {
     method,
     headers: {
       'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ export const craeteOrUpdatePost = async (value: any) => {
 };
 
 export const deletePost = async (id: string) => {
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/post`, {
+  const res = await fetch(`${REMIX_API}/blog/post`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const createComment = async ({
   postId: string;
   parentId?: string;
 }): Promise<{ status: number }> => {
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/comment`, {
+  const res = await fetch(`${REMIX_API}/blog/comment`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ export const createComment = async ({
 };
 
 export const deleteComment = async (id: string): Promise<{ status: number }> => {
-  const res = await fetch(`${REMIX_WORKER_URL}/blog/comment`, {
+  const res = await fetch(`${REMIX_API}/blog/comment`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
