@@ -69,6 +69,7 @@ export const updatePostAtom = atom(null, async (get, set, post: Post) => {
     id: post.id,
     title: post.title,
     content: post.content,
+    excerpt: post.excerpt,
     tags: post.tags,
     category_name: post.category_name,
   });

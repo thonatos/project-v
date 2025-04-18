@@ -21,7 +21,7 @@ const PostExcerpt: React.FC<{ content?: string }> = ({ content }) => {
   if (!content) return null;
 
   return (
-    <Alert>
+    <Alert className="mb-2">
       <Terminal className="size-4" />
       <AlertTitle>Summary:</AlertTitle>
       <AlertDescription>{content}</AlertDescription>
@@ -34,14 +34,14 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
     <Card className="p-4 gap-4">
       <div className="flex justify-between items-start mb-2">
         <div className="space-y-4">
-          <h2 className="text-3xl font-bold">{post.title}</h2>
+          <h2 className="text-sm md:text-xl font-bold">{post.title}</h2>
           <div className="flex items-center space-x-4 text-muted-foreground">
             <div className="flex items-center">
               <Bookmark className="w-4 h-4 mr-1" />
               <span>{post.category_name}</span>
             </div>
 
-            <div className="flex items-center">
+            <div className="hidden md:flex items-center">
               <User className="w-4 h-4 mr-1" />
               <span>{post.user_email}</span>
             </div>
@@ -63,7 +63,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
         </div>
 
         {isOwner && (
-          <div className="flex space-x-2">
+          <div className="hidden md:flex space-x-2">
             <Button
               variant="outline"
               size="sm"

@@ -10,14 +10,14 @@ import type { Post } from '~/types';
 
 const ImagePlaceholder = () => (
   <Skeleton
-    className="h-36 md:h-48 w-full rounded-xl"
+    className="h-36 md:h-56 w-full rounded-xl"
     style={{
       marginTop: 0,
     }}
   />
 );
 
-export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_image, updated_at }) => {
+export const PostCard: React.FC<Post> = ({ id, title, tags, excerpt, feature_image, updated_at }) => {
   const postLink = `/post/${id}`;
 
   return (
@@ -29,7 +29,7 @@ export const PostCard: React.FC<Post> = ({ id, title, tags, except, feature_imag
               feature_image ? (
                 <AsyncImage
                   src={feature_image}
-                  className="object-cover h-36 md:h-48 w-full rounded-xl"
+                  className="object-cover h-36 md:h-56 w-full rounded-xl"
                   loader={<ImagePlaceholder />}
                 />
               ) : (

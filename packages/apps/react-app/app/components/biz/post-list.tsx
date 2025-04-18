@@ -14,7 +14,7 @@ export const PostList: React.FC<{ data: Post[] }> = ({ data }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {data.map((post) => (
         <PostCard key={post.id} {...post} feature_image={`https://picsum.photos/seed/${post.id}/480/240`} />
       ))}
