@@ -43,6 +43,11 @@ export const sendMessageAtom = atom(null, async (get, set, message: string, toke
         try {
           const jsonData = JSON.parse(data);
           const content = jsonData.response;
+
+          if (!content) {
+            return;
+          }
+
           newMessage += content;
           set(messagesAtom, [
             ...newMessages,
