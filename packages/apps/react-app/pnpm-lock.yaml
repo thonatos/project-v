@@ -147,8 +147,8 @@ importers:
         specifier: ~2.12.2
         version: 2.12.3(@types/react@19.1.1)(react@19.1.0)
       loadable-image:
-        specifier: ~3.2.6
-        version: 3.2.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        specifier: ~3.3.0
+        version: 3.3.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       lowlight:
         specifier: ~3.3.0
         version: 3.3.0
@@ -3574,8 +3574,8 @@ packages:
   linkifyjs@4.2.0:
     resolution: {integrity: sha512-pCj3PrQyATaoTYKHrgWRF3SJwsm61udVh+vuls/Rl6SptiDhgE7ziUIudAedRY9QEfynmM7/RmLEfPUyw1HPCw==}
 
-  loadable-image@3.2.6:
-    resolution: {integrity: sha512-pZ2IK8zvxyiEEoVMlLEjYQn0dtw6+A6lJZExaFvjjV30app7cdDqjNI3c7bADT2kIOwcU1Wgnv78BcAUkSwt2Q==}
+  loadable-image@3.3.0:
+    resolution: {integrity: sha512-P9mkG2mYB6IzegKhWNHi5uEsaTKlPMEGFR/Q9G0xMduyIJQWTdxfCVsGP/JTEvzXxBP44bQ/2HcxF2Kl/9Y2GA==}
     peerDependencies:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
@@ -8345,7 +8345,7 @@ snapshots:
 
   linkifyjs@4.2.0: {}
 
-  loadable-image@3.2.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  loadable-image@3.3.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)

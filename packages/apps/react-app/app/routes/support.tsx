@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Logo } from '~/components/custom/logo';
+import { Logo } from '~/components/biz/logo';
 import { Tiptap } from '~/components/tiptap/editor';
 import { ProjectList } from '~/components/biz/project-list';
 import { StrategyCard } from '~/components/biz/strategy-card';

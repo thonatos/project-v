@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '~/components/ui/sidebar';
-import Logo from '~/components/custom/logo';
+import Logo from '~/components/biz/logo';
 import { profileAtom } from '~/store/authAtom';
 
 const NavLinks = [
