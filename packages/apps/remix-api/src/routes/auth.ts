@@ -154,7 +154,12 @@ export const getProfile = async (c: Context) => {
     throw new HTTPException(401, { message: 'user not registered' });
   }
 
+  const currentTime = Date.now();
+
   const profile = {
+    exp: Math.floor(currentTime / 1000) + 60 * 60 * 24,
+    iat: Math.floor(currentTime / 1000),
+
     id: userData.id,
     role: userData.role,
     name: userData.name,

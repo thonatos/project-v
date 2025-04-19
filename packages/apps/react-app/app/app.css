@@ -139,25 +139,6 @@ body {
   }
 }
 
-.logo {
-  display: flex;
-  align-items: baseline;
-}
-
-.logo .title {
-  color: #829a82 !important;
-  margin: 0;
-  padding: 0;
-  font-size: 16px;
-}
-
-.logo .description {
-  color: #8264ff !important;
-  opacity: 0.55;
-  margin: 0 0 0 0.4em;
-  font-size: 12px;
-}
-
 .tiptap {
   :first-child {
     margin-top: 0;

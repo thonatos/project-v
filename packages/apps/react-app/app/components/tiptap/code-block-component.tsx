@@ -15,24 +15,36 @@ export const CodeBlockComponent: React.FC<any> = ({ editor, node, updateAttribut
   };
 
   return (
-    <NodeViewWrapper className="code-block relative">
-      <div className="absolute top-[.5rem] right-[.5rem] bg-white dark:bg-black rounded-md">
-        <Select defaultValue={defaultLanguage} onValueChange={handleLanguageChange} disabled={!editable}>
-          <SelectTrigger className="w-[150px]" size="sm">
-            <SelectValue placeholder="Select a language" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={'null'}>auto</SelectItem>
-            {extension.options.lowlight.listLanguages().map((lang: string, index: number) => (
-              <SelectItem value={lang} key={index}>
-                {lang}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <NodeViewWrapper
+      className="code-block flex flex-col rounded-md"
+      style={{
+        backgroundColor: 'var(--tw-prose-pre-bg)',
+      }}
+    >
+      <div className="flex justify-end p-2">
+        <div className="bg-white dark:bg-black rounded-md">
+          <Select defaultValue={defaultLanguage} onValueChange={handleLanguageChange} disabled={!editable}>
+            <SelectTrigger className="w-[150px]" size="sm">
+              <SelectValue placeholder="Select a language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={'null'}>auto</SelectItem>
+              {extension.options.lowlight.listLanguages().map((lang: string, index: number) => (
+                <SelectItem value={lang} key={index}>
+                  {lang}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <pre className="px-[1rem] pt-[2.8rem] pb-[1rem] mt-1 md:pt-[3rem]">
+      <pre
+        style={{
+          padding: '1rem',
+          margin: '0',
+        }}
+      >
         <NodeViewContent as="code" />
       </pre>
     </NodeViewWrapper>

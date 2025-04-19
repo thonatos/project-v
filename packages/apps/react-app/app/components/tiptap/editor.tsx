@@ -15,8 +15,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 
-import { UniqueID } from '@tiptap-pro/extension-unique-id';
 import { Color } from '@tiptap/extension-color';
+import { UniqueID } from '@tiptap-pro/extension-unique-id';
 import {
   getHierarchicalIndexes,
   TableOfContents,
