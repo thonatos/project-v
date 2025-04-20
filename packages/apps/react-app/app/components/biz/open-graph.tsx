@@ -17,7 +17,7 @@ export const OpenGraph: React.FC<{
           <Logo
             title={REMIX_WEB.base.name}
             description={REMIX_WEB.base.description}
-            className="bg-slate-200 rounded-sm"
+            className="bg-slate-200 rounded-sm min-w-[200px]"
           />
         </div>
         <h2 className="text-sm md:text-xl font-bold">{title}</h2>

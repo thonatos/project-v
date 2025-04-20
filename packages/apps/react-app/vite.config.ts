@@ -59,7 +59,6 @@ export default defineConfig({
         // injectionPoint: undefined,
         swSrc: 'app/sw.ts',
       },
-
       devOptions: {
         enabled: true,
         type: 'module',
