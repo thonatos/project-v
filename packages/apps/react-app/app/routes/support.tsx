@@ -35,7 +35,9 @@ export default function ({}: Route.ComponentProps) {
       </div>
 
       <div className="space-y-4">
-        <Logo title="ρV" description="undefined project" />
+        <div className="flex justify-start">
+          <Logo title="ρV" description="undefined project" />
+        </div>
         <Tiptap
           content={`
           <blockquote>
