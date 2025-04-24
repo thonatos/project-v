@@ -16,7 +16,7 @@ export const CodeBlockComponent: React.FC<any> = ({ editor, node, updateAttribut
 
   return (
     <NodeViewWrapper
-      className="code-block flex flex-col rounded-md"
+      className="code-block flex flex-col rounded-md mb-2"
       style={{
         backgroundColor: 'var(--tw-prose-pre-bg)',
       }}

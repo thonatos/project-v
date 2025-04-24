@@ -3,8 +3,7 @@ import invariant from 'tiny-invariant';
 import { toast } from 'sonner';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Link, Await, useLoaderData, useNavigate } from 'react-router';
-import { PostDetail } from '~/components/biz/post-detail';
-import { PostDetailSkeleton } from '~/components/biz/post-detail-skeleton';
+import { PostDetail, PostSkeleton } from '~/components/biz/post-detail';
 import { profileAtom } from '~/store/authAtom';
 import { deletePostAtom, updatePostAtom } from '~/store/blogAtom';
 import { getMeta } from '~/lib/seo-util';
@@ -73,23 +72,29 @@ export default function ({}: Route.ComponentProps) {
 
   return (
     <div className="max-w-full overflow-hidden">
-      <Suspense fallback={<PostDetailSkeleton />}>
-        <Await resolve={loaderData}>
-          {(loaderData) => {
-            const isOwner = !!profile && profile.id === loaderData?.post?.user_id;
-            return loaderData ? (
-              <PostDetail
-                post={loaderData.post}
-                isOwner={isOwner}
-                onEdit={handleEditPost}
-                onDelete={handleDeletePost}
-              />
-            ) : (
-              <PostDetailSkeleton />
-            );
-          }}
-        </Await>
-      </Suspense>
+      <div className="mx-auto max-w-[1400px]">
+        <Suspense fallback={<PostSkeleton />}>
+          <Await resolve={loaderData}>
+            {(loaderData) => {
+              const post = loaderData.post;
+              const isOwner = !!profile && profile.id === post?.user_id;
+
+              if (!post) {
+                return <PostSkeleton />;
+              }
+
+              return (
+                <PostDetail
+                  post={post}
+                  isOwner={isOwner}
+                  onEdit={handleEditPost}
+                  onDelete={handleDeletePost}
+                />
+              );
+            }}
+          </Await>
+        </Suspense>
+      </div>
     </div>
   );
 }

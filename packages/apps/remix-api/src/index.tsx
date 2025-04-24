@@ -4,13 +4,14 @@ import { timing } from 'hono/timing';
 import { logger } from 'hono/logger';
 
 import { JwtMiddleware } from './middlewares/jwt';
+import { IsLoginMiddleware } from './middlewares/is-login';
 import { IsAdminMiddleware } from './middlewares/is-admin';
 import { SupabaseMiddleware } from './middlewares/supabase';
 
-import conf from './routes/conf';
-import chat from './routes/chat';
-import blog from './routes/blog';
 import auth from './routes/auth';
+import blog from './routes/blog';
+import chat from './routes/chat';
+import conf from './routes/conf';
 import passkey from './routes/passkey';
 
 import { HomePage } from './components/home';
@@ -68,6 +69,15 @@ app.use(
 );
 
 app.use('*', SupabaseMiddleware());
+
+app.use(
+  '*',
+  IsLoginMiddleware({
+    GET: ['/auth/oauth', '/auth/callback', '/blog/post', '/blog/posts', '/blog/categories', '/conf'],
+    POST: ['/auth/password', '/passkey/challenge', '/passkey/register', '/passkey/authenticate'],
+  })
+);
+
 app.use('/chat/*', JwtMiddleware());
 app.use('/chat/*', IsAdminMiddleware());
 

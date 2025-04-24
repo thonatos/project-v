@@ -4,13 +4,13 @@ import { Button } from '~/components/ui/button';
 import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '~/components/ui/select';
 import { useIsMobile } from '~/hooks/use-mobile';
 
-interface PostCategoryProps {
+interface CategoryProps {
   value?: string;
   categories: string[];
   onChange: (category: string) => void;
 }
 
-export const PostCategory: React.FC<PostCategoryProps> = ({ categories, value, onChange }) => {
+export const PostCategory: React.FC<CategoryProps> = ({ categories, value, onChange }) => {
   const isMobile = useIsMobile();
 
   if (isMobile) {

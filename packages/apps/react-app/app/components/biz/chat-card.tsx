@@ -55,7 +55,7 @@ export const ChatCard: React.FC<{ disabled?: boolean }> = ({ disabled = false })
 
   return (
     <Card
-      className={cn('h-full flex flex-col py-0', {
+      className={cn('h-full flex flex-col py-0 min-h-[50vh]', {
         hidden: disabled,
       })}
     >

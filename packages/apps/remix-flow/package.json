@@ -1,0 +1,21 @@
+{
+  "name": "remix-flow",
+  "version": "0.0.0-dev.0",
+  "private": true,
+  "scripts": {
+    "_phase:build": "",
+    "build": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy --minify",
+    "dev": "wrangler dev --local",
+    "list": "wrangler workflows list",
+    "wrangler": "wrangler"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "~1.0.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250415.0",
+    "typescript": "5.7.2",
+    "wrangler": "^4"
+  }
+}

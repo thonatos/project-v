@@ -22,7 +22,6 @@ import {
 
 import { PostEditorTag } from './post-editor-tag';
 import { PostEditorCategory } from './post-editor-category';
-import { OpenGraph } from './open-graph';
 
 import type { Post } from '~/types';
 
@@ -160,11 +159,6 @@ export const PostEditorForm: React.FC<{
               })
             }
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="excerpt">OpenGraph</Label>
-          <OpenGraph title={title} description={excerpt} />
         </div>
 
         <PostEditorCategory

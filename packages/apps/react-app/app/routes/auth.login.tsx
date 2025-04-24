@@ -22,8 +22,6 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function ({}: Route.ComponentProps) {
-  const actionData = useActionData<typeof action>();
-
   return (
     <div className="w-full max-w-sm md:max-w-4xl">
       <LoginForm />

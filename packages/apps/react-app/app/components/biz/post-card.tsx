@@ -17,6 +17,30 @@ const ImagePlaceholder = () => (
   />
 );
 
+export const PostCardSkeleton: React.FC<{}> = () => {
+  return (
+    <Card className="overflow-hidden py-0 justify-between">
+      <CardHeader className="p-0">
+        <Skeleton
+          className="h-36 md:h-48 w-full rounded-xl"
+          style={{
+            marginTop: 0,
+          }}
+        />
+      </CardHeader>
+
+      <CardContent className="p-2">
+        <Skeleton className="h-6 w-full" />
+      </CardContent>
+
+      <CardFooter className="flex justify-between bg-muted/50 p-2">
+        <Skeleton className="h-6 w-1/4" />
+        <Skeleton className="h-6 w-2/4" />
+      </CardFooter>
+    </Card>
+  );
+};
+
 export const PostCard: React.FC<Post> = ({ id, title, tags, excerpt, feature_image, updated_at }) => {
   const postLink = `/post/${id}`;
 

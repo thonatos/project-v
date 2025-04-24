@@ -25,14 +25,10 @@ export const meta = ({ location }: Route.MetaArgs) => {
 
 export default function ({}: Route.ComponentProps) {
   return (
-    <div className="grid grid-cols-1 gap-8">
-      <div>
-        <StrategyCard />
-      </div>
+    <div className="flex flex-col gap-4">
+      <StrategyCard />
 
-      <div>
-        <ProjectList />
-      </div>
+      <ProjectList />
 
       <div className="space-y-4">
         <div className="flex justify-start">

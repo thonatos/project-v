@@ -19,7 +19,7 @@ export default function ({}: Route.ComponentProps) {
   const profile = useAtomValue(profileAtom);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+    <div className="max-w-full">
       <div className="space-y-4">
         <Suspense fallback={<div>Loading...</div>}>
           <Await resolve={profile}>

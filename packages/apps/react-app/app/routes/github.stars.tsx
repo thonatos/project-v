@@ -1,8 +1,6 @@
-import { Suspense } from 'react';
 import loadable from '@loadable/component';
-import { Link, Await, useAsyncValue } from 'react-router';
+import { Link } from 'react-router';
 import { RepositoryFilter } from '~/components/biz/repository-filter';
-import { RepositorySkeleton } from '~/components/biz/repository-skeleton';
 import { getMeta } from '~/lib/seo-util';
 
 import type { Route } from './+types/github.stars';
@@ -27,15 +25,10 @@ export const meta = ({ location }: Route.MetaArgs) => {
 };
 
 export default function ({}: Route.ComponentProps) {
-  const value = useAsyncValue();
   return (
-    <div className="grid grid-cols-1">
+    <div className="flex flex-col gap-4">
       <RepositoryFilter />
-      <Suspense fallback={<RepositorySkeleton />}>
-        <Await resolve={value}>
-          <RepositoryList />
-        </Await>
-      </Suspense>
+      <RepositoryList />
     </div>
   );
 }
