@@ -1,7 +1,28 @@
 import React, { Suspense } from 'react';
+import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { StrategyList } from './strategy-list';
-import { StrategySkeleton } from '~/components/biz/strategy-skeleton';
+
+export const StrategySkeleton: React.FC<{}> = () => {
+  return (
+    <div className="grid grid-cols-1 gap-8 py-4">
+      <div className="grid gap-2">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+
+      <div className="grid gap-2">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+
+      <div className="grid gap-2">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-4 w-full" />
+      </div>
+    </div>
+  );
+};
 
 export const StrategyCard: React.FC<{}> = () => {
   return (

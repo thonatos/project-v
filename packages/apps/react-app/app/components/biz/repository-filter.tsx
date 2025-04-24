@@ -35,7 +35,7 @@ export const RepositoryFilter: React.FC<{}> = () => {
   }, [filterName, debouncedSearch]);
 
   return (
-    <div className="mb-6 flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col sm:flex-row gap-4">
       <Input
         type="text"
         placeholder="Search repositories..."

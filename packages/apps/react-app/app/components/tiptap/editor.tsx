@@ -43,6 +43,7 @@ lowlight.register('css', css);
 lowlight.register('html', html);
 
 import { ToC } from './editor-toc';
+import clsx from 'clsx';
 
 export const Tiptap: React.FC<{
   content?: string;
@@ -107,8 +108,12 @@ export const Tiptap: React.FC<{
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class:
-          'prose prose-slate prose-sm sm:prose-base max-w-none min-h-[400px] focus:outline-none dark:prose-invert',
+        class: clsx(
+          'prose prose-slate prose-sm sm:prose-base max-w-none focus:outline-none dark:prose-invert',
+          {
+            'min-h-[400px]': editable,
+          }
+        ),
       },
     },
     onUpdate: ({ editor }) => {

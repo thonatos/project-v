@@ -2,7 +2,7 @@ import { Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign, decode } from 'hono/jwt';
 import { Provider } from '@supabase/supabase-js';
-import { getUserId, removeUserId, setUserId } from '../util';
+import { removeUserId, setUserId } from '../services/user';
 
 export const app = new Hono();
 
@@ -131,7 +131,7 @@ export const logout = async (c: Context) => {
 export const getProfile = async (c: Context) => {
   const jwtSecret = c.env.AUTH_JWT_SECRET || 'secret';
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   // check if user is logged in
   if (!user_id) {

@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "remix-flow",
+  "main": "src/index.ts",
+  "browser": {
+    "binding": "BROWSER"
+  },
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "remix",
+      "preview_bucket_name": "remix-preview"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "remix-flow",
+      "binding": "SCREENSHOT",
+      "class_name": "ScreenshotWorkflow"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2024-11-01"
+}

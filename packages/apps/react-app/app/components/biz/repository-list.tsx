@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSetAtom, useAtomValue } from 'jotai';
 
-import { RepositoryCard } from './repository-card';
+import { RepositoryCard, RepositorySkeleton } from './repository-card';
 import { GITHUB_FETCH_STARRED_REPO_LIST_EVENT, type GithubRepo } from '~/modules/github';
 import { loadRepoAtom, recordAtom, filterRepoAtom } from '~/store/githubAtom';
 
@@ -72,11 +72,15 @@ export const RepositoryList = () => {
   }, []);
 
   if (!repositories?.length) {
-    return null;
+    return (
+      <div className="grid grid-cols-1 gap-4">
+        <RepositorySkeleton />
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       {repositories.map((item: GithubRepo) => {
         return <RepositoryCard key={item.id} repo={item} />;
       })}
