@@ -360,6 +360,11 @@
       "tags": ["apps"]
     },
     {
+      "packageName": "remix-flow",
+      "projectFolder": "packages/apps/remix-flow",
+      "tags": ["apps"]
+    },
+    {
       "packageName": "react-component",
       "projectFolder": "packages/libs/react-component",
       "tags": ["libs"]

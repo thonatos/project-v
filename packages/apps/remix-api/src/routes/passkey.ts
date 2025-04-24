@@ -1,7 +1,7 @@
 import { Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { server } from '@passwordless-id/webauthn';
-import { getUserId, setUserId } from '../util';
+import { setUserId } from '../util';
 
 const app = new Hono();
 
@@ -16,7 +16,7 @@ export const registerPasskey = async (c: Context) => {
   const { registration, challenge } = await c.req.json<{ registration: any; challenge: string }>();
   const origin = c.req.header('Origin') || '';
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   // check if user is logged in
   if (!user_id) {

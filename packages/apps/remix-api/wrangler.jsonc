@@ -8,6 +8,12 @@
       "ai": {
         "binding": "AI"
       },
+      "services": [
+        {
+          "binding": "WORKFLOW",
+          "service": "remix-flow"
+        }
+      ],
       "vars": {
         "AUTH_APP_URL": "http://localhost:5173",
         "AUTH_CALLBACK_URL": "http://localhost:8787/auth/callback",
@@ -19,6 +25,12 @@
       "ai": {
         "binding": "AI"
       },
+      "services": [
+        {
+          "binding": "WORKFLOW",
+          "service": "remix-flow"
+        }
+      ],
       "vars": {
         "AUTH_APP_URL": "https://remix.implements.io/",
         "AUTH_CALLBACK_URL": "https://remix-api.implements.io/auth/callback",
@@ -37,8 +49,10 @@
   },
   "upload_source_maps": true,
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "head_sampling_rate": 1
   },
   "workers_dev": true,
+  "compatibility_flags": ["nodejs_compat"],
   "compatibility_date": "2024-11-01"
 }

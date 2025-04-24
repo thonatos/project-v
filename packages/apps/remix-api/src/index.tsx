@@ -4,13 +4,14 @@ import { timing } from 'hono/timing';
 import { logger } from 'hono/logger';
 
 import { JwtMiddleware } from './middlewares/jwt';
+import { IsLoginMiddleware } from './middlewares/is-login';
 import { IsAdminMiddleware } from './middlewares/is-admin';
 import { SupabaseMiddleware } from './middlewares/supabase';
 
-import conf from './routes/conf';
-import chat from './routes/chat';
-import blog from './routes/blog';
 import auth from './routes/auth';
+import blog from './routes/blog';
+import chat from './routes/chat';
+import conf from './routes/conf';
 import passkey from './routes/passkey';
 
 import { HomePage } from './components/home';
@@ -24,6 +25,7 @@ export type Variables = JwtVariables & TimingVariables;
 
 export interface Env {
   AI: Ai;
+  WORKFLOW: Service;
 }
 
 export type Bindings = {
@@ -68,6 +70,22 @@ app.use(
 );
 
 app.use('*', SupabaseMiddleware());
+
+app.use(
+  '*',
+  IsLoginMiddleware({
+    ignore: [
+      '/auth/password',
+      '/auth/oauth',
+      '/auth/callback',
+      '/passkey/challenge',
+      '/passkey/authenticate',
+      '/blog/post',
+      '/blog/posts',
+    ],
+  })
+);
+
 app.use('/chat/*', JwtMiddleware());
 app.use('/chat/*', IsAdminMiddleware());
 

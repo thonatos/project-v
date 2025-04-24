@@ -1,6 +1,6 @@
 import { Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { getUserId, setUserId } from '../util';
+import { getUserId } from '../util';
 
 export const app = new Hono();
 
@@ -78,7 +78,7 @@ export const getPost = async (c: Context) => {
 export const createPost = async (c: Context) => {
   const post = await c.req.json<{}>();
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   if (!user_id) {
     throw new HTTPException(403, { message: 'Unauthorized' });
@@ -97,6 +97,14 @@ export const createPost = async (c: Context) => {
     throw new HTTPException(400, { message: error.message });
   }
 
+  await c.env.WORKFLOW.create({
+    params: {
+      url: `https://remix.implements.io/post/${data.id}`,
+      key: data.id,
+      // selector: '#post',
+    },
+  });
+
   return c.json({
     data,
   });
@@ -105,7 +113,7 @@ export const createPost = async (c: Context) => {
 export const updatePost = async (c: Context) => {
   const post = await c.req.json<{ id: string }>();
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   if (!user_id) {
     throw new HTTPException(403, { message: 'Unauthorized' });
@@ -125,6 +133,14 @@ export const updatePost = async (c: Context) => {
     throw new HTTPException(400, { message: error.message });
   }
 
+  await c.env.WORKFLOW.create({
+    params: {
+      url: `https://remix.implements.io/post/${data.id}`,
+      key: data.id,
+      // selector: '#post',
+    },
+  });
+
   return c.json({
     data,
   });
@@ -133,7 +149,7 @@ export const updatePost = async (c: Context) => {
 export const deletePost = async (c: Context) => {
   const post = await c.req.json<{ id: string }>();
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   if (!user_id) {
     throw new HTTPException(401, { message: 'Unauthorized' });
@@ -165,7 +181,7 @@ export const createComment = async (c: Context) => {
   }>();
 
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   if (!user_id) {
     throw new HTTPException(401, { message: 'Unauthorized' });
@@ -197,7 +213,7 @@ export const deleteComment = async (c: Context) => {
   }>();
 
   const supabase = c.get('supabase');
-  const user_id = await getUserId(c);
+  const user_id = c.get('user_id');
 
   if (!user_id) {
     throw new HTTPException(401, { message: 'Unauthorized' });

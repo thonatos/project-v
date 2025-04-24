@@ -76,16 +76,15 @@ export default function ({}: Route.ComponentProps) {
       <Suspense fallback={<PostDetailSkeleton />}>
         <Await resolve={loaderData}>
           {(loaderData) => {
-            const isOwner = !!profile && profile.id === loaderData?.post?.user_id;
-            return loaderData ? (
-              <PostDetail
-                post={loaderData.post}
-                isOwner={isOwner}
-                onEdit={handleEditPost}
-                onDelete={handleDeletePost}
-              />
-            ) : (
-              <PostDetailSkeleton />
+            const post = loaderData.post;
+            const isOwner = !!profile && profile.id === post?.user_id;
+
+            if (!post) {
+              return <PostDetailSkeleton />;
+            }
+
+            return (
+              <PostDetail post={post} isOwner={isOwner} onEdit={handleEditPost} onDelete={handleDeletePost} />
             );
           }}
         </Await>

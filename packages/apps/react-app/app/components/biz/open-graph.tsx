@@ -11,8 +11,8 @@ export const OpenGraph: React.FC<{
   const description = options.description || REMIX_WEB.base.description;
 
   return (
-    <Card className="gap-2 py-4">
-      <CardHeader className="px-4">
+    <Card id="open-graph" className="gap-2 py-4">
+      <CardHeader className="px-4 gap-2">
         <div className="flex justify-end">
           <Logo
             title={REMIX_WEB.base.name}
@@ -23,7 +23,7 @@ export const OpenGraph: React.FC<{
         <h2 className="text-sm md:text-xl font-bold">{title}</h2>
       </CardHeader>
       <CardContent className="px-4">
-        <div className="text-xs text-muted-foreground">{description}</div>
+        <div className="text-sm text-muted-foreground">{description}</div>
       </CardContent>
     </Card>
   );
