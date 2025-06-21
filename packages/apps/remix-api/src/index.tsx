@@ -12,6 +12,7 @@ import auth from './routes/auth';
 import blog from './routes/blog';
 import chat from './routes/chat';
 import conf from './routes/conf';
+import charge from './routes/charge';
 import passkey from './routes/passkey';
 
 import { HomePage } from './components/home';
@@ -40,6 +41,8 @@ export type Bindings = {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+
+  COINBASE_API_KEY: string;
 
   AI: {
     run: (model: string, inputs: any) => Promise<any>;
@@ -74,7 +77,13 @@ app.use(
   '*',
   IsLoginMiddleware({
     GET: ['/auth/oauth', '/auth/callback', '/blog/post', '/blog/posts', '/blog/categories', '/conf'],
-    POST: ['/auth/password', '/passkey/challenge', '/passkey/register', '/passkey/authenticate'],
+    POST: [
+      '/auth/password',
+      '/passkey/challenge',
+      '/passkey/register',
+      '/passkey/authenticate',
+      '/charge/create',
+    ],
   })
 );
 
@@ -89,6 +98,7 @@ app.route('/conf', conf);
 app.route('/auth', auth);
 app.route('/blog', blog);
 app.route('/chat', chat);
+app.route('/charge', charge);
 app.route('/passkey', passkey);
 
 export default app;
