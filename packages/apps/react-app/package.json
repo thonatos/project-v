@@ -13,6 +13,7 @@
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "~0.38.14",
     "@loadable/component": "~5.16.4",
     "@passwordless-id/webauthn": "~2.3.0",
     "@radix-ui/react-avatar": "^1.1.3",
@@ -71,7 +72,8 @@
     "tailwindcss": "^4.0.0",
     "tiny-invariant": "~1.3.3",
     "tippy.js": "~6.3.7",
-    "tw-animate-css": "^1.2.5"
+    "tw-animate-css": "^1.2.5",
+    "wagmi": "~2.15.6"
   },
   "devDependencies": {
     "@react-router/dev": "^7.5.2",

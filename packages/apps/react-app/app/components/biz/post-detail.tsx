@@ -9,6 +9,8 @@ import { Alert, AlertTitle, AlertDescription } from '~/components/ui/alert';
 import { Tiptap } from '~/components/tiptap/editor';
 import { formatDateTime } from '~/lib/utils';
 
+import { PostSponsor } from './post-sponsor';
+
 import type { Post } from '~/types';
 
 interface PostDetailProps {
@@ -166,6 +168,16 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
         <PostExcerpt content={post.excerpt} />
 
         <Tiptap content={post.content} editable={false} />
+
+        <div className="flex item-center justify-between gap-2">
+          <div className="text-sm text-muted-foreground flex flex-col item-center justify-center">
+            you can support this post by donating to the author. Your contribution helps keep the content
+            flowing and supports the creator's work.
+          </div>
+
+          {/* Donation Button */}
+          <PostSponsor postId={post.id} />
+        </div>
       </Card>
     </div>
   );
