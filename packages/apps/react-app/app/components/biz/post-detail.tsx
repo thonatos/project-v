@@ -132,33 +132,37 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
   return (
     <div className="flex flex-col gap-4">
       {/* actions */}
-      {isOwner && (
-        <div className="hidden md:flex space-x-2 md:justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (!onEdit || !post.id) return;
-              onEdit(post.id);
-            }}
-          >
-            <Pencil className="w-4 h-4 mr-1" />
-            编辑
-          </Button>
+      <div className="flex item-center justify-between">
+        <PostSponsor postId={post.id} />
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              if (!onDelete || !post.id) return;
-              onDelete(post.id);
-            }}
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            删除
-          </Button>
-        </div>
-      )}
+        {isOwner && (
+          <div className="hidden md:flex space-x-2 md:justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (!onEdit || !post.id) return;
+                onEdit(post.id);
+              }}
+            >
+              <Pencil className="w-4 h-4 mr-1" />
+              编辑
+            </Button>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (!onDelete || !post.id) return;
+                onDelete(post.id);
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-1" />
+              删除
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* poster */}
       <PostPoster post={post} />
@@ -168,16 +172,6 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
         <PostExcerpt content={post.excerpt} />
 
         <Tiptap content={post.content} editable={false} />
-
-        <div className="flex item-center justify-between gap-2">
-          <div className="text-sm text-muted-foreground flex flex-col item-center justify-center">
-            you can support this post by donating to the author. Your contribution helps keep the content
-            flowing and supports the creator's work.
-          </div>
-
-          {/* Donation Button */}
-          <PostSponsor postId={post.id} />
-        </div>
       </Card>
     </div>
   );
