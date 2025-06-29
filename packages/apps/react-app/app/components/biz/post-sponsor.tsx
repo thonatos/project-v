@@ -27,9 +27,9 @@ export const PostSponsor: React.FC<PostSponsorProps> = ({ postId }) => {
   }
 
   return (
-    <Checkout className="mt-0 max-w-48" chargeHandler={chargeHandler}>
+    <Checkout className="gap-0 mt-0 max-w-32" chargeHandler={chargeHandler}>
       <CheckoutButton
-        className="border border-gray-200 rounded-md bg-primary text-white cursor-pointer p-2 mt-0"
+        className="border border-gray-200 rounded-md bg-primary text-white cursor-pointer p-1 mt-0"
         icon={<CircleDollarSign className="h-[1rem] w-[1rem]" />}
         text="Sponsor Post"
         coinbaseBranded
