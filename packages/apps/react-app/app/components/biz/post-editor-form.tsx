@@ -17,7 +17,7 @@ import {
   resetPostAtom,
   publishPostAtom,
   categoriesAtom,
-  ListCategoryAtom,
+  listCategoryAtom,
 } from '~/store/blogAtom';
 
 import { PostEditorTag } from './post-editor-tag';
@@ -38,7 +38,7 @@ export const PostEditorForm: React.FC<{
   const savePost = useSetAtom(postAtom);
   const resetPost = useSetAtom(resetPostAtom);
   const publishPost = useSetAtom(publishPostAtom);
-  const listCategory = useSetAtom(ListCategoryAtom);
+  const listCategory = useSetAtom(listCategoryAtom);
 
   const { title, content, excerpt, tags: selectedTags, category_name } = post;
 

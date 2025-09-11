@@ -29,14 +29,19 @@ export const CommentForm: React.FC<CommentFormProps> = ({ postId, parentId, onCa
     setIsSubmitting(true);
 
     try {
-      const { status } = await createComment({ content, postId, parentId });
+      const { data, error } = await createComment({ content, postId, parentId });
 
-      if (status === 401) {
+      if (error || !data) {
+        toast.error('评论失败');
+        return;
+      }
+
+      if (data.status === 401) {
         toast.warning('请先登录');
         return;
       }
 
-      if (status !== 201) {
+      if (data.status !== 201) {
         toast.warning('评论失败');
         return;
       }
