@@ -30,7 +30,7 @@ export interface SponsorAccounts {
 export const THEME = {
   DARK: 'dark',
   LIGHT: 'light',
-};
+} as const;
 
 export const logger = debug('store:appAtom');
 

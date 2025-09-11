@@ -5,7 +5,7 @@ import { Link, useLoaderData, useNavigate } from 'react-router';
 import { PostList } from '~/components/biz/post-list';
 import { PostCategory } from '~/components/biz/post-category';
 import { listPost } from '~/service/blog';
-import { categoriesAtom, ListCategoryAtom } from '~/store/blogAtom';
+import { categoriesAtom, listCategoryAtom } from '~/store/blogAtom';
 import { getMeta } from '~/lib/seo-util';
 
 import type { Route } from './+types/_index';
@@ -19,9 +19,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const searchParams = new URLSearchParams(url.search);
 
   const category = searchParams.get('category') ?? 'all';
-  const data = await listPost(category);
+  const { data } = await listPost(category);
 
-  return data;
+  return { data, category };
 };
 
 export function meta({ location }: Route.MetaArgs) {
@@ -32,35 +32,39 @@ export function meta({ location }: Route.MetaArgs) {
   return [...props, { title }];
 }
 
-export default function ({}: Route.ComponentProps) {
-  const nagivate = useNavigate();
+const Index: React.FC<Route.ComponentProps> = ({}) => {
+  const navigate = useNavigate();
   const categories = useAtomValue(categoriesAtom);
-  const listCategory = useSetAtom(ListCategoryAtom);
+  const listCategory = useSetAtom(listCategoryAtom);
   const { data, category } = useLoaderData<typeof loader>();
 
   const handleCategoryChange = (category: string) => {
-    nagivate(`?category=${category}`);
+    navigate(`?category=${category}`);
   };
 
   useEffect(() => {
     if (categories.length !== 0) {
       return;
     }
-
     listCategory();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, listCategory]);
+
+  if (!data) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-4">
       <PostCategory
         categories={['all', ...categories.map((c) => c.name)]}
         value={category}
-        onChange={(category) => {
-          handleCategoryChange(category);
-        }}
+        onChange={handleCategoryChange}
       />
 
       <PostList data={data} />
     </div>
   );
-}
+};
+
+export default Index;

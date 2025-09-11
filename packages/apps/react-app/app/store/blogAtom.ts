@@ -1,7 +1,7 @@
 import debug from 'debug';
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { craeteOrUpdatePost, deletePost, listCategory, createComment, deleteComment } from '~/service/blog';
+import { createOrUpdatePost, deletePost, listCategory, createComment, deleteComment } from '~/service/blog';
 import type { Category, Post } from '~/types';
 
 export const logger = debug('store:blogAtom');
@@ -36,11 +36,12 @@ const defaultContent = `
 </blockquote>
 `;
 
-const defaultPost = {
+const defaultPost: Post = {
   title: '',
   content: defaultContent,
   excerpt: '',
   tags: [defaultTags[0]],
+  // 其他 Post 字段可补充默认值
 };
 
 export const tagsAtom = atom<string[]>(defaultTags);
@@ -53,29 +54,27 @@ export const categoriesAtom = atomWithStorage<Category[]>('remix_blog_categories
   getOnInit: true,
 });
 
-export const ListCategoryAtom = atom(null, async (_get, set) => {
+export const listCategoryAtom = atom(null, async (_get, set) => {
   try {
     const { data, error } = await listCategory();
     logger('list category', data, error);
     set(categoriesAtom, data);
+    return { data, error };
   } catch (error) {
     logger('list category error', error);
+    return { error };
   }
 });
 
-export const updatePostAtom = atom(null, async (get, set, post: Post) => {
+export const updatePostAtom = atom(null, async (_get, set, post: Post) => {
   logger('update post', post);
   set(postAtom, {
-    id: post.id,
-    title: post.title,
-    content: post.content,
-    excerpt: post.excerpt,
-    tags: post.tags,
-    category_name: post.category_name,
+    ...defaultPost,
+    ...post,
   });
 });
 
-export const resetPostAtom = atom(null, async (_get, set) => {
+export const resetPostAtom = atom(null, (_get, set) => {
   set(postAtom, defaultPost);
 });
 
@@ -84,14 +83,10 @@ export const deletePostAtom = atom(null, async (_get, _set, id: string) => {
   try {
     const { data } = await deletePost(id);
     logger('delete post success', data);
-    return {
-      data,
-    };
+    return { data };
   } catch (error) {
     logger('delete post error', error);
-    return {
-      error,
-    };
+    return { error };
   }
 });
 
@@ -102,31 +97,27 @@ export const publishPostAtom = atom(null, async (get, set) => {
   const { category_name, ...rest } = post;
   const category = categories.find((c) => c.name === category_name);
 
-  if (!post.title.trim() || !post.content.trim() || !category) {
-    logger('post is invalid');
-    return;
+  if (!post.title?.trim() || !post.content?.trim() || !category) {
+    const error = 'Post is invalid: title/content/category required';
+    logger('post is invalid', post);
+    return { error };
   }
 
   const postData = {
     ...rest,
-    category_id: category?.id,
+    category_id: category.id,
   };
 
   logger('publish post', postData);
 
   try {
     set(submittingAtom, true);
-    const { data, error } = await craeteOrUpdatePost(postData);
+    const { data, error } = await createOrUpdatePost(postData);
     logger('publish post success', data, error);
-    return {
-      data,
-      error,
-    };
+    return { data, error };
   } catch (error) {
     logger('publish post error', error);
-    return {
-      error,
-    };
+    return { error };
   } finally {
     set(submittingAtom, false);
   }
@@ -134,11 +125,27 @@ export const publishPostAtom = atom(null, async (get, set) => {
 
 export const createCommentAtom = atom(
   null,
-  async (get, set, { content, postId, parentId }: { content: string; postId: string; parentId?: string }) => {
-    return await createComment({ content, postId, parentId });
+  async (
+    _get,
+    _set,
+    { content, postId, parentId }: { content: string; postId: string; parentId?: string }
+  ) => {
+    try {
+      const data = await createComment({ content, postId, parentId });
+      return { data };
+    } catch (error) {
+      logger('create comment error', error);
+      return { error };
+    }
   }
 );
 
-export const deleteCommentAtom = atom(null, async (get, set, id: string) => {
-  return await deleteComment(id);
+export const deleteCommentAtom = atom(null, async (_get, _set, id: string) => {
+  try {
+    const data = await deleteComment(id);
+    return { data };
+  } catch (error) {
+    logger('delete comment error', error);
+    return { error };
+  }
 });
