@@ -13,7 +13,7 @@
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
-    "@coinbase/onchainkit": "~0.38.14",
+    "@coinbase/onchainkit": "^1.x",
     "@loadable/component": "~5.16.4",
     "@passwordless-id/webauthn": "~2.3.0",
     "@radix-ui/react-avatar": "^1.1.3",

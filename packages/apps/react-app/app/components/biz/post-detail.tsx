@@ -9,7 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from '~/components/ui/alert';
 import { Tiptap } from '~/components/tiptap/editor';
 import { formatDateTime } from '~/lib/utils';
 
-import { PostSponsor } from './post-sponsor';
+// import { PostSponsor } from './post-sponsor';
 
 import type { Post } from '~/types';
 
@@ -133,7 +133,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, isOwner, onEdit, o
     <div className="flex flex-col gap-4">
       {/* actions */}
       <div className="flex item-center justify-between">
-        <PostSponsor postId={post.id} />
+        {/* <PostSponsor postId={post.id} /> */}
 
         {isOwner && (
           <div className="hidden md:flex space-x-2 md:justify-end">
