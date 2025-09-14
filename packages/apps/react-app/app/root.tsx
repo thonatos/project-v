@@ -1,8 +1,8 @@
 import clsx from 'clsx';
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
 import { Provider as JotaiProvider, useAtomValue } from 'jotai';
-import { base } from 'wagmi/chains';
-import { OnchainKitProvider } from '@coinbase/onchainkit';
+// import { base } from 'wagmi/chains';
+// import { OnchainKitProvider } from '@coinbase/onchainkit';
 import { createProvider, composeProviders } from '~/lib/provider-util';
 import { Toaster } from '~/components/ui/sonner';
 import { DefaultLayout } from '~/components/layout';
@@ -67,10 +67,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const providers = [
     createProvider(JotaiProvider),
-    createProvider(OnchainKitProvider, {
-      apiKey: import.meta.env.VITE_PUBLIC_ONCHAINKIT_API_KEY || '',
-      chain: base,
-    }),
+    // createProvider(OnchainKitProvider, {
+    //   apiKey: import.meta.env.VITE_PUBLIC_ONCHAINKIT_API_KEY || '',
+    //   chain: base,
+    // }),
   ];
   const AllInOneProvider = composeProviders(providers);
 
