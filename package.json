@@ -1,0 +1,13 @@
+{
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.13",
+		"@commitlint/cli": "^20.5.0",
+		"@commitlint/config-conventional": "^20.5.0",
+		"husky": "^9.1.7"
+	},
+	"scripts": {
+		"prepare": "husky",
+		"format": "biome format packages",
+		"format:write": "biome format packages --write"
+	}
+}
