@@ -3,7 +3,6 @@
   "version": "0.0.0-dev.0",
   "private": true,
   "scripts": {
-    "_phase:build": "",
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy --minify",
     "dev": "wrangler dev --local",

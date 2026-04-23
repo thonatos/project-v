@@ -8,8 +8,7 @@
   ],
   "author": "Suyi <thonatos.yang@gmail.com>",
   "scripts": {
-    "_phase:build": "npm run build",
-    "build": "",
+    "build": "wrangler deploy --dry-run",
     "check": "tsc && wrangler deploy --dry-run",
     "deploy": "wrangler deploy --minify",
     "dev": "wrangler dev --remote",
