@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "_phase:build": "react-router build",
     "build": "react-router build",
     "deploy": "react-router build",
     "dev": "react-router dev",
