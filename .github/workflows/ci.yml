@@ -18,11 +18,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Verify Change Logs
-        run: node common/scripts/install-run-rush.js change --verify
-      - name: Rush Install
-        run: node common/scripts/install-run-rush.js install
+      - name: Install dependencies
+        run: pnpm install
         env:
           TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
-      - name: Rush rebuild
-        run: node common/scripts/install-run-rush.js rebuild
+      - name: Build all projects
+        run: pnpm -r build
