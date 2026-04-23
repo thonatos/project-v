@@ -19,11 +19,7 @@ export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) =
   }, []);
 
   if (location.pathname === '/auth/login') {
-    return (
-      <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-4 md:p-8">
-        {children}
-      </div>
-    );
+    return <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-4 md:p-8">{children}</div>;
   }
 
   return (

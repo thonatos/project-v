@@ -5,7 +5,7 @@ export const chatText = async (
   options: {
     token: string;
     onMessage: (data: string) => void;
-  }
+  },
 ) => {
   try {
     const response = await fetch(`${REMIX_API}/chat/text`, {

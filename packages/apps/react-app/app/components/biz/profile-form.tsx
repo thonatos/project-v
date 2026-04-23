@@ -154,13 +154,7 @@ export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
           )}
 
           {isEditing && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleResetForm}
-              className="mr-2"
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleResetForm} className="mr-2" disabled={isSubmitting}>
               取消
             </Button>
           )}

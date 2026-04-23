@@ -13,14 +13,9 @@ const getPaginationInfo = (input: string) => {
   return paginationInfo;
 };
 
-export const queryStarredRepoList = async (options?: {
-  url?: string;
-  pageSize?: number;
-  pageNumber?: number;
-}) => {
+export const queryStarredRepoList = async (options?: { url?: string; pageSize?: number; pageNumber?: number }) => {
   const { url, pageNumber = 1, pageSize = 100 } = options || {};
-  const target =
-    url || `https://api.github.com/users/thonatos/starred?per_page=${pageSize}&page=${pageNumber}`;
+  const target = url || `https://api.github.com/users/thonatos/starred?per_page=${pageSize}&page=${pageNumber}`;
 
   const params: any = {
     method: 'GET',

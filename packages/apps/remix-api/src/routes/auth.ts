@@ -19,7 +19,9 @@ export const loginWithPassword = async (c: Context) => {
   }
 
   if (password.length < 8) {
-    throw new HTTPException(400, { message: 'Password should be at least 12 characters' });
+    throw new HTTPException(400, {
+      message: 'Password should be at least 12 characters',
+    });
   }
 
   // auth with supabase
@@ -139,16 +141,8 @@ export const getProfile = async (c: Context) => {
   }
 
   // check if user is registered
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select()
-    .eq('user_id', user_id)
-    .single();
-  const { data: credentialData } = await supabase
-    .from('credentials')
-    .select()
-    .eq('user_id', user_id)
-    .single();
+  const { data: userData, error: userError } = await supabase.from('users').select().eq('user_id', user_id).single();
+  const { data: credentialData } = await supabase.from('credentials').select().eq('user_id', user_id).single();
 
   if (!userData || userError) {
     throw new HTTPException(401, { message: 'user not registered' });

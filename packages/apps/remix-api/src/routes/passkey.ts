@@ -13,7 +13,10 @@ export const getPasskeyChallenge = async (c: Context) => {
 };
 
 export const registerPasskey = async (c: Context) => {
-  const { registration, challenge } = await c.req.json<{ registration: any; challenge: string }>();
+  const { registration, challenge } = await c.req.json<{
+    registration: any;
+    challenge: string;
+  }>();
   const origin = c.req.header('Origin') || '';
   const supabase = c.get('supabase');
   const user_id = c.get('user_id');
@@ -24,11 +27,7 @@ export const registerPasskey = async (c: Context) => {
   }
 
   // check if credential already exists
-  const { data: credentialData } = await supabase
-    .from('credentials')
-    .select()
-    .eq('user_id', user_id)
-    .single();
+  const { data: credentialData } = await supabase.from('credentials').select().eq('user_id', user_id).single();
 
   if (credentialData) {
     throw new HTTPException(400, { message: 'credential already exists' });
@@ -70,7 +69,10 @@ export const registerPasskey = async (c: Context) => {
 
 export const authenticatePasskey = async (c: Context) => {
   const origin = c.req.header('Origin') || '';
-  const { authentication, challenge } = await c.req.json<{ authentication: any; challenge: string }>();
+  const { authentication, challenge } = await c.req.json<{
+    authentication: any;
+    challenge: string;
+  }>();
   const supabase = c.get('supabase');
   const credentialId = authentication.id;
 

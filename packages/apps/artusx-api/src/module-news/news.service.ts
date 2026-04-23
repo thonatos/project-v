@@ -41,7 +41,10 @@ export default class NewsService {
 
     const page = await browser.newPage();
     await page.emulate(iPhone13Pro);
-    await page.goto('https://www.jin10.com', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto('https://www.jin10.com', {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
     const list = await page.$$('.jin-flash-item-container');
 
     await Promise.all(
@@ -80,7 +83,7 @@ export default class NewsService {
         const itemData = await itemEvaluate.jsonValue();
 
         newsList.push(itemData);
-      })
+      }),
     );
 
     // this.logger.info('fetchNewsList:newsList:total', newsList.length);
@@ -172,7 +175,10 @@ export default class NewsService {
 
     const page = await browser.newPage();
     await page.emulate(iPhone13Pro);
-    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(targetUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000,
+    });
     const detailHandler = await page.$('.detail-content');
 
     const detailEvaluate = await page.evaluateHandle((detailHandler) => {
@@ -244,16 +250,14 @@ export default class NewsService {
 
       jinLayout
         ?.querySelector(
-          '.jin-layout-content > .media-wrap > .jin-layout-content__left > .index-page > .index-page-header__wrap'
+          '.jin-layout-content > .media-wrap > .jin-layout-content__left > .index-page > .index-page-header__wrap',
         )
         ?.remove();
 
       jinLayout?.querySelector('.table-header__right')?.remove();
     }, jinLayout);
 
-    const riliHandler = await page.$(
-      '.jin-layout > .jin-layout-content > .media-wrap > .jin-layout-content__left'
-    );
+    const riliHandler = await page.$('.jin-layout > .jin-layout-content > .media-wrap > .jin-layout-content__left');
 
     const boundingBox = await riliHandler?.boundingBox();
 

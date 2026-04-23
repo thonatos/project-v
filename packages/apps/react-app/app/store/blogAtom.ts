@@ -125,11 +125,7 @@ export const publishPostAtom = atom(null, async (get, set) => {
 
 export const createCommentAtom = atom(
   null,
-  async (
-    _get,
-    _set,
-    { content, postId, parentId }: { content: string; postId: string; parentId?: string }
-  ) => {
+  async (_get, _set, { content, postId, parentId }: { content: string; postId: string; parentId?: string }) => {
     try {
       const data = await createComment({ content, postId, parentId });
       return { data };
@@ -137,7 +133,7 @@ export const createCommentAtom = atom(
       logger('create comment error', error);
       return { error };
     }
-  }
+  },
 );
 
 export const deleteCommentAtom = atom(null, async (_get, _set, id: string) => {

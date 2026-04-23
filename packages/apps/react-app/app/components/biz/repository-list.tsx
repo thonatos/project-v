@@ -32,7 +32,9 @@ export const RepositoryList = () => {
       return;
     }
 
-    worker.current = new Worker(new URL('~/worker.ts', import.meta.url), { type: 'module' });
+    worker.current = new Worker(new URL('~/worker.ts', import.meta.url), {
+      type: 'module',
+    });
 
     worker.current.onmessage = (e) => {
       const { type, payload } = e.data;

@@ -32,7 +32,7 @@ export function RepositoryFilter() {
         name: value && value.trim().toLowerCase(),
       });
     }, 200),
-    []
+    [],
   );
 
   // memoize language options，防止不必要的渲染
@@ -47,7 +47,7 @@ export function RepositoryFilter() {
         </SelectItem>
       )),
     ],
-    [languages]
+    [languages],
   );
 
   return (

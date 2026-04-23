@@ -58,7 +58,7 @@ export const sendMessageAtom = atom(null, async (get, set, message: string, toke
           ]);
         } catch (error) {}
       },
-    }
+    },
   );
 });
 
