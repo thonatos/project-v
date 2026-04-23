@@ -1,20 +1,16 @@
 import { REMIX_WEB } from '~/constants';
 
-export const getMeta = (options: { 
-  pathname: string,
-  title?: string,
-  description?: string,
-}) => {  
+export const getMeta = (options: { pathname: string; title?: string; description?: string }) => {
   const { baseUrl, base, twitter, openGraph } = REMIX_WEB;
-  
+
   const url = new URL(options.pathname, baseUrl);
   const title = options.title || base.name;
   const description = options.description || base.description;
-  
+
   return [
-    // Site    
+    // Site
     { name: 'author', content: base.creator },
-    { name: 'creator', content: base.creator },    
+    { name: 'creator', content: base.creator },
     { name: 'keywords', content: base.keywords },
     { name: 'description', content: base.description },
 
@@ -37,5 +33,5 @@ export const getMeta = (options: {
     { property: 'og:image', content: openGraph.image },
     { property: 'og:image:width', content: openGraph.width },
     { property: 'og:image:height', content: openGraph.height },
-  ];  
-}
+  ];
+};

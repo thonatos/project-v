@@ -42,11 +42,7 @@ export const listPost = async (c: Context) => {
     });
   }
 
-  const { data = [] } = await supabase
-    .from('posts')
-    .select()
-    .order('created_at', { ascending: false })
-    .limit(15);
+  const { data = [] } = await supabase.from('posts').select().order('created_at', { ascending: false }).limit(15);
 
   return c.json({
     data,

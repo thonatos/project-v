@@ -56,7 +56,7 @@ const cleanCache = async () => {
   await Promise.all(
     keys.map((key) => {
       return caches.delete(key);
-    })
+    }),
   );
 };
 
@@ -152,7 +152,7 @@ const assetsRoute = new Route(
         statuses: [0, 200],
       }),
     ],
-  })
+  }),
 );
 
 const apiRoute = new Route(
@@ -162,7 +162,7 @@ const apiRoute = new Route(
   },
   new StaleWhileRevalidate({
     cacheName: `api-${SW_VERSION}`,
-  })
+  }),
 );
 
 // self.__WB_MANIFEST is default injection point

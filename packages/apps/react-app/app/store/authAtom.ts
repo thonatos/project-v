@@ -6,7 +6,10 @@ import { getProfile, getChallenge, registerPasskey, authenticatePasskey } from '
 
 import type { Profile } from '~/types';
 
-type Payload = Omit<Profile, 'created_at' | 'updated_at'> & { iat: number; exp: number };
+type Payload = Omit<Profile, 'created_at' | 'updated_at'> & {
+  iat: number;
+  exp: number;
+};
 
 const logger = debug('app:store:authAtom');
 
@@ -33,7 +36,7 @@ export const credentialAtom = atomWithStorage<{ id: string } | undefined>(
   undefined,
   {
     getOnInit: true,
-  }
+  },
 );
 
 export const resetProfileAtom = atom(null, (_get, set) => {

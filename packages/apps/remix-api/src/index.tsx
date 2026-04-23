@@ -68,7 +68,7 @@ app.use(
 
       return '.implements.io';
     },
-  })
+  }),
 );
 
 app.use('*', SupabaseMiddleware());
@@ -77,14 +77,8 @@ app.use(
   '*',
   IsLoginMiddleware({
     GET: ['/auth/oauth', '/auth/callback', '/blog/post', '/blog/posts', '/blog/categories', '/conf'],
-    POST: [
-      '/auth/password',
-      '/passkey/challenge',
-      '/passkey/register',
-      '/passkey/authenticate',
-      '/charge/create',
-    ],
-  })
+    POST: ['/auth/password', '/passkey/challenge', '/passkey/register', '/passkey/authenticate', '/charge/create'],
+  }),
 );
 
 app.use('/chat/*', JwtMiddleware());

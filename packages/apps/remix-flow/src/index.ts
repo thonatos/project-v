@@ -69,7 +69,7 @@ export class ScreenshotWorkflow extends WorkflowEntrypoint<Env, Params> {
         }
 
         return screenshot;
-      }
+      },
     );
 
     // upload the screenshot to r2
@@ -113,7 +113,7 @@ export default {
           {
             error: 'Missing url parameter',
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -123,7 +123,7 @@ export default {
           {
             error: 'Invalid url',
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -149,7 +149,7 @@ export default {
         {
           error: 'Failed to create workflow',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   },

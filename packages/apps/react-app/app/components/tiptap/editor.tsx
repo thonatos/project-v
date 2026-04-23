@@ -108,12 +108,9 @@ export const Tiptap: React.FC<{
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: clsx(
-          'prose prose-slate prose-sm sm:prose-base max-w-none focus:outline-none dark:prose-invert',
-          {
-            'min-h-[400px]': editable,
-          }
-        ),
+        class: clsx('prose prose-slate prose-sm sm:prose-base max-w-none focus:outline-none dark:prose-invert', {
+          'min-h-[400px]': editable,
+        }),
       },
     },
     onUpdate: ({ editor }) => {

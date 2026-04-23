@@ -29,7 +29,11 @@ export const CommentForm: React.FC<CommentFormProps> = ({ postId, parentId, onCa
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await createComment({ content, postId, parentId });
+      const { data, error } = await createComment({
+        content,
+        postId,
+        parentId,
+      });
 
       if (error || !data) {
         toast.error('评论失败');
@@ -57,12 +61,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({ postId, parentId, onCa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <Textarea
-        placeholder="写下你的评论..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={4}
-      />
+      <Textarea placeholder="写下你的评论..." value={content} onChange={(e) => setContent(e.target.value)} rows={4} />
       <div className="flex justify-end space-x-2">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel}>

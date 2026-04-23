@@ -69,9 +69,7 @@ export const PostCard: React.FC<Post> = ({ id, title, tags, excerpt, feature_ima
         </div>
       </CardContent>
       <CardFooter className="flex justify-between bg-muted/50 py-2 px-2">
-        <div className="text-xs text-muted-foreground">
-          {updated_at && formatDateTime('en-US', updated_at)}
-        </div>
+        <div className="text-xs text-muted-foreground">{updated_at && formatDateTime('en-US', updated_at)}</div>
         <div className="text-sm text-muted-foreground space-x-2">
           {tags.map((tag) => (
             <Badge key={tag} variant="outline">

@@ -14,13 +14,16 @@ export interface RepoTypeChartProps {
 export function RepoTypeChart({ data }: RepoTypeChartProps) {
   // context7 配置
   const config = React.useMemo(() => {
-    return data.reduce((acc, cur) => {
-      acc[cur.type] = {
-        label: cur.type,
-        color: cur.color || undefined,
-      };
-      return acc;
-    }, {} as Record<string, { label: string; color?: string }>);
+    return data.reduce(
+      (acc, cur) => {
+        acc[cur.type] = {
+          label: cur.type,
+          color: cur.color || undefined,
+        };
+        return acc;
+      },
+      {} as Record<string, { label: string; color?: string }>,
+    );
   }, [data]);
 
   return (
@@ -38,9 +41,7 @@ export function RepoTypeChart({ data }: RepoTypeChartProps) {
               cx="50%"
               cy="50%"
               outerRadius={80}
-              label={({ name, percent }: { name: string; percent: number }) =>
-                `${name} ${(percent * 100).toFixed(1)}%`
-              }
+              label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(1)}%`}
               isAnimationActive
             >
               {data.map((entry) => (

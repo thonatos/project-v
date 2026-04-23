@@ -83,14 +83,7 @@ export default function ({}: Route.ComponentProps) {
                 return <PostSkeleton />;
               }
 
-              return (
-                <PostDetail
-                  post={post}
-                  isOwner={isOwner}
-                  onEdit={handleEditPost}
-                  onDelete={handleDeletePost}
-                />
-              );
+              return <PostDetail post={post} isOwner={isOwner} onEdit={handleEditPost} onDelete={handleDeletePost} />;
             }}
           </Await>
         </Suspense>

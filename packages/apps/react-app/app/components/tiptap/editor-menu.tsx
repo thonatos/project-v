@@ -190,11 +190,7 @@ export const EditorTopMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="flex space-x-2">
-            <Input
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="输入链接地址..."
-            />
+            <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="输入链接地址..." />
             <Button onClick={addLink}>添加</Button>
           </div>
         </PopoverContent>
@@ -208,11 +204,7 @@ export const EditorTopMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
         </PopoverTrigger>
         <PopoverContent className="w-80">
           <div className="flex space-x-2">
-            <Input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="输入图片地址..."
-            />
+            <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="输入图片地址..." />
             <Button onClick={addImage}>添加</Button>
           </div>
         </PopoverContent>

@@ -13,7 +13,7 @@ export const recordAtom = atomWithStorage<number | undefined>(
   undefined,
   {
     getOnInit: true,
-  }
+  },
 );
 
 // repo
@@ -35,7 +35,7 @@ export const loadRepoAtom = atom(
 
     set(repoListAtom, repoList);
     set(repoLangAtom, langList);
-  }
+  },
 );
 
 // filter
@@ -49,11 +49,7 @@ export const filterRepoAtom = atom(
     const repos = get(repoListAtom);
 
     const filtered = repos.filter((repo) => {
-      if (
-        name &&
-        !repo.name.toLowerCase().includes(name) &&
-        !repo.description?.toLowerCase().includes(name)
-      ) {
+      if (name && !repo.name.toLowerCase().includes(name) && !repo.description?.toLowerCase().includes(name)) {
         return false;
       }
 
@@ -73,5 +69,5 @@ export const filterRepoAtom = atom(
   (_get, set, value: { name?: string; lang?: string }) => {
     set(filterNameAtom, value.name || '');
     set(filterLangAtom, value.lang || '');
-  }
+  },
 );
