@@ -90,3 +90,12 @@ turbo-*.log*
 
 # typescript
 *.tsbuildinfo
+
+# Rush config directories
+**/common/config/rush/
+**/common/temp/rush-recycler/
+**/common/autoinstallers/rush-*/
+**/config/rush/
+**/rush-recycler/
+**/config/rush-project.json
+**/config/rush-*.json

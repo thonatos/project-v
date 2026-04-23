@@ -2,19 +2,39 @@
 
 > undefined project - ρV.
 
-## development
+## Development
 
 ```bash
-## npm
-npm install -g @microsoft/rush
-## or pnpm
-pnpm add -g @microsoft/rush
+# Install dependencies
+pnpm install
+
+# Build all projects
+pnpm -r build
+
+# Run dev server for specific project
+pnpm --filter react-app dev
+pnpm --filter artusx-api dev
+pnpm --filter remix-api dev
+pnpm --filter remix-flow dev
+pnpm --filter react-component dev
 ```
 
-## deploy
+## Code Quality
 
 ```bash
-rush install
-rush build
-rush deploy -p remix-app -s remix-app --overwrite
+# Format code
+pnpm biome format --write .
+
+# Lint code
+pnpm biome lint .
+```
+
+## Deploy
+
+```bash
+pnpm install
+pnpm -r build
+# Deploy via wrangler for Cloudflare Workers projects
+pnpm --filter remix-api deploy
+pnpm --filter remix-flow deploy
 ```
