@@ -17,7 +17,13 @@ WORKDIR /app
 # layer: deps
 FROM base AS deps
 COPY . ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=secret,id=TIPTAP_PRO_TOKEN \
+    --mount=type=cache,id=pnpm,target=/pnpm/store \
+    export TIPTAP_PRO_TOKEN=$(cat /run/secrets/TIPTAP_PRO_TOKEN) \
+    && echo "@tiptap-pro:registry=https://registry.tiptap.dev/" > .npmrc \
+    && echo "//registry.tiptap.dev/:_authToken=${TIPTAP_PRO_TOKEN}" >> .npmrc \
+    && echo "registry=https://registry.npmmirror.com/" >> .npmrc \
+    && pnpm install --frozen-lockfile
 
 # layer: build
 FROM deps AS build
