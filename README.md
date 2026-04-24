@@ -2,6 +2,11 @@
 
 > undefined project - ρV.
 
+## Prerequisites
+
+- Node.js >= 20
+- pnpm (`npm install -g pnpm`)
+
 ## Development
 
 ```bash

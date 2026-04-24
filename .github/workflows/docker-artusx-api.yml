@@ -26,6 +26,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64
-          context: '{{defaultContext}}:packages/apps/artusx-api'
+          context: '{{defaultContext}}'
+          dockerfile: packages/apps/artusx-api/Dockerfile
           push: true
           tags: registry.cn-hongkong.aliyuncs.com/suyi/artusx-api:latest
