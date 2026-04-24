@@ -99,3 +99,6 @@ turbo-*.log*
 **/rush-recycler/
 **/config/rush-project.json
 **/config/rush-*.json
+
+# Gitleaks report
+.gitleaks-report.json
