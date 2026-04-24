@@ -23,5 +23,5 @@
 
 ## 5. 验证
 
-- [ ] 5.1 提交变更，验证 pre-commit hook 正常工作
+- [x] 5.1 提交变更，验证 pre-commit hook 正常工作
 - [ ] 5.2 观察 GitHub Actions workflow 运行结果
