@@ -16,6 +16,10 @@
 - **WHEN** 开发者运行 `pnpm -r <script>`
 - **THEN** 系统 SHALL 在所有 workspace 项目中执行指定脚本
 
+#### Scenario: Docker 构建使用 pnpm
+- **WHEN** Docker 构建应用
+- **THEN** 构建步骤 SHALL 使用 `pnpm --filter <package> build`
+
 ### Requirement: pnpm-workspace.yaml 配置
 
 项目 SHALL 在根目录包含 pnpm-workspace.yaml 文件，定义 workspace 包路径。
@@ -55,3 +59,19 @@
 #### Scenario: dev 命令保持不变
 - **WHEN** 项目有 dev 脚本
 - **THEN** scripts.dev SHALL 保持原样（单项目运行，无需递归）
+
+#### Scenario: Dockerfile 不使用已删除脚本
+- **WHEN** Dockerfile 执行构建
+- **THEN** 步骤 SHALL 不调用 `_phase:build` 等已删除的脚本
+
+### Requirement: packageManager 字段移除
+
+项目 package.json SHALL 不包含 packageManager 字段。
+
+#### Scenario: react-app 无 packageManager
+- **WHEN** 查看 react-app/package.json
+- **THEN** 文件 SHALL 不包含 packageManager 字段
+
+#### Scenario: 根目录无 packageManager
+- **WHEN** 查看 package.json
+- **THEN** 文件 SHALL 不包含 packageManager 字段
