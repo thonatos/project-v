@@ -1,0 +1,33 @@
+title = "Gitleaks Config"
+
+[allowlist]
+description = "允许列表"
+paths = [
+  '''\.gitleaks\.toml''',
+  '''pnpm-lock\.yaml''',
+  '''\.npmrc''',
+]
+
+[[rules]]
+id = "npm-token"
+description = "npm Token"
+regex = '''npm_[A-Za-z0-9]{36}'''
+tags = ["npm", "token"]
+
+[[rules]]
+id = "telegram-bot-token"
+description = "Telegram Bot Token"
+regex = '''[0-9]{9,10}:[A-Za-z0-9_-]{35}'''
+tags = ["telegram", "bot"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[A-Za-z0-9]{48}'''
+tags = ["openai", "api"]
+
+[[rules]]
+id = "github-token"
+description = "GitHub Token"
+regex = '''ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|ghu_[A-Za-z0-9]{36}|ghs_[A-Za-z0-9]{36}|ghr_[A-Za-z0-9]{36}'''
+tags = ["github", "token"]
