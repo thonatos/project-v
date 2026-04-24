@@ -1,7 +1,7 @@
-import React from 'react';
+import type React from 'react';
 
 import { Label } from '~/components/ui/label';
-import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '~/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 
 interface PostEditorCategoryProps {
   value?: string;

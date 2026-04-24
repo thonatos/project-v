@@ -2,7 +2,7 @@
 module.exports = {
   theme: {
     extend: {
-      typography: (_theme: any) => ({
+      typography: (_theme: Record<string, unknown>) => ({
         DEFAULT: {
           css: {
             'blockquote p:first-of-type::before': {

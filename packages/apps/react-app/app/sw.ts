@@ -1,9 +1,10 @@
 /// <reference lib="webworker" />
-import { clientsClaim } from 'workbox-core';
-import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
-import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
-import { NavigationRoute, registerRoute, Route } from 'workbox-routing';
+
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { clientsClaim } from 'workbox-core';
+import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
+import { NavigationRoute, Route, registerRoute } from 'workbox-routing';
+import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -114,10 +115,11 @@ self.addEventListener('message', (event) => {
   }
 });
 
-self.addEventListener('statechange', (event: any) => {
-  console.log('[sw] statechange: ', event?.target);
+self.addEventListener('statechange', (event: Event) => {
+  const target = event.target as ServiceWorker | null;
+  console.log('[sw] statechange: ', target);
 
-  if (event?.target?.state === 'redundant') {
+  if (target?.state === 'redundant') {
     console.log('[sw] statechange: redundant');
   }
 });
@@ -166,7 +168,7 @@ const apiRoute = new Route(
 );
 
 // self.__WB_MANIFEST is default injection point
-let manifest = SW_WB_MANIFEST || [];
+const manifest = SW_WB_MANIFEST || [];
 const homePageIndex = manifest.findIndex((item) => {
   if (typeof item === 'string') {
     return item === '/';

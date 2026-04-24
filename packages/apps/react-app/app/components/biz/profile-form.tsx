@@ -1,13 +1,12 @@
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAtomValue, useSetAtom } from 'jotai';
-
-import { Card } from '~/components/ui/card';
-import { Label } from '~/components/ui/label';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import { Textarea } from '~/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+import { Button } from '~/components/ui/button';
+import { Card } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Textarea } from '~/components/ui/textarea';
 import { bindPasskeyAtom, credentialAtom } from '~/store/authAtom';
 
 import type { Profile } from '~/types';
@@ -21,7 +20,7 @@ export const ProfileForm: React.FC<{ profile: Profile }> = ({ profile }) => {
   const bindPasskey = useSetAtom(bindPasskeyAtom);
 
   const handleChange = (field: string, value: string) => {
-    setUser((prev: any) => ({
+    setUser((prev: Profile) => ({
       ...prev,
       [field]: value,
     }));

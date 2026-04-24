@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import type React from 'react';
+import { useEffect } from 'react';
 import { loadConfAtom, strategiesAtom } from '~/store/appAtom';
 
-export const StrategyList: React.FC<{}> = () => {
+export const StrategyList: React.FC = () => {
   const strategies = useAtomValue(strategiesAtom);
   const loadConf = useSetAtom(loadConfAtom);
 

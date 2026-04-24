@@ -1,11 +1,11 @@
 import clsx from 'clsx';
-import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
 import { Provider as JotaiProvider, useAtomValue } from 'jotai';
+import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
+import { DefaultLayout } from '~/components/layout';
+import { Toaster } from '~/components/ui/sonner';
 // import { base } from 'wagmi/chains';
 // import { OnchainKitProvider } from '@coinbase/onchainkit';
-import { createProvider, composeProviders } from '~/lib/provider-util';
-import { Toaster } from '~/components/ui/sonner';
-import { DefaultLayout } from '~/components/layout';
+import { composeProviders, createProvider } from '~/lib/provider-util';
 
 import { themeAtom } from '~/store/appAtom';
 

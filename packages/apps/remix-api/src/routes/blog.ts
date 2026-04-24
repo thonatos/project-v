@@ -1,4 +1,4 @@
-import { Context, Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
 export const app = new Hono();
@@ -21,11 +21,11 @@ export const listPost = async (c: Context) => {
   const category = c.req.query('category') || 'all';
   const supabase = c.get('supabase');
 
-  let category_id;
+  let category_id: number | undefined;
 
   if (category !== 'all') {
     const { data: categoryData } = await supabase.from('categories').select().eq('name', category);
-    category_id = categoryData && categoryData[0].id;
+    category_id = categoryData?.[0].id;
   }
 
   if (category_id) {
@@ -71,7 +71,7 @@ export const getPost = async (c: Context) => {
 };
 
 export const createPost = async (c: Context) => {
-  const post = await c.req.json<{}>();
+  const post = await c.req.json<Record<string, unknown>>();
   const supabase = c.get('supabase');
   const user_id = c.get('user_id');
 

@@ -24,7 +24,7 @@ export const meta = ({ location }: Route.MetaArgs) => {
   return [...props, { title }];
 };
 
-export default function ({}: Route.ComponentProps) {
+export default function (_: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-4">
       <RepositoryFilter />

@@ -1,8 +1,8 @@
-import debug from 'debug';
 import { client } from '@passwordless-id/webauthn';
+import debug from 'debug';
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { getProfile, getChallenge, registerPasskey, authenticatePasskey } from '~/service/auth';
+import { authenticatePasskey, getChallenge, getProfile, registerPasskey } from '~/service/auth';
 
 import type { Profile } from '~/types';
 
@@ -93,7 +93,7 @@ export const loadProfileAtom = atom(null, async (get, set) => {
   }
 });
 
-export const bindPasskeyAtom = atom(null, async (get, set, data: any) => {
+export const bindPasskeyAtom = atom(null, async (get, _set, data: { email: string }) => {
   const profile = get(profileAtom);
   if (!profile) return;
 
@@ -116,7 +116,7 @@ export const bindPasskeyAtom = atom(null, async (get, set, data: any) => {
   // set(profileAtom, { ...profile, [name]: value });
 });
 
-export const authPasskeyAtom = atom(null, async (get, set, data?: any) => {
+export const authPasskeyAtom = atom(null, async (_get, _set, _data?: unknown) => {
   try {
     const { data: challenge } = await getChallenge();
     logger('authPasskeyAtom:challenge', challenge);

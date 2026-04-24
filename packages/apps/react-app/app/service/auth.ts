@@ -42,7 +42,7 @@ export const getChallenge = async () => {
   return data;
 };
 
-export const registerPasskey = async ({ registration, challenge }: { registration: any; challenge: string }) => {
+export const registerPasskey = async ({ registration, challenge }: { registration: unknown; challenge: string }) => {
   const res = await fetch(`${REMIX_API}/passkey/register`, {
     method: 'POST',
     headers: {
@@ -63,7 +63,7 @@ export const authenticatePasskey = async ({
   authentication,
   challenge,
 }: {
-  authentication: any;
+  authentication: unknown;
   challenge: string;
 }) => {
   const res = await fetch(`${REMIX_API}/passkey/authenticate`, {

@@ -1,11 +1,10 @@
-import { useState } from 'react';
 import { PlusCircle, X } from 'lucide-react';
-
-import { Label } from '~/components/ui/label';
+import { useState } from 'react';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '~/components/ui/command';
+import { Label } from '~/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 
 interface PostEditorTagProps {
   tags: string[];
@@ -46,7 +45,7 @@ export const PostEditorTag: React.FC<PostEditorTagProps> = ({ tags, values, onVa
         {values.map((tag) => (
           <Badge key={tag} variant="secondary" className="px-3 py-1">
             {tag}
-            <button onClick={() => removeTag(tag)} className="ml-2 hover:text-destructive">
+            <button type="button" onClick={() => removeTag(tag)} className="ml-2 hover:text-destructive">
               <X className="h-3 w-3" />
             </button>
           </Badge>

@@ -1,8 +1,7 @@
-import { forwardRef, useImperativeHandle } from 'react';
 import { ReactRenderer } from '@tiptap/react';
-import tippy from 'tippy.js';
-
 import { Calculator, Calendar, CreditCard, Settings, Smile, User } from 'lucide-react';
+import { forwardRef, useImperativeHandle } from 'react';
+import tippy from 'tippy.js';
 
 import {
   Command,
@@ -15,7 +14,18 @@ import {
   CommandShortcut,
 } from '~/components/ui/command';
 
-export const SlashComponent = forwardRef((props: any, ref) => {
+interface SlashProps {
+  command: (params: { id: string }) => void;
+}
+
+interface SuggestionProps {
+  query: string;
+  editor: unknown;
+  clientRect?: (() => DOMRect) | null;
+  event?: KeyboardEvent;
+}
+
+export const SlashComponent = forwardRef((props: SlashProps, ref) => {
   const upHandler = () => {};
 
   const downHandler = () => {};
@@ -120,10 +130,10 @@ export const SlashSuggestion = {
       .slice(0, 5);
   },
   render: () => {
-    let component: any, popup: any;
+    let component: ReactRenderer, popup: [tippy.Instance];
 
     return {
-      onStart: (props: any) => {
+      onStart: (props: SuggestionProps) => {
         component = new ReactRenderer(SlashComponent, {
           props,
           editor: props.editor,
@@ -144,7 +154,7 @@ export const SlashSuggestion = {
         });
       },
 
-      onUpdate: (props: any) => {
+      onUpdate: (props: SuggestionProps) => {
         component.updateProps(props);
 
         if (!props.clientRect) {
@@ -156,8 +166,8 @@ export const SlashSuggestion = {
         });
       },
 
-      onKeyDown: (props: any) => {
-        if (props.event.key === 'Escape') {
+      onKeyDown: (props: SuggestionProps) => {
+        if (props.event?.key === 'Escape') {
           popup[0].hide();
 
           return true;

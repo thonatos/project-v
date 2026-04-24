@@ -1,12 +1,11 @@
-import React from 'react';
-import { Pencil, Trash2, User, Bookmark, Terminal, Calendar } from 'lucide-react';
-
-import { Card } from '~/components/ui/card';
+import { Bookmark, Calendar, Pencil, Terminal, Trash2, User } from 'lucide-react';
+import type React from 'react';
+import { Tiptap } from '~/components/tiptap/editor';
+import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import { Card } from '~/components/ui/card';
 import { Skeleton } from '~/components/ui/skeleton';
-import { Alert, AlertTitle, AlertDescription } from '~/components/ui/alert';
-import { Tiptap } from '~/components/tiptap/editor';
 import { formatDateTime } from '~/lib/utils';
 
 // import { PostSponsor } from './post-sponsor';
@@ -20,7 +19,7 @@ interface PostDetailProps {
   onDelete?: (id: string) => void;
 }
 
-export const PostSkeleton: React.FC<{}> = () => {
+export const PostSkeleton: React.FC = () => {
   return (
     <Card className="p-4">
       <div className="flex justify-between items-start mb-4">

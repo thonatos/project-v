@@ -1,7 +1,7 @@
-import React from 'react';
+import type React from 'react';
 
 import { Button } from '~/components/ui/button';
-import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '~/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 import { useIsMobile } from '~/hooks/use-mobile';
 
 interface CategoryProps {

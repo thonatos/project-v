@@ -10,7 +10,7 @@ import {
 } from '~/components/ui/dropdown-menu';
 import { THEME, themeAtom } from '~/store/appAtom';
 
-export const ModeToggle: React.FC<{}> = () => {
+export const ModeToggle: React.FC = () => {
   const setTheme = useSetAtom(themeAtom);
 
   const handleChange = (theme: string) => {

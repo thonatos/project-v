@@ -1,4 +1,4 @@
-import { Context, Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 
 export const app = new Hono();
 

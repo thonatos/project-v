@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { Input } from '~/components/ui/input';
 import { searchAtom } from '~/store/appAtom';
 
-export const SearchBar: React.FC<{}> = () => {
+export const SearchBar: React.FC = () => {
   const [searchValue, setSearchValue] = useAtom(searchAtom);
 
   return (

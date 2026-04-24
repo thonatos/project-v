@@ -2,12 +2,14 @@ const getPaginationInfo = (input: string) => {
   // const input = '<https://api.github.com/user/958063/starred?per_page=100&page=2>; rel="next", <https://api.github.com/user/958063/starred?per_page=100&page=25>; rel="last"';
   const regex = /<([^>]+)>;\s*rel="([^"]+)"/g;
 
-  let matches;
-  let paginationInfo: Record<string, string> = {};
+  let matches: RegExpExecArray | null;
+  const paginationInfo: Record<string, string> = {};
 
-  while ((matches = regex.exec(input)) !== null) {
+  matches = regex.exec(input);
+  while (matches !== null) {
     const [_, url, type] = matches;
     paginationInfo[type] = url;
+    matches = regex.exec(input);
   }
 
   return paginationInfo;
@@ -17,7 +19,7 @@ export const queryStarredRepoList = async (options?: { url?: string; pageSize?: 
   const { url, pageNumber = 1, pageSize = 100 } = options || {};
   const target = url || `https://api.github.com/users/thonatos/starred?per_page=${pageSize}&page=${pageNumber}`;
 
-  const params: any = {
+  const params: RequestInit = {
     method: 'GET',
     headers: {
       'content-type': 'application/json',

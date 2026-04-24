@@ -1,6 +1,6 @@
-import { PluginInjectEnum } from '@artusx/utils';
-import { ContentType, Controller, GET, Inject } from '@artusx/core';
 import type { ArtusXContext, NunjucksClient } from '@artusx/core';
+import { ContentType, Controller, GET, Inject } from '@artusx/core';
+import { PluginInjectEnum } from '@artusx/utils';
 import StrategyService from '../service/strategy';
 
 @Controller('/api')

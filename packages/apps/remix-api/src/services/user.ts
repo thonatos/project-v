@@ -1,8 +1,7 @@
-import { Context } from 'hono';
-import { getSignedCookie, setSignedCookie, deleteCookie } from 'hono/cookie';
-
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import type { Context } from 'hono';
+import { deleteCookie, getSignedCookie, setSignedCookie } from 'hono/cookie';
 
 dayjs.extend(utc);
 

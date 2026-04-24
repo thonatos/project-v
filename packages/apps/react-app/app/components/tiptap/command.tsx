@@ -1,6 +1,12 @@
 import { Extension } from '@tiptap/core';
 import { Suggestion } from '@tiptap/suggestion';
 
+interface CommandProps {
+  editor: { chain: () => { focus: () => { deleteRange: (range: unknown) => { run: () => void } } } };
+  range: unknown;
+  props: unknown;
+}
+
 export const CustomCommand = Extension.create({
   name: 'custom_commands',
 
@@ -8,7 +14,7 @@ export const CustomCommand = Extension.create({
     return {
       suggestion: {
         char: '/',
-        command: ({ editor, range, props }: any) => {
+        command: ({ editor, range }: CommandProps) => {
           editor.chain().focus().deleteRange(range).run();
         },
       },

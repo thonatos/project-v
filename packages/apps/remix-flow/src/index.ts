@@ -1,5 +1,5 @@
-import { WorkflowEntrypoint, WorkflowStep, WorkflowEvent } from 'cloudflare:workers';
-import { KnownDevices } from '@cloudflare/puppeteer';
+import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
+import { type ElementHandle, KnownDevices, type Page } from '@cloudflare/puppeteer';
 import { CORS_ORIGINS } from './constants';
 import { getBrowser } from './util';
 
@@ -33,17 +33,15 @@ export class ScreenshotWorkflow extends WorkflowEntrypoint<Env, Params> {
       },
       async () => {
         const endpoint = this.env.BROWSER;
-        let browser;
-        let handler;
-
-        const { browser: _browser } = await getBrowser(endpoint);
-        browser = _browser;
+        const { browser } = await getBrowser(endpoint);
 
         if (!browser) {
           throw new Error('Failed to connect to browser');
         }
 
-        const page = await browser?.newPage();
+        let handler: Page | ElementHandle<Node> | null;
+
+        const page = await browser.newPage();
         await page.emulate(KnownDevices['iPhone 13 Pro']);
 
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });

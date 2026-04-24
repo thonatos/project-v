@@ -1,34 +1,41 @@
-import React from 'react';
-import { toast } from 'sonner';
 import { useSetAtom } from 'jotai';
-import { Form, useNavigate } from 'react-router';
 import { GithubIcon, KeySquareIcon } from 'lucide-react';
+import type React from 'react';
+import { Form, useNavigate } from 'react-router';
+import { toast } from 'sonner';
 
 import { Button } from '~/components/ui/button';
+import { Card, CardContent } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { Card, CardContent } from '~/components/ui/card';
-
+import { REMIX_API } from '~/constants';
 import { cn } from '~/lib/utils';
 import { authPasskeyAtom, loadProfileAtom } from '~/store/authAtom';
-import { REMIX_API } from '~/constants';
 
-const Intro: React.FC<{}> = () => {
+const Intro: React.FC = () => {
   return (
     <div className="relative hidden bg-muted md:block">
       <img
         src="/placeholder.svg"
-        alt="Image"
+        alt="Login page background"
         className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
       />
     </div>
   );
 };
 
-const Terms: React.FC<{}> = () => {
+const Terms: React.FC = () => {
   return (
     <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-      By clicking continue, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      By clicking continue, you agree to our{' '}
+      <button type="button" className="underline underline-offset-4 hover:text-primary">
+        Terms of Service
+      </button>{' '}
+      and{' '}
+      <button type="button" className="underline underline-offset-4 hover:text-primary">
+        Privacy Policy
+      </button>
+      .
     </div>
   );
 };

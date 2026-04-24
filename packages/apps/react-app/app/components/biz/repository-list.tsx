@@ -1,9 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
-import { useSetAtom, useAtomValue } from 'jotai';
-
-import { RepositoryCard, RepositorySkeleton } from './repository-card';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useEffect, useRef, useState } from 'react';
 import { GITHUB_FETCH_STARRED_REPO_LIST_EVENT, type GithubRepo } from '~/modules/github';
-import { loadRepoAtom, recordAtom, filterRepoAtom } from '~/store/githubAtom';
+import { filterRepoAtom, loadRepoAtom, recordAtom } from '~/store/githubAtom';
+import { RepositoryCard, RepositorySkeleton } from './repository-card';
 
 export const RepositoryList = () => {
   const worker = useRef<Worker | undefined>(undefined);

@@ -1,18 +1,17 @@
-import React from 'react';
 import { useAtomValue } from 'jotai';
+import { BotIcon, EditIcon, FolderGit, HelpCircleIcon, Home } from 'lucide-react';
+import type React from 'react';
 import { NavLink, useLocation } from 'react-router';
-import { Home, FolderGit, EditIcon, HelpCircleIcon, BotIcon } from 'lucide-react';
-
+import Logo from '~/components/biz/logo';
 import {
   Sidebar,
-  SidebarHeader,
   SidebarContent,
   SidebarGroup,
+  SidebarHeader,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from '~/components/ui/sidebar';
-import Logo from '~/components/biz/logo';
 import { profileAtom } from '~/store/authAtom';
 
 const NavLinks = [
@@ -23,7 +22,7 @@ const NavLinks = [
   { icon: HelpCircleIcon, label: 'Support', pathname: '/support' },
 ];
 
-export const CustomSidebar: React.FC<{}> = () => {
+export const CustomSidebar: React.FC = () => {
   const location = useLocation();
   const profile = useAtomValue(profileAtom);
   const navLinks = NavLinks.filter((item) => {

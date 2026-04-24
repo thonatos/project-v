@@ -1,7 +1,7 @@
-import React from 'react';
+import { Checkout, CheckoutButton, CheckoutStatus } from '@coinbase/onchainkit/checkout';
 import { useSetAtom } from 'jotai';
 import { CircleDollarSign } from 'lucide-react';
-import { Checkout, CheckoutButton, CheckoutStatus } from '@coinbase/onchainkit/checkout';
+import type React from 'react';
 import { createChargeAtom } from '~/store/chargeAtom';
 
 interface PostSponsorProps {

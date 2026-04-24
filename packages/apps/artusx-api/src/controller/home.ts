@@ -1,6 +1,6 @@
-import { PluginInjectEnum } from '@artusx/utils';
-import { Controller, GET, Inject } from '@artusx/core';
 import type { ArtusXContext, NunjucksClient } from '@artusx/core';
+import { Controller, GET, Inject } from '@artusx/core';
+import { PluginInjectEnum } from '@artusx/utils';
 
 const content = `
 User-agent: *

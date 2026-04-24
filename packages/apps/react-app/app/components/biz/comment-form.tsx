@@ -1,6 +1,6 @@
+import { useSetAtom } from 'jotai';
 import React from 'react';
 import { toast } from 'sonner';
-import { useSetAtom } from 'jotai';
 
 import { Button } from '~/components/ui/button';
 import { Textarea } from '~/components/ui/textarea';

@@ -1,7 +1,7 @@
 import { REMIX_API } from '~/constants';
 
 export const chatText = async (
-  value: any,
+  value: { text?: string; conversation_id?: string },
   options: {
     token: string;
     onMessage: (data: string) => void;

@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import type { ComponentType, PropsWithChildren } from 'react';
 
 export interface IProvider<T> {
@@ -6,7 +6,7 @@ export interface IProvider<T> {
   props?: Omit<T, 'children'>;
 }
 
-export type IProviders = Array<IProvider<any>>;
+export type IProviders = Array<IProvider<Record<string, unknown>>>;
 
 export function createProvider<T>(
   Component: ComponentType<PropsWithChildren<T>>,

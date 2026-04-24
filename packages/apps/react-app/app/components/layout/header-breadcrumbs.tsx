@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Link, useMatches } from 'react-router';
 
 import {
@@ -10,16 +10,22 @@ import {
   BreadcrumbSeparator,
 } from '~/components/ui/breadcrumb';
 
-export const Breadcrumbs: React.FC<{}> = () => {
-  const matches: Array<any> = useMatches();
-  const matchesBreadcrumbs = matches.filter((match) => match.handle && match.handle.breadcrumb);
+type HandleWithBreadcrumb = {
+  breadcrumb: (match: unknown) => React.ReactNode;
+};
+
+export const Breadcrumbs: React.FC = () => {
+  const matches = useMatches();
+  const matchesBreadcrumbs = matches.filter(
+    (match) => match.handle && (match.handle as HandleWithBreadcrumb).breadcrumb,
+  );
   const lastMatchBreadcrumbIndex = matchesBreadcrumbs.length - 1;
 
   return (
     <Breadcrumb className="hidden md:flex">
       <BreadcrumbList>
         {matchesBreadcrumbs.map((match, index) => {
-          const currentBreadcrumb = match.handle.breadcrumb(match);
+          const currentBreadcrumb = (match.handle as HandleWithBreadcrumb).breadcrumb(match);
 
           if (index === lastMatchBreadcrumbIndex) {
             return (

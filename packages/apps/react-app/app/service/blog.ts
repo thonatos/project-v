@@ -33,7 +33,7 @@ export const getPost = async (id: string) => {
   return data;
 };
 
-export const createOrUpdatePost = async (value: any) => {
+export const createOrUpdatePost = async (value: { id?: string; title?: string; content?: string; tags?: string[] }) => {
   const method = value.id ? 'PUT' : 'POST';
 
   const res = await fetch(`${REMIX_API}/blog/post`, {

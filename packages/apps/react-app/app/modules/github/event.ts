@@ -1,7 +1,11 @@
 import { GITHUB_FETCH_STARRED_REPO_LIST_EVENT } from './constants';
-
-import { queryStarredRepoList } from './service';
 import { initDB, insertRepoList } from './database';
+import { queryStarredRepoList } from './service';
+
+interface CallbackData {
+  type: string;
+  payload: { status: string };
+}
 
 export class Github {
   private async fetchRepoList(url?: string) {
@@ -26,12 +30,12 @@ export class Github {
     }
   }
 
-  private async messageHandler(event: MessageEvent, callback: (data: any) => void) {
+  private async messageHandler(event: MessageEvent, callback: (data: CallbackData) => void) {
     const { data } = event;
     console.debug('[worker] Github:messageHandler:data', data);
 
     let hasNext = true;
-    let nextUrl = undefined;
+    let nextUrl: string | undefined;
 
     while (hasNext) {
       const res = await this.fetchRepoList(nextUrl);
@@ -51,7 +55,7 @@ export class Github {
     });
   }
 
-  async handleMessage(event: MessageEvent, callback: (data: any) => void) {
+  async handleMessage(event: MessageEvent, callback: (data: CallbackData) => void) {
     console.debug('[worker] Github:handleMessage:event', event);
     if (event.data?.type !== GITHUB_FETCH_STARRED_REPO_LIST_EVENT) {
       return;

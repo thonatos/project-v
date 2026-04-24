@@ -1,7 +1,7 @@
-import { Inject, Injectable, ArtusXInjectEnum, ArtusApplication } from '@artusx/core';
-import { PluginInjectEnum } from '@artusx/utils';
+import { type ArtusApplication, ArtusXInjectEnum, Inject, Injectable } from '@artusx/core';
 import type PluginClickHouse from '@artusx/plugin-clickhouse/client';
 import type { ClickHouseClient } from '@artusx/plugin-clickhouse/types';
+import { PluginInjectEnum } from '@artusx/utils';
 
 @Injectable()
 export default class StrategyService {

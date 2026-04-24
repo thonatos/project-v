@@ -1,5 +1,5 @@
 import debug from 'debug';
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 import { GITHUB_DATABASE_NAME, GITHUB_DATABASE_STORE_NAME, type GithubRepo } from './constants';
 
 export const logger = debug('database:github');
