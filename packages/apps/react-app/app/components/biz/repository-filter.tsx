@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useState, useTransition, useMemo } from 'react';
 import { useAtom } from 'jotai';
-import { loadRepoAtom, filterRepoAtom } from '~/store/githubAtom';
-
+import { useCallback, useMemo, useState, useTransition } from 'react';
 import { Input } from '~/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 import { debounce } from '~/lib/utils';
+import { filterRepoAtom, loadRepoAtom } from '~/store/githubAtom';
 
 export function RepositoryFilter() {
   const [filterName, setFilterName] = useState('');
@@ -29,7 +28,7 @@ export function RepositoryFilter() {
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       dispach({
-        name: value && value.trim().toLowerCase(),
+        name: value?.trim().toLowerCase(),
       });
     }, 200),
     [],

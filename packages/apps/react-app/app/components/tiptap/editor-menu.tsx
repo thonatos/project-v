@@ -1,31 +1,30 @@
-import React, { useState } from 'react';
+import type { Editor } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/react';
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  Link2,
-  Image as ImageIcon,
   Code,
-  Quote,
-  ListOrdered,
-  List,
   Heading1,
   Heading2,
   Heading3,
+  Image as ImageIcon,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
   Palette,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
+  Quote,
+  Underline as UnderlineIcon,
 } from 'lucide-react';
-
-import { Input } from '~/components/ui/input';
+import type React from 'react';
+import { useState } from 'react';
 import { Button } from '~/components/ui/button';
-import { Toggle } from '~/components/ui/toggle';
+import { Input } from '~/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 import { Separator } from '~/components/ui/separator';
-
-import type { Editor } from '@tiptap/core';
+import { Toggle } from '~/components/ui/toggle';
 
 export const EditorMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   return (
@@ -221,6 +220,7 @@ export const EditorTopMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
             {['#000000', '#ef4444', '#22c55e', '#3b82f6', '#a855f7'].map((color) => (
               <button
                 key={color}
+                type="button"
                 className="w-6 h-6 rounded-md focus:outline-none focus:ring-1 focus:ring-offset-0"
                 style={{ backgroundColor: color }}
                 onClick={() => editor.chain().focus().setColor(color).run()}

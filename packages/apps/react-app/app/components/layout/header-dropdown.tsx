@@ -1,9 +1,8 @@
-import React from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import type React from 'react';
 import { useNavigate } from 'react-router';
-
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '~/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-
-import { profileAtom, resetProfileAtom } from '~/store/authAtom';
 import { REMIX_API } from '~/constants';
+import { profileAtom, resetProfileAtom } from '~/store/authAtom';
 
 const menus = [
   { label: 'Account', type: 'Label' },
@@ -25,7 +23,7 @@ const menus = [
   { label: 'Logout', key: 'logout' },
 ];
 
-export const Dropdown: React.FC<{}> = () => {
+export const Dropdown: React.FC = () => {
   const navigate = useNavigate();
   const profile = useAtomValue(profileAtom);
   const resetProfile = useSetAtom(resetProfileAtom);

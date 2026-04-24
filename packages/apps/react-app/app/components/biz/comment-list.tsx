@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { User, Clock, Delete } from 'lucide-react';
-
-import { formatDateTime } from '~/lib/utils';
-import { Card } from '~/components/ui/card';
+import { Clock, Delete, User } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '~/components/ui/button';
-import { CommentReply } from './comment-reply';
+import { Card } from '~/components/ui/card';
 import { Separator } from '~/components/ui/separator';
+import { formatDateTime } from '~/lib/utils';
 import { profileAtom } from '~/store/authAtom';
-
 import type { Comment } from '~/types';
+import { CommentReply } from './comment-reply';
 
 interface CommentListProps {
   comments: Comment[];
@@ -96,7 +94,9 @@ export const CommentList: React.FC<CommentListProps> = ({ comments, onDelete, on
 
     // Second pass: Organize comments into a tree structure
     comments.forEach((comment) => {
-      const formattedComment = commentMap.get(comment.id)!;
+      const formattedComment = commentMap.get(comment.id);
+      if (!formattedComment) return;
+
       if (comment.parent_id) {
         const parentComment = commentMap.get(comment.parent_id);
         if (parentComment) {

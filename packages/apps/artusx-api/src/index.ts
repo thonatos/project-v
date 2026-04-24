@@ -1,6 +1,6 @@
-import fs from 'fs-extra';
-import path from 'path';
+import path from 'node:path';
 import { bootstrap } from '@artusx/utils';
+import fs from 'fs-extra';
 
 const ROOT_DIR = path.resolve(__dirname);
 

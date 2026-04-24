@@ -1,12 +1,11 @@
-import path from 'path';
-import { getApiId, getProxy, getEnv } from '@artusx/utils';
-import { ArtusXConfig, NunjucksConfigureOptions } from '@artusx/core';
-
+import path from 'node:path';
+import type { ArtusXConfig, NunjucksConfigureOptions } from '@artusx/core';
+import type { ClickHouseConfig } from '@artusx/plugin-clickhouse/client';
+import type { OpenAIConfig } from '@artusx/plugin-openai/client';
 import type { PPTRConfig } from '@artusx/plugin-pptr/client';
 import type { RedisConfig } from '@artusx/plugin-redis/client';
-import type { OpenAIConfig } from '@artusx/plugin-openai/client';
 import type { TelegramConfig } from '@artusx/plugin-telegram/client';
-import type { ClickHouseConfig } from '@artusx/plugin-clickhouse/client';
+import { getApiId, getEnv, getProxy } from '@artusx/utils';
 
 export default () => {
   const cache = {

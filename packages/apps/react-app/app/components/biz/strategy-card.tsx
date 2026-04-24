@@ -1,9 +1,10 @@
-import React, { Suspense } from 'react';
-import { Skeleton } from '~/components/ui/skeleton';
+import type React from 'react';
+import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import { Skeleton } from '~/components/ui/skeleton';
 import { StrategyList } from './strategy-list';
 
-export const StrategySkeleton: React.FC<{}> = () => {
+export const StrategySkeleton: React.FC = () => {
   return (
     <div className="grid grid-cols-1 gap-8 py-4">
       <div className="grid gap-2">
@@ -24,7 +25,7 @@ export const StrategySkeleton: React.FC<{}> = () => {
   );
 };
 
-export const StrategyCard: React.FC<{}> = () => {
+export const StrategyCard: React.FC = () => {
   return (
     <Card className="overflow-hidden py-0 gap-0">
       <CardHeader className="p-4 bg-muted/50">

@@ -1,29 +1,26 @@
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { useAtomValue, useSetAtom } from 'jotai';
-
+import { Tiptap } from '~/components/tiptap/editor';
+import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { Button } from '~/components/ui/button';
 import { Textarea } from '~/components/ui/textarea';
-import { Tiptap } from '~/components/tiptap/editor';
 
 import {
-  tagsAtom,
-  postAtom,
-  submittingAtom,
-  resetPostAtom,
-  publishPostAtom,
   categoriesAtom,
   listCategoryAtom,
+  postAtom,
+  publishPostAtom,
+  resetPostAtom,
+  submittingAtom,
+  tagsAtom,
 } from '~/store/blogAtom';
-
-import { PostEditorTag } from './post-editor-tag';
-import { PostEditorCategory } from './post-editor-category';
-
 import type { Post } from '~/types';
+import { PostEditorCategory } from './post-editor-category';
+import { PostEditorTag } from './post-editor-tag';
 
 export const PostEditorForm: React.FC<{
   id?: string;

@@ -1,13 +1,13 @@
-import { Suspense } from 'react';
-import invariant from 'tiny-invariant';
-import { toast } from 'sonner';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { Link, Await, useLoaderData, useNavigate } from 'react-router';
+import { Suspense } from 'react';
+import { Await, Link, useLoaderData, useNavigate } from 'react-router';
+import { toast } from 'sonner';
+import invariant from 'tiny-invariant';
 import { PostDetail, PostSkeleton } from '~/components/biz/post-detail';
-import { profileAtom } from '~/store/authAtom';
-import { deletePostAtom, updatePostAtom } from '~/store/blogAtom';
 import { getMeta } from '~/lib/seo-util';
 import { getPost } from '~/service/blog';
+import { profileAtom } from '~/store/authAtom';
+import { deletePostAtom, updatePostAtom } from '~/store/blogAtom';
 
 import type { Route } from './+types/post.$id';
 
@@ -36,7 +36,7 @@ export const loader = async ({ params }: Route.LoaderArgs) => {
   return data;
 };
 
-export default function ({}: Route.ComponentProps) {
+export default function (_: Route.ComponentProps) {
   const navigate = useNavigate();
   const loaderData = useLoaderData<typeof loader>();
 

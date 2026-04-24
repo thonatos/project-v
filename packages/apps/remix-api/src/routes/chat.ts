@@ -1,4 +1,4 @@
-import { Context, Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
 import { AI_MODEL } from '../constants';

@@ -1,9 +1,8 @@
 import debug from 'debug';
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { initDB, getRepoList } from '~/modules/github';
-
 import type { GithubRepo } from '~/modules/github';
+import { getRepoList, initDB } from '~/modules/github';
 
 export const logger = debug('store:githubAtom');
 

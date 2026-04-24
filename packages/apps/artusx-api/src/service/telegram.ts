@@ -1,18 +1,18 @@
-import fs from 'fs-extra';
-import path from 'path';
-import sharp from 'sharp';
-
 import { createHash } from 'node:crypto';
-import { PluginInjectEnum } from '@artusx/utils';
-import { Inject, Injectable, ArtusInjectEnum } from '@artusx/core';
+import path from 'node:path';
 import type { Log4jsClient } from '@artusx/core';
+import { ArtusInjectEnum, Inject, Injectable } from '@artusx/core';
 import type PluginTelegram from '@artusx/plugin-telegram/client';
 import type { TelegramClient } from '@artusx/plugin-telegram/types';
+import { PluginInjectEnum } from '@artusx/utils';
+import fs from 'fs-extra';
+import sharp from 'sharp';
+import type { AppConfig } from '../types/config';
 
 @Injectable()
 export default class TelegramService {
   @Inject(ArtusInjectEnum.Config)
-  config: Record<string, any>;
+  config: AppConfig;
 
   @Inject(PluginInjectEnum.Log4js)
   log4js: Log4jsClient;

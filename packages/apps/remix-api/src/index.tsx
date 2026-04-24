@@ -1,26 +1,21 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { timing } from 'hono/timing';
+import type { JwtVariables } from 'hono/jwt';
 import { logger } from 'hono/logger';
-
-import { JwtMiddleware } from './middlewares/jwt';
-import { IsLoginMiddleware } from './middlewares/is-login';
+import type { TimingVariables } from 'hono/timing';
+import { timing } from 'hono/timing';
+import { HomePage } from './components/home';
+import { CORS_ORIGINS } from './constants';
 import { IsAdminMiddleware } from './middlewares/is-admin';
+import { IsLoginMiddleware } from './middlewares/is-login';
+import { JwtMiddleware } from './middlewares/jwt';
 import { SupabaseMiddleware } from './middlewares/supabase';
-
 import auth from './routes/auth';
 import blog from './routes/blog';
+import charge from './routes/charge';
 import chat from './routes/chat';
 import conf from './routes/conf';
-import charge from './routes/charge';
 import passkey from './routes/passkey';
-
-import { HomePage } from './components/home';
-
-import { CORS_ORIGINS } from './constants';
-
-import type { JwtVariables } from 'hono/jwt';
-import type { TimingVariables } from 'hono/timing';
 
 export type Variables = JwtVariables & TimingVariables;
 
@@ -45,7 +40,7 @@ export type Bindings = {
   COINBASE_API_KEY: string;
 
   AI: {
-    run: (model: string, inputs: any) => Promise<any>;
+    run: (model: string, inputs: unknown) => Promise<unknown>;
   };
 };
 

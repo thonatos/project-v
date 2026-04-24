@@ -6,7 +6,7 @@ const headerClass = css`
 
 export const HomePage = () => {
   return (
-    <html>
+    <html lang="en">
       <head>
         <Style />
       </head>

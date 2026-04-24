@@ -1,14 +1,13 @@
-import { PluginInjectEnum } from '@artusx/utils';
-import { Inject, Injectable } from '@artusx/core';
 import type { Log4jsClient } from '@artusx/core';
-
-import { TZ_ASIA_SHANGHAI } from '../constants';
-import { dayjs } from '../util';
-
-import type { Redis } from '@artusx/plugin-redis/types';
-import type PluginRedis from '@artusx/plugin-redis/client';
+import { Inject, Injectable } from '@artusx/core';
 import type PPTRClient from '@artusx/plugin-pptr/client';
 import { KnownDevices } from '@artusx/plugin-pptr/client';
+import type PluginRedis from '@artusx/plugin-redis/client';
+
+import type { Redis } from '@artusx/plugin-redis/types';
+import { PluginInjectEnum } from '@artusx/utils';
+import { TZ_ASIA_SHANGHAI } from '../constants';
+import { dayjs } from '../util';
 
 const iPhone13Pro = KnownDevices['iPhone 13 Pro Max'];
 
@@ -90,10 +89,10 @@ export default class NewsService {
     return newsList;
   }
 
-  async batchFetchNewsDetail(items: NewsDetail[], callback: (data: any) => Promise<void>) {
+  async batchFetchNewsDetail(items: NewsDetail[], callback: (data: NewsCallbackData) => Promise<void>) {
     const pLimit = (await import('p-limit')).default;
     const limit = pLimit(1);
-    const tasks: any[] = [];
+    const tasks: Promise<void>[] = [];
 
     for (const item of items) {
       const cached = await this.redis.get(item.id);
@@ -292,4 +291,9 @@ export interface NewsDetail {
   isRili: boolean;
   isFlash: boolean;
   isArticle: boolean;
+}
+
+export interface NewsCallbackData {
+  message: string;
+  thumb?: string;
 }

@@ -1,5 +1,5 @@
+import type { ActiveSession, Browser, BrowserWorker } from '@cloudflare/puppeteer';
 import puppeteer from '@cloudflare/puppeteer';
-import type { BrowserWorker, ActiveSession } from '@cloudflare/puppeteer';
 
 export const getActiveSession = async (endpoint: BrowserWorker) => {
   const sessions: ActiveSession[] = await puppeteer.sessions(endpoint);
@@ -18,16 +18,16 @@ export const getRandomSession = async (endpoint: BrowserWorker) => {
   const sessionsIds = await getActiveSession(endpoint);
 
   if (sessionsIds.length === 0) {
-    return;
+    return undefined;
   }
 
   const sessionId = sessionsIds[Math.floor(Math.random() * sessionsIds.length)];
 
-  return sessionId!;
+  return sessionId;
 };
 
 export const getBrowser = async (endpoint: BrowserWorker) => {
-  let browser;
+  let browser: Browser | undefined;
   let sessionId = await getRandomSession(endpoint);
 
   if (sessionId) {

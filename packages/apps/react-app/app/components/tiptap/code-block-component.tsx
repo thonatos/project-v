@@ -1,8 +1,15 @@
-import React from 'react';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
+import type React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 
-export const CodeBlockComponent: React.FC<any> = ({ editor, node, updateAttributes, extension }) => {
+interface CodeBlockProps {
+  editor: { options: { editable: boolean } };
+  node: { attrs: { language?: string } };
+  updateAttributes: (attrs: { language: string }) => void;
+  extension: unknown;
+}
+
+export const CodeBlockComponent: React.FC<CodeBlockProps> = ({ editor, node, updateAttributes, extension }) => {
   const {
     options: { editable },
   } = editor;

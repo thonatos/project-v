@@ -1,4 +1,4 @@
-import { Link, useActionData } from 'react-router';
+import { Link } from 'react-router';
 import { LoginForm } from '~/components/biz/login-form';
 import { loginWithPassword } from '~/service/auth';
 
@@ -8,7 +8,7 @@ export const handle = {
   breadcrumb: () => <Link to="/auth/login">Login</Link>,
 };
 
-export const meta = ({}: Route.MetaArgs) => {
+export const meta = (_: Route.MetaArgs) => {
   return [{ title: 'Login' }, { name: 'ρV', content: 'undefined project - ρV' }];
 };
 
@@ -21,7 +21,7 @@ export async function action({ request }: Route.ActionArgs) {
   return data;
 }
 
-export default function ({}: Route.ComponentProps) {
+export default function (_: Route.ComponentProps) {
   return (
     <div className="w-full max-w-sm md:max-w-4xl">
       <LoginForm />

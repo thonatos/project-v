@@ -1,6 +1,6 @@
-import { Context, Hono } from 'hono';
-import { HTTPException } from 'hono/http-exception';
 import { server } from '@passwordless-id/webauthn';
+import { type Context, Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { setUserId } from '../services/user';
 
 const app = new Hono();
@@ -14,7 +14,7 @@ export const getPasskeyChallenge = async (c: Context) => {
 
 export const registerPasskey = async (c: Context) => {
   const { registration, challenge } = await c.req.json<{
-    registration: any;
+    registration: Record<string, unknown>;
     challenge: string;
   }>();
   const origin = c.req.header('Origin') || '';
@@ -70,7 +70,7 @@ export const registerPasskey = async (c: Context) => {
 export const authenticatePasskey = async (c: Context) => {
   const origin = c.req.header('Origin') || '';
   const { authentication, challenge } = await c.req.json<{
-    authentication: any;
+    authentication: Record<string, unknown>;
     challenge: string;
   }>();
   const supabase = c.get('supabase');
@@ -106,7 +106,7 @@ export const authenticatePasskey = async (c: Context) => {
         authenticationParsed,
       },
     });
-  } catch (error) {
+  } catch (_error) {
     throw new HTTPException(400, { message: 'authentication failed' });
   }
 };

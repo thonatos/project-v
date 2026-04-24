@@ -1,8 +1,8 @@
-import React from 'react';
-import { OSS_PROJECTS } from '~/constants';
+import type React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { OSS_PROJECTS } from '~/constants';
 
-export const ProjectList: React.FC<{}> = () => {
+export const ProjectList: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
       {OSS_PROJECTS.map((project) => (

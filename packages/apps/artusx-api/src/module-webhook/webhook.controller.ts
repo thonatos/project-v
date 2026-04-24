@@ -1,14 +1,15 @@
-import { PluginInjectEnum } from '@artusx/utils';
-import { Controller, POST, Inject, MW, ArtusInjectEnum } from '@artusx/core';
 import type { ArtusXContext, Log4jsClient, NunjucksClient } from '@artusx/core';
+import { ArtusInjectEnum, Controller, Inject, MW, POST } from '@artusx/core';
+import { PluginInjectEnum } from '@artusx/utils';
 
 import TelegramService from '../service/telegram';
 import checkAuthToken from './auth.middleware';
+import type { AppConfig } from '../types/config';
 
 @Controller('/webhook')
 export default class WebhookController {
   @Inject(ArtusInjectEnum.Config)
-  config: Record<string, any>;
+  config: AppConfig;
 
   @Inject(PluginInjectEnum.Log4js)
   log4js: Log4jsClient;

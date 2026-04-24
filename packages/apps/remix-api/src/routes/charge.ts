@@ -1,4 +1,4 @@
-import { Context, Hono } from 'hono';
+import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
 export const app = new Hono();
@@ -26,7 +26,7 @@ export const createCharge = async (c: Context) => {
   };
 
   const response = await fetch('https://api.commerce.coinbase.com/charges', options);
-  const data: any = await response.json();
+  const data = (await response.json()) as { data?: { id?: string } };
 
   // console.log('Response from Coinbase:', data);
 

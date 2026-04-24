@@ -1,9 +1,10 @@
-import React, { Suspense } from 'react';
-import { Await, Link } from 'react-router';
 import { AsyncImage } from 'loadable-image';
+import type React from 'react';
+import { Suspense } from 'react';
+import { Await, Link } from 'react-router';
 import { Badge } from '~/components/ui/badge';
-import { Skeleton } from '~/components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
+import { Skeleton } from '~/components/ui/skeleton';
 
 import { formatDateTime } from '~/lib/utils';
 import type { Post } from '~/types';
@@ -17,7 +18,7 @@ const ImagePlaceholder = () => (
   />
 );
 
-export const PostCardSkeleton: React.FC<{}> = () => {
+export const PostCardSkeleton: React.FC = () => {
   return (
     <Card className="overflow-hidden py-0 justify-between">
       <CardHeader className="p-0">
@@ -41,7 +42,7 @@ export const PostCardSkeleton: React.FC<{}> = () => {
   );
 };
 
-export const PostCard: React.FC<Post> = ({ id, title, tags, excerpt, feature_image, updated_at }) => {
+export const PostCard: React.FC<Post> = ({ id, title, tags, feature_image, updated_at }) => {
   const postLink = `/post/${id}`;
 
   return (

@@ -1,7 +1,7 @@
-import { Context, Hono } from 'hono';
+import type { Provider } from '@supabase/supabase-js';
+import { type Context, Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { sign, decode } from 'hono/jwt';
-import { Provider } from '@supabase/supabase-js';
+import { decode, sign } from 'hono/jwt';
 import { removeUserId, setUserId } from '../services/user';
 
 export const app = new Hono();

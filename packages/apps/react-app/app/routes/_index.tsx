@@ -1,12 +1,11 @@
-import { useEffect } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { useEffect } from 'react';
 import { Link, useLoaderData, useNavigate } from 'react-router';
-
-import { PostList } from '~/components/biz/post-list';
 import { PostCategory } from '~/components/biz/post-category';
+import { PostList } from '~/components/biz/post-list';
+import { getMeta } from '~/lib/seo-util';
 import { listPost } from '~/service/blog';
 import { categoriesAtom, listCategoryAtom } from '~/store/blogAtom';
-import { getMeta } from '~/lib/seo-util';
 
 import type { Route } from './+types/_index';
 
@@ -32,7 +31,7 @@ export function meta({ location }: Route.MetaArgs) {
   return [...props, { title }];
 }
 
-const Index: React.FC<Route.ComponentProps> = ({}) => {
+const Index: React.FC<Route.ComponentProps> = () => {
   const navigate = useNavigate();
   const categories = useAtomValue(categoriesAtom);
   const listCategory = useSetAtom(listCategoryAtom);

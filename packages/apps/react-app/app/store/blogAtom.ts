@@ -1,7 +1,7 @@
 import debug from 'debug';
 import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-import { createOrUpdatePost, deletePost, listCategory, createComment, deleteComment } from '~/service/blog';
+import { createComment, createOrUpdatePost, deleteComment, deletePost, listCategory } from '~/service/blog';
 import type { Category, Post } from '~/types';
 
 export const logger = debug('store:blogAtom');

@@ -1,10 +1,10 @@
-import dayjs from 'dayjs';
-import { PluginInjectEnum } from '@artusx/utils';
-import { ArtusInjectEnum, Inject, Schedule } from '@artusx/core';
 import type { ArtusXSchedule, Log4jsClient } from '@artusx/core';
-
-import NewsService from './news.service';
+import { ArtusInjectEnum, Inject, Schedule } from '@artusx/core';
+import { PluginInjectEnum } from '@artusx/utils';
+import dayjs from 'dayjs';
 import TelegramService from '../service/telegram';
+import NewsService from './news.service';
+import type { AppConfig } from '../types/config';
 
 @Schedule({
   enable: false,
@@ -13,7 +13,7 @@ import TelegramService from '../service/telegram';
 })
 export default class RiliSchedule implements ArtusXSchedule {
   @Inject(ArtusInjectEnum.Config)
-  config: Record<string, any>;
+  config: AppConfig;
 
   @Inject(PluginInjectEnum.Log4js)
   log4js: Log4jsClient;

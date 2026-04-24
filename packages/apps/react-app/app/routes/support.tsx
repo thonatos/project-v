@@ -1,8 +1,8 @@
 import { Link } from 'react-router';
 import { Logo } from '~/components/biz/logo';
-import { Tiptap } from '~/components/tiptap/editor';
 import { ProjectList } from '~/components/biz/project-list';
 import { StrategyCard } from '~/components/biz/strategy-card';
+import { Tiptap } from '~/components/tiptap/editor';
 import { getMeta } from '~/lib/seo-util';
 
 import type { Route } from './+types/support';
@@ -23,7 +23,7 @@ export const meta = ({ location }: Route.MetaArgs) => {
   return [...props, { title }];
 };
 
-export default function ({}: Route.ComponentProps) {
+export default function (_: Route.ComponentProps) {
   return (
     <div className="flex flex-col gap-4">
       <StrategyCard />

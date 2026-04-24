@@ -1,5 +1,5 @@
-import { Suspense } from 'react';
 import loadable from '@loadable/component';
+import { Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import type { Route } from './+types/dash.post';
@@ -10,11 +10,11 @@ export const handle = {
   breadcrumb: () => <Link to="/dash/post">Post</Link>,
 };
 
-export const meta = ({}: Route.MetaArgs) => {
+export const meta = (_: Route.MetaArgs) => {
   return [{ title: 'Post' }, { name: 'ρV', content: 'undefined project - ρV' }];
 };
 
-export default function ({}: Route.ComponentProps) {
+export default function (_: Route.ComponentProps) {
   const [searchParams] = useSearchParams();
   const id = searchParams.get('id') || '';
 

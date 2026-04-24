@@ -1,4 +1,4 @@
-import { ArtusXContext, ArtusXNext } from '@artusx/core';
+import type { ArtusXContext, ArtusXNext } from '@artusx/core';
 import { getEnv } from '@artusx/utils';
 
 const WEBHOOK_AUTH_TOKEN = getEnv<string>('WEBHOOK_AUTH_TOKEN', 'string') || '';

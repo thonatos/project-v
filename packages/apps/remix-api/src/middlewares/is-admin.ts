@@ -1,4 +1,4 @@
-import { MiddlewareHandler } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 
 export const IsAdminMiddleware = (): MiddlewareHandler => {

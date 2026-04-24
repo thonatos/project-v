@@ -1,12 +1,12 @@
 import clsx from 'clsx';
-import { useEffect, useState } from 'react';
 import { useSetAtom } from 'jotai';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import { SidebarInset, SidebarProvider } from '~/components/ui/sidebar';
+import { loadProfileAtom } from '~/store/authAtom';
 import { Header } from './header';
 import { CustomSidebar } from './sidebar';
-import { loadProfileAtom } from '~/store/authAtom';
 
 export const DefaultLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);

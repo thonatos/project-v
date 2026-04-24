@@ -1,9 +1,14 @@
-import { cn } from '~/lib/utils';
-import { TextSelection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/core';
+import { TextSelection } from '@tiptap/pm/state';
 import type { TableOfContentData } from '@tiptap-pro/extension-table-of-contents';
+import { cn } from '~/lib/utils';
 
-export const ToCItem = ({ item, onItemClick }: any) => {
+interface ToCItemProps {
+  item: { isActive?: boolean; isScrolledOver?: boolean; level: number; id: string; textContent: string };
+  onItemClick: (id: string) => void;
+}
+
+export const ToCItem = ({ item, onItemClick }: ToCItemProps) => {
   return (
     <div
       className={cn('tiptap-toc-item', {
@@ -11,7 +16,7 @@ export const ToCItem = ({ item, onItemClick }: any) => {
         'is-scrolled-over': item.isScrolledOver,
       })}
       style={{
-        // @ts-ignore
+        // @ts-expect-error
         '--level': item.level,
       }}
     >
@@ -58,7 +63,7 @@ export const ToC = ({ items = [], editor }: { items: TableOfContentData; editor:
       editor.view.focus();
 
       if (history.pushState) {
-        // @ts-ignore
+        // @ts-expect-error
         history.pushState(null, null, `#${id}`);
       }
 

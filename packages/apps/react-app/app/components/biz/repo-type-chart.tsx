@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend } from '~/components/ui/chart';
 import * as Recharts from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { ChartContainer, ChartLegend, ChartTooltip, ChartTooltipContent } from '~/components/ui/chart';
 
 export interface RepoTypeChartProps {
   data: Array<{
