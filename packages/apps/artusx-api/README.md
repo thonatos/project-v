@@ -3,15 +3,12 @@
 ## develop
 
 ```bash
-rush install
-rush update
-rushx dev
+pnpm --filter artusx-api dev
 ```
 
 ## deploy
 
 ```bash
-rush install
-rush build -t artusx-api
-rush deploy -p artusx-api -s artusx-api --overwrite
+pnpm --filter artusx-api build
+pnpm --filter artusx-api start
 ```
