@@ -1,5 +1,5 @@
 {
-  "name": "Node.js 20.x",
+  "name": "Node.js 24.x",
   "build": {
     "dockerfile": "Dockerfile"
   },

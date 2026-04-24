@@ -1,5 +1,5 @@
 # layer: base
-FROM node:20 AS base
+FROM node:24 AS base
 
 ENV TIME_ZONE=Asia/Shanghai
 ENV PNPM_HOME="/pnpm"
