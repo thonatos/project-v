@@ -27,6 +27,6 @@ jobs:
         with:
           platforms: linux/amd64
           context: '{{defaultContext}}'
-          dockerfile: packages/apps/artusx-api/Dockerfile
+          file: packages/apps/artusx-api/Dockerfile
           push: true
           tags: registry.cn-hongkong.aliyuncs.com/suyi/artusx-api:latest
