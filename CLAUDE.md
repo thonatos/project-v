@@ -4,56 +4,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a Rush-managed monorepo with multiple applications and libraries. The repo uses pnpm as the package manager and requires Node.js >=20.x.
+This is a pnpm-managed monorepo with multiple applications and libraries. The repo requires Node.js >=20.x.
 
 ## Common Commands
 
 ### Installation and Build
 ```bash
 # Install dependencies (required on first setup)
-rush install
-# or
-rush update
+pnpm install
 
 # Build all projects
-rush build
+pnpm -r build
 
-# Build specific project
-rush build -t <project-name>
+# Build specific project (use package.json name)
+pnpm -F <package-name> build
 
-# Deploy (uses rush.json "projects" names)
-rush deploy -p remix-api -s remix-api --overwrite
+# Examples:
+pnpm -F react-app build
+pnpm -F artusx-api build
+pnpm -F remix-api build
 ```
 
 ### Project-specific Development
-Use `rushx` to run scripts in specific projects:
 ```bash
 # React SPA dev server (http://localhost:5173)
-rushx -t react-app dev
+pnpm -F react-app dev
 
 # ArtusX API dev server
-rushx -t artusx-api dev
+pnpm -F artusx-api dev
 
 # Remix API (Cloudflare Workers, remote dev)
-rushx -t remix-api dev
+pnpm -F remix-api dev
 
 # Remix Flow (Cloudflare Workers, local dev)
-rushx -t remix-flow dev
+pnpm -F remix-flow dev
 
 # React Component library (Storybook at port 6006)
-rushx -t react-component dev
+pnpm -F react-component dev
 ```
 
-### Linting and Type Checking
+### Linting and Formatting
 ```bash
-# React app
-rushx -t react-app typecheck
+# Run biome lint on all packages
+pnpm biome lint packages
 
-# ArtusX API
-rushx -t artusx-api lint
+# Run biome lint with auto-fix
+pnpm biome lint packages --write --unsafe
 
-# React Component library
-rushx -t react-component lint
+# Run biome format
+pnpm biome format packages --write
+
+# Run biome check (lint + format)
+pnpm biome check packages --write
+
+# Full project build + lint verification
+pnpm -r build && pnpm biome lint packages
 ```
 
 ### PWA/React App Customization
@@ -71,7 +76,6 @@ pnpm dlx shadcn@latest add {component}
 ### Monorepo Layout
 - `packages/apps/` - Applications
 - `packages/libs/` - Shared libraries
-- `common/` - Rush configuration, scripts, git hooks
 
 ### Applications
 
@@ -100,12 +104,14 @@ pnpm dlx shadcn@latest add {component}
 - `src/config/` - Configuration files
 - `src/controller/` - Request handlers
 - `src/service/` - Business logic
+- `src/types/` - Type definitions (including `config.ts` for AppConfig)
 - `src/module-*/` - Feature modules (module-api, module-news, module-webhook)
 - `src/view/` - View templates
 - `migrations/` - Database migrations
 
 **Key conventions:**
 - Use dependency injection via ArtusX
+- Use `AppConfig` type from `src/types/config.ts` for config injection
 - Use `this.logger` for logging in service classes
 - Use `debug` package for structured logging elsewhere
 - Handle errors with try/catch
@@ -142,6 +148,15 @@ pnpm dlx shadcn@latest add {component}
 
 ## Coding Standards
 
+### Linting (Biome)
+This project uses **Biome** for linting and formatting. Key rules to follow:
+
+- **noExplicitAny**: Avoid `any` type. Use `unknown` or specific types.
+- **noBannedTypes**: Don't use `{}` as a type. Use `Record<string, never>` for empty objects.
+- **useButtonType**: Always add `type="button"` to button elements.
+- **useNodejsImportProtocol**: Use `node:` protocol for Node.js builtins (e.g., `import path from 'node:path'`).
+- **useOptionalChain**: Use optional chaining `?.` instead of `&&` checks.
+
 ### Naming Conventions
 - **PascalCase** - Component names, interfaces, type aliases
 - **camelCase** - Variables, functions, methods
@@ -149,7 +164,7 @@ pnpm dlx shadcn@latest add {component}
 - **ALL_CAPS** - Constants (e.g., `REMIX_API`, `TZ_ASIA_SHANGHAI`)
 
 ### Code Quality
-- Follow `.prettierrc.js` formatting
+- Follow Biome formatting rules (configured in `biome.json`)
 - Use meaningful commit messages (conventional commits)
 - Implement proper type definitions for public APIs
 - Use constants for magic numbers/strings
@@ -161,20 +176,11 @@ pnpm dlx shadcn@latest add {component}
 - Export types alongside components/functions
 - Use proper generic types with React components
 - Prefer `const` and `readonly` for immutability
+- Avoid `any` - use `unknown` or specific types when type is uncertain
 
 ### React (react-app)
 - Follow React hooks rules (no conditional hooks)
 - Keep components small and focused (single responsibility)
 - Implement loading states with skeleton components
 - Export types for component props
-
-## Rush Project Tags
-
-Projects are tagged for selective operations:
-- `apps` - Applications
-- `libs` - Libraries
-- `plugins` - Plugins
-- `tools` - Tools
-- `boilerplates` - Boilerplates
-
-Use with Rush commands: `rush build --only tag:apps`
+- Always add `type="button"` to button elements (not just `<button>`)
