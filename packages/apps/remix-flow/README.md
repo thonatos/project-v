@@ -1,14 +1,15 @@
 # remix-flow
 
+## develop
+
+```bash
+pnpm --filter remix-flow dev
+```
+
 ## deploy
 
 ```bash
-rush install
-rush build -t remix-flow
-rush deploy -p remix-flow -s remix-flow --overwrite
-
-# or
-npx wrangler deploy
+pnpm --filter remix-flow deploy
 ```
 
 ## trigger
@@ -19,4 +20,3 @@ npx wrangler deploy
   "key": "6aa74f1d-336d-4d3d-bd16-cff64e94b55f",
   "selector": "#open-graph"
 }
-```
