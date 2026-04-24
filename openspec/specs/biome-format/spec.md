@@ -17,8 +17,12 @@
 - **THEN** biome SHALL 格式化所有符合条件的源文件
 
 #### Scenario: 代码检查
-- **WHEN** 开发者运行 `pnpm biome lint .`
+- **WHEN** 开发者运行 `pnpm lint` 或 `pnpm biome lint packages`
 - **THEN** biome SHALL 检查所有源文件并报告 lint 错误
+
+#### Scenario: 代码检查自动修复
+- **WHEN** 开发者运行 `pnpm lint:fix` 或 `pnpm biome lint packages --write`
+- **THEN** biome SHALL 自动修复可修复的 lint 问题
 
 ### Requirement: prettier 文件移除
 
@@ -34,12 +38,20 @@
 
 ### Requirement: biome 配置
 
-biome.json SHALL 配置适用于项目的格式化规则。
+biome.json SHALL 配置适用于项目的格式化和 lint 规则。
 
 #### Scenario: biome 配置存在
-- **WHEN** 项目根目录存在 biome.json
-- **THEN** 配置 SHALL 包含适当的格式化选项
+- **GIVEN** 项目根目录存在 biome.json
+- **THEN** 配置 SHALL 包含适当的格式化选项和 lint 规则
 
-#### Scenario: biome 使用默认配置
-- **WHEN** 开发者运行 `pnpm biome init`
-- **THEN** 生成的 biome.json SHALL 适用于 TypeScript 和 JavaScript 项目
+#### Scenario: linter 启用
+- **GIVEN** biome.json 配置
+- **THEN** `linter.enabled` SHALL 为 `true`
+
+#### Scenario: linter rules 配置
+- **GIVEN** biome.json 配置
+- **THEN** `linter.rules.recommended` SHALL 为 `true`
+
+#### Scenario: files includes 配置
+- **GIVEN** biome.json 配置
+- **THEN** `files.includes` SHALL 包含 `packages/**/*.ts`、`packages/**/*.tsx`、`packages/**/*.js`

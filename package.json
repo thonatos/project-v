@@ -7,6 +7,8 @@
 	},
 	"scripts": {
 		"prepare": "husky",
+		"lint": "biome lint packages",
+		"lint:fix": "biome lint packages --write",
 		"format": "biome format packages",
 		"format:write": "biome format packages --write"
 	}

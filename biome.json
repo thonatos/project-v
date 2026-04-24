@@ -6,24 +6,28 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"includes": ["packages/**/*.ts", "packages/**/*.tsx", "packages/**/*.js"]
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "space",		
+		"indentStyle": "space",
 		"indentWidth": 2,
 		"lineEnding": "lf",
 		"lineWidth": 120
 	},
 	"linter": {
-		"enabled": false
+		"enabled": true,
+		"rules": {
+			"recommended": true
+		}
 	},
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "single",
 			"semicolons": "always",
 			"bracketSameLine": false,
-			"trailingCommas": "all"			
+			"trailingCommas": "all"
 		}
 	},
 	"css": {
@@ -31,7 +35,7 @@
 			"tailwindDirectives": true
 		},
 		"formatter": {
-			"quoteStyle": "single"			
+			"quoteStyle": "single"
 		}
 	}
 }
