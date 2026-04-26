@@ -28,7 +28,7 @@
 
 ## MODIFIED Requirements
 
-### Requirement: oxlint 配置
+### Requirement: biome 配置
 
 **原要求：** biome.json SHALL 配置适用于项目的格式化和 lint 规则。
 
