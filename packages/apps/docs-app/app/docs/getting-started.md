@@ -62,6 +62,58 @@ interface Doc {
 pnpm build
 ```
 
+## 流程图示例
+
+使用 Mermaid 语法绘制流程图：
+
+```mermaid
+graph TD
+    A[开始] --> B[安装依赖]
+    B --> C[启动开发服务器]
+    C --> D[编写文档]
+    D --> E[构建静态站点]
+    E --> F[部署]
+    F --> G[完成]
+```
+
+## 时序图示例
+
+使用 Mermaid 语法绘制时序图：
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant Server
+    User->>Browser: 访问文档页面
+    Browser->>Server: 请求文档内容
+    Server->>Browser: 返回 HTML
+    Browser->>User: 渲染页面
+```
+
+## 类图示例
+
+使用 Mermaid 语法绘制类图：
+
+```mermaid
+classDiagram
+    class Doc {
+        +string slug
+        +string title
+        +string date
+        +string description
+        +string content
+        +TocItem[] toc
+    }
+    class TocItem {
+        +string id
+        +string text
+        +number depth
+        +TocItem[] children
+    }
+    Doc --> TocItem : contains
+```
+
 ---
 
 更多信息请参考项目文档。
