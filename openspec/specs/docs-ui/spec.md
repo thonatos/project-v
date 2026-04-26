@@ -1,11 +1,11 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: 站点标题配置
-系统 SHALL 配置站点标题为 "ρV"，描述为 "undefined project"。
+系统 SHALL 配置站点标题为 "ρV"，描述为 "undefined project"，并为品牌名添加防翻译标记。
 
 #### Scenario: 显示站点标题
 - **WHEN** 用户访问任意页面
-- **THEN** 导航栏 Logo 显示 "ρV"
+- **THEN** 导航栏 Logo 显示 "ρV"，品牌名被 `translate="no"` 包裹
 
 #### Scenario: 页面 meta 标题
 - **WHEN** 页面渲染完成
@@ -15,16 +15,25 @@
 - **WHEN** 用户查看站点 meta 信息
 - **THEN** 站点描述显示为 "undefined project"
 
-### Requirement: Footer 版权声明
-系统 SHALL 在 Footer 显示完整的版权声明。
+## ADDED Requirements
 
-#### Scenario: 显示版权信息
-- **WHEN** 用户访问任意页面
-- **THEN** Footer 显示版权年份和所有者信息
+### Requirement: Theme Color Meta 标签
+系统 SHALL 添加 `theme-color` meta 标签，匹配页面背景色。
 
-### Requirement: Footer 外部链接
-系统 SHALL 在 Footer 显示相关外部链接。
+#### Scenario: Theme Color 配置
+- **WHEN** 页面渲染完成
+- **THEN** `<meta name="theme-color" content="#ffffff">` 存在于 head 中
 
-#### Scenario: 显示项目链接
-- **WHEN** Footer 渲染完成
-- **THEN** Footer 显示 GitHub 仓库链接或其他相关链接
+### Requirement: Scroll Margin Top
+系统 SHALL 为标题添加 `scroll-margin-top`，确保锚点跳转正确对齐。
+
+#### Scenario: 标题锚点跳转
+- **WHEN** 用户点击标题锚点链接
+- **THEN** 页面滚动后标题不被 Header 遮挡（scroll-margin-top: 4rem）
+
+### Requirement: 主内容区域标识
+系统 SHALL 为主内容区域添加 `id="main-content"`，支持 Skip Link 跳转。
+
+#### Scenario: 主内容区域 ID
+- **WHEN** 页面渲染完成
+- **THEN** 主内容区域（Outlet）具有 `id="main-content"`

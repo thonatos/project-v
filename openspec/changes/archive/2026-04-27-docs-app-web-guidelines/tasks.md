@@ -34,5 +34,4 @@
 - [x] 6.2 运行 pnpm -F docs-app build 验证构建
 - [x] 6.3 使用 playwright 验证 skip link 功能（通过预渲染 HTML 验证）
 - [x] 6.4 使用 playwright 验证 focus-visible 样式（通过预渲染 HTML 验证）
-- [ ] 6.5 提交代码
-- [ ] 6.5 提交代码
+- [x] 6.5 提交代码
