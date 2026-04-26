@@ -11,45 +11,47 @@ export function MermaidRenderer() {
       startOnLoad: false,
       theme: 'base',
       themeVariables: {
-        // Match docs-app code block style (dark background)
+        // Background layers - dark gray tones
         background: '#1f2937',
-        primaryColor: '#374151',
-        primaryTextColor: '#f9fafb',
-        primaryBorderColor: '#f59e0b',
-        secondaryColor: '#4b5563',
-        secondaryTextColor: '#f9fafb',
-        secondaryBorderColor: '#6b7280',
-        tertiaryColor: '#6b7280',
-        tertiaryTextColor: '#f9fafb',
-        tertiaryBorderColor: '#9ca3af',
-        // Lines and edges - use bright color for visibility
-        lineColor: '#9ca3af',
-        // Text colors - use bright white for readability
-        textColor: '#f9fafb',
         mainBkg: '#1f2937',
         nodeBkg: '#374151',
-        nodeBorder: '#f59e0b',
         clusterBkg: '#1f2937',
-        clusterBorder: '#374151',
-        titleColor: '#f59e0b',
-        // Edge/connection labels - bright background and text
         edgeLabelBackground: '#374151',
+
+        // Text colors - high contrast (near white)
+        textColor: '#f9fafb',
+        primaryTextColor: '#f9fafb',
+        secondaryTextColor: '#f9fafb',
+        tertiaryTextColor: '#f9fafb',
+        classText: '#f9fafb',
         labelTextColor: '#f9fafb',
-        // Sequence diagram (works fine)
+
+        // Borders and lines - medium gray (visible, not harsh)
+        lineColor: '#9ca3af',
+        primaryBorderColor: '#6b7280',
+        secondaryBorderColor: '#6b7280',
+        tertiaryBorderColor: '#6b7280',
+        nodeBorder: '#6b7280',
+        clusterBorder: '#374151',
+
+        // Node colors
+        primaryColor: '#374151',
+        secondaryColor: '#4b5563',
+        tertiaryColor: '#6b7280',
+
+        // Sequence diagram
         actorBkg: '#374151',
-        actorBorder: '#f59e0b',
+        actorBorder: '#6b7280',
         actorTextColor: '#f9fafb',
         actorLineColor: '#9ca3af',
         signalColor: '#9ca3af',
         signalTextColor: '#f9fafb',
         labelBoxBkgColor: '#374151',
-        labelBoxBorderColor: '#f59e0b',
+        labelBoxBorderColor: '#6b7280',
         loopTextColor: '#f9fafb',
-        noteBorderColor: '#f59e0b',
+        noteBorderColor: '#6b7280',
         noteBkgColor: '#374151',
         noteTextColor: '#f9fafb',
-        // Class diagram - ensure text visibility
-        classText: '#f9fafb',
       },
       flowchart: {
         curve: 'basis',
@@ -69,7 +71,6 @@ export function MermaidRenderer() {
       securityLevel: 'loose',
     });
 
-    // mermaid.run() will find all elements with class="mermaid" and render them
     mermaid.run({
       querySelector: 'pre.mermaid',
       suppressErrors: false,
