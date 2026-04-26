@@ -103,13 +103,13 @@ classDiagram
         +string date
         +string description
         +string content
-        +TocItem[] toc
+        +TocItem toc
     }
     class TocItem {
         +string id
         +string text
         +number depth
-        +TocItem[] children
+        +TocItem children
     }
     Doc --> TocItem : contains
 ```
