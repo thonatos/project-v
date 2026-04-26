@@ -1,7 +1,9 @@
 {
 	"$schema": "https://oxc.rs/schema/oxlint.json",
 	"ignore": [
-		"packages/apps/react-app/app/components/ui/**"
+		"packages/apps/react-app/app/components/ui/**",
+		"packages/apps/docs-app/.react-router/**",
+		"packages/apps/docs-app/build/**"
 	],
 	"categories": {
 		"correctness": "warn",

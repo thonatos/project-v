@@ -1,8 +1,5 @@
 import type { LinksFunction } from 'react-router';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
-import { ThemeProvider } from 'next-themes';
-import { MDXProvider } from '@mdx-js/react';
-import { useMDXComponents } from '~/components/mdx-components';
 
 import './app.css';
 
@@ -14,7 +11,7 @@ export const links: LinksFunction = () => [
 ];
 
 export function meta() {
-  return [{ title: 'Docs App' }, { name: 'description', content: '文档和手稿展示站点' }];
+  return [{ title: 'ρV' }, { name: 'description', content: 'undefined project' }];
 }
 
 export default function App() {
@@ -27,11 +24,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <MDXProvider components={useMDXComponents()}>
-            <Outlet />
-          </MDXProvider>
-        </ThemeProvider>
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>

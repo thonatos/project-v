@@ -11,5 +11,8 @@
   "arrowParens": "always",
   "bracketSameLine": false,
   "bracketSpacing": true,
-  "ignorePatterns": []
+  "ignorePatterns": [
+    "packages/apps/docs-app/.react-router/**",
+    "packages/apps/docs-app/build/**"
+  ]
 }
