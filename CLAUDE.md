@@ -45,20 +45,20 @@ pnpm -F react-component dev
 
 ### Linting and Formatting
 ```bash
-# Run biome lint on all packages
-pnpm biome lint packages
+# Run oxlint on all packages
+pnpm lint
 
-# Run biome lint with auto-fix
-pnpm biome lint packages --write --unsafe
+# Run oxlint with auto-fix
+pnpm lint:fix
 
-# Run biome format
-pnpm biome format packages --write
+# Check formatting (dry-run)
+pnpm format
 
-# Run biome check (lint + format)
-pnpm biome check packages --write
+# Format all packages
+pnpm format:write
 
 # Full project build + lint verification
-pnpm -r build && pnpm biome lint packages
+pnpm -r build && pnpm lint
 ```
 
 ### PWA/React App Customization
@@ -148,14 +148,17 @@ pnpm dlx shadcn@latest add {component}
 
 ## Coding Standards
 
-### Linting (Biome)
-This project uses **Biome** for linting and formatting. Key rules to follow:
+### Linting (Oxlint)
+This project uses **Oxlint** for linting and **Oxfmt** for formatting. Key rules to follow:
 
-- **noExplicitAny**: Avoid `any` type. Use `unknown` or specific types.
-- **noBannedTypes**: Don't use `{}` as a type. Use `Record<string, never>` for empty objects.
+- **no-unused-vars**: Avoid unused variables. Use `_` prefix for intentionally unused catch parameters.
 - **useButtonType**: Always add `type="button"` to button elements.
 - **useNodejsImportProtocol**: Use `node:` protocol for Node.js builtins (e.g., `import path from 'node:path'`).
 - **useOptionalChain**: Use optional chaining `?.` instead of `&&` checks.
+
+Configuration files:
+- `oxlint.json` - Lint rules and ignore patterns
+- `.oxfmtrc.json` - Formatting options (indent width: 2, line width: 120, single quotes)
 
 ### Naming Conventions
 - **PascalCase** - Component names, interfaces, type aliases
@@ -164,7 +167,7 @@ This project uses **Biome** for linting and formatting. Key rules to follow:
 - **ALL_CAPS** - Constants (e.g., `REMIX_API`, `TZ_ASIA_SHANGHAI`)
 
 ### Code Quality
-- Follow Biome formatting rules (configured in `biome.json`)
+- Follow Oxlint/Oxfmt formatting rules (configured in `oxlint.json` and `.oxfmtrc.json`)
 - Use meaningful commit messages (conventional commits)
 - Implement proper type definitions for public APIs
 - Use constants for magic numbers/strings
