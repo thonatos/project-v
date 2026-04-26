@@ -1,6 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { marked } from 'marked';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkRehype from 'remark-rehype';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeStringify from 'rehype-stringify';
+import type { Root, Heading, Code, Text } from 'mdast';
+import type { Element, Root as HastRoot } from 'hast';
+import { visit } from 'unist-util-visit';
 
 const docsDir = path.join(process.cwd(), 'app/docs');
 
@@ -10,15 +19,24 @@ interface DocFrontmatter {
   description: string;
 }
 
+interface TocItem {
+  id: string;
+  text: string;
+  depth: number;
+  children: TocItem[];
+}
+
 interface Doc {
   slug: string;
   title: string;
   date: string;
   description: string;
   content: string;
+  toc: TocItem[];
 }
 
-function parseFrontmatter(content: string): { frontmatter: DocFrontmatter; body: string } {
+// Extract frontmatter from markdown content
+function extractFrontmatter(content: string): { frontmatter: DocFrontmatter; body: string } {
   const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
   const match = content.match(frontmatterRegex);
 
@@ -45,6 +63,91 @@ function parseFrontmatter(content: string): { frontmatter: DocFrontmatter; body:
   return { frontmatter, body };
 }
 
+// Generate unique heading ID
+function generateHeadingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+}
+
+// Extract TOC from markdown AST
+function extractToc(tree: Root): TocItem[] {
+  const headings: TocItem[] = [];
+  const stack: { depth: number; items: TocItem[] }[] = [{ depth: 0, items: headings }];
+
+  visit(tree, 'heading', (node: Heading) => {
+    if (node.depth < 1 || node.depth > 3) return;
+
+    const text = node.children
+      .filter((child): child is Text => child.type === 'text')
+      .map((child) => child.value)
+      .join('');
+
+    const id = generateHeadingId(text);
+    const item: TocItem = { id, text, depth: node.depth, children: [] };
+
+    // Find appropriate parent level
+    while (stack.length > 1 && stack[stack.length - 1].depth >= node.depth) {
+      stack.pop();
+    }
+
+    stack[stack.length - 1].items.push(item);
+    stack.push({ depth: node.depth, items: item.children });
+  });
+
+  return headings;
+}
+
+// Add heading IDs to hast tree
+function addHeadingIds(tree: HastRoot): void {
+  visit(tree, 'element', (node: Element) => {
+    if (['h1', 'h2', 'h3'].includes(node.tagName)) {
+      const text = node.children
+        .filter((child): child is Text => child.type === 'text')
+        .map((child) => child.value)
+        .join('');
+      node.properties = { ...node.properties, id: generateHeadingId(text) };
+    }
+  });
+}
+
+// Preserve mermaid code blocks (don't highlight)
+function preserveMermaidBlocks(): import('unified').Plugin {
+  return () => (tree: Root) => {
+    visit(tree, 'code', (node: Code) => {
+      if (node.lang === 'mermaid') {
+        // Mark as mermaid for client-side rendering
+        node.data = { ...node.data, hProperties: { className: ['mermaid'] } };
+        node.lang = undefined; // Prevent rehype-highlight from processing
+      }
+    });
+  };
+}
+
+// Process markdown to HTML with TOC
+async function processMarkdown(body: string): Promise<{ content: string; toc: TocItem[] }> {
+  const processor = unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkFrontmatter, ['yaml'])
+    .use(preserveMermaidBlocks)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeHighlight, { detect: true })
+    .use(rehypeStringify, { allowDangerousHtml: true });
+
+  const tree = processor.parse(body);
+  const toc = extractToc(tree as Root);
+
+  const hastTree = await processor.run(tree, body);
+  addHeadingIds(hastTree as HastRoot);
+
+  const content = processor.stringify(hastTree);
+
+  return { content: String(content), toc };
+}
+
 export async function getDocSlugs(): Promise<string[]> {
   if (!fs.existsSync(docsDir)) {
     return [];
@@ -67,8 +170,8 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
   }
 
   const content = fs.readFileSync(actualPath, 'utf-8');
-  const { frontmatter, body } = parseFrontmatter(content);
-  const htmlContent = marked.parse(body) as string;
+  const { frontmatter, body } = extractFrontmatter(content);
+  const { content: htmlContent, toc } = await processMarkdown(body);
 
   return {
     slug,
@@ -76,6 +179,7 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
     date: frontmatter.date,
     description: frontmatter.description,
     content: htmlContent,
+    toc,
   };
 }
 
