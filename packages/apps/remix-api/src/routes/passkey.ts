@@ -106,7 +106,7 @@ export const authenticatePasskey = async (c: Context) => {
         authenticationParsed,
       },
     });
-  } catch (_error) {
+  } catch {
     throw new HTTPException(400, { message: 'authentication failed' });
   }
 };
