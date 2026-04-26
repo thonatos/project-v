@@ -120,14 +120,42 @@ async function processMarkdown(body: string): Promise<{ content: string; toc: To
     .use(remarkGfm)
     .use(remarkFrontmatter, ['yaml'])
     .use(() => (tree: Root) => {
-      // Preserve mermaid code blocks
+      // Mark mermaid code blocks - clear lang to prevent highlighting
       visit(tree, 'code', (node: Code) => {
         if (node.lang === 'mermaid') {
-          node.data = { ...node.data, hProperties: { className: ['mermaid'] } };
+          // Store original mermaid code and mark for special handling
+          node.data = {
+            ...node.data,
+            hProperties: { className: ['mermaid-raw'] },
+          };
+          // Clear lang so rehype-highlight won't process it
+          node.lang = undefined;
+          node.meta = undefined;
         }
       });
     })
     .use(remarkRehype, { allowDangerousHtml: true })
+    .use(() => (tree: HastRoot) => {
+      // Handle mermaid blocks before rehype-highlight
+      visit(tree, 'element', (node: Element) => {
+        if (node.tagName === 'pre' && node.children?.[0]?.type === 'element') {
+          const codeNode = node.children[0] as Element;
+          const classes = (codeNode.properties?.className as string[]) || [];
+          if (classes.includes('mermaid-raw')) {
+            // Get the text content from code block
+            const textContent =
+              codeNode.children
+                ?.filter((child): child is Text => child.type === 'text')
+                ?.map((child) => child.value)
+                ?.join('') || '';
+            // Replace with simple pre.mermaid containing the raw text
+            node.tagName = 'pre';
+            node.properties = { className: ['mermaid'] };
+            node.children = [{ type: 'text', value: textContent }];
+          }
+        }
+      });
+    })
     .use(rehypeHighlight, { detect: true, subset: false })
     .use(rehypeStringify, { allowDangerousHtml: true });
 
