@@ -13,15 +13,6 @@
     --color-border: #e2e8f0;
   }
 
-  .dark {
-    --color-primary: #f59e0b;
-    --color-primary-hover: #fbbf24;
-    --color-text: #f1f5f9;
-    --color-text-muted: #94a3b8;
-    --color-bg: #0f172a;
-    --color-border: #334155;
-  }
-
   html {
     scroll-behavior: smooth;
   }
@@ -36,9 +27,10 @@
 }
 
 @layer components {
-  /* Article prose styles - Tailwind Blog inspired */
+  /* Article prose styles */
   .prose {
     max-width: none;
+    color: var(--color-text);
   }
 
   .prose h1 {
@@ -47,6 +39,7 @@
     letter-spacing: -0.025em;
     margin-top: 0;
     margin-bottom: 1rem;
+    color: var(--color-text);
   }
 
   .prose h2 {
@@ -55,6 +48,7 @@
     letter-spacing: -0.025em;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
+    color: var(--color-text);
   }
 
   .prose h3 {
@@ -62,12 +56,14 @@
     font-weight: 600;
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
+    color: var(--color-text);
   }
 
   .prose p {
     margin-top: 1.25em;
     margin-bottom: 1.25em;
     line-height: 1.75;
+    color: var(--color-text);
   }
 
   .prose a {
@@ -85,21 +81,31 @@
     font-weight: 600;
   }
 
-  .prose code {
+  /* Inline code - match code block style */
+  .prose code:not(pre code) {
     font-size: 0.875em;
-    background-color: var(--color-border);
+    font-weight: 400;
+    color: #e5e7eb !important;
+    background-color: #1f2937;
     padding: 0.125em 0.25em;
     border-radius: 0.25rem;
   }
 
+  /* Code blocks */
   .prose pre {
     border-radius: 0.5rem;
     overflow-x: auto;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background-color: #1f2937;
   }
 
   .prose pre code {
+    color: #e5e7eb;
     background-color: transparent;
     padding: 0;
+    display: block;
   }
 
   .prose ul,
@@ -107,11 +113,13 @@
     margin-top: 1em;
     margin-bottom: 1em;
     padding-left: 1.5em;
+    color: var(--color-text);
   }
 
   .prose li {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+    color: var(--color-text);
   }
 
   .prose blockquote {
