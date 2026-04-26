@@ -68,12 +68,12 @@ pnpm build
 
 ```mermaid
 graph TD
-    A[开始] --> B[安装依赖]
-    B --> C[启动开发服务器]
-    C --> D[编写文档]
-    D --> E[构建静态站点]
-    E --> F[部署]
-    F --> G[完成]
+    A[Start] --> B[Install Dependencies]
+    B --> C[Start Dev Server]
+    C --> D[Write Docs]
+    D --> E[Build Static Site]
+    E --> F[Deploy]
+    F --> G[Done]
 ```
 
 ## 时序图示例
@@ -85,10 +85,10 @@ sequenceDiagram
     participant User
     participant Browser
     participant Server
-    User->>Browser: 访问文档页面
-    Browser->>Server: 请求文档内容
-    Server->>Browser: 返回 HTML
-    Browser->>User: 渲染页面
+    User->>Browser: Visit doc page
+    Browser->>Server: Request doc content
+    Server->>Browser: Return HTML
+    Browser->>User: Render page
 ```
 
 ## 类图示例
