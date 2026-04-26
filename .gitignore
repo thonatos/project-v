@@ -102,3 +102,9 @@ turbo-*.log*
 
 # Gitleaks report
 .gitleaks-report.json
+
+# Playwright test artifacts
+.playwright-mcp
+
+# React Router cache
+.react-router/

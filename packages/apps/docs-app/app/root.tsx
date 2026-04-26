@@ -14,10 +14,7 @@ export const links: LinksFunction = () => [
 ];
 
 export function meta() {
-  return [
-    { title: 'Docs App' },
-    { name: 'description', content: '文档和手稿展示站点' },
-  ];
+  return [{ title: 'Docs App' }, { name: 'description', content: '文档和手稿展示站点' }];
 }
 
 export default function App() {

@@ -119,10 +119,7 @@ export function ProseImage({ src, alt }: ProseImageProps) {
           <img
             src={resolvedSrc}
             alt={alt}
-            className={cn(
-              'max-w-[90vw] max-h-[90vh] object-contain cursor-move',
-              isDragging ? 'grabbing' : 'grab'
-            )}
+            className={cn('max-w-[90vw] max-h-[90vh] object-contain cursor-move', isDragging ? 'grabbing' : 'grab')}
             style={{
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             }}

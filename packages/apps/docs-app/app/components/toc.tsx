@@ -30,7 +30,7 @@ export function TOC() {
           }
         });
       },
-      { rootMargin: '-80px 0px -80px 0px' }
+      { rootMargin: '-80px 0px -80px 0px' },
     );
 
     headings.forEach((h) => {
@@ -60,11 +60,7 @@ export function TOC() {
               href={`#${item.id}`}
               className={`text-sm hover:text-[var(--color-primary)] transition-colors ${
                 item.level === 3 ? 'pl-3' : ''
-              } ${
-                activeId === item.id
-                  ? 'text-[var(--color-primary)] font-medium'
-                  : 'text-[var(--color-text-muted)]'
-              }`}
+              } ${activeId === item.id ? 'text-[var(--color-primary)] font-medium' : 'text-[var(--color-text-muted)]'}`}
             >
               {item.text}
             </a>

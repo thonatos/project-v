@@ -1,21 +1,16 @@
 import { ArticleCard } from '~/components/article-card';
 
 // Glob import all MDX files to get frontmatter
-const docsModules = import.meta.glob<{ frontmatter: { title: string; date: string; description: string; image?: string } }>(
-  './docs/*.mdx',
-  { eager: true }
-);
+const docsModules = import.meta.glob<{
+  frontmatter: { title: string; date: string; description: string; image?: string };
+}>('./docs/*.mdx', { eager: true });
 
-const manuscriptsModules = import.meta.glob<{ frontmatter: { title: string; date: string; description: string; image?: string } }>(
-  './manuscripts/*.mdx',
-  { eager: true }
-);
+const manuscriptsModules = import.meta.glob<{
+  frontmatter: { title: string; date: string; description: string; image?: string };
+}>('./manuscripts/*.mdx', { eager: true });
 
 export function meta() {
-  return [
-    { title: 'Docs App' },
-    { name: 'description', content: '文档和手稿展示站点' },
-  ];
+  return [{ title: 'Docs App' }, { name: 'description', content: '文档和手稿展示站点' }];
 }
 
 export default function Index() {
@@ -41,12 +36,8 @@ export default function Index() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Hero Section - Tailwind Blog style */}
       <header className="mb-12">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-          最新更新
-        </h1>
-        <p className="text-lg text-[var(--color-text-muted)] max-w-2xl">
-          所有文档和手稿，持续更新中。
-        </p>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">最新更新</h1>
+        <p className="text-lg text-[var(--color-text-muted)] max-w-2xl">所有文档和手稿，持续更新中。</p>
       </header>
 
       {/* Articles List - Tailwind Blog style */}
