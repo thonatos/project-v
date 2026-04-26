@@ -173,6 +173,93 @@
     margin-top: 3em;
     margin-bottom: 3em;
   }
+
+  /* Mermaid diagram styles */
+  .mermaid-diagram {
+    background-color: #1f2937;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .mermaid-error {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+
+  /* rehype-highlight styles (hljs classes) */
+  .hljs {
+    background: #1f2937 !important;
+    color: #e5e7eb;
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: #6b7280;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-addition {
+    color: #f472b6;
+  }
+
+  .hljs-number,
+  .hljs-string,
+  .hljs-meta .hljs-meta-string,
+  .hljs-literal,
+  .hljs-doctag,
+  .hljs-regexp {
+    color: #a5f3fc;
+  }
+
+  .hljs-title,
+  .hljs-section,
+  .hljs-name,
+  .hljs-selector-id,
+  .hljs-selector-class {
+    color: #fbbf24;
+  }
+
+  .hljs-attribute,
+  .hljs-attr,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-class .hljs-title,
+  .hljs-type {
+    color: #c084fc;
+  }
+
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-subst,
+  .hljs-meta,
+  .hljs-meta .hljs-keyword,
+  .hljs-selector-attr,
+  .hljs-selector-pseudo,
+  .hljs-link {
+    color: #34d399;
+  }
+
+  .hljs-built_in,
+  .hljs-deletion {
+    color: #f87171;
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: bold;
+  }
 }
 
 /* Reduced motion preference */
