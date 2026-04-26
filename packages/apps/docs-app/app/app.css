@@ -1,0 +1,128 @@
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+
+/* Tailwind Blog inspired styles */
+@layer base {
+  :root {
+    --color-primary: #f59e0b;
+    --color-primary-hover: #d97706;
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
+    --color-bg: #ffffff;
+    --color-border: #e2e8f0;
+  }
+
+  .dark {
+    --color-primary: #f59e0b;
+    --color-primary-hover: #fbbf24;
+    --color-text: #f1f5f9;
+    --color-text-muted: #94a3b8;
+    --color-bg: #0f172a;
+    --color-border: #334155;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Article prose styles - Tailwind Blog inspired */
+  .prose {
+    max-width: none;
+  }
+
+  .prose h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .prose h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .prose p {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    line-height: 1.75;
+  }
+
+  .prose a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 500;
+  }
+
+  .prose a:hover {
+    color: var(--color-primary-hover);
+  }
+
+  .prose strong {
+    font-weight: 600;
+  }
+
+  .prose code {
+    font-size: 0.875em;
+    background-color: var(--color-border);
+    padding: 0.125em 0.25em;
+    border-radius: 0.25rem;
+  }
+
+  .prose pre {
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .prose pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+
+  .prose ul,
+  .prose ol {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+  }
+
+  .prose li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .prose blockquote {
+    border-left: 3px solid var(--color-primary);
+    padding-left: 1em;
+    margin-left: 0;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  .prose hr {
+    border-color: var(--color-border);
+    margin-top: 3em;
+    margin-bottom: 3em;
+  }
+}
