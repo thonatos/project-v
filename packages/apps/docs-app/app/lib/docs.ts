@@ -113,28 +113,22 @@ function addHeadingIds(tree: HastRoot): void {
   });
 }
 
-// Preserve mermaid code blocks (don't highlight)
-function preserveMermaidBlocks(): import('unified').Plugin {
-  return () => (tree: Root) => {
-    visit(tree, 'code', (node: Code) => {
-      if (node.lang === 'mermaid') {
-        // Mark as mermaid for client-side rendering
-        node.data = { ...node.data, hProperties: { className: ['mermaid'] } };
-        node.lang = undefined; // Prevent rehype-highlight from processing
-      }
-    });
-  };
-}
-
 // Process markdown to HTML with TOC
 async function processMarkdown(body: string): Promise<{ content: string; toc: TocItem[] }> {
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkFrontmatter, ['yaml'])
-    .use(preserveMermaidBlocks)
+    .use(() => (tree: Root) => {
+      // Preserve mermaid code blocks
+      visit(tree, 'code', (node: Code) => {
+        if (node.lang === 'mermaid') {
+          node.data = { ...node.data, hProperties: { className: ['mermaid'] } };
+        }
+      });
+    })
     .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeHighlight, { detect: true })
+    .use(rehypeHighlight, { detect: true, subset: false })
     .use(rehypeStringify, { allowDangerousHtml: true });
 
   const tree = processor.parse(body);
