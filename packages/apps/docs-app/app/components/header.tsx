@@ -7,9 +7,9 @@ export function Header() {
         {/* Logo */}
         <Link
           to="/"
-          className="text-sm font-semibold tracking-tight hover:text-[var(--color-primary)] transition-colors"
+          className="text-sm font-semibold tracking-tight hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
         >
-          ρV
+          <span translate="no">ρV</span>
         </Link>
       </nav>
     </header>
