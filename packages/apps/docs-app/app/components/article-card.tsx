@@ -10,7 +10,10 @@ interface ArticleCardProps {
 export function ArticleCard({ href, title, date, description }: ArticleCardProps) {
   return (
     <article className="group border-b border-[var(--color-border)] pb-8">
-      <Link to={href} className="block">
+      <Link
+        to={href}
+        className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+      >
         {/* Date */}
         <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{date}</time>
 

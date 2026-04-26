@@ -20,11 +20,16 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#ffffff" />
         <Meta />
         <Links />
       </head>
       <body>
-        <Outlet />
+        {/* Skip link for accessibility */}
+        <a href="#main-content" className="skip-link">
+          跳转到主要内容
+        </a>
+        <Outlet id="main-content" />
         <ScrollRestoration />
         <Scripts />
       </body>
