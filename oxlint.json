@@ -1,0 +1,17 @@
+{
+	"$schema": "https://oxc.rs/schema/oxlint.json",
+	"ignore": [
+		"packages/apps/react-app/app/components/ui/**"
+	],
+	"categories": {
+		"correctness": "warn",
+		"bug": "warn",
+		"perf": "warn",
+		"suspicious": "warn",
+		"pedantic": "off",
+		"style": "warn",
+		"restriction": "off",
+		"nursery": "off"
+	},
+	"plugins": ["typescript", "react", "import", "unicorn"]
+}

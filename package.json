@@ -1,15 +1,16 @@
 {
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.13",
 		"@commitlint/cli": "^20.5.0",
 		"@commitlint/config-conventional": "^20.5.0",
-		"husky": "^9.1.7"
+		"husky": "^9.1.7",
+		"oxfmt": "^0.46.0",
+		"oxlint": "^1.61.0"
 	},
 	"scripts": {
 		"prepare": "husky",
-		"lint": "biome lint packages",
-		"lint:fix": "biome lint packages --write",
-		"format": "biome format packages",
-		"format:write": "biome format packages --write"
+		"lint": "oxlint lint packages",
+		"lint:fix": "oxlint lint packages --fix",
+		"format": "oxfmt format packages --check",
+		"format:write": "oxfmt format packages --write"
 	}
 }
