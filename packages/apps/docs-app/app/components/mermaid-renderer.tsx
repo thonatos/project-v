@@ -16,9 +16,11 @@ export function MermaidRenderer() {
     const renderMermaidBlocks = async () => {
       const mermaidBlocks = document.querySelectorAll('pre.mermaid');
 
-      mermaidBlocks.forEach(async (block, index) => {
+      // Process each block sequentially
+      for (let index = 0; index < mermaidBlocks.length; index++) {
+        const block = mermaidBlocks[index];
         const code = block.textContent || '';
-        const id = `mermaid-${index}-${Math.random().toString(36).slice(2)}`;
+        const id = `mermaid-${index}-${Date.now().toString(36)}`;
 
         try {
           const { svg } = await mermaid.render(id, code);
@@ -26,13 +28,14 @@ export function MermaidRenderer() {
           div.className = 'mermaid-diagram my-4 overflow-x-auto';
           div.innerHTML = svg;
           block.replaceWith(div);
-        } catch {
+        } catch (err) {
+          console.error('Mermaid render error:', err);
           const errorDiv = document.createElement('div');
           errorDiv.className = 'mermaid-error my-4 p-4 bg-red-50 border border-red-200 rounded-lg';
           errorDiv.innerHTML = `<p class="text-red-600">Mermaid 语法错误：请检查图表定义</p><pre class="mt-2 text-sm text-red-500 overflow-x-auto">${code}</pre>`;
           block.replaceWith(errorDiv);
         }
-      });
+      }
     };
 
     renderMermaidBlocks();
