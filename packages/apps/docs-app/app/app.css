@@ -187,6 +187,29 @@
     height: auto;
   }
 
+  /* Force all mermaid text to be white for visibility on dark background */
+  .mermaid-diagram svg text {
+    fill: #f9fafb !important;
+  }
+
+  /* Flowchart edge labels */
+  .mermaid-diagram svg .edgeLabel text {
+    fill: #f9fafb !important;
+  }
+
+  /* Class diagram text */
+  .mermaid-diagram svg .classLabel text,
+  .mermaid-diagram svg .classLabel .label text {
+    fill: #f9fafb !important;
+  }
+
+  /* Sequence diagram text */
+  .mermaid-diagram svg .actor text,
+  .mermaid-diagram svg .messageLineText text,
+  .mermaid-diagram svg .labelText text {
+    fill: #f9fafb !important;
+  }
+
   .mermaid-error {
     background-color: #fef2f2;
     border: 1px solid #fecaca;
