@@ -72,6 +72,17 @@ function generateHeadingId(text: string): string {
     .trim();
 }
 
+// Get text content from mdast node recursively
+function getMdastTextContent(node: Heading | Code | Text | Element): string {
+  if (node.type === 'text') {
+    return node.value;
+  }
+  if ('children' in node && node.children) {
+    return node.children.map(getMdastTextContent).join('');
+  }
+  return '';
+}
+
 // Extract TOC from markdown AST
 function extractToc(tree: Root): TocItem[] {
   const headings: TocItem[] = [];
@@ -80,11 +91,7 @@ function extractToc(tree: Root): TocItem[] {
   visit(tree, 'heading', (node: Heading) => {
     if (node.depth < 1 || node.depth > 3) return;
 
-    const text = node.children
-      .filter((child): child is Text => child.type === 'text')
-      .map((child) => child.value)
-      .join('');
-
+    const text = getMdastTextContent(node);
     const id = generateHeadingId(text);
     const item: TocItem = { id, text, depth: node.depth, children: [] };
 
@@ -100,14 +107,22 @@ function extractToc(tree: Root): TocItem[] {
   return headings;
 }
 
+// Get text content from an element recursively
+function getTextContent(node: Element | Text): string {
+  if (node.type === 'text') {
+    return node.value;
+  }
+  if (node.type === 'element' && node.children) {
+    return node.children.map(getTextContent).join('');
+  }
+  return '';
+}
+
 // Add heading IDs to hast tree
 function addHeadingIds(tree: HastRoot): void {
   visit(tree, 'element', (node: Element) => {
     if (['h1', 'h2', 'h3'].includes(node.tagName)) {
-      const text = node.children
-        .filter((child): child is Text => child.type === 'text')
-        .map((child) => child.value)
-        .join('');
+      const text = getTextContent(node);
       node.properties = { ...node.properties, id: generateHeadingId(text) };
     }
   });
