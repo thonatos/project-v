@@ -1,0 +1,8 @@
+// Biome scripts backup for rollback
+// Original scripts from package.json before oxlint migration
+{
+  "lint": "biome lint packages",
+  "lint:fix": "biome lint packages --write",
+  "format": "biome format packages",
+  "format:write": "biome format packages --write"
+}
