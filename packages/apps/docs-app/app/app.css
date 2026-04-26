@@ -29,7 +29,9 @@
   body {
     background-color: var(--color-bg);
     color: var(--color-text);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 }
 
