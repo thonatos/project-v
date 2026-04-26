@@ -3,7 +3,7 @@ import mermaid from 'mermaid';
 
 /**
  * MermaidRenderer - Finds and renders all mermaid code blocks in the document
- * This component scans the DOM for `<pre class="mermaid">` elements and renders them as diagrams
+ * Uses mermaid.run() which is the recommended API for mermaid v10+
  */
 export function MermaidRenderer() {
   useEffect(() => {
@@ -13,32 +13,11 @@ export function MermaidRenderer() {
       securityLevel: 'loose',
     });
 
-    const renderMermaidBlocks = async () => {
-      const mermaidBlocks = document.querySelectorAll('pre.mermaid');
-
-      // Process each block sequentially
-      for (let index = 0; index < mermaidBlocks.length; index++) {
-        const block = mermaidBlocks[index];
-        const code = block.textContent || '';
-        const id = `mermaid-${index}-${Date.now().toString(36)}`;
-
-        try {
-          const { svg } = await mermaid.render(id, code);
-          const div = document.createElement('div');
-          div.className = 'mermaid-diagram my-4 overflow-x-auto';
-          div.innerHTML = svg;
-          block.replaceWith(div);
-        } catch (err) {
-          console.error('Mermaid render error:', err);
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'mermaid-error my-4 p-4 bg-red-50 border border-red-200 rounded-lg';
-          errorDiv.innerHTML = `<p class="text-red-600">Mermaid 语法错误：请检查图表定义</p><pre class="mt-2 text-sm text-red-500 overflow-x-auto">${code}</pre>`;
-          block.replaceWith(errorDiv);
-        }
-      }
-    };
-
-    renderMermaidBlocks();
+    // mermaid.run() will find all elements with class="mermaid" and render them
+    mermaid.run({
+      querySelector: 'pre.mermaid',
+      suppressErrors: false,
+    });
   }, []);
 
   return null;
