@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 export function Header() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-sm bg-[var(--color-bg)]/80 border-b border-[var(--color-border)]">
-      <nav className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <nav className="px-4 sm:px-6 lg:px-8 h-14 flex items-center lg:max-w-7xl lg:mx-auto">
         {/* Logo */}
         <Link
           to="/"
