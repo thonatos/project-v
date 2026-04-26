@@ -139,6 +139,15 @@
     background-color: #1f2937;
   }
 
+  .prose pre.mermaid {
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    padding: 1em;
+    background-color: transparent !important;
+  }
+
   .prose pre code {
     color: #e5e7eb;
     background-color: transparent;
