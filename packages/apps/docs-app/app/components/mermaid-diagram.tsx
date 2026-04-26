@@ -22,7 +22,7 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
         const { svg } = await mermaid.render(`mermaid-${Math.random().toString(36).slice(2)}`, code);
         setSvg(svg);
         setError('');
-      } catch (_err) {
+      } catch {
         setError('Mermaid 语法错误：请检查图表定义');
         setSvg('');
       }

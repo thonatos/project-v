@@ -56,7 +56,7 @@ export const sendMessageAtom = atom(null, async (get, set, message: string, toke
               content: newMessage,
             },
           ]);
-        } catch (_error) {}
+        } catch {}
       },
     },
   );
