@@ -187,3 +187,8 @@ Configuration files:
 - Implement loading states with skeleton components
 - Export types for component props
 - Always add `type="button"` to button elements (not just `<button>`)
+
+### Browser Testing (Playwright MCP)
+- Use Playwright MCP to view browser display effects when needed
+- When running browser testing in background tasks, close the browser tab after task completion (use `browser_tabs` with `action: close`)
+- Do NOT close the entire browser - only close individual tabs to preserve browser session for potential follow-up testing

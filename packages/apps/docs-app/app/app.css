@@ -2,11 +2,11 @@
 
 @plugin '@tailwindcss/typography';
 
-/* Tailwind Blog inspired styles */
+/* Tailwind Blog inspired styles - Slate theme */
 @layer base {
   :root {
-    --color-primary: #f59e0b;
-    --color-primary-hover: #d97706;
+    --color-primary: #475569;
+    --color-primary-hover: #334155;
     --color-text: #0f172a;
     --color-text-muted: #64748b;
     --color-bg: #ffffff;
