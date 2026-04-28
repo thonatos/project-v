@@ -108,3 +108,6 @@ turbo-*.log*
 
 # React Router cache
 .react-router/
+
+# Wrangler
+.wrangler
