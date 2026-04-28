@@ -2,15 +2,18 @@
 
 @plugin '@tailwindcss/typography';
 
-/* Tailwind Blog inspired styles - Lime theme */
+/* Claude-inspired off-white theme */
 @layer base {
   :root {
-    --color-primary: #84cc16;
-    --color-primary-hover: #65a30d;
-    --color-text: #171717;
-    --color-text-muted: #737373;
-    --color-bg: #ffffff;
-    --color-border: #d9f99d;
+    --color-primary: #141413;
+    --color-primary-hover: #000000;
+    --color-text: #141413;
+    --color-text-muted: #6b6b6b;
+    --color-bg: #f0f0eb;
+    --color-bg-subtle: #e8e8e3;
+    --color-bg-card: #ffffff;
+    --color-border: #30302e;
+    --color-border-subtle: #d4d4d0;
   }
 
   html {
@@ -105,9 +108,8 @@
   }
 
   .prose a {
-    color: var(--color-primary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    color: var(--color-text);
+    text-decoration: none;
     font-weight: 500;
   }
 
@@ -170,7 +172,7 @@
   }
 
   .prose blockquote {
-    border-left: 3px solid var(--color-primary);
+    border-left: 3px solid var(--color-border);
     padding-left: 1em;
     margin-left: 0;
     color: var(--color-text-muted);
@@ -178,7 +180,7 @@
   }
 
   .prose hr {
-    border-color: var(--color-border);
+    border-color: var(--color-border-subtle);
     margin-top: 3em;
     margin-bottom: 3em;
   }
