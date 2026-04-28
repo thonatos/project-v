@@ -16,7 +16,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
     <div className="px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">
       {/* Hero Section */}
       <header className="mb-16">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-[var(--color-primary)]">ρV</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-[var(--color-text)]">ρV</h1>
         <p className="text-lg text-[var(--color-text-muted)]">undefined project</p>
       </header>
 
