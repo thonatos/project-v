@@ -18,7 +18,7 @@ export function ArticleCard({ href, title, date, description }: ArticleCardProps
         <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{date}</time>
 
         {/* Title */}
-        <h2 className="text-xl font-semibold mb-3 group-hover:text-[var(--color-primary)] transition-colors">
+        <h2 className="text-xl font-semibold mb-3 text-[var(--color-primary)] group-hover:text-[var(--color-primary-hover)] transition-colors">
           {title}
         </h2>
 

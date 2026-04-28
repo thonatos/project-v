@@ -14,14 +14,18 @@ export function Footer() {
           <p className="text-sm text-[var(--color-text-muted)]">
             <span translate="no">ρV</span> &copy; {year}
           </p>
-          <a
-            href="https://github.com/thonatos/project-v"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-          >
-            GitHub
-          </a>
+
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Built with ❤️ using{' '}
+            <a
+              href="https://reactrouter.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] hover:underline"
+            >
+              React Router
+            </a>
+          </p>
         </div>
       </div>
     </footer>

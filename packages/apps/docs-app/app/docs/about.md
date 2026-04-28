@@ -4,8 +4,6 @@ date: 2024-02-01
 description: 关于 ρV 项目
 ---
 
-# About ρV
-
 **ρV** (rho V) 是一个实验性的文档站点项目。
 
 ## 特性
@@ -22,7 +20,3 @@ description: 关于 ρV 项目
 - React 19
 - Tailwind CSS v4
 - Shiki 语法高亮
-
----
-
-undefined project.

@@ -58,7 +58,7 @@ export function TOC({ items }: TOCProps) {
     <>
       {/* Desktop TOC - sticky sidebar */}
       <nav className="hidden lg:block sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto py-4">
-        <h4 className="text-sm font-semibold mb-3 text-[var(--color-text)]">目录</h4>
+        <h4 className="text-sm font-semibold mb-3 text-[var(--color-primary)]">目录</h4>
         <ul className="space-y-1">{items.map((item) => renderItem(item))}</ul>
       </nav>
 
@@ -83,7 +83,7 @@ export function TOC({ items }: TOCProps) {
 
         {isExpanded && (
           <nav className="absolute bottom-12 right-0 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg p-4 shadow-lg max-w-xs max-h-64 overflow-y-auto">
-            <h4 className="text-sm font-semibold mb-3 text-[var(--color-text)]">目录</h4>
+            <h4 className="text-sm font-semibold mb-3 text-[var(--color-primary)]">目录</h4>
             <ul className="space-y-1">{items.map((item) => renderItem(item))}</ul>
           </nav>
         )}
