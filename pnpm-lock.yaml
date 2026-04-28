@@ -123,6 +123,9 @@ importers:
       isbot:
         specifier: ^5.1.17
         version: 5.1.39
+      lucide-react:
+        specifier: ^0.487.0
+        version: 0.487.0(react@19.2.5)
       mermaid:
         specifier: ^11.4.1
         version: 11.14.0

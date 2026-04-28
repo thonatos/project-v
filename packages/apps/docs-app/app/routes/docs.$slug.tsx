@@ -27,7 +27,9 @@ export default function DocPage({ loaderData }: Route.ComponentProps) {
           {/* Header */}
           <header className="mb-8">
             <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{loaderData.date}</time>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{loaderData.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-primary)]">
+              {loaderData.title}
+            </h1>
           </header>
 
           {/* Content */}
