@@ -1,13 +1,15 @@
 import { Link } from 'react-router';
+import { TagBadge } from './tag-badge';
 
 interface ArticleCardProps {
   href: string;
   title: string;
   date: string;
   description: string;
+  tags?: string[];
 }
 
-export function ArticleCard({ href, title, date, description }: ArticleCardProps) {
+export function ArticleCard({ href, title, date, description, tags }: ArticleCardProps) {
   return (
     <article className="group border-b border-[var(--color-border-subtle)] pb-8">
       <Link
@@ -25,6 +27,15 @@ export function ArticleCard({ href, title, date, description }: ArticleCardProps
         {/* Description */}
         <p className="text-[var(--color-text-muted)] line-clamp-2">{description}</p>
       </Link>
+
+      {/* Tags */}
+      {tags && tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {tags.map((tag) => (
+            <TagBadge key={tag} tag={tag} />
+          ))}
+        </div>
+      )}
     </article>
   );
 }
