@@ -3,7 +3,7 @@ import { Github } from 'lucide-react';
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-sm bg-[var(--color-bg)] border-b border-[var(--color-border-subtle)] px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 backdrop-blur-sm bg-[var(--color-bg)] border-b border-[var(--color-border-subtle)] px-4 sm:px-6 lg:px-8">
       <nav className="h-14 flex items-center justify-between lg:max-w-7xl lg:mx-auto">
         {/* Logo */}
         <Link
@@ -17,13 +17,16 @@ export function Header() {
         </Link>
 
         {/* Navigation Links */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* TOC button slot - for mobile TOC drawer */}
+          <div id="header-toc-slot" className="lg:hidden flex items-center" />
+
           <a
             href="https://github.com/thonatos/project-v"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="访问 GitHub 仓库"
-            className="text-[var(--color-text)] hover:text-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
+            className="flex items-center justify-center text-[var(--color-text)] hover:text-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
           >
             <Github className="h-4 w-4" />
           </a>

@@ -1,6 +1,6 @@
 import type { Route } from './+types/docs.$slug';
 import { getDocBySlug } from '~/lib/docs';
-import { TOC } from '~/components/toc';
+import { TOCProvider, MobileTOCDrawer, DesktopTOC } from '~/components/toc';
 import { MermaidRenderer } from '~/components/mermaid-renderer';
 import { TagBadge } from '~/components/tag-badge';
 
@@ -18,38 +18,43 @@ export function meta({ data }: Route.MetaArgs) {
 
 export default function DocPage({ loaderData }: Route.ComponentProps) {
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-12">
-      {/* Mermaid renderer for mermaid code blocks */}
-      <MermaidRenderer />
+    <TOCProvider items={loaderData.toc}>
+      {/* Mobile TOC Drawer - button + full screen slide-in */}
+      <MobileTOCDrawer />
 
-      <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8 lg:max-w-7xl lg:mx-auto">
-        {/* Main content */}
-        <div className="min-w-0">
-          {/* Header */}
-          <header className="mb-8">
-            <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{loaderData.date}</time>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text)]">
-              {loaderData.title}
-            </h1>
-            {/* Tags */}
-            {loaderData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {loaderData.tags.map((tag) => (
-                  <TagBadge key={tag} tag={tag} />
-                ))}
-              </div>
-            )}
-          </header>
+      <div className="px-4 sm:px-6 lg:px-8 py-12">
+        {/* Mermaid renderer for mermaid code blocks */}
+        <MermaidRenderer />
 
-          {/* Content */}
-          <article className="prose max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: loaderData.content }} />
-          </article>
+        <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8 lg:max-w-7xl lg:mx-auto">
+          {/* Main content */}
+          <div className="min-w-0">
+            {/* Header */}
+            <header className="mb-8">
+              <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{loaderData.date}</time>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text)]">
+                {loaderData.title}
+              </h1>
+              {/* Tags */}
+              {loaderData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {loaderData.tags.map((tag) => (
+                    <TagBadge key={tag} tag={tag} />
+                  ))}
+                </div>
+              )}
+            </header>
+
+            {/* Content */}
+            <article className="prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: loaderData.content }} />
+            </article>
+          </div>
+
+          {/* Desktop TOC sidebar */}
+          <DesktopTOC />
         </div>
-
-        {/* TOC sidebar */}
-        <TOC items={loaderData.toc} />
       </div>
-    </div>
+    </TOCProvider>
   );
 }
