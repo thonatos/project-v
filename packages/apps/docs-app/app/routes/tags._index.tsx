@@ -2,37 +2,37 @@ import type { Route } from './+types/tags._index';
 import { Link } from 'react-router';
 import { getAllTags } from '~/lib/docs';
 
-// 标签颜色配置 - 和 TagBadge 保持一致
+// 标签颜色配置 - 暖色中性色调，与 TagBadge 保持一致
 const TAG_COLORS: Record<string, { bg: string; text: string; hover: string }> = {
-  amber: {
-    bg: 'bg-amber-100',
-    text: 'text-amber-800',
-    hover: 'hover:bg-amber-200',
+  stone: {
+    bg: 'bg-stone-100',
+    text: 'text-stone-700',
+    hover: 'hover:bg-stone-200',
   },
-  cyan: {
-    bg: 'bg-cyan-100',
-    text: 'text-cyan-800',
-    hover: 'hover:bg-cyan-200',
+  warm: {
+    bg: 'bg-amber-50',
+    text: 'text-amber-900',
+    hover: 'hover:bg-amber-100',
   },
-  rose: {
-    bg: 'bg-rose-100',
-    text: 'text-rose-800',
-    hover: 'hover:bg-rose-200',
+  tan: {
+    bg: 'bg-yellow-50',
+    text: 'text-yellow-800',
+    hover: 'hover:bg-yellow-100',
   },
-  emerald: {
-    bg: 'bg-emerald-100',
-    text: 'text-emerald-800',
-    hover: 'hover:bg-emerald-200',
+  sand: {
+    bg: 'bg-neutral-100',
+    text: 'text-neutral-700',
+    hover: 'hover:bg-neutral-200',
   },
-  violet: {
-    bg: 'bg-violet-100',
-    text: 'text-violet-800',
-    hover: 'hover:bg-violet-200',
+  dusk: {
+    bg: 'bg-gray-100',
+    text: 'text-gray-700',
+    hover: 'hover:bg-gray-200',
   },
-  slate: {
-    bg: 'bg-slate-100',
-    text: 'text-slate-700',
-    hover: 'hover:bg-slate-200',
+  earth: {
+    bg: 'bg-stone-50',
+    text: 'text-stone-800',
+    hover: 'hover:bg-stone-150',
   },
 };
 
