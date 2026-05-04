@@ -2,18 +2,42 @@
 
 @plugin '@tailwindcss/typography';
 
-/* Claude-inspired off-white theme */
+/* ========================================
+   原配色方案（回滚时可用）
+   --color-primary: #141413;
+   --color-primary-hover: #000000;
+   --color-text: #141413;
+   --color-text-muted: #6b6b6b;
+   --color-bg: #f0f0eb;
+   --color-bg-subtle: #e8e8e3;
+   --color-bg-card: #ffffff;
+   --color-border: #30302e;
+   --color-border-subtle: #d4d4d0;
+   ======================================== */
+
+/* 紫色系配色主题 */
 @layer base {
   :root {
-    --color-primary: #141413;
-    --color-primary-hover: #000000;
-    --color-text: #141413;
-    --color-text-muted: #6b6b6b;
-    --color-bg: #f0f0eb;
-    --color-bg-subtle: #e8e8e3;
-    --color-bg-card: #ffffff;
-    --color-border: #30302e;
-    --color-border-subtle: #d4d4d0;
+    /* 主色调 - 紫色系 */
+    --color-primary: #8264ff;
+    --color-primary-hover: #6b4fff; /* hover 更深 */
+    --color-primary-deep: #5a3fff; /* deep 最深 */
+
+    /* 文字颜色 */
+    --color-text: #1f2937; /* gray-800 */
+    --color-text-muted: #6b7280; /* gray-500 */
+
+    /* 背景颜色 */
+    --color-bg: #ffffff;
+    --color-bg-subtle: #ede9fe; /* violet-100，更明显 */
+    --color-bg-card: #f9fafb; /* gray-50 */
+
+    /* 边框颜色 */
+    --color-border: #e5e7eb; /* gray-200 */
+    --color-border-subtle: #f3f4f6; /* gray-100 */
+
+    /* Grid 栅格颜色 */
+    --color-grid: rgba(139, 92, 246, 0.03); /* violet-500 低透明度 */
   }
 
   html {
@@ -21,11 +45,30 @@
   }
 
   body {
-    background-color: var(--color-bg);
+    /* 背景渐变：225° 从左下到右上 */
+    background: linear-gradient(225deg, #ffffff 0%, #f5f3ff 90%, #ede9fe 100%);
     color: var(--color-text);
+    font-size: 14px;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+    min-height: 100vh;
+  }
+
+  /* Grid 栅格背景效果 */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: -1;
   }
 }
 
@@ -80,7 +123,10 @@
     letter-spacing: -0.025em;
     margin-top: 0;
     margin-bottom: 1rem;
-    color: var(--color-primary);
+    color: var(--color-text);
+    /* 紫色下划线装饰 */
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid var(--color-primary);
   }
 
   .prose h2 {
@@ -89,7 +135,10 @@
     letter-spacing: -0.025em;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
-    color: var(--color-primary);
+    color: var(--color-text);
+    /* 紫色左边框装饰 */
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--color-primary);
   }
 
   .prose h3 {
@@ -97,7 +146,7 @@
     font-weight: 600;
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
-    color: var(--color-primary);
+    color: var(--color-text);
   }
 
   .prose p {
@@ -108,26 +157,28 @@
   }
 
   .prose a {
-    color: var(--color-text);
+    color: var(--color-primary);
     text-decoration: none;
     font-weight: 500;
   }
 
   .prose a:hover {
     color: var(--color-primary-hover);
+    text-decoration: underline;
   }
 
   .prose strong {
     font-weight: 600;
+    color: var(--color-text);
   }
 
-  /* Inline code - match code block style */
+  /* Inline code - 紫色背景 */
   .prose code:not(pre code) {
     font-size: 0.875em;
     font-weight: 400;
-    color: #e5e7eb !important;
-    background-color: #1f2937;
-    padding: 0.125em 0.25em;
+    color: var(--color-primary-deep);
+    background-color: var(--color-bg-subtle);
+    padding: 0.125em 0.375em;
     border-radius: 0.25rem;
   }
 
@@ -139,6 +190,7 @@
     margin-bottom: 1.5em;
     padding: 1em;
     background-color: #1f2937;
+    border: 1px solid var(--color-border);
   }
 
   .prose pre.mermaid {
@@ -148,6 +200,7 @@
     margin-bottom: 1.5em;
     padding: 1em;
     background-color: transparent !important;
+    border: none;
   }
 
   .prose pre code {
@@ -172,15 +225,19 @@
   }
 
   .prose blockquote {
-    border-left: 3px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
     padding-left: 1em;
     margin-left: 0;
     color: var(--color-text-muted);
     font-style: italic;
+    background-color: var(--color-bg-subtle);
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    border-radius: 0 0.25rem 0.25rem 0;
   }
 
   .prose hr {
-    border-color: var(--color-border-subtle);
+    border-color: var(--color-border);
     margin-top: 3em;
     margin-bottom: 3em;
   }
@@ -228,7 +285,7 @@
     padding: 1rem;
   }
 
-  /* rehype-highlight styles (hljs classes) */
+  /* rehype-highlight styles (hljs classes) - 配合紫色主题 */
   .hljs {
     background: #1f2937 !important;
     color: #e5e7eb;
@@ -242,7 +299,7 @@
   .hljs-keyword,
   .hljs-selector-tag,
   .hljs-addition {
-    color: #f472b6;
+    color: #c4b5fd; /* violet-300 */
   }
 
   .hljs-number,
@@ -251,7 +308,7 @@
   .hljs-literal,
   .hljs-doctag,
   .hljs-regexp {
-    color: #a5f3fc;
+    color: #a78bfa; /* violet-400 */
   }
 
   .hljs-title,
@@ -259,7 +316,7 @@
   .hljs-name,
   .hljs-selector-id,
   .hljs-selector-class {
-    color: #fbbf24;
+    color: #8b5cf6; /* violet-500 */
   }
 
   .hljs-attribute,
@@ -268,7 +325,7 @@
   .hljs-template-variable,
   .hljs-class .hljs-title,
   .hljs-type {
-    color: #c084fc;
+    color: #7c3aed; /* violet-600 */
   }
 
   .hljs-symbol,
@@ -279,7 +336,7 @@
   .hljs-selector-attr,
   .hljs-selector-pseudo,
   .hljs-link {
-    color: #34d399;
+    color: #34d399; /* emerald-400 */
   }
 
   .hljs-built_in,
@@ -293,6 +350,15 @@
 
   .hljs-strong {
     font-weight: bold;
+  }
+
+  /* 文档标题区域层次感样式 */
+  .doc-header-card {
+    background-color: rgba(249, 250, 251, 0.5); /* gray-50/50 */
+    border: 1px solid #f3f4f6; /* gray-100 */
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 }
 
