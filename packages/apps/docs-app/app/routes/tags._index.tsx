@@ -1,80 +1,76 @@
 import type { Route } from './+types/tags._index';
 import { Link } from 'react-router';
-import { getAllTags } from '~/lib/docs';
-
-// 标签颜色配置 - 暖色中性色调，与 TagBadge 保持一致
-const TAG_COLORS: Record<string, { bg: string; text: string; hover: string }> = {
-  stone: {
-    bg: 'bg-stone-100',
-    text: 'text-stone-700',
-    hover: 'hover:bg-stone-200',
-  },
-  warm: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-900',
-    hover: 'hover:bg-amber-100',
-  },
-  tan: {
-    bg: 'bg-yellow-50',
-    text: 'text-yellow-800',
-    hover: 'hover:bg-yellow-100',
-  },
-  sand: {
-    bg: 'bg-neutral-100',
-    text: 'text-neutral-700',
-    hover: 'hover:bg-neutral-200',
-  },
-  dusk: {
-    bg: 'bg-gray-100',
-    text: 'text-gray-700',
-    hover: 'hover:bg-gray-200',
-  },
-  earth: {
-    bg: 'bg-stone-50',
-    text: 'text-stone-800',
-    hover: 'hover:bg-stone-150',
-  },
-};
-
-const COLOR_KEYS = Object.keys(TAG_COLORS);
-
-function getTagColor(tag: string) {
-  let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
-    hash = (hash + tag.charCodeAt(i)) % COLOR_KEYS.length;
-  }
-  return TAG_COLORS[COLOR_KEYS[hash]];
-}
+import { getAllTags, getAllDocs, type Doc } from '~/lib/docs';
+import { getTagColor } from '~/lib/tag-colors';
 
 export function meta() {
-  return [{ title: 'ρV - 标签' }, { name: 'description', content: '所有标签列表' }];
+  return [{ title: 'ρV - All Tags' }, { name: 'description', content: '所有标签列表' }];
 }
 
 export async function loader() {
   const tags = await getAllTags();
-  return tags;
+  const docs = await getAllDocs();
+  return { tags, docs };
 }
 
 export default function TagsIndex({ loaderData }: Route.ComponentProps) {
+  const { tags, docs } = loaderData;
+
+  // 按标签分组文档
+  const docsByTag = new Map<string, Doc[]>();
+  for (const doc of docs) {
+    for (const tag of doc.tags) {
+      const existing = docsByTag.get(tag) || [];
+      docsByTag.set(tag, [...existing, doc]);
+    }
+  }
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">
-      <header className="mb-16">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-[var(--color-text)]">标签</h1>
-        <p className="text-lg text-[var(--color-text-muted)]">按标签浏览文档</p>
+      <header className="mb-12">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-[var(--color-text)]">All Tags</h1>
+        <p className="text-lg text-[var(--color-text-muted)]">
+          共 {tags.length} 个标签，{docs.length} 篇文档
+        </p>
       </header>
 
-      {loaderData.length > 0 ? (
-        <div className="flex flex-wrap gap-3">
-          {loaderData.map((tag) => {
+      {/* 标签卡片网格 */}
+      {tags.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tags.map((tag) => {
             const color = getTagColor(tag.name);
+            const tagDocs = docsByTag.get(tag.name) || [];
+
             return (
               <Link
                 key={tag.name}
                 to={`/tags/${tag.name}`}
-                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${color.bg} ${color.text} ${color.hover} transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]`}
+                className={`group block p-4 rounded-lg ${color.bg} ${color.hover} ${color.hoverText ?? ''} transition-all border border-transparent hover:border-[var(--color-primary)]/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]`}
               >
-                <span className="text-sm font-medium">{tag.name}</span>
-                <span className="text-xs bg-white/50 px-2 py-0.5 rounded-full">{tag.count}</span>
+                {/* 标签名称和计数 */}
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className={`text-lg font-semibold ${color.text}`}>{tag.name}</h2>
+                  <span className="text-sm bg-white/60 px-2 py-1 rounded-full text-[var(--color-text-muted)]">
+                    {tag.count} 篇
+                  </span>
+                </div>
+
+                {/* 最近文档预览 */}
+                {tagDocs.length > 0 && (
+                  <div className="space-y-2">
+                    {tagDocs.slice(0, 2).map((doc) => (
+                      <p
+                        key={doc.slug}
+                        className="text-sm text-[var(--color-text-muted)] truncate group-hover:text-[var(--color-text)]"
+                      >
+                        {doc.title}
+                      </p>
+                    ))}
+                    {tagDocs.length > 2 && (
+                      <p className="text-xs text-[var(--color-text-muted)]">+{tagDocs.length - 2} 更多</p>
+                    )}
+                  </div>
+                )}
               </Link>
             );
           })}
