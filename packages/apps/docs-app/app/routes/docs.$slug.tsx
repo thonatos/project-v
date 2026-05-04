@@ -2,6 +2,7 @@ import type { Route } from './+types/docs.$slug';
 import { getDocBySlug } from '~/lib/docs';
 import { TOC } from '~/components/toc';
 import { MermaidRenderer } from '~/components/mermaid-renderer';
+import { TagBadge } from '~/components/tag-badge';
 
 export async function loader({ params }: Route.LoaderArgs) {
   const doc = await getDocBySlug(params.slug);
@@ -30,6 +31,14 @@ export default function DocPage({ loaderData }: Route.ComponentProps) {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text)]">
               {loaderData.title}
             </h1>
+            {/* Tags */}
+            {loaderData.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {loaderData.tags.map((tag) => (
+                  <TagBadge key={tag} tag={tag} />
+                ))}
+              </div>
+            )}
           </header>
 
           {/* Content */}
