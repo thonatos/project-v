@@ -2,6 +2,7 @@
 title: About ρV
 date: 2024-02-01
 description: 关于 ρV 项目
+tags: [about, intro]
 ---
 
 **ρV** (rho V) 是一个实验性的文档站点项目。
