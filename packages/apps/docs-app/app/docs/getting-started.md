@@ -2,6 +2,7 @@
 title: Getting Started
 date: 2024-01-15
 description: 快速开始使用 docs-app 文档站点的指南
+tags: [guide, tutorial, intro]
 ---
 
 欢迎使用 docs-app 文档站点！本指南将帮助你快速了解如何使用。

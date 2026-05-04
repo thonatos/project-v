@@ -1,10 +1,11 @@
 import type { Config } from '@react-router/dev/config';
-import { getDocSlugs } from './app/lib/docs';
+import { getDocSlugs, getAllTags } from './app/lib/docs';
 
 export default {
   ssr: false,
   async prerender() {
     const slugs = await getDocSlugs();
-    return ['/', ...slugs.map((slug) => `/docs/${slug}`)];
+    const tags = await getAllTags();
+    return ['/', '/tags', ...slugs.map((slug) => `/docs/${slug}`), ...tags.map((tag) => `/tags/${tag.name}`)];
   },
 } satisfies Config;
