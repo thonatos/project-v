@@ -29,6 +29,7 @@ export default function Index({ loaderData }: Route.ComponentProps) {
             title={doc.title}
             date={doc.date}
             description={doc.description}
+            tags={doc.tags}
           />
         ))}
       </div>
