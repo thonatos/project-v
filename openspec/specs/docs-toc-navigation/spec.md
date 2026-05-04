@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+为文档页面提供目录导航功能，支持桌面端侧边栏展示和移动端全屏抽屉展示，帮助用户快速定位文档内容。
+
+## Requirements
 
 ### Requirement: TOC 目录生成
 系统 SHALL 为文档生成目录（Table of Contents）数据。
@@ -16,7 +20,7 @@
 
 #### Scenario: 显示 TOC 目录
 - **WHEN** 文档页面渲染
-- **THEN** TOC 组件显示在文档侧边栏
+- **THEN** TOC 组件显示在文档侧边栏（桌面端）或通过抽屉展示（移动端）
 
 #### Scenario: TOC 标题跳转
 - **WHEN** 用户点击 TOC 中的标题链接
@@ -28,4 +32,4 @@
 
 #### Scenario: 响应式 TOC 显示
 - **WHEN** 用户在移动端访问文档页面
-- **THEN** TOC 侧边栏隐藏或折叠，通过按钮展开
+- **THEN** TOC 通过 Header 导航栏按钮触发全屏抽屉展示
