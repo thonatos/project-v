@@ -17,6 +17,7 @@ interface DocFrontmatter {
   title: string;
   date: string;
   description: string;
+  tags?: string[];
 }
 
 interface TocItem {
@@ -33,6 +34,7 @@ interface Doc {
   description: string;
   content: string;
   toc: TocItem[];
+  tags: string[];
 }
 
 // Extract frontmatter from markdown content
@@ -42,7 +44,7 @@ function extractFrontmatter(content: string): { frontmatter: DocFrontmatter; bod
 
   if (!match) {
     return {
-      frontmatter: { title: 'Untitled', date: '', description: '' },
+      frontmatter: { title: 'Untitled', date: '', description: '', tags: [] },
       body: content,
     };
   }
@@ -50,7 +52,7 @@ function extractFrontmatter(content: string): { frontmatter: DocFrontmatter; bod
   const frontmatterStr = match[1];
   const body = content.slice(match[0].length);
 
-  const frontmatter: DocFrontmatter = { title: '', date: '', description: '' };
+  const frontmatter: DocFrontmatter = { title: '', date: '', description: '', tags: [] };
 
   frontmatterStr.split('\n').forEach((line) => {
     const [key, ...valueParts] = line.split(':');
@@ -58,6 +60,18 @@ function extractFrontmatter(content: string): { frontmatter: DocFrontmatter; bod
     if (key === 'title') frontmatter.title = value;
     if (key === 'date') frontmatter.date = value;
     if (key === 'description') frontmatter.description = value;
+    if (key === 'tags') {
+      // Parse YAML array format: [tag1, tag2] or ["tag1", "tag2"]
+      const arrayMatch = value.match(/^\[.*\]$/);
+      if (arrayMatch) {
+        const inner = value.slice(1, -1);
+        const tags = inner
+          .split(',')
+          .map((t) => t.trim().replace(/^["']|["']$/g, ''))
+          .filter((t) => t.length > 0);
+        frontmatter.tags = tags;
+      }
+    }
   });
 
   return { frontmatter, body };
@@ -217,6 +231,7 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
     description: frontmatter.description,
     content: htmlContent,
     toc,
+    tags: frontmatter.tags || [],
   };
 }
 
@@ -227,4 +242,33 @@ export async function getAllDocs(): Promise<Doc[]> {
   return docs
     .filter((doc): doc is Doc => doc !== null)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export interface TagInfo {
+  name: string;
+  count: number;
+}
+
+export async function getAllTags(): Promise<TagInfo[]> {
+  const docs = await getAllDocs();
+  const tagMap = new Map<string, number>();
+
+  for (const doc of docs) {
+    for (const tag of doc.tags) {
+      const count = tagMap.get(tag) || 0;
+      tagMap.set(tag, count + 1);
+    }
+  }
+
+  const tags: TagInfo[] = [];
+  for (const [name, count] of tagMap.entries()) {
+    tags.push({ name, count });
+  }
+
+  return tags.sort((a, b) => b.count - a.count);
+}
+
+export async function getDocsByTag(tag: string): Promise<Doc[]> {
+  const docs = await getAllDocs();
+  return docs.filter((doc) => doc.tags.includes(tag));
 }
