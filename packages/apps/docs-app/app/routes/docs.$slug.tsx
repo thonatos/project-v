@@ -29,8 +29,8 @@ export default function DocPage({ loaderData }: Route.ComponentProps) {
         <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-8 lg:max-w-7xl lg:mx-auto">
           {/* Main content */}
           <div className="min-w-0">
-            {/* Header */}
-            <header className="mb-8">
+            {/* Header - 使用层次感样式 */}
+            <header className="doc-header-card">
               <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{loaderData.date}</time>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text)]">
                 {loaderData.title}
