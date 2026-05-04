@@ -79,7 +79,7 @@ function MobileTOCMenuButtonInner() {
     <button
       type="button"
       onClick={() => setIsOpen(!isOpen)}
-      className="flex items-center justify-center text-[var(--color-text)] hover:text-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
+      className="flex items-center justify-center px-2 py-1 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
       aria-label={isOpen ? '关闭目录' : '打开目录'}
       aria-expanded={isOpen}
     >
@@ -95,6 +95,13 @@ export function MobileTOCMenuButton() {
 
   useEffect(() => {
     setMounted(true);
+    return () => {
+      // 卸载时隐藏分割线
+      const divider = document.getElementById('mobile-divider');
+      if (divider) {
+        divider.classList.add('hidden');
+      }
+    };
   }, []);
 
   if (!mounted) {
@@ -102,8 +109,14 @@ export function MobileTOCMenuButton() {
   }
 
   const slot = document.getElementById('header-toc-slot');
+  const divider = document.getElementById('mobile-divider');
   if (!slot) {
     return null;
+  }
+
+  // 显示分割线（如果存在）
+  if (divider) {
+    divider.classList.remove('hidden');
   }
 
   return createPortal(<MobileTOCMenuButtonInner />, slot);
