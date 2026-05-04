@@ -27,7 +27,7 @@ interface TocItem {
   children: TocItem[];
 }
 
-interface Doc {
+export interface Doc {
   slug: string;
   title: string;
   date: string;
