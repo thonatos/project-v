@@ -77,13 +77,13 @@ function extractFrontmatter(content: string): { frontmatter: DocFrontmatter; bod
   return { frontmatter, body };
 }
 
-// Generate unique heading ID
+// Generate unique heading ID (supports Chinese and Unicode characters)
 function generateHeadingId(text: string): string {
   return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
+    .trim()
     .replace(/\s+/g, '-')
-    .trim();
+    .replace(/[^\p{L}\p{N}_-]/gu, '')
+    .slice(0, 100);
 }
 
 // Get text content from mdast node recursively
@@ -97,17 +97,24 @@ function getMdastTextContent(node: Heading | Code | Text | Element): string {
   return '';
 }
 
-// Extract TOC from markdown AST
+// Extract TOC from markdown AST (with uniqueness counter)
 function extractToc(tree: Root): TocItem[] {
   const headings: TocItem[] = [];
   const stack: { depth: number; items: TocItem[] }[] = [{ depth: 0, items: headings }];
+  const idCounts = new Map<string, number>();
 
   visit(tree, 'heading', (node: Heading) => {
     if (node.depth < 1 || node.depth > 3) return;
 
     const text = getMdastTextContent(node);
-    const id = generateHeadingId(text);
-    const item: TocItem = { id, text, depth: node.depth, children: [] };
+    const baseId = generateHeadingId(text);
+    if (!baseId) return;
+
+    const count = idCounts.get(baseId) || 0;
+    idCounts.set(baseId, count + 1);
+
+    const uniqueId = count > 0 ? `${baseId}-${count + 1}` : baseId;
+    const item: TocItem = { id: uniqueId, text, depth: node.depth, children: [] };
 
     // Find appropriate parent level
     while (stack.length > 1 && stack[stack.length - 1].depth >= node.depth) {
@@ -132,12 +139,21 @@ function getTextContent(node: Element | Text): string {
   return '';
 }
 
-// Add heading IDs to hast tree
+// Add heading IDs to hast tree (with uniqueness counter)
 function addHeadingIds(tree: HastRoot): void {
+  const idCounts = new Map<string, number>();
+
   visit(tree, 'element', (node: Element) => {
     if (['h1', 'h2', 'h3'].includes(node.tagName)) {
       const text = getTextContent(node);
-      node.properties = { ...node.properties, id: generateHeadingId(text) };
+      const baseId = generateHeadingId(text);
+      if (!baseId) return;
+
+      const count = idCounts.get(baseId) || 0;
+      idCounts.set(baseId, count + 1);
+
+      const uniqueId = count > 0 ? `${baseId}-${count + 1}` : baseId;
+      node.properties = { ...node.properties, id: uniqueId };
     }
   });
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, createContext, useContext } from 'react';
+import { useEffect, useRef, useState, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 
 interface TocItem {
@@ -11,7 +11,7 @@ interface TocItem {
 interface TOCContextValue {
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
-  activeId: string;
+  activeId: string | null;
   items: TocItem[];
 }
 
@@ -32,13 +32,15 @@ interface TOCProviderProps {
 
 export function TOCProvider({ items, children }: TOCProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeId, setActiveId] = useState<string>('');
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const hasScrolledRef = useRef(false);
+  const hashNavigatedRef = useRef(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && hasScrolledRef.current && !hashNavigatedRef.current && entry.target.id) {
             setActiveId(entry.target.id);
           }
         });
@@ -50,6 +52,29 @@ export function TOCProvider({ items, children }: TOCProviderProps) {
     headings.forEach((h) => observer.observe(h));
 
     return () => observer.disconnect();
+  }, []);
+
+  // Detect first scroll to enable TOC active highlighting
+  useEffect(() => {
+    const onScroll = () => {
+      hasScrolledRef.current = true;
+      hashNavigatedRef.current = false;
+    };
+    window.addEventListener('scroll', onScroll, { once: true, passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Handle URL hash navigation - activate TOC item immediately
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const el = document.getElementById(hash);
+      if (el && el.id) {
+        hasScrolledRef.current = true;
+        hashNavigatedRef.current = true;
+        setActiveId(hash);
+      }
+    }
   }, []);
 
   // Lock body scroll when drawer is open
@@ -137,7 +162,7 @@ export function MobileTOCDrawer() {
         onClick={() => setIsOpen(false)}
         className={`block text-base py-3 px-4 transition-colors hover:bg-[var(--color-bg-subtle)] rounded-lg ${
           level > 0 ? 'pl-8' : ''
-        } ${activeId === item.id ? 'text-[var(--color-primary)] font-medium bg-[var(--color-bg-subtle)]' : 'text-[var(--color-text)]'}`}
+        } ${activeId !== null && activeId === item.id ? 'text-[var(--color-primary)] font-medium bg-[var(--color-bg-subtle)]' : 'text-[var(--color-text)]'}`}
       >
         {item.text}
       </a>
@@ -208,7 +233,7 @@ export function DesktopTOC({ className }: DesktopTOCProps) {
         href={`#${item.id}`}
         className={`block text-sm py-1 transition-colors hover:text-[var(--color-primary)] ${
           level > 0 ? 'pl-4' : ''
-        } ${activeId === item.id ? 'text-[var(--color-primary)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+        } ${activeId !== null && activeId === item.id ? 'text-[var(--color-primary)] font-medium' : 'text-[var(--color-text-muted)]'}`}
       >
         {item.text}
       </a>
