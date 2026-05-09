@@ -497,6 +497,12 @@ importers:
         specifier: ^4
         version: 4.84.1(@cloudflare/workers-types@4.20260423.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/libs/bot:
+    dependencies:
+      undici:
+        specifier: ^7.24.8
+        version: 7.24.8
+
   packages/libs/react-component:
     dependencies:
       react:

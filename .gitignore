@@ -111,3 +111,6 @@ turbo-*.log*
 
 # Wrangler
 .wrangler
+
+# telegram bot commands config
+commands-config.json
