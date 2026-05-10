@@ -29,7 +29,7 @@ export function Header() {
               to="/tags"
               className="px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
             >
-              All Tags
+              Tags
             </Link>
 
             <Link

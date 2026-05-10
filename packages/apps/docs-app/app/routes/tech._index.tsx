@@ -1,7 +1,9 @@
 import type { Route } from './+types/tech._index';
-import { Link } from 'react-router';
 import { getAllDocs } from '~/lib/docs';
 import { ArticleCard } from '~/components/article-card';
+import { PageHeader } from '~/components/page-header';
+import { TagFilterPanel } from '~/components/tag-filter-panel';
+import { ArticleListPanel } from '~/components/article-list-panel';
 
 // Technical 相关标签
 const TECH_TAGS = [
@@ -53,40 +55,22 @@ export default function TechIndex({ loaderData }: Route.ComponentProps) {
       }
     }
   }
+  const categoryTags = Array.from(tagCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">
-      <header className="mb-12">
-        <div className="flex items-center gap-3 mb-4">
-          <Link
-            to="/"
-            className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-          >
-            ← 返回首页
-          </Link>
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 text-[var(--color-text)]">Technical</h1>
-        <p className="text-lg text-[var(--color-text-muted)] mb-6">Linux、网络、运维等技术文档，共 {docs.length} 篇</p>
+      <PageHeader
+        title="Technical"
+        description={`Linux、网络、运维等技术文档，共 ${docs.length} 篇`}
+        backLink={{ to: '/', label: '← 返回首页' }}
+      />
 
-        {/* 标签云 */}
-        <div className="flex flex-wrap gap-2">
-          {Array.from(tagCounts.entries())
-            .sort((a, b) => b[1] - a[1])
-            .map(([tag, count]) => (
-              <Link
-                key={tag}
-                to={`/tags/${tag}`}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-sm rounded-md bg-[var(--color-bg-subtle)] text-[var(--color-primary-deep)] hover:bg-[var(--color-primary)]/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-              >
-                {tag}
-                <span className="text-xs text-[var(--color-text-muted)]">{count}</span>
-              </Link>
-            ))}
-        </div>
-      </header>
+      {categoryTags.length > 0 && <TagFilterPanel title="标签列表" tags={categoryTags} />}
 
       {docs.length > 0 ? (
-        <div className="space-y-8">
+        <ArticleListPanel count={docs.length}>
           {docs.map((doc) => (
             <ArticleCard
               key={doc.slug}
@@ -97,7 +81,7 @@ export default function TechIndex({ loaderData }: Route.ComponentProps) {
               tags={doc.tags}
             />
           ))}
-        </div>
+        </ArticleListPanel>
       ) : (
         <p className="text-[var(--color-text-muted)] text-center py-12">暂无技术相关文档</p>
       )}
