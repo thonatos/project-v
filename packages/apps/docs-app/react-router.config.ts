@@ -6,13 +6,6 @@ export default {
   async prerender() {
     const slugs = await getDocSlugs();
     const tags = await getAllTags();
-    return [
-      '/',
-      '/tags',
-      '/tech',
-      '/trading',
-      ...slugs.map((slug) => `/docs/${slug}`),
-      ...tags.map((tag) => `/tags/${tag.name}`),
-    ];
+    return ['/', '/tags', ...slugs.map((slug) => `/docs/${slug}`), ...tags.map((tag) => `/tags/${tag.name}`)];
   },
 } satisfies Config;
