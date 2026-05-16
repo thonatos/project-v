@@ -244,7 +244,9 @@ export function DesktopTOC({ className }: DesktopTOCProps) {
   );
 
   return (
-    <nav className={`hidden lg:block sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto py-4 ${className}`}>
+    <nav
+      className={`hidden lg:block sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto py-4 scrollbar-none ${className}`}
+    >
       <h4 className="text-sm font-semibold mb-3 text-[var(--color-primary)]">目录</h4>
       <ul className="space-y-1">{items.map((item) => renderItem(item))}</ul>
     </nav>
