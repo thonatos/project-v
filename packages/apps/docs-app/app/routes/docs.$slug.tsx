@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import type { Route } from './+types/docs.$slug';
 import { getDocBySlug } from '~/lib/docs';
 import { TOCProvider, MobileTOCDrawer, DesktopTOC } from '~/components/toc';
@@ -53,6 +54,27 @@ export default function DocPage({ loaderData }: Route.ComponentProps) {
 
           {/* Desktop TOC sidebar */}
           <DesktopTOC />
+        </div>
+      </div>
+    </TOCProvider>
+  );
+}
+
+export function ErrorBoundary() {
+  console.error('Error loading document');
+  return (
+    <TOCProvider items={[]}>
+      <MobileTOCDrawer />
+      <div className="px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold text-[var(--color-text)] mb-4">文档加载失败</h1>
+          <p className="text-[var(--color-text-muted)] mb-8">抱歉，无法加载此文档</p>
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center px-4 py-2 bg-[var(--color-primary)] text-white rounded-md hover:bg-[var(--color-primary-hover)] transition-colors"
+          >
+            返回首页
+          </Link>
         </div>
       </div>
     </TOCProvider>
