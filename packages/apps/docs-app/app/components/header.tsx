@@ -29,21 +29,7 @@ export function Header() {
               to="/tags"
               className="px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
             >
-              Tags
-            </Link>
-
-            <Link
-              to="/tech"
-              className="px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-            >
-              Technical
-            </Link>
-
-            <Link
-              to="/trading"
-              className="px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-            >
-              Trading
+              All Tags
             </Link>
 
             {/* 竖线分割 - 导航链接与 GitHub */}
