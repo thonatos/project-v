@@ -1,16 +1,13 @@
-import type { Doc, TagInfo } from '~/lib/docs';
+import type { TagInfo } from '~/lib/docs';
 import { getTagColor } from '~/lib/tag-colors';
 import { SummaryLinkCard } from './summary-link-card';
 
 interface TagSummaryCardProps {
   tag: TagInfo;
-  docs: Doc[];
 }
 
-export function TagSummaryCard({ tag, docs }: TagSummaryCardProps) {
+export function TagSummaryCard({ tag }: TagSummaryCardProps) {
   const color = getTagColor(tag.name);
-  const previewDocs = docs.slice(0, 2);
-  const remainingCount = docs.length - previewDocs.length;
 
   return (
     <SummaryLinkCard to={`/tags/${tag.name}`}>
@@ -24,20 +21,6 @@ export function TagSummaryCard({ tag, docs }: TagSummaryCardProps) {
           {tag.count} 篇
         </span>
       </div>
-
-      {previewDocs.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {previewDocs.map((doc) => (
-            <p
-              key={doc.slug}
-              className="truncate text-sm text-[var(--color-text-muted)] group-hover:text-[var(--color-text)]"
-            >
-              {doc.title}
-            </p>
-          ))}
-          {remainingCount > 0 && <p className="text-xs text-[var(--color-text-muted)]">+{remainingCount} 更多</p>}
-        </div>
-      )}
     </SummaryLinkCard>
   );
 }

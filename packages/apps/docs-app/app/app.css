@@ -45,8 +45,7 @@
   }
 
   body {
-    /* 背景渐变：225° 从左下到右上 */
-    background: linear-gradient(225deg, #ffffff 0%, #f5f3ff 90%, #ede9fe 100%);
+    background: #ffffff;
     color: var(--color-text);
     font-size: 14px;
     font-feature-settings:
@@ -54,25 +53,18 @@
       'calt' 1;
     min-height: 100vh;
   }
-
-  /* Grid 栅格背景效果 */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image:
-      linear-gradient(var(--color-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: -1;
-  }
 }
 
 @layer components {
+  /* Scrollbar none utility */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* Skip link for accessibility */
   .skip-link {
     position: absolute;
