@@ -65,3 +65,4 @@ pnpm format:write
 - 提交用 conventional commits
 - 浏览器测试后只关 tab，不关浏览器
 - Git 提交：正常提交，使用 git hooks 验证，禁止跳过
+- Oxlint 配置：`oxlint.json`、`.oxfmtrc.json`
