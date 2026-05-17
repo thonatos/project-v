@@ -1,194 +1,66 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+<!-- 参考本文件时：1) 涉及具体应用时先查应用规范 2) 涉及代码编写时查开发规范 3) 其他通用约定查其他规范 -->
 
-## Overview
+## 应用规范
 
-This is a pnpm-managed monorepo with multiple applications and libraries. The repo requires Node.js >=20.x.
+### react-app
 
-## Common Commands
+- 状态用 Jotai
+- 通知用 Sonner
+- UI 用 shadcn/ui，不用 Radix UI
 
-### Installation and Build
+### artusx-api
+
+- 依赖注入用 ArtusX
+- 日志用 `this.logger`（service）或 `debug` 包
+- 配置注入用 `AppConfig`（from `src/types/config.ts`）
+
+### remix-api / remix-flow
+
+- 部署：`wrangler deploy --minify`
+- remix-api 用 Hono + Supabase + Dayjs
+
+## 开发规范
+
+### 构建命令
+
 ```bash
-# Install dependencies (required on first setup)
 pnpm install
-
-# Build all projects
-pnpm -r build
-
-# Build specific project (use package.json name)
-pnpm -F <package-name> build
-
-# Examples:
-pnpm -F react-app build
-pnpm -F artusx-api build
-pnpm -F remix-api build
-```
-
-### Project-specific Development
-```bash
-# React SPA dev server (http://localhost:5173)
-pnpm -F react-app dev
-
-# ArtusX API dev server
-pnpm -F artusx-api dev
-
-# Remix API (Cloudflare Workers, remote dev)
-pnpm -F remix-api dev
-
-# Remix Flow (Cloudflare Workers, local dev)
-pnpm -F remix-flow dev
-
-# React Component library (Storybook at port 6006)
-pnpm -F react-component dev
-```
-
-### Linting and Formatting
-```bash
-# Run oxlint on all packages
+pnpm -F <pkg> build
+pnpm -F <pkg> dev
 pnpm lint
-
-# Run oxlint with auto-fix
 pnpm lint:fix
-
-# Check formatting (dry-run)
-pnpm format
-
-# Format all packages
 pnpm format:write
-
-# Full project build + lint verification
-pnpm -r build && pnpm lint
 ```
-
-### PWA/React App Customization
-```bash
-# Generate service worker and manifest (in react-app)
-pnpx remix-pwa sw
-pnpx remix-pwa manifest
-
-# Add shadcn/ui components (in react-app)
-pnpm dlx shadcn@latest add {component}
-```
-
-## Project Structure
-
-### Monorepo Layout
-- `packages/apps/` - Applications
-- `packages/libs/` - Shared libraries
-
-### Applications
-
-#### 1. `react-app` (React SPA)
-**Stack:** React Router v7, React 19, TypeScript, Tailwind CSS, shadcn/ui, Jotai, Sonner
-
-**Structure:**
-- `app/routes/` - File-based routing with React Router
-- `app/components/` - Reusable components
-- `app/store/` - Jotai state atoms
-- `app/service/` - API services
-- `app/lib/` - Utilities and helpers
-
-**Key conventions:**
-- Use functional components with hooks (no `React.FC`)
-- Use shadcn/ui components (not Radix UI directly)
-- Use Tailwind CSS with `cn()` utility for conditional classes
-- Use Jotai for state management
-- Use Sonner for toast notifications
-- Add `data-slot` attributes for component identification
-
-#### 2. `artusx-api` (Node.js API)
-**Stack:** ArtusX framework, TypeScript, Node.js
-
-**Structure:**
-- `src/config/` - Configuration files
-- `src/controller/` - Request handlers
-- `src/service/` - Business logic
-- `src/types/` - Type definitions (including `config.ts` for AppConfig)
-- `src/module-*/` - Feature modules (module-api, module-news, module-webhook)
-- `src/view/` - View templates
-- `migrations/` - Database migrations
-
-**Key conventions:**
-- Use dependency injection via ArtusX
-- Use `AppConfig` type from `src/types/config.ts` for config injection
-- Use `this.logger` for logging in service classes
-- Use `debug` package for structured logging elsewhere
-- Handle errors with try/catch
-
-#### 3. `remix-api` (Cloudflare Worker API)
-**Stack:** Hono, TypeScript, Supabase, Dayjs
-
-**Structure:**
-- `src/routes/` - Hono route definitions
-- `src/components/` - Route components
-- `src/middlewares/` - Middleware functions
-- `src/services/` - API services
-- `wrangler.jsonc` - Cloudflare Worker configuration
-
-**Key conventions:**
-- Use Hono for routing and middleware
-- Use Supabase client for database access
-- Use Dayjs for date/time operations
-- Deploy via Wrangler: `wrangler deploy --minify`
-
-#### 4. `remix-flow` (Cloudflare Worker Automation)
-**Stack:** Cloudflare Workers, Puppeteer, TypeScript
-
-**Key conventions:**
-- Use Puppeteer for browser automation
-- Use Wrangler for deployment: `wrangler deploy --minify`
-
-#### 5. `react-component` (Shared UI Library)
-**Stack:** React, TypeScript, Vite, Storybook
-
-**Key conventions:**
-- Use Storybook for component documentation/testing
-- Build: `tsc -b && vite build`
-
-## Coding Standards
-
-### Linting (Oxlint)
-This project uses **Oxlint** for linting and **Oxfmt** for formatting. Key rules to follow:
-
-- **no-unused-vars**: Avoid unused variables. Use `_` prefix for intentionally unused catch parameters.
-- **useButtonType**: Always add `type="button"` to button elements.
-- **useNodejsImportProtocol**: Use `node:` protocol for Node.js builtins (e.g., `import path from 'node:path'`).
-- **useOptionalChain**: Use optional chaining `?.` instead of `&&` checks.
-
-Configuration files:
-- `oxlint.json` - Lint rules and ignore patterns
-- `.oxfmtrc.json` - Formatting options (indent width: 2, line width: 120, single quotes)
-
-### Naming Conventions
-- **PascalCase** - Component names, interfaces, type aliases
-- **camelCase** - Variables, functions, methods
-- **_prefix** - Private class members
-- **ALL_CAPS** - Constants (e.g., `REMIX_API`, `TZ_ASIA_SHANGHAI`)
-
-### Code Quality
-- Follow Oxlint/Oxfmt formatting rules (configured in `oxlint.json` and `.oxfmtrc.json`)
-- Use meaningful commit messages (conventional commits)
-- Implement proper type definitions for public APIs
-- Use constants for magic numbers/strings
-- Prefer explicit error handling over silent failures
-- Use optional chaining (`?.`) and nullish coalescing (`??`)
 
 ### TypeScript
-- Use `interface` for data structures and type definitions
-- Export types alongside components/functions
-- Use proper generic types with React components
-- Prefer `const` and `readonly` for immutability
-- Avoid `any` - use `unknown` or specific types when type is uncertain
 
-### React (react-app)
-- Follow React hooks rules (no conditional hooks)
-- Keep components small and focused (single responsibility)
-- Implement loading states with skeleton components
-- Export types for component props
-- Always add `type="button"` to button elements (not just `<button>`)
+- 用 `interface` 定义数据结构
+- 避免 `any`，用 `unknown` 或具体类型
+- 用 `const` 和 `readonly` 保持不可变
 
-### Browser Testing (Playwright MCP)
-- Use Playwright MCP to view browser display effects when needed
-- When running browser testing in background tasks, close the browser tab after task completion (use `browser_tabs` with `action: close`)
-- Do NOT close the entire browser - only close individual tabs to preserve browser session for potential follow-up testing
+### React
+
+- 函数组件 + hooks，不用 `React.FC`
+- 用 `cn()` 处理 Tailwind 条件类
+- 按钮必须加 `type="button"`
+- 添加 `data-slot` 属性标识组件
+
+### Node.js
+
+- 用 `node:` 前缀导入内置模块：`import path from 'node:path'`
+- 未使用的 catch 参数用 `_` 前缀
+
+### 其他
+
+- 用 `?.` 替代 `&&` 做可选链检查
+- 用 `??` 做空值合并
+- 错误用 try/catch 处理，不用 silent failures
+
+## 其他规范
+
+- 始终使用相对路径，不用绝对路径
+- Oxlint 配置：`oxlint.json`、`.oxfmtrc.json`
+- 提交用 conventional commits
+- 浏览器测试后只关 tab，不关浏览器
