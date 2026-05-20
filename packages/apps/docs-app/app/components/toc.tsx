@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, createContext, useContext } from 'react';
-import { createPortal } from 'react-dom';
+import { ListTree, X } from 'lucide-react';
 
-interface TocItem {
+export interface TocItem {
   id: string;
   text: string;
   depth: number;
@@ -89,11 +89,16 @@ export function TOCProvider({ items, children }: TOCProviderProps) {
     };
   }, [isOpen]);
 
-  return <TOCContext.Provider value={{ isOpen, setIsOpen, activeId, items }}>{children}</TOCContext.Provider>;
+  return (
+    <TOCContext.Provider value={{ isOpen, setIsOpen, activeId, items }}>
+      {children}
+      <MobileTOCMenuButton />
+      <MobileTOCDrawer />
+    </TOCContext.Provider>
+  );
 }
 
-// Mobile TOC Drawer Button - rendered into header slot via Portal
-function MobileTOCMenuButtonInner() {
+export function MobileTOCMenuButton() {
   const { isOpen, setIsOpen, items } = useTOC();
 
   if (items.length === 0) {
@@ -104,52 +109,33 @@ function MobileTOCMenuButtonInner() {
     <button
       type="button"
       onClick={() => setIsOpen(!isOpen)}
-      className="flex items-center justify-center px-2 py-1 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+      className="fixed right-12 top-3 z-50 flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] lg:hidden"
       aria-label={isOpen ? '关闭目录' : '打开目录'}
       aria-expanded={isOpen}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-      </svg>
+      <ListTree className="h-4 w-4" />
     </button>
   );
-}
-
-export function MobileTOCMenuButton() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => {
-      // 卸载时隐藏分割线
-      const divider = document.getElementById('mobile-divider');
-      if (divider) {
-        divider.classList.add('hidden');
-      }
-    };
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  const slot = document.getElementById('header-toc-slot');
-  const divider = document.getElementById('mobile-divider');
-  if (!slot) {
-    return null;
-  }
-
-  // 显示分割线（如果存在）
-  if (divider) {
-    divider.classList.remove('hidden');
-  }
-
-  return createPortal(<MobileTOCMenuButtonInner />, slot);
 }
 
 // Mobile TOC Drawer - full screen slide-in from right (no backdrop)
 export function MobileTOCDrawer() {
   const { isOpen, setIsOpen, activeId, items } = useTOC();
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, setIsOpen]);
 
   if (items.length === 0) {
     return null;
@@ -174,9 +160,6 @@ export function MobileTOCDrawer() {
 
   return (
     <>
-      {/* Menu button in header nav area */}
-      <MobileTOCMenuButton />
-
       {/* Drawer panel - full width, no backdrop */}
       <div
         className={`lg:hidden fixed inset-y-0 right-0 z-50 w-full bg-[var(--color-bg)] shadow-xl transform transition-transform duration-300 ease-in-out ${
@@ -193,15 +176,7 @@ export function MobileTOCDrawer() {
               className="flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
               aria-label="关闭目录"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="h-4 w-4" />
             </button>
           </div>
 

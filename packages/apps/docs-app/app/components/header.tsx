@@ -4,7 +4,7 @@ import { Github } from 'lucide-react';
 export function Header() {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-sm bg-white/80 border-b border-gray-200 px-4 sm:px-6 lg:px-8">
-      <nav className="h-14 flex items-center justify-between lg:max-w-7xl lg:mx-auto">
+      <nav className="h-14 w-full flex items-center justify-between lg:max-w-7xl lg:mx-auto">
         {/* 左侧 Logo */}
         <Link
           to="/"
@@ -20,9 +20,6 @@ export function Header() {
 
         {/* 右侧导航链接 */}
         <div className="flex items-center">
-          {/* TOC button slot - for mobile TOC drawer */}
-          <div id="header-toc-slot" className="lg:hidden flex items-center mr-2" />
-
           {/* 导航链接 - 桌面端显示 */}
           <div className="hidden lg:flex items-center gap-1">
             <Link
@@ -48,8 +45,6 @@ export function Header() {
 
           {/* 移动端：分割线 + GitHub 图标 */}
           <div className="lg:hidden flex items-center">
-            {/* 竖线分割 - TOC 与 GitHub */}
-            <div id="mobile-divider" className="h-4 w-px bg-gray-200 mr-3 hidden" />
             <a
               href="https://github.com/thonatos/project-v"
               target="_blank"
