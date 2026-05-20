@@ -1,11 +1,12 @@
 import type { Route } from './+types/tags.$tag';
 import { getDocsByTag, getAllTags } from '~/lib/docs';
 import { ArticleCard } from '~/components/article-card';
+import { BasicLayout } from '~/components/basic-layout';
 import { PageHeader } from '~/components/page-header';
 import { getTagColor } from '~/lib/tag-colors';
 import { ContentPanel } from '~/components/content-panel';
 import { ArticleListPanel } from '~/components/article-list-panel';
-import { LinkedTagPill } from '~/components/linked-tag-pill';
+import { TagChip } from '~/components/tag-chip';
 
 export function meta({ data }: Route.MetaArgs) {
   return [{ title: `ρV - 标签: ${data.tag}` }, { name: 'description', content: `${data.tag} 标签下的文档` }];
@@ -42,7 +43,7 @@ export default function TagPage({ loaderData }: Route.ComponentProps) {
   const currentTagColor = getTagColor(loaderData.tag);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">
+    <BasicLayout>
       <PageHeader
         title={`Tag: ${loaderData.tag}`}
         description={`共 ${loaderData.count} 篇文档`}
@@ -77,7 +78,7 @@ export default function TagPage({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {loaderData.relatedTags.map((tag) => (
-                <LinkedTagPill key={tag.name} name={tag.name} count={tag.count} />
+                <TagChip key={tag.name} name={tag.name} href={`/tags/${tag.name}`} count={tag.count} />
               ))}
             </div>
           </div>
@@ -100,6 +101,6 @@ export default function TagPage({ loaderData }: Route.ComponentProps) {
       ) : (
         <p className="text-[var(--color-text-muted)] text-center py-12">该标签下暂无文档</p>
       )}
-    </div>
+    </BasicLayout>
   );
 }

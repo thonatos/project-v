@@ -1,5 +1,5 @@
 import { ContentPanel } from './content-panel';
-import { LinkedTagPill } from './linked-tag-pill';
+import { TagChip } from './tag-chip';
 
 interface TagFilterPanelProps {
   title: string;
@@ -19,7 +19,7 @@ export function TagFilterPanel({ title, tags }: TagFilterPanelProps) {
 
       <div className="flex flex-wrap gap-1.5">
         {tags.map((tag) => (
-          <LinkedTagPill key={tag.name} name={tag.name} count={tag.count} />
+          <TagChip key={tag.name} name={tag.name} href={`/tags/${tag.name}`} count={tag.count} />
         ))}
       </div>
     </ContentPanel>

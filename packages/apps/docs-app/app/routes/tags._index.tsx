@@ -1,5 +1,6 @@
 import type { Route } from './+types/tags._index';
 import { getAllTags } from '~/lib/docs';
+import { BasicLayout } from '~/components/basic-layout';
 import { PageHeader } from '~/components/page-header';
 import { TagSummaryCard } from '~/components/tag-summary-card';
 
@@ -16,11 +17,11 @@ export default function TagsIndex({ loaderData }: Route.ComponentProps) {
   const { tags } = loaderData;
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">
+    <BasicLayout>
       <PageHeader title="All Tags" description={`共 ${tags.length} 个标签`} />
 
       {tags.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
           {tags.map((tag) => (
             <TagSummaryCard key={tag.name} tag={tag} />
           ))}
@@ -28,6 +29,6 @@ export default function TagsIndex({ loaderData }: Route.ComponentProps) {
       ) : (
         <p className="text-[var(--color-text-muted)] text-center py-12">暂无标签</p>
       )}
-    </div>
+    </BasicLayout>
   );
 }
