@@ -114,3 +114,6 @@ turbo-*.log*
 
 # telegram bot commands config
 commands-config.json
+
+# CodeGraph local index
+.codegraph/
