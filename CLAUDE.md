@@ -39,6 +39,15 @@
 - 部署：`wrangler deploy --minify`
 - remix-api 用 Hono + Supabase + Dayjs
 
+### i18n-studio
+
+- React Router v7 全栈 + SQLite + Drizzle ORM（better-sqlite3）
+- 构建：`pnpm -F i18n-studio build` / `dev` / `start` / `typecheck` / `db:generate` / `test`
+- 数据存储：`data/i18n.db`（WAL），加入该 app 的 `.gitignore`
+- 状态走 loaders/actions，**不**引入 Jotai 等外部状态库
+- UI 用 shadcn/ui + Radix（该 app 内放宽全局"不用 Radix UI"约束）
+- 通知用 Sonner；表单优先 React Router `Form` / `useFetcher`
+
 ## 开发规范
 
 ### 构建命令
