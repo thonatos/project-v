@@ -44,7 +44,7 @@ export async function requireUser(request: Request): Promise<User> {
   return user;
 }
 
-export async function loginAndCreateSession(userId: string, redirectTo = '/'): Promise<Response> {
+export async function loginAndCreateSession(userId: string, redirectTo = '/dashboard'): Promise<Response> {
   const session = await sessionStorage.getSession();
   session.set(USER_KEY, userId);
   return redirect(redirectTo, {

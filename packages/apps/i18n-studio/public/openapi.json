@@ -1,0 +1,1804 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "i18n-studio API",
+    "version": "1.0.0",
+    "description": "i18n-studio HTTP API. Endpoints under `/api/**` are operated by the dashboard with cookie sessions or scoped Bearer tokens; `/snapshot/**` exposes read-only translation bundles for downstream consumers."
+  },
+  "servers": [
+    {
+      "url": "https://your-instance.example.com",
+      "description": "Self-hosted instance"
+    },
+    {
+      "url": "http://localhost:5173",
+      "description": "Local dev server"
+    }
+  ],
+  "tags": [
+    { "name": "namespaces", "description": "命名空间生命周期" },
+    { "name": "entries", "description": "词条 CRUD 与发布流" },
+    { "name": "versions", "description": "翻译版本与发布历史" },
+    { "name": "members", "description": "命名空间成员管理" },
+    { "name": "tokens", "description": "API token (scope=task / readonly)" },
+    { "name": "tasks", "description": "翻译任务编排与 worker 协议" },
+    { "name": "sync", "description": "跨命名空间同步" },
+    { "name": "snapshot", "description": "对外只读快照通道" },
+    { "name": "import-export", "description": "批量导入导出" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__i18n_studio_session",
+        "description": "由 `/login` 颁发的 HttpOnly cookie 会话"
+      },
+      "taskBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token, scope=task。仅 `/api/tasks/{id}/*` worker 接口接受"
+      },
+      "readonlyBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token, scope=readonly。供 `/snapshot/**` 在私有命名空间下使用"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string", "example": "forbidden" },
+          "message": { "type": "string" },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "Locale": {
+        "type": "object",
+        "required": ["code", "label", "englishLabel", "isBuiltin", "enabled", "sortOrder"],
+        "properties": {
+          "code": { "type": "string", "example": "zh-cn" },
+          "label": { "type": "string", "example": "简体中文" },
+          "englishLabel": { "type": "string", "example": "Simplified Chinese" },
+          "nativeLabel": { "type": "string", "nullable": true },
+          "region": { "type": "string", "nullable": true },
+          "isBuiltin": { "type": "boolean" },
+          "enabled": { "type": "boolean" },
+          "sortOrder": { "type": "integer" },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "updatedAt": { "type": "integer", "format": "int64" }
+        }
+      },
+      "Namespace": {
+        "type": "object",
+        "required": ["id", "slug", "name", "defaultLocale", "locales", "publicRead", "bundleVersion"],
+        "properties": {
+          "id": { "type": "string" },
+          "slug": { "type": "string", "example": "marketing" },
+          "name": { "type": "string" },
+          "defaultLocale": { "type": "string", "example": "zh-cn" },
+          "locales": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "命名空间启用的 locale 集合(JSON 数组持久化)"
+          },
+          "publicRead": { "type": "boolean", "description": "公共可读时 `/snapshot/**` 无需 token" },
+          "bundleVersion": { "type": "integer", "description": "随发布递增" },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "updatedAt": { "type": "integer", "format": "int64" },
+          "createdBy": { "type": "string" }
+        }
+      },
+      "Membership": {
+        "type": "object",
+        "required": ["id", "namespaceId", "userId", "role"],
+        "properties": {
+          "id": { "type": "string" },
+          "namespaceId": { "type": "string" },
+          "userId": { "type": "string" },
+          "role": { "type": "string", "enum": ["admin", "editor", "viewer"] },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "updatedAt": { "type": "integer", "format": "int64" }
+        }
+      },
+      "Entry": {
+        "type": "object",
+        "required": ["id", "namespaceId", "key"],
+        "properties": {
+          "id": { "type": "string" },
+          "namespaceId": { "type": "string" },
+          "key": {
+            "type": "string",
+            "description": "扁平 key,允许字母/数字/下划线/短横线,以 . 分段,最多 10 段",
+            "example": "home.title"
+          },
+          "description": { "type": "string", "nullable": true },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "updatedAt": { "type": "integer", "format": "int64" },
+          "updatedBy": { "type": "string" }
+        }
+      },
+      "Translation": {
+        "type": "object",
+        "required": ["id", "entryId", "locale", "value"],
+        "properties": {
+          "id": { "type": "string" },
+          "entryId": { "type": "string" },
+          "locale": { "type": "string" },
+          "value": { "type": "string" },
+          "publishedVersion": { "type": "integer", "nullable": true },
+          "updatedAt": { "type": "integer", "format": "int64" },
+          "updatedBy": { "type": "string" }
+        }
+      },
+      "TranslationVersion": {
+        "type": "object",
+        "required": ["id", "entryId", "locale", "version", "value", "source", "status", "actorId", "createdAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "entryId": { "type": "string" },
+          "locale": { "type": "string" },
+          "version": { "type": "integer" },
+          "value": { "type": "string" },
+          "source": {
+            "type": "string",
+            "enum": ["manual", "import", "task", "sync", "revert"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "published", "discarded"]
+          },
+          "actorId": { "type": "string" },
+          "metadata": {
+            "type": "string",
+            "nullable": true,
+            "description": "JSON 字符串"
+          },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "publishedAt": { "type": "integer", "format": "int64", "nullable": true }
+        }
+      },
+      "TranslationTask": {
+        "type": "object",
+        "required": ["id", "namespaceId", "status", "targetLocales", "sourceLocale", "total", "done"],
+        "properties": {
+          "id": { "type": "string" },
+          "namespaceId": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "completed", "failed", "cancelled"]
+          },
+          "targetLocales": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "filter": {
+            "type": "object",
+            "description": "JSON 字符串持久化,常含 prefix / missingLocale 等过滤条件",
+            "additionalProperties": true
+          },
+          "sourceLocale": { "type": "string" },
+          "total": { "type": "integer" },
+          "done": { "type": "integer" },
+          "createdBy": { "type": "string" },
+          "workerId": { "type": "string", "nullable": true },
+          "startedAt": { "type": "integer", "format": "int64", "nullable": true },
+          "completedAt": { "type": "integer", "format": "int64", "nullable": true },
+          "failedReason": { "type": "string", "nullable": true },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "updatedAt": { "type": "integer", "format": "int64" }
+        }
+      },
+      "TranslationTaskItem": {
+        "type": "object",
+        "required": ["id", "taskId", "entryId", "key", "sourceValue", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "taskId": { "type": "string" },
+          "entryId": { "type": "string" },
+          "key": { "type": "string" },
+          "sourceValue": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "done"] }
+        }
+      },
+      "ApiToken": {
+        "type": "object",
+        "required": ["id", "namespaceId", "name", "scope", "tokenPrefix"],
+        "properties": {
+          "id": { "type": "string" },
+          "namespaceId": { "type": "string" },
+          "name": { "type": "string" },
+          "scope": { "type": "string", "enum": ["task", "readonly"] },
+          "tokenPrefix": {
+            "type": "string",
+            "description": "明文前 6 位,用于在 UI 中识别 token"
+          },
+          "createdBy": { "type": "string" },
+          "createdAt": { "type": "integer", "format": "int64" },
+          "revokedAt": { "type": "integer", "format": "int64", "nullable": true }
+        }
+      }
+    },
+    "responses": {
+      "invalid_json_error": {
+        "description": "请求体不是合法 JSON",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "invalid_json", "message": "请求体不是合法 JSON" }
+          }
+        }
+      },
+      "unsupported_media_type_error": {
+        "description": "Content-Type 必须为 application/json",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "unsupported_media_type", "message": "Content-Type 必须为 application/json" }
+          }
+        }
+      },
+      "forbidden_error": {
+        "description": "用户无权执行该操作(角色不足)",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "forbidden", "message": "Forbidden" }
+          }
+        }
+      },
+      "not_found_error": {
+        "description": "目标资源不存在,或当前账号无权感知其存在",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "not_found", "message": "Not Found" }
+          }
+        }
+      },
+      "validation_error": {
+        "description": "请求体或参数未通过校验",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": {
+              "code": "validation_error",
+              "message": "字段不合法",
+              "details": { "field": "slug" }
+            }
+          }
+        }
+      },
+      "locale_not_found_error": {
+        "description": "引用了系统字典中不存在的 locale",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "locale_not_found", "message": "locale 不存在" }
+          }
+        }
+      },
+      "locale_disabled_error": {
+        "description": "目标 locale 在系统字典中被禁用",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "locale_disabled", "message": "locale 已禁用" }
+          }
+        }
+      },
+      "locale_in_use_error": {
+        "description": "locale 仍被命名空间引用,无法禁用或删除",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "locale_in_use", "message": "locale 被命名空间引用" }
+          }
+        }
+      },
+      "locale_builtin_undeletable_error": {
+        "description": "内置 locale 不允许删除",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "code": "locale_builtin_undeletable", "message": "内置 locale 不可删除" }
+          }
+        }
+      },
+      "locale_dictionary_empty_error": {
+        "description": "系统 locale 字典为空,无法继续操作",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": {
+              "code": "locale_dictionary_empty",
+              "message": "请先在 /dashboard/locales 中添加 locale"
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/namespaces": {
+      "get": {
+        "operationId": "listNamespaces",
+        "tags": ["namespaces"],
+        "summary": "List namespaces",
+        "description": "返回当前用户作为成员的所有命名空间。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "命名空间集合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["namespaces"],
+                  "properties": {
+                    "namespaces": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Namespace" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      },
+      "post": {
+        "operationId": "createNamespace",
+        "tags": ["namespaces"],
+        "summary": "Create namespace",
+        "description": "创建命名空间;创建者自动成为 admin。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["slug", "name"],
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "description": "小写字母/数字/_/-,字母或数字开头",
+                    "example": "marketing"
+                  },
+                  "name": { "type": "string" },
+                  "defaultLocale": { "type": "string", "example": "zh-cn" },
+                  "locales": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "命名空间已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["namespace"],
+                  "properties": {
+                    "namespace": { "$ref": "#/components/schemas/Namespace" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "415": { "$ref": "#/components/responses/unsupported_media_type_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "slug",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "operationId": "getNamespace",
+        "tags": ["namespaces"],
+        "summary": "Get namespace detail",
+        "description": "返回命名空间元数据与当前调用者的角色;非成员返回 404 不暴露存在性。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "命名空间详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["namespace", "role"],
+                  "properties": {
+                    "namespace": { "$ref": "#/components/schemas/Namespace" },
+                    "role": { "type": "string", "enum": ["admin", "editor", "viewer"] }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "patch": {
+        "operationId": "updateNamespace",
+        "tags": ["namespaces"],
+        "summary": "Update namespace",
+        "description": "更新命名空间设置;仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "defaultLocale": { "type": "string" },
+                  "locales": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "publicRead": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["namespace"],
+                  "properties": {
+                    "namespace": { "$ref": "#/components/schemas/Namespace" }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" },
+          "422": { "$ref": "#/components/responses/locale_not_found_error" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNamespace",
+        "tags": ["namespaces"],
+        "summary": "Delete namespace",
+        "description": "删除命名空间(级联词条/版本/任务/token);仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/entries": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "slug",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "operationId": "listEntries",
+        "tags": ["entries"],
+        "summary": "List entries",
+        "description": "按 prefix / locale / status / 分组方式列出词条;支持 cursor 分页。",
+        "security": [{ "cookieSession": [] }],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "prefix",
+            "schema": { "type": "string" },
+            "description": "key 前缀过滤"
+          },
+          {
+            "in": "query",
+            "name": "view",
+            "schema": { "type": "string", "enum": ["all"] },
+            "description": "传 `all` 返回所有词条(含未发布)"
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "schema": { "type": "string" },
+            "description": "逗号分隔的 locale 列表"
+          },
+          {
+            "in": "query",
+            "name": "at_version",
+            "schema": { "type": "integer" },
+            "description": "锁定到某个 bundleVersion 的快照"
+          },
+          {
+            "in": "query",
+            "name": "group",
+            "schema": { "type": "string", "enum": ["key", "locale"] }
+          },
+          {
+            "in": "query",
+            "name": "include",
+            "schema": { "type": "string", "enum": ["published", "draft", "all"] }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": { "type": "string", "enum": ["all", "draft", "published", "discarded"] }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": { "type": "string" }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": { "type": "integer", "default": 100 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "词条列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+                    "nextCursor": { "type": "string", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "post": {
+        "operationId": "upsertEntryAtCollection",
+        "tags": ["entries"],
+        "summary": "Upsert entries (collection-level)",
+        "description": "保留位:当前路由仅注册 GET。词条创建走 `PUT /api/namespaces/{slug}/entries/{key}`。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "405": {
+            "description": "未实现的方法",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/entries/{key}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        {
+          "in": "path",
+          "name": "key",
+          "required": true,
+          "schema": { "type": "string" },
+          "description": "URL 编码后的扁平 key"
+        }
+      ],
+      "get": {
+        "operationId": "getEntry",
+        "tags": ["entries"],
+        "summary": "Get entry detail",
+        "description": "返回词条与每个 locale 的当前值/草稿/最新版本。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "词条详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entry": { "$ref": "#/components/schemas/Entry" },
+                    "translations": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Translation" }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "put": {
+        "operationId": "upsertEntry",
+        "tags": ["entries"],
+        "summary": "Upsert entry translations",
+        "description": "创建或更新词条;`asDraft=true` 时只写草稿,不发布。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "translations": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" },
+                    "description": "{ locale: value } 形式"
+                  },
+                  "description": { "type": "string", "nullable": true },
+                  "asDraft": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upsert 结果",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" },
+          "415": { "$ref": "#/components/responses/unsupported_media_type_error" },
+          "422": { "$ref": "#/components/responses/locale_disabled_error" }
+        }
+      },
+      "delete": {
+        "operationId": "deleteEntry",
+        "tags": ["entries"],
+        "summary": "Delete entry",
+        "description": "删除词条及其所有版本/翻译。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "删除结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/entries/{key}/publish": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "operationId": "publishEntry",
+        "tags": ["entries"],
+        "summary": "Publish a single version",
+        "description": "把指定 locale + version 升级为已发布状态;同时更新 namespace.bundleVersion。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["locale", "version"],
+                "properties": {
+                  "locale": { "type": "string" },
+                  "version": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发布结果",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" },
+          "405": {
+            "description": "GET 不被允许",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/entries/{key}/discard": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "operationId": "discardEntry",
+        "tags": ["entries"],
+        "summary": "Discard a draft version",
+        "description": "把草稿版本标记为 discarded,不影响已发布版本。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["locale", "version"],
+                "properties": {
+                  "locale": { "type": "string" },
+                  "version": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "丢弃结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/entries/{key}/revert": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "key", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "operationId": "revertEntry",
+        "tags": ["entries"],
+        "summary": "Revert to a previous version",
+        "description": "基于历史版本生成一条新的 published 版本(source=revert)。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["locale", "version"],
+                "properties": {
+                  "locale": { "type": "string" },
+                  "version": { "type": "integer", "description": "回滚到的目标版本号" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "回滚结果",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/entries/{key}/versions": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "key", "required": true, "schema": { "type": "string" } },
+        { "in": "query", "name": "locale", "required": true, "schema": { "type": "string" } },
+        { "in": "query", "name": "limit", "schema": { "type": "integer", "default": 50 } },
+        {
+          "in": "query",
+          "name": "cursor",
+          "schema": { "type": "string", "description": "上一页返回的最后 createdAt 时间戳" }
+        }
+      ],
+      "get": {
+        "operationId": "listEntryVersions",
+        "tags": ["versions"],
+        "summary": "List version history",
+        "description": "返回某条词条 + locale 的版本时间线(append-only)。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "版本列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "versions": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TranslationVersion" }
+                    },
+                    "nextCursor": { "type": "integer", "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/publish-batch": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "publishBatch",
+        "tags": ["entries"],
+        "summary": "Publish entries in batch",
+        "description": "在一个事务里发布多条 (entry, locale, version);任一项不存在整体回滚。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["items"],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["locale", "version"],
+                      "properties": {
+                        "entry_id": { "type": "string" },
+                        "key": { "type": "string" },
+                        "locale": { "type": "string" },
+                        "version": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "批量发布结果",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/import": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "importEntries",
+        "tags": ["import-export"],
+        "summary": "Import flat entries",
+        "description": "批量导入指定 locale 的扁平 key/value 字典;`asDraft=true` 仅写草稿。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["locale", "entries"],
+                "properties": {
+                  "locale": { "type": "string" },
+                  "entries": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                  },
+                  "asDraft": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "导入成功(全部 ok)",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "422": {
+            "description": "部分 key/value 无效",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": { "type": "string" },
+                          "reason": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "415": { "$ref": "#/components/responses/unsupported_media_type_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/export": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        {
+          "in": "query",
+          "name": "locale",
+          "schema": { "type": "string" },
+          "description": "逗号分隔 locale,缺省返回全部"
+        },
+        {
+          "in": "query",
+          "name": "at_version",
+          "schema": { "type": "integer" },
+          "description": "锁定到某个 bundleVersion"
+        }
+      ],
+      "get": {
+        "operationId": "exportEntries",
+        "tags": ["import-export"],
+        "summary": "Export flat entries",
+        "description": "导出已发布的扁平字典(可按 locale 过滤、可锁定 bundleVersion)。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "扁平字典",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": { "type": "string" }
+                  },
+                  "description": "{ locale: { key: value } }"
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/members": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "listMembers",
+        "tags": ["members"],
+        "summary": "List members",
+        "description": "列出命名空间所有成员;成员均可访问。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "成员列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "members": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Membership" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "post": {
+        "operationId": "inviteMember",
+        "tags": ["members"],
+        "summary": "Invite member by email",
+        "description": "通过 email 添加既有用户为成员;仅 admin 可调用。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "role"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "role": { "type": "string", "enum": ["admin", "editor", "viewer"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "成员已添加",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "membership": { "$ref": "#/components/schemas/Membership" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/members/{userId}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "userId", "required": true, "schema": { "type": "string" } }
+      ],
+      "patch": {
+        "operationId": "updateMember",
+        "tags": ["members"],
+        "summary": "Update member role",
+        "description": "更新成员角色;仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["admin", "editor", "viewer"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "membership": { "$ref": "#/components/schemas/Membership" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      },
+      "delete": {
+        "operationId": "removeMember",
+        "tags": ["members"],
+        "summary": "Remove member",
+        "description": "移除成员;仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "移除结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/tokens": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "listTokens",
+        "tags": ["tokens"],
+        "summary": "List API tokens",
+        "description": "返回命名空间下所有 token 元数据(不含明文)。仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "Token 列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tokens": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ApiToken" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      },
+      "post": {
+        "operationId": "createToken",
+        "tags": ["tokens"],
+        "summary": "Create API token",
+        "description": "创建 token 并返回唯一一次的明文(`plaintext`)。`scope=task` 用于 worker,`scope=readonly` 用于 snapshot。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "scope"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "scope": { "type": "string", "enum": ["task", "readonly"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Token 已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["token", "plaintext"],
+                  "properties": {
+                    "token": { "$ref": "#/components/schemas/ApiToken" },
+                    "plaintext": {
+                      "type": "string",
+                      "description": "明文 token,仅在创建时返回一次,后续无法找回"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/tokens/{id}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+      ],
+      "delete": {
+        "operationId": "revokeToken",
+        "tags": ["tokens"],
+        "summary": "Revoke API token",
+        "description": "把 token 标记为 revoked;后续验证将失败。仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "撤销结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/tasks": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "listTasks",
+        "tags": ["tasks"],
+        "summary": "List translation tasks",
+        "description": "列出命名空间下任务,可按 status 过滤。",
+        "security": [{ "cookieSession": [] }],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "in_progress", "completed", "failed", "cancelled"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "任务列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tasks": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TranslationTask" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "post": {
+        "operationId": "createTask",
+        "tags": ["tasks"],
+        "summary": "Create translation task",
+        "description": "基于过滤条件或显式 entryIds 切出 work items,生成一个 `pending` 任务。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["targetLocales"],
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "properties": {
+                      "prefix": { "type": "string" },
+                      "missingLocale": { "type": "string" }
+                    }
+                  },
+                  "entryIds": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "targetLocales": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "minItems": 1
+                  },
+                  "sourceLocale": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": { "$ref": "#/components/schemas/TranslationTask" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/tasks/{id}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+      ],
+      "get": {
+        "operationId": "getTask",
+        "tags": ["tasks"],
+        "summary": "Get task",
+        "description": "返回单个任务详情。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "任务详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": { "$ref": "#/components/schemas/TranslationTask" },
+                    "items": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TranslationTaskItem" }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "delete": {
+        "operationId": "cancelTask",
+        "tags": ["tasks"],
+        "summary": "Cancel task",
+        "description": "取消任务(状态 → cancelled);仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": {
+            "description": "取消结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/tasks/{id}/claim": {
+      "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "claimTask",
+        "tags": ["tasks"],
+        "summary": "Claim task (worker)",
+        "description": "Worker 用 `task` scope token 抢占任务;成功后任务进入 `in_progress`。",
+        "security": [{ "taskBearer": [] }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workerId": { "type": "string", "default": "unknown" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Claim 结果(任务+items)",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "401": {
+            "description": "未提供有效 task token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "415": { "$ref": "#/components/responses/unsupported_media_type_error" }
+        }
+      }
+    },
+    "/api/tasks/{id}/complete": {
+      "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "completeTask",
+        "tags": ["tasks"],
+        "summary": "Complete task (worker)",
+        "description": "Worker 在所有 items 写完后调用,任务状态 → completed。",
+        "security": [{ "taskBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "完成结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": { "$ref": "#/components/schemas/TranslationTask" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未提供有效 task token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/fail": {
+      "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "failTask",
+        "tags": ["tasks"],
+        "summary": "Fail task (worker)",
+        "description": "Worker 报错时调用,任务状态 → failed,记录原因。",
+        "security": [{ "taskBearer": [] }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "失败已记录",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "task": { "$ref": "#/components/schemas/TranslationTask" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未提供有效 task token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/payload": {
+      "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "getTaskPayload",
+        "tags": ["tasks"],
+        "summary": "Get task payload (worker)",
+        "description": "Worker 拉取待翻译条目(key + sourceValue + targetLocales)。",
+        "security": [{ "taskBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "任务 payload",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "401": {
+            "description": "未提供有效 task token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/results": {
+      "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "writeTaskResults",
+        "tags": ["tasks"],
+        "summary": "Write task results (worker)",
+        "description": "Worker 提交批量翻译结果;每条结果会作为 source=task 的草稿版本写入。",
+        "security": [{ "taskBearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["results"],
+                "properties": {
+                  "results": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": ["entryId", "locale", "value"],
+                      "properties": {
+                        "entryId": { "type": "string" },
+                        "locale": { "type": "string" },
+                        "value": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "已写入结果",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "401": {
+            "description": "未提供有效 task token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/namespaces/{targetSlug}/sync": {
+      "parameters": [{ "in": "path", "name": "targetSlug", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "runSync",
+        "tags": ["sync"],
+        "summary": "Sync entries from another namespace",
+        "description": "把 `sourceSlug` 的发布快照(可锁定 `atVersion`)同步到当前命名空间;`strategy` 决定冲突处理(skip 跳过 / overwrite 覆盖 / fill_missing 仅补齐)。`autoPublish=true` 同步后立即发布,否则写为草稿。`dryRun=true` 仅返回差异不落库。需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["sourceSlug", "locales", "strategy"],
+                "properties": {
+                  "sourceSlug": { "type": "string" },
+                  "prefix": { "type": "string" },
+                  "entryIds": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "locales": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "strategy": {
+                    "type": "string",
+                    "enum": ["skip", "overwrite", "fill_missing"]
+                  },
+                  "atVersion": { "type": "integer" },
+                  "autoPublish": { "type": "boolean", "default": false },
+                  "dryRun": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "同步报告(diff / 写入数 / dryRun 标志)",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/validation_error" },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/snapshot/{slug}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        {
+          "in": "query",
+          "name": "locale",
+          "schema": { "type": "string" },
+          "description": "逗号分隔 locale。缺省返回命名空间所有启用 locale。"
+        },
+        {
+          "in": "query",
+          "name": "bundle_version",
+          "schema": { "type": "integer" },
+          "description": "锁定到指定 bundleVersion;命中时缓存为 immutable 1 年。"
+        }
+      ],
+      "get": {
+        "operationId": "getSnapshot",
+        "tags": ["snapshot"],
+        "summary": "Get translation bundle",
+        "description": "返回命名空间最新发布的多 locale bundle。`publicRead=true` 时无需 token;否则要求 `readonlyBearer`。响应总是带 `ETag`、`X-Bundle-Version`,客户端可使用 `If-None-Match` 命中 304。",
+        "security": [{}, { "readonlyBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Bundle 主体",
+            "headers": {
+              "ETag": {
+                "schema": { "type": "string" },
+                "description": "由 bundleVersion + locales 组合生成"
+              },
+              "X-Bundle-Version": {
+                "schema": { "type": "string" }
+              },
+              "Cache-Control": {
+                "schema": { "type": "string" },
+                "description": "锁定 bundle_version 时为 immutable;否则 60s"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bundleVersion": { "type": "integer" },
+                    "locales": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": { "type": "string" }
+                      }
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Bundle 未变化(命中 If-None-Match)",
+            "headers": {
+              "ETag": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "description": "私有 namespace 缺少有效 readonly token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/snapshot/{slug}/{locale}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "locale", "required": true, "schema": { "type": "string" } },
+        {
+          "in": "query",
+          "name": "bundle_version",
+          "schema": { "type": "integer" }
+        }
+      ],
+      "get": {
+        "operationId": "getSnapshotLocale",
+        "tags": ["snapshot"],
+        "summary": "Get single-locale bundle",
+        "description": "返回单一 locale 的扁平 key/value 字典。鉴权与缓存策略同 `/snapshot/{slug}`(支持 `If-None-Match` → 304)。",
+        "security": [{}, { "readonlyBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "扁平字典 { key: value }",
+            "headers": {
+              "ETag": { "schema": { "type": "string" } },
+              "X-Bundle-Version": { "schema": { "type": "string" } },
+              "Cache-Control": { "schema": { "type": "string" } }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Bundle 未变化",
+            "headers": {
+              "ETag": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "description": "私有 namespace 缺少有效 readonly token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    }
+  }
+}
