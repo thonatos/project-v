@@ -1,20 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { setupTestDb, bootstrap, seedWorld, type TestCtx } from './helpers';
+import { setupTestDbFromTemplate, bootstrap, seedWorld, type TestCtx } from '../helpers';
 
-/**
- * 8.3 权限矩阵:admin / editor / viewer / 非成员 × 各操作
- *      + token scope (task / readonly) 各自可达 / 拒绝集合
- *
- * 直接覆盖 service 层(服务层是权限门所依赖的真值);UI 层 requireRole 在
- * `app/lib/auth.server.ts` 已有断言,这里通过 service + token 层组合断言行为。
- */
 describe('permission matrix (service + token scope)', () => {
   let ctx: TestCtx;
 
   beforeEach(async () => {
     vi.resetModules();
-    const env = setupTestDb();
+    const env = setupTestDbFromTemplate();
     ctx = await bootstrap(env);
   });
   afterEach(() => ctx.env.cleanup());
@@ -33,15 +26,13 @@ describe('permission matrix (service + token scope)', () => {
     ).not.toThrow();
     expect(() => namespace.updateNamespace('docs', { name: 'Docs2' })).not.toThrow();
     const e = entry.getEntryByKey(w.docs.id, 'a.b')!;
-    // admin 可以直接 publish / discard
-    expect(() => publish.publishOne(e.id, 'zh-cn', 1, w.alice.id)).toThrow(); // 已经是 published 不能再 publish
+    expect(() => publish.publishOne(e.id, 'zh-cn', 1, w.alice.id)).toThrow();
   });
 
   it('editor: 可写词条但不能改 namespace 设置(只 service 层暂未强约束 → 由 requireRole 把守;断言 role 为 editor)', async () => {
     const w = await seedWorld(ctx);
     const { membership, entry } = ctx.api;
     expect(membership.getRole(w.docs.id, w.bob.id)).toBe('editor');
-    // editor 写词条没问题
     entry.upsertEntry({
       namespaceId: w.docs.id,
       key: 'x.y',
@@ -55,7 +46,6 @@ describe('permission matrix (service + token scope)', () => {
     const w = await seedWorld(ctx);
     const { membership } = ctx.api;
     expect(membership.getRole(w.docs.id, w.carol.id)).toBe('viewer');
-    // alice 是唯一 admin,降级会被拒
     expect(() => membership.updateRole(w.docs.id, w.alice.id, 'editor')).toThrow();
   });
 
@@ -111,10 +101,8 @@ describe('permission matrix (service + token scope)', () => {
       scope: 'readonly',
       createdBy: w.alice.id,
     });
-    // artx 私有
     const req = new Request('https://x/snapshot/artx', { headers: { Authorization: `Bearer ${plaintext}` } });
     expect(() => snapshot.requireSnapshotAccess(req, 'artx')).toThrow();
-    // 自己的 ns 通过
     const req2 = new Request('https://x/snapshot/docs', { headers: { Authorization: `Bearer ${plaintext}` } });
     expect(() => snapshot.requireSnapshotAccess(req2, 'docs')).not.toThrow();
   });

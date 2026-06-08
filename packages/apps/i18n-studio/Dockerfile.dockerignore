@@ -1,0 +1,36 @@
+# Version control & toolchain ---------------------------------------------
+**/node_modules
+**/.git
+**/.github
+**/.vscode
+**/.idea
+**/.DS_Store
+
+# Editor / hidden artifacts ------------------------------------------------
+**/*.log
+**/.env
+**/.env.*
+
+# Per-app build outputs (i18n-studio) -------------------------------------
+packages/apps/i18n-studio/build
+packages/apps/i18n-studio/.react-router
+packages/apps/i18n-studio/.tmp
+packages/apps/i18n-studio/data
+packages/apps/i18n-studio/tests/.tmp
+packages/apps/i18n-studio/tsconfig.tsbuildinfo
+packages/apps/i18n-studio/.cache
+
+# Other apps' build outputs (avoid leaking into i18n-studio image context)
+packages/apps/*/dist
+packages/apps/*/build
+packages/apps/*/.react-router
+packages/apps/*/.cache
+packages/apps/*/.next
+
+# OpenSpec workspace state -------------------------------------------------
+openspec/changes/*/.openspec.yaml
+.codegraph
+
+# Test coverage / fixtures ------------------------------------------------
+**/coverage
+**/.nyc_output

@@ -5,11 +5,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '~': path.resolve(__dirname, './app'),
+      '~openapi': path.resolve(__dirname, './public/openapi.json'),
     },
   },
   test: {
     environment: 'node',
-    include: ['app/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
+    include: ['tests/**/*.test.{ts,tsx}'],
     setupFiles: ['./tests/setup.ts'],
+    globalSetup: ['./tests/global-setup.ts'],
   },
 });

@@ -1,4 +1,4 @@
-import { setupTestDb, type TestEnv } from './test-db';
+import { setupTestDbFromTemplate, setupTestDb, type TestEnv } from './test-db';
 
 export interface TestCtx {
   env: TestEnv;
@@ -115,4 +115,4 @@ export async function seedWorld(ctx: TestCtx): Promise<SeededWorld> {
   };
 }
 
-export { setupTestDb };
+export { setupTestDbFromTemplate, setupTestDb };
