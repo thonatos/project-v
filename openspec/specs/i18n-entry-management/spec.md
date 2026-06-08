@@ -1,5 +1,7 @@
-## ADDED Requirements
+## Purpose
 
+定义 i18n-studio 多语言词条管理的核心契约:命名空间隔离、flat key 词条结构、CRUD、批量导入导出、版本历史、草稿/发布工作流、跨命名空间同步、客户端 snapshot 通道,以及与 `i18n-locale-management` 字典的集成边界。
+## Requirements
 ### Requirement: 命名空间隔离
 
 系统 SHALL 提供命名空间作为词条管理的隔离单元，每个命名空间拥有独立的语言配置、词条集合与成员关系，命名空间之间互不可见。
@@ -62,25 +64,43 @@
 
 ### Requirement: 默认与可扩展语言配置
 
-系统 SHALL 默认启用 `zh-cn`、`zh-tw`、`en-us` 三种语言；管理员 MAY 通过命名空间配置追加更多语言。所有语言代码 MUST 满足 BCP-47 风格的小写 `xx` 或 `xx-xx` 格式。
+系统 SHALL 维护一张全局 locale 字典(参见 capability `i18n-locale-management`),命名空间的语言列表 MUST 仅引用字典中 `enabled=1` 的 code。新建命名空间且未显式提供 `locales` 时,系统 SHALL 取字典中按 `sortOrder` 升序排列的前三个 enabled 内置 locale 作为默认值(默认情况下等价于 `zh-cn`、`zh-tw`、`en-us`)。所有语言代码 MUST 满足 BCP-47 风格的小写 `xx` 或 `xx-xx` 格式。
 
 #### Scenario: 命名空间默认语言
 
-- **GIVEN** 新创建的命名空间
+- **GIVEN** 新创建的命名空间且 `locales` 入参为空
 - **WHEN** 查询其语言列表
-- **THEN** 返回 `["zh-cn","zh-tw","en-us"]`，并标记 `zh-cn` 为 `default_locale`（用于翻译任务的源语言默认值与 UI 元信息提示，不影响运行时缺失值的填充行为）
+- **THEN** 返回字典中前三个 enabled 内置 locale 的 code(默认部署等于 `["zh-cn","zh-tw","en-us"]`),并标记其首项(`zh-cn`)为 `default_locale`(用于翻译任务的源语言默认值与 UI 元信息提示,不影响运行时缺失值的填充行为)
 
-#### Scenario: 添加自定义语言
+#### Scenario: 添加新语言到命名空间
 
-- **GIVEN** 命名空间管理员
-- **WHEN** 提交新增语言 `ja-jp`
-- **THEN** 系统校验格式后将该语言加入命名空间语言列表
+- **GIVEN** 命名空间管理员,且字典中存在 enabled `ja-jp`
+- **WHEN** 通过 `updateNamespace` 提交追加 `ja-jp`
+- **THEN** 系统校验通过并将其加入命名空间语言列表
 
-#### Scenario: 拒绝非法语言代码
+#### Scenario: 拒绝字典外语言代码
 
-- **GIVEN** 输入语言代码为 `Chinese` 或 `zh_CN`
+- **GIVEN** 输入语言代码 `xx-yy`,字典中不存在该 code
+- **WHEN** 用户提交 `createNamespace` 或 `updateNamespace`
+- **THEN** 系统返回 422,错误码 `locale_not_found`,不修改数据库
+
+#### Scenario: 拒绝已禁用的语言代码
+
+- **GIVEN** 字典中 `de-de` 存在但 `enabled=0`
+- **WHEN** 用户在 `createNamespace` / `updateNamespace` 中引用 `de-de`
+- **THEN** 系统返回 422,错误码 `locale_disabled`,不修改数据库
+
+#### Scenario: 拒绝格式非法的语言代码
+
+- **GIVEN** 输入语言代码 `Chinese` 或 `zh_CN`
 - **WHEN** 用户提交配置
-- **THEN** 系统返回校验错误，要求使用 `xx` 或 `xx-xx` 小写格式
+- **THEN** 系统返回校验错误,要求使用 `xx` 或 `xx-xx` 小写格式(此校验在字典查询之前进行,因此即使字典含同名条目也无法绕过格式约束)
+
+#### Scenario: default_locale 必须在已选 locales 中
+
+- **GIVEN** namespace 当前 `locales=['zh-cn','en-us']`,`default_locale='zh-cn'`
+- **WHEN** 用户提交 `updateNamespace({ defaultLocale: 'ja-jp' })`(`ja-jp` 不在 locales 列表)
+- **THEN** 系统返回 422,提示 `default_locale 必须在 locales 列表中`,不修改数据库
 
 ### Requirement: Flat Key 词条结构
 
@@ -507,7 +527,7 @@
 
 #### Scenario: 入站拉取（其它空间 → 当前空间）
 
-- **GIVEN** 用户打开 `/ns/B/sync`，提交 `{ source: "A", target: "B", prefix: "home.", locales: ["zh-cn"], strategy: "overwrite" }`
+- **GIVEN** 用户打开 `/dashboard/B/sync`，提交 `{ source: "A", target: "B", prefix: "home.", locales: ["zh-cn"], strategy: "overwrite" }`
 - **WHEN** 用户在 B 是 editor，A 任意成员
 - **THEN** 系统按 prefix 过滤 A 的词条并覆盖写入 B
 
@@ -646,3 +666,4 @@
 - **GIVEN** 单一来源（IP 或 token）在短时间内大量请求快照
 - **WHEN** 触发限流阈值
 - **THEN** 系统返回 429 + `Retry-After`，并在常规缓存命中（304）路径下不计入限流
+

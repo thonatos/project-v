@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+定义 i18n-studio 用户与命名空间间的成员关系契约:多对多绑定、admin/editor/viewer 三种角色、邀请/移除/调整角色的权限矩阵,以及"最后一名 admin 不可移除"的安全闸。
+
+## Requirements
 
 ### Requirement: 用户—命名空间多对多关系
 

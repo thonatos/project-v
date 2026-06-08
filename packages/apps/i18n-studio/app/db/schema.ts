@@ -194,6 +194,26 @@ export const apiTokens = sqliteTable(
   }),
 );
 
+// locales (system-wide language dictionary)
+export const locales = sqliteTable(
+  'locales',
+  {
+    code: text('code').primaryKey(),
+    label: text('label').notNull(),
+    englishLabel: text('english_label').notNull(),
+    nativeLabel: text('native_label'),
+    region: text('region'),
+    isBuiltin: integer('is_builtin', { mode: 'boolean' }).notNull().default(false),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => ({
+    enabledSortIdx: index('locales_enabled_sort_idx').on(t.enabled, t.sortOrder),
+  }),
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Namespace = typeof namespaces.$inferSelect;
@@ -210,6 +230,8 @@ export type TaskStatus = TranslationTask['status'];
 export type TranslationTaskItem = typeof translationTaskItems.$inferSelect;
 export type ApiToken = typeof apiTokens.$inferSelect;
 export type TokenScope = ApiToken['scope'];
+export type Locale = typeof locales.$inferSelect;
+export type NewLocale = typeof locales.$inferInsert;
 
 // Suppress unused import warning if no raw SQL constraints
 export const _sql = sql;
