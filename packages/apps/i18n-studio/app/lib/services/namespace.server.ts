@@ -5,8 +5,10 @@ import { newId, nowMs } from '~/lib/id.server';
 import { namespaces, memberships, entries, translations, translationVersions } from '~/db/schema';
 import type { Namespace } from '~/db/schema';
 import { localeSchema, slugSchema } from '~/lib/validators';
+import { jsonError } from '~/lib/api.server';
+import { assertLocalesExist, listEnabledLocales } from '~/lib/services/locale.server';
 
-export const DEFAULT_LOCALES = ['zh-cn', 'zh-tw', 'en-us'];
+const DEFAULT_LOCALE_COUNT = 3;
 
 export function listNamespaces(userId: string): Array<Namespace & { role: string }> {
   const db = getDb();
@@ -42,10 +44,19 @@ export function createNamespace(input: CreateNamespaceInput): Namespace {
   if (existing) {
     throw new Error('slug 已存在');
   }
-  const locales = input.locales && input.locales.length > 0 ? input.locales : DEFAULT_LOCALES;
-  for (const l of locales) {
-    localeSchema.parse(l);
+  let locales: string[];
+  if (input.locales && input.locales.length > 0) {
+    for (const l of input.locales) localeSchema.parse(l);
+    locales = input.locales;
+  } else {
+    locales = listEnabledLocales()
+      .slice(0, DEFAULT_LOCALE_COUNT)
+      .map((l) => l.code);
+    if (locales.length === 0) {
+      throw jsonError(422, 'locale_dictionary_empty', '系统语言字典为空,请先在 /dashboard/locales 中添加 locale');
+    }
   }
+  assertLocalesExist(locales);
   const defaultLocale = input.defaultLocale ?? locales[0];
   if (!locales.includes(defaultLocale)) {
     throw new Error('default_locale 必须在 locales 列表中');
@@ -103,6 +114,7 @@ export function updateNamespace(slug: string, patch: UpdateNamespaceInput): Name
     if (patch.locales) {
       for (const l of patch.locales) localeSchema.parse(l);
       nextLocales = Array.from(new Set(patch.locales));
+      assertLocalesExist(nextLocales);
     }
 
     let nextDefault = ns.defaultLocale;
