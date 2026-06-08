@@ -82,3 +82,237 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Prose / Markdown article styles -------------------------------------- */
+
+  .prose h1,
+  .prose h2,
+  .prose h3 {
+    scroll-margin-top: 4rem;
+  }
+
+  .prose {
+    max-width: none;
+    color: var(--foreground);
+    line-height: 1.75;
+  }
+
+  .prose h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--foreground);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prose h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: var(--foreground);
+  }
+
+  .prose h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+  }
+
+  .prose h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+  }
+
+  .prose p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    color: var(--foreground);
+  }
+
+  .prose a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+    font-weight: 500;
+  }
+
+  .prose a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  .prose strong {
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  .prose code:not(pre code) {
+    font-size: 0.875em;
+    color: var(--foreground);
+    background-color: var(--muted);
+    padding: 0.15em 0.4em;
+    border-radius: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .prose pre {
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    padding: 1em;
+    background-color: oklch(0.205 0 0);
+    border: 1px solid var(--border);
+    font-size: 0.875em;
+    line-height: 1.6;
+  }
+
+  .prose pre code {
+    color: oklch(0.92 0 0);
+    background-color: transparent;
+    padding: 0;
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .prose ul {
+    list-style: disc;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+  }
+
+  .prose ol {
+    list-style: decimal;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+  }
+
+  .prose li {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+  }
+
+  .prose li > p {
+    margin-top: 0.4em;
+    margin-bottom: 0.4em;
+  }
+
+  .prose blockquote {
+    border-left: 3px solid var(--border);
+    padding: 0.5em 1em;
+    margin: 1em 0;
+    color: var(--muted-foreground);
+    background-color: var(--muted);
+    border-radius: 0 0.25rem 0.25rem 0;
+  }
+
+  .prose blockquote p {
+    margin: 0.25em 0;
+  }
+
+  .prose hr {
+    border-color: var(--border);
+    margin-top: 2.5em;
+    margin-bottom: 2.5em;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    font-size: 0.9em;
+  }
+
+  .prose thead {
+    border-bottom: 1px solid var(--border);
+    background-color: var(--muted);
+  }
+
+  .prose th,
+  .prose td {
+    padding: 0.5em 0.75em;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prose th {
+    font-weight: 600;
+  }
+
+  /* highlight.js (rehype-highlight) — neutral dark theme matching pre bg */
+
+  .hljs {
+    background: transparent !important;
+    color: oklch(0.92 0 0);
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: oklch(0.6 0 0);
+    font-style: italic;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-section,
+  .hljs-link {
+    color: oklch(0.78 0.13 305);
+  }
+
+  .hljs-string,
+  .hljs-number,
+  .hljs-meta .hljs-meta-string,
+  .hljs-doctag,
+  .hljs-regexp {
+    color: oklch(0.82 0.14 145);
+  }
+
+  .hljs-title,
+  .hljs-name,
+  .hljs-selector-id,
+  .hljs-selector-class,
+  .hljs-attr,
+  .hljs-attribute {
+    color: oklch(0.85 0.12 80);
+  }
+
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-type,
+  .hljs-built_in,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: oklch(0.82 0.13 220);
+  }
+
+  .hljs-deletion {
+    color: oklch(0.7 0.18 25);
+  }
+
+  .hljs-addition {
+    color: oklch(0.78 0.13 145);
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: bold;
+  }
+}
