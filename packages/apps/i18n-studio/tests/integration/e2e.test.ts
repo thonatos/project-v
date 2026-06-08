@@ -1,19 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { setupTestDb, bootstrap, type TestCtx } from './helpers';
+import { setupTestDbFromTemplate, bootstrap, type TestCtx } from '../helpers';
 
-/**
- * 8.15 进程内 E2E 冒烟:
- *  注册 → 建 ns → 批量导入 zh-cn(published) → 生成 task token → 外部 worker
- *  pull payload + 回写 en-us(draft) → admin publish → 创建 readonly token →
- *  /snapshot 取最终 bundle。覆盖关键 API 在 service 层的端到端贯通。
- */
 describe('e2e smoke (in-process)', () => {
   let ctx: TestCtx;
 
   beforeEach(async () => {
     vi.resetModules();
-    const env = setupTestDb();
+    const env = setupTestDbFromTemplate();
     ctx = await bootstrap(env);
   });
   afterEach(() => ctx.env.cleanup());
@@ -28,7 +22,6 @@ describe('e2e smoke (in-process)', () => {
       createdBy: alice.id,
     });
 
-    // 批量导入 zh-cn 词条(published)
     const ir = entry.importFlat({
       namespaceId: ns.id,
       locale: 'zh-cn',
@@ -38,7 +31,6 @@ describe('e2e smoke (in-process)', () => {
     expect(ir.ok).toBe(true);
     expect(ir.imported).toBe(2);
 
-    // 创建翻译任务 + task token
     const t = task.createTask({
       namespaceId: ns.id,
       filter: { prefix: 'home.' },
@@ -55,7 +47,6 @@ describe('e2e smoke (in-process)', () => {
     });
     expect(apiToken.verifyToken(taskToken, 'task')?.namespaceSlug).toBe('docs');
 
-    // worker:拉取 payload + claim + 回写 draft
     const payload = task.getPayload(t.id);
     expect(payload['home.title']).toBe('首页');
     const claimed = task.claimTask(t.id, 'worker-1');
@@ -67,7 +58,6 @@ describe('e2e smoke (in-process)', () => {
     expect(task.writeResults(t.id, results, alice.id).applied).toBe(2);
     task.completeTask(t.id);
 
-    // admin 批量 publish
     const eTitle = entry.getEntryByKey(ns.id, 'home.title')!;
     const eSub = entry.getEntryByKey(ns.id, 'home.subtitle')!;
     const pr = publish.publishBatch(
@@ -79,7 +69,6 @@ describe('e2e smoke (in-process)', () => {
     );
     expect(pr.published).toBe(2);
 
-    // 客户端用 readonly token 取 snapshot
     const { plaintext: roToken } = apiToken.createApiToken({
       namespaceId: ns.id,
       name: 'web',

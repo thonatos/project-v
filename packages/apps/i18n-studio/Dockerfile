@@ -1,31 +1,57 @@
-FROM node:20-bookworm-slim AS deps
+# syntax=docker/dockerfile:1.7
+
+############################
+# Stage 1: install deps
+############################
+FROM node:24-bookworm-slim AS deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Use pnpm to install workspace deps
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Pin pnpm to a fixed major to keep builds reproducible without touching root
+# package.json (no `packageManager` field — see openspec change
+# i18n-studio-modernization).
+RUN corepack enable && corepack prepare pnpm@11 --activate
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/apps/i18n-studio/package.json packages/apps/i18n-studio/
 RUN pnpm install --frozen-lockfile --filter i18n-studio...
 
+############################
+# Stage 2: build + deploy
+############################
 FROM deps AS build
 COPY packages/apps/i18n-studio packages/apps/i18n-studio
 RUN pnpm -F i18n-studio build
 
-FROM node:20-bookworm-slim AS runtime
+# Produce a self-contained production directory with only `dependencies`.
+# `/prod/node_modules` will not contain devDependencies, so the runtime image
+# does not need pnpm or compile toolchain.
+RUN pnpm -F i18n-studio deploy --prod /prod
+
+############################
+# Stage 3: runtime
+############################
+FROM node:24-bookworm-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-RUN corepack enable
+
 WORKDIR /app
-COPY --from=build /app/packages/apps/i18n-studio /app
-COPY --from=deps /app/node_modules /app/node_modules
-COPY --from=deps /app/packages/apps/i18n-studio/node_modules /app/node_modules
-ENV NODE_ENV=production
-ENV DATABASE_FILE=/data/i18n.db
+COPY --from=build /prod /app
+
+ENV NODE_ENV=production \
+    DATABASE_FILE=/data/i18n.db \
+    PORT=3000
+
+# Ensure `/data` (sqlite volume) and `/app` are owned by the unprivileged
+# `node` user shipped with the base image.
+RUN mkdir -p /data && chown -R node:node /data /app
+USER node
+
 VOLUME /data
 EXPOSE 3000
-CMD ["pnpm", "start"]
+
+CMD ["node", "node_modules/@react-router/serve/dist/cli.js", "./build/server/index.js"]
