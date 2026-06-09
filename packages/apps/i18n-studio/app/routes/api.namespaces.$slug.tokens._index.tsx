@@ -17,8 +17,11 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (request.method !== 'POST') return jsonError(405, 'method_not_allowed', 'use POST');
   try {
     const ctx = await requireRole(request, params.slug!, ['admin']);
-    const body = await readJson<{ name?: string; scope?: 'task' | 'readonly' }>(request);
+    const body = await readJson<{ name?: string; scope?: 'task' | 'readonly' | 'write' }>(request);
     if (!body.name || !body.scope) return jsonError(400, 'invalid_input', 'name 与 scope 必填');
+    if (!['task', 'readonly', 'write'].includes(body.scope)) {
+      return jsonError(400, 'invalid_input', 'scope 必须为 task/readonly/write');
+    }
     const r = createApiToken({
       namespaceId: ctx.namespace.id,
       name: body.name,

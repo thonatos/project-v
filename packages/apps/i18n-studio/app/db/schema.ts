@@ -182,7 +182,7 @@ export const apiTokens = sqliteTable(
       .notNull()
       .references(() => namespaces.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
-    scope: text('scope', { enum: ['task', 'readonly'] }).notNull(),
+    scope: text('scope', { enum: ['task', 'readonly', 'write'] }).notNull(),
     tokenHash: text('token_hash').notNull(),
     tokenPrefix: text('token_prefix').notNull(),
     createdBy: text('created_by').notNull(),
