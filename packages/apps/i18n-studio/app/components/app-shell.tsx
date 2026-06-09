@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Form, Link, NavLink } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { CommandIcon, Languages, LogOut, Menu, Sparkles, User as UserIcon } from 'lucide-react';
 
 import {
@@ -22,8 +23,10 @@ import {
 } from '~/components/ui/breadcrumb';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '~/components/ui/sheet';
 import { ThemeToggle } from '~/components/theme-toggle';
+import { LangToggle } from '~/components/lang-toggle';
 import { cn } from '~/lib/utils';
 import type { Theme } from '~/lib/theme';
+import type { Lang } from '~/lib/i18n';
 
 interface BreadcrumbCrumb {
   label: string;
@@ -33,6 +36,7 @@ interface BreadcrumbCrumb {
 interface AppShellHeaderProps {
   user?: { email: string; displayName?: string | null; isSuperuser?: boolean } | null;
   theme: Theme;
+  lang: Lang;
   crumbs?: BreadcrumbCrumb[];
   /** Optional left-side slot rendered before the brand (e.g. dashboard subnav Sheet trigger) */
   leadingSlot?: React.ReactNode;
@@ -61,23 +65,25 @@ interface NavLinks {
 }
 
 function PrimaryNav({ user }: NavLinks) {
+  const { t } = useTranslation('common');
   if (!user) return null;
   return (
-    <nav className="hidden items-center gap-0.5 md:flex" aria-label="主导航">
+    <nav className="hidden items-center gap-0.5 md:flex" aria-label={t('shell.mainNav')}>
       <NavLink to="/dashboard" className={navLinkClass}>
-        Dashboard
+        {t('nav.dashboard')}
       </NavLink>
     </nav>
   );
 }
 
 function MobileNav({ user }: NavLinks) {
+  const { t } = useTranslation('common');
   const [open, setOpen] = React.useState(false);
   const close = () => setOpen(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="md:hidden" aria-label="打开菜单">
+        <Button type="button" variant="ghost" size="icon" className="md:hidden" aria-label={t('shell.openMenu')}>
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
@@ -85,10 +91,10 @@ function MobileNav({ user }: NavLinks) {
         <SheetHeader>
           <SheetTitle>i18n-studio</SheetTitle>
         </SheetHeader>
-        <nav className="mt-6 flex flex-col gap-1 px-4" aria-label="移动端导航">
+        <nav className="mt-6 flex flex-col gap-1 px-4" aria-label={t('shell.mobileNav')}>
           {user ? (
             <Link to="/dashboard" onClick={close} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
-              Dashboard
+              {t('nav.dashboard')}
             </Link>
           ) : null}
           {user ? <div className="my-2 border-t" /> : null}
@@ -100,20 +106,20 @@ function MobileNav({ user }: NavLinks) {
                 className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
               >
                 <LogOut className="size-4" />
-                Logout
+                {t('auth.logout')}
               </button>
             </Form>
           ) : (
             <>
               <Link to="/login" onClick={close} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
-                登录
+                {t('auth.login')}
               </Link>
               <Link
                 to="/register"
                 onClick={close}
                 className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
               >
-                注册
+                {t('auth.register')}
               </Link>
             </>
           )}
@@ -123,7 +129,8 @@ function MobileNav({ user }: NavLinks) {
   );
 }
 
-export function AppShellHeader({ user, theme, crumbs, leadingSlot }: AppShellHeaderProps) {
+export function AppShellHeader({ user, theme, lang, crumbs, leadingSlot }: AppShellHeaderProps) {
+  const { t } = useTranslation('common');
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-3 px-4">
@@ -162,10 +169,14 @@ export function AppShellHeader({ user, theme, crumbs, leadingSlot }: AppShellHea
         ) : null}
         <div className="ml-auto flex items-center gap-2">
           <PrimaryNav user={user} />
-          <span className="hidden items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground lg:flex">
+          <span
+            className="hidden items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground lg:flex"
+            aria-label={t('shell.commandKeyHint')}
+          >
             <CommandIcon className="size-3" />
             <span>K</span>
           </span>
+          <LangToggle lang={lang} className="hidden sm:inline-flex" />
           <ThemeToggle theme={theme} className="hidden sm:inline-flex" />
           {user ? (
             <DropdownMenu>
@@ -187,14 +198,14 @@ export function AppShellHeader({ user, theme, crumbs, leadingSlot }: AppShellHea
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard">
                     <UserIcon className="size-4" />
-                    Namespaces
+                    {t('menu.namespaces')}
                   </Link>
                 </DropdownMenuItem>
                 {user.isSuperuser ? (
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/locales">
                       <Languages className="size-4" />
-                      Manage locales
+                      {t('menu.manageLocales')}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -203,7 +214,7 @@ export function AppShellHeader({ user, theme, crumbs, leadingSlot }: AppShellHea
                   <DropdownMenuItem asChild>
                     <button type="submit" className="w-full">
                       <LogOut className="size-4" />
-                      Logout
+                      {t('auth.logout')}
                     </button>
                   </DropdownMenuItem>
                 </Form>
@@ -212,10 +223,10 @@ export function AppShellHeader({ user, theme, crumbs, leadingSlot }: AppShellHea
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
               <Button variant="ghost" asChild size="sm">
-                <Link to="/login">登录</Link>
+                <Link to="/login">{t('auth.login')}</Link>
               </Button>
               <Button asChild size="sm">
-                <Link to="/register">注册</Link>
+                <Link to="/register">{t('auth.register')}</Link>
               </Button>
             </div>
           )}

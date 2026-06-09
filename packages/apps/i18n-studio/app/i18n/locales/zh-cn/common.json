@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "login": "登录",
+    "logout": "退出登录",
+    "register": "注册"
+  },
+  "dashboard": {
+    "commandPaletteHint": "按 ⌘K 调出命令面板。",
+    "namespaces": "命名空间",
+    "namespacesDescription": "管理你参与的多语言命名空间。",
+    "newNamespace": "新建命名空间"
+  },
+  "lang": {
+    "en": "English",
+    "label": "语言切换",
+    "zh": "中文"
+  },
+  "menu": {
+    "manageLocales": "管理语言库",
+    "namespaces": "命名空间"
+  },
+  "namespaceNav": {
+    "entries": "词条",
+    "members": "成员",
+    "openSidebar": "打开侧边栏",
+    "overview": "概览",
+    "settings": "设置",
+    "sync": "同步",
+    "tasks": "任务"
+  },
+  "nav": {
+    "dashboard": "Dashboard"
+  },
+  "shell": {
+    "commandKeyHint": "命令面板快捷键",
+    "mainNav": "主导航",
+    "mobileNav": "移动端导航",
+    "openMenu": "打开菜单"
+  },
+  "sidebar": {
+    "drafts": "草稿",
+    "entries": "词条",
+    "members": "成员",
+    "namespace": "命名空间"
+  }
+}

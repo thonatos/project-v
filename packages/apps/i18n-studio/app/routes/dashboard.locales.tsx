@@ -101,7 +101,7 @@ type EditingState = { mode: 'create' } | { mode: 'edit'; row: Locale } | null;
 
 export default function LocalesPage() {
   const { locales } = useLoaderData<typeof loader>();
-  const { user, theme } = useOutletContext<DashboardContext>();
+  const { user, theme, lang } = useOutletContext<DashboardContext>();
   const fetcher = useFetcher<typeof action>();
   const [editing, setEditing] = React.useState<EditingState>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<Locale | null>(null);
@@ -130,6 +130,7 @@ export default function LocalesPage() {
       <AppShellHeader
         user={user}
         theme={theme}
+        lang={lang}
         crumbs={[{ label: 'System', to: '/dashboard/locales' }, { label: 'Locales' }]}
       />
       <main className="mx-auto w-full max-w-5xl px-4 py-8">

@@ -1,4 +1,5 @@
 import { Link, useLoaderData, useOutletContext } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Boxes, Languages, Plus, Sparkles, Users } from 'lucide-react';
 
 import { listNamespaces } from '~/lib/services/namespace.server';
@@ -25,23 +26,24 @@ export function meta() {
 
 export default function DashboardIndex() {
   const { namespaces } = useLoaderData<typeof loader>();
-  const { user, theme } = useOutletContext<DashboardContext>();
+  const { user, theme, lang } = useOutletContext<DashboardContext>();
+  const { t } = useTranslation('common');
   return (
     <div>
-      <AppShellHeader user={user} theme={theme} />
+      <AppShellHeader user={user} theme={theme} lang={lang} />
       <main className="mx-auto w-full max-w-7xl px-4 py-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Namespaces</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('dashboard.namespaces')}</h1>
             <p className="text-sm text-muted-foreground">
-              管理你参与的多语言命名空间。
-              <span className="hidden text-muted-foreground/80 sm:inline"> 按 ⌘K 调出命令面板。</span>
+              {t('dashboard.namespacesDescription')}
+              <span className="hidden text-muted-foreground/80 sm:inline"> {t('dashboard.commandPaletteHint')}</span>
             </p>
           </div>
           <Button asChild>
             <Link to="/dashboard/new">
               <Plus className="size-4" />
-              新建命名空间
+              {t('dashboard.newNamespace')}
             </Link>
           </Button>
         </div>

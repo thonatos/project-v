@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "login": "Sign in",
+    "logout": "Logout",
+    "register": "Sign up"
+  },
+  "dashboard": {
+    "commandPaletteHint": "Press ⌘K to open the command palette.",
+    "namespaces": "Namespaces",
+    "namespacesDescription": "Manage the localization namespaces you belong to.",
+    "newNamespace": "New namespace"
+  },
+  "lang": {
+    "en": "English",
+    "label": "Switch language",
+    "zh": "中文"
+  },
+  "menu": {
+    "manageLocales": "Manage locales",
+    "namespaces": "Namespaces"
+  },
+  "namespaceNav": {
+    "entries": "Entries",
+    "members": "Members",
+    "openSidebar": "Open sidebar",
+    "overview": "Overview",
+    "settings": "Settings",
+    "sync": "Sync",
+    "tasks": "Tasks"
+  },
+  "nav": {
+    "dashboard": "Dashboard"
+  },
+  "shell": {
+    "commandKeyHint": "Command palette shortcut",
+    "mainNav": "Main navigation",
+    "mobileNav": "Mobile navigation",
+    "openMenu": "Open menu"
+  },
+  "sidebar": {
+    "drafts": "Drafts",
+    "entries": "Entries",
+    "members": "Members",
+    "namespace": "Namespace"
+  }
+}

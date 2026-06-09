@@ -1,4 +1,6 @@
+import * as React from 'react';
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from 'react-router';
+import { I18nextProvider } from 'react-i18next';
 
 import { Toaster } from '~/components/ui/sonner';
 import { CommandPalette, type CommandNamespace } from '~/components/command-palette';
@@ -6,6 +8,10 @@ import { TooltipProvider } from '~/components/ui/tooltip';
 import { useSystemThemeSync } from '~/components/theme-toggle';
 import { resolveThemeClassName, type Theme } from '~/lib/theme';
 import { getTheme } from '~/lib/theme.server';
+import { DEFAULT_LANG, type Lang } from '~/lib/i18n';
+import { getLang } from '~/lib/i18n.server';
+import i18n, { I18N_NAMESPACES } from '~/i18n/config';
+import { mergeChangedBundles, splitFlatByNamespace } from '~/i18n/runtime-merge';
 import { getUser } from '~/lib/auth.server';
 import { listNamespaces } from '~/lib/services/namespace.server';
 import './app.css';
@@ -14,6 +20,7 @@ import type { Route } from './+types/root';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = getTheme(request);
+  const lang = getLang(request);
   const url = new URL(request.url);
   const slugMatch = url.pathname.match(/^\/dashboard\/([^/]+)/);
   // dashboard 自身列表页(`/dashboard`、`/dashboard/new`、`/dashboard/locales`)不算
@@ -34,7 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     /* unauthenticated traffic still renders the shell (login/register pages) */
   }
 
-  return { theme, user, namespaces, currentSlug };
+  return { theme, lang, user, namespaces, currentSlug };
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -47,32 +54,87 @@ export function meta({ data }: Route.MetaArgs) {
 
 interface LayoutData {
   theme: Theme;
+  lang: Lang;
   user: { id: string; email: string; displayName: string | null; isSuperuser: boolean } | null;
   namespaces: CommandNamespace[];
   currentSlug: string | null;
 }
 
+/**
+ * After hydration, pull the latest published copy for the active language from
+ * the `studio-ui` snapshot and deep-merge it over the bundled fallback. The
+ * snapshot returns flat keys (e.g. `common.login`); we split them by namespace
+ * prefix into per-ns bundles and only merge when a value actually differs, so a
+ * 304 / no-op never triggers a second flicker. Failures fall back silently to
+ * the bundled resources and never block the first paint.
+ */
+function useRuntimeLocalePull(lang: Lang): void {
+  const etagRef = React.useRef<Record<string, string | null>>({});
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let cancelled = false;
+
+    const headers: HeadersInit = {};
+    const prevEtag = etagRef.current[lang];
+    if (prevEtag) headers['If-None-Match'] = prevEtag;
+
+    void fetch(`/snapshot/studio-ui/${lang}`, { headers })
+      .then(async (res) => {
+        if (cancelled || res.status === 304 || !res.ok) return;
+        etagRef.current[lang] = res.headers.get('ETag');
+        const flat = (await res.json()) as Record<string, unknown>;
+        // Split flat `ns.key.path` entries by namespace, then merge only the
+        // namespaces whose copy actually differs (avoids a second flicker).
+        mergeChangedBundles(i18n, lang, splitFlatByNamespace(flat, I18N_NAMESPACES));
+      })
+      .catch(() => {
+        /* silent: bundled resources remain the fallback */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lang]);
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useLoaderData<typeof loader>() as LayoutData | undefined;
   const theme: Theme = data?.theme ?? 'system';
+  const lang: Lang = data?.lang ?? DEFAULT_LANG;
   const namespaces = data?.namespaces ?? [];
   const currentSlug = data?.currentSlug ?? null;
   const isSuperuser = data?.user?.isSuperuser ?? false;
   useSystemThemeSync(theme);
+  useRuntimeLocalePull(lang);
+
+  // Keep the i18next instance in sync with the loader language. On the server
+  // this must happen before render so the streamed HTML matches `<html lang>`;
+  // doing it inline here is safe at SSR (single-pass, no client tree to update).
+  // On the client we defer to an effect — calling `changeLanguage` during render
+  // would trigger a setState in subscribed components mid-render (React warns).
+  if (typeof window === 'undefined' && i18n.language !== lang) {
+    void i18n.changeLanguage(lang);
+  }
+  React.useEffect(() => {
+    if (i18n.language !== lang) void i18n.changeLanguage(lang);
+  }, [lang]);
 
   return (
-    <html lang="zh-cn" className={resolveThemeClassName(theme)}>
+    <html lang={lang} className={resolveThemeClassName(theme)}>
       <head>
         <meta charSet="utf-8" />
         <Meta />
         <Links />
       </head>
       <body className="bg-background text-foreground antialiased">
-        <TooltipProvider delayDuration={150}>
-          {children}
-          <CommandPalette namespaces={namespaces} currentSlug={currentSlug} isSuperuser={isSuperuser} />
-        </TooltipProvider>
-        <Toaster richColors position="top-right" />
+        <I18nextProvider i18n={i18n}>
+          <TooltipProvider delayDuration={150}>
+            {children}
+            <CommandPalette namespaces={namespaces} currentSlug={currentSlug} isSuperuser={isSuperuser} />
+          </TooltipProvider>
+          <Toaster richColors position="top-right" />
+        </I18nextProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
