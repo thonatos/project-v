@@ -14,7 +14,7 @@ function hashToken(plaintext: string): string {
 }
 
 function generateTokenString(scope: TokenScope): string {
-  const prefix = scope === 'task' ? 'tk_' : 'ro_';
+  const prefix = scope === 'task' ? 'tk_' : scope === 'write' ? 'wr_' : 'ro_';
   return prefix + crypto.randomBytes(24).toString('base64url');
 }
 

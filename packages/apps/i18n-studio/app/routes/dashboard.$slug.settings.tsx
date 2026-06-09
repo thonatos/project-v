@@ -29,7 +29,7 @@ import {
 import type { Route } from './+types/dashboard.$slug.settings';
 import type { NsContext } from './dashboard.$slug';
 
-type TokenScope = 'task' | 'readonly';
+type TokenScope = 'task' | 'readonly' | 'write';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const ctx = await requireRole(request, params.slug!, ['admin']);
@@ -237,7 +237,9 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">API Tokens</CardTitle>
-          <CardDescription>task token 用于 worker 拉取/回写;readonly token 用于 snapshot 通道。</CardDescription>
+          <CardDescription>
+            task token 用于 worker 拉取/回写;readonly token 用于 snapshot 通道;write token 用于脚本写入文案。
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Form method="post" className="grid items-end gap-3 sm:grid-cols-[1fr_160px_auto]">
@@ -256,6 +258,7 @@ export default function SettingsPage() {
                 <SelectContent>
                   <SelectItem value="task">task</SelectItem>
                   <SelectItem value="readonly">readonly</SelectItem>
+                  <SelectItem value="write">write（写入文案）</SelectItem>
                 </SelectContent>
               </Select>
             </div>
