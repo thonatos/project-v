@@ -7,6 +7,9 @@ import { isbot } from 'isbot';
 import type { RenderToPipeableStreamOptions } from 'react-dom/server';
 import { renderToPipeableStream } from 'react-dom/server';
 
+// Initialize the shared i18next instance before any rendering occurs.
+import './i18n/config';
+
 const ABORT_DELAY = 5_000;
 
 export default function handleRequest(

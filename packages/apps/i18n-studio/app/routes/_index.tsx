@@ -6,13 +6,15 @@ import { Hero } from '~/components/landing/hero';
 import { Features } from '~/components/landing/features';
 import { getUser } from '~/lib/auth.server';
 import { getTheme } from '~/lib/theme.server';
+import { getLang } from '~/lib/i18n.server';
 
 import type { Route } from './+types/_index';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await getUser(request);
   const theme = getTheme(request);
-  return { user, theme };
+  const lang = getLang(request);
+  return { user, theme, lang };
 }
 
 export function meta() {
@@ -27,10 +29,10 @@ export function meta() {
 }
 
 export default function Index() {
-  const { user, theme } = useLoaderData<typeof loader>();
+  const { user, theme, lang } = useLoaderData<typeof loader>();
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AppShellHeader user={user} theme={theme} />
+      <AppShellHeader user={user} theme={theme} lang={lang} />
       <main className="flex-1">
         <Hero user={user} />
         <Features />

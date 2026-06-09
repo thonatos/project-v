@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Link, NavLink, Outlet, useLoaderData, useOutletContext } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Boxes, FileText, ListChecks, Menu, RefreshCw, Settings, Users } from 'lucide-react';
 
 import { requireRole } from '~/lib/auth.server';
@@ -42,18 +43,19 @@ interface NavItem {
 
 export default function NamespaceLayout() {
   const { namespace, role, user, stats, locales } = useLoaderData<typeof loader>();
-  const { theme } = useOutletContext<DashboardContext>();
+  const { theme, lang } = useOutletContext<DashboardContext>();
+  const { t } = useTranslation('common');
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const navItems: NavItem[] = [
-    { to: '.', label: 'Overview', icon: Boxes, end: true },
-    { to: 'entries', label: 'Entries', icon: FileText },
-    { to: 'tasks', label: 'Tasks', icon: ListChecks },
-    { to: 'sync', label: 'Sync', icon: RefreshCw },
+    { to: '.', label: t('namespaceNav.overview'), icon: Boxes, end: true },
+    { to: 'entries', label: t('namespaceNav.entries'), icon: FileText },
+    { to: 'tasks', label: t('namespaceNav.tasks'), icon: ListChecks },
+    { to: 'sync', label: t('namespaceNav.sync'), icon: RefreshCw },
   ];
   if (role === 'admin') {
-    navItems.push({ to: 'members', label: 'Members', icon: Users });
-    navItems.push({ to: 'settings', label: 'Settings', icon: Settings });
+    navItems.push({ to: 'members', label: t('namespaceNav.members'), icon: Users });
+    navItems.push({ to: 'settings', label: t('namespaceNav.settings'), icon: Settings });
   }
 
   const crumbs = [{ label: 'Namespaces', to: '/dashboard' }, { label: namespace.name }];
@@ -63,13 +65,14 @@ export default function NamespaceLayout() {
       <AppShellHeader
         user={user}
         theme={theme}
+        lang={lang}
         crumbs={crumbs}
         leadingSlot={
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button type="button" variant="ghost" size="icon" className="md:hidden">
                 <Menu className="size-5" />
-                <span className="sr-only">打开侧边栏</span>
+                <span className="sr-only">{t('namespaceNav.openSidebar')}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0">
@@ -145,14 +148,15 @@ function SidebarMeta({
   bundleVersion: number;
   compact?: boolean;
 }) {
+  const { t } = useTranslation('common');
   return (
     <div className={cn('mt-4 rounded-md border bg-background p-3 text-xs text-muted-foreground', compact && 'mt-3')}>
       <div className="flex items-center justify-between">
-        <span>Entries</span>
+        <span>{t('sidebar.entries')}</span>
         <span className="font-medium text-foreground">{stats.entriesCount}</span>
       </div>
       <div className="mt-1 flex items-center justify-between">
-        <span>Drafts</span>
+        <span>{t('sidebar.drafts')}</span>
         <span
           className={cn('font-medium', stats.draftCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground')}
         >
@@ -160,7 +164,7 @@ function SidebarMeta({
         </span>
       </div>
       <div className="mt-1 flex items-center justify-between">
-        <span>Members</span>
+        <span>{t('sidebar.members')}</span>
         <span className="font-medium text-foreground">{stats.membersCount}</span>
       </div>
       <div className="mt-2 border-t pt-2 text-[10px] uppercase tracking-wider">bundle v{bundleVersion}</div>

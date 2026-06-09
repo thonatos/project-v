@@ -9,27 +9,31 @@ import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet';
 import { getUser } from '~/lib/auth.server';
 import { getDocsInOrder } from '~/lib/docs';
 import { getTheme } from '~/lib/theme.server';
+import { getLang } from '~/lib/i18n.server';
 
 import type { Route } from './+types/docs';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const theme = getTheme(request);
+  const lang = getLang(request);
   const user = await getUser(request);
   const docs = await getDocsInOrder();
   return {
     theme,
+    lang,
     user,
     sidebar: docs.map((d) => ({ slug: d.slug, title: d.title })),
   };
 }
 
 export default function DocsLayout() {
-  const { theme, user, sidebar } = useLoaderData<typeof loader>();
+  const { theme, lang, user, sidebar } = useLoaderData<typeof loader>();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AppShellHeader
         user={user}
         theme={theme}
+        lang={lang}
         leadingSlot={
           <Sheet>
             <SheetTrigger asChild>

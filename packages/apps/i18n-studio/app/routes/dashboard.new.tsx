@@ -77,7 +77,7 @@ export function meta() {
 
 export default function NewNamespacePage() {
   const { localeOptions, defaultSelected } = useLoaderData<typeof loader>();
-  const { user, theme } = useOutletContext<DashboardContext>();
+  const { user, theme, lang } = useOutletContext<DashboardContext>();
   const actionData = useActionData<typeof action>();
   const nav = useNavigation();
   const submitting = nav.state === 'submitting';
@@ -100,6 +100,7 @@ export default function NewNamespacePage() {
       <AppShellHeader
         user={user}
         theme={theme}
+        lang={lang}
         crumbs={[{ label: 'Namespaces', to: '/dashboard' }, { label: 'New' }]}
       />
       <main className="mx-auto w-full max-w-2xl px-4 py-8">
