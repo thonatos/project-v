@@ -5,3 +5,5 @@ build/
 node_modules/
 tests/.tmp/
 *.log
+.env
+.env.local
