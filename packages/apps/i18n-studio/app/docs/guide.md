@@ -450,15 +450,9 @@ namespace B.locales = ['zh-cn', 'ja-jp']
 
 涉及 locale 字典的常见错误:`locale_not_found`、`locale_disabled`、`locale_in_use`、`locale_builtin_undeletable`、`locale_dictionary_empty`。
 
-### 升级时的修补
+### 字典引用完整性
 
-某些升级会引入新的内置 locale 或调整字段,运维需在容器内执行:
-
-```bash
-pnpm repair:locales
-```
-
-详见 [部署](/docs/deployment)。
+namespace 引用的每个 locale 在创建/更新时都会经字典校验(`assertLocalesExist`),引用字典外或已禁用的 code 会被直接拒绝(`locale_not_found` / `locale_disabled`),因此不会产生悬空引用,运维无需定期巡检修补。
 
 ## 下一步
 
