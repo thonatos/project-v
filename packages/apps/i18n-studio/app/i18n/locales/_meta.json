@@ -1,0 +1,12 @@
+{
+  "zh-cn": {
+    "label": "简体中文",
+    "englishLabel": "Simplified Chinese",
+    "nativeLabel": "中文(简体)"
+  },
+  "en-us": {
+    "label": "英语 (美国)",
+    "englishLabel": "English (US)",
+    "nativeLabel": "English"
+  }
+}
