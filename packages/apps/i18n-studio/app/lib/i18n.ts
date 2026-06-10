@@ -3,15 +3,15 @@
  * cookie I/O) and client (`Layout` resolves cookie -> `<html lang>` and
  * `i18n.changeLanguage` during SSR and hydration).
  *
- * Codes are lowercase BCP-47 tags (`zh-cn` default/fallback, `en-us`), matching
- * the `studio-ui` namespace locale set so self-hosted pull/push align.
+ * The supported language set + default are NOT hand-maintained here — they are
+ * derived from `app/i18n/generated.ts`, which codegen produces by scanning the
+ * committed `app/i18n/locales/` tree. Add a language by adding its locale dir
+ * (via `i18n:pull`) and re-running `i18n:codegen`; no edit to this file needed.
  */
+import { SUPPORTED_LANGS, DEFAULT_LANG, type Lang } from '~/i18n/generated';
 
-export type Lang = 'zh-cn' | 'en-us';
-
-export const SUPPORTED_LANGS: readonly Lang[] = ['zh-cn', 'en-us'] as const;
-
-export const DEFAULT_LANG: Lang = 'zh-cn';
+export type { Lang };
+export { SUPPORTED_LANGS, DEFAULT_LANG };
 
 export function isLang(value: unknown): value is Lang {
   return typeof value === 'string' && (SUPPORTED_LANGS as readonly string[]).includes(value);

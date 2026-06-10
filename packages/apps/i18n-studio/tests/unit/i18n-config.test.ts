@@ -51,3 +51,21 @@ describe('i18n instance', () => {
     expect(i18n.t('common:does.not.exist')).toBe('does.not.exist');
   });
 });
+
+describe('generated locale metadata', () => {
+  it('SUPPORTED_LANGS + resources are derived from generated.ts', async () => {
+    const gen = await import('~/i18n/generated');
+    // i18next 实例的语种集与生成物一致(单一来源)
+    expect([...gen.SUPPORTED_LANGS].sort()).toEqual(['en-us', 'zh-cn']);
+    expect(gen.DEFAULT_LANG).toBe('zh-cn');
+    expect(Object.keys(gen.resources).sort()).toEqual(['en-us', 'zh-cn']);
+  });
+
+  it('LOCALE_META carries native display names for the toggle', async () => {
+    const gen = await import('~/i18n/generated');
+    const codes = gen.LOCALE_META.map((m) => m.code).sort();
+    expect(codes).toEqual(['en-us', 'zh-cn']);
+    const zh = gen.LOCALE_META.find((m) => m.code === 'zh-cn')!;
+    expect(zh.nativeLabel).toBe('中文(简体)');
+  });
+});

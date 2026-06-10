@@ -5,25 +5,17 @@
  * value (see `root.tsx`), never by browser detection — that keeps SSR (cookie)
  * and CSR consistent and avoids hydration mismatch.
  *
- * Resources are statically imported and bundled (no async backend / code split),
- * so the first frame already has the correct copy with no FOUC.
+ * Resources + the supported language set come from `generated.ts` (produced by
+ * `i18n:codegen` scanning `app/i18n/locales/`), not hand-written here. They are
+ * statically imported and bundled (no async backend / code split), so the first
+ * frame already has the correct copy with no FOUC.
  */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import { DEFAULT_LANG, SUPPORTED_LANGS } from '~/lib/i18n';
+import { DEFAULT_LANG, SUPPORTED_LANGS, I18N_NAMESPACES, resources } from './generated';
 
-import zhCommon from './locales/zh-cn/common.json';
-import zhLanding from './locales/zh-cn/landing.json';
-import enCommon from './locales/en-us/common.json';
-import enLanding from './locales/en-us/landing.json';
-
-export const I18N_NAMESPACES = ['common', 'landing'] as const;
-
-export const resources = {
-  'zh-cn': { common: zhCommon, landing: zhLanding },
-  'en-us': { common: enCommon, landing: enLanding },
-} as const;
+export { I18N_NAMESPACES, resources };
 
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
