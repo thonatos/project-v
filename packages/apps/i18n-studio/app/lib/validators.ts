@@ -66,3 +66,22 @@ export function validateLocaleSubset(input: string[], allowed: string[]): { ok: 
   const invalid = input.filter((l) => !allowSet.has(l));
   return { ok: invalid.length === 0, invalid };
 }
+
+/**
+ * 解析 `namespaces.locales` JSON 列为 string[] 的唯一入口。
+ *
+ * 该列以 JSON 字符串数组形式存储(无外键约束),历史上 `JSON.parse` +
+ * `try/catch` + `Array.isArray` 的防御性解析散落多处。统一收敛到此函数:
+ * 非法 JSON、非数组、含非 string 元素一律安全降级为已解析出的 string 子集
+ * (损坏时返回空数组),调用方无需各自重复防御。
+ */
+export function parseNsLocales(raw: string): string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter((v): v is string => typeof v === 'string');
+}
