@@ -48,12 +48,7 @@ docker run -d \
    ```bash
    pnpm db:migrate     # drizzle 自动迁移
    ```
-4. 必要时手动跑一次:
-   ```bash
-   docker exec -it i18n-studio pnpm repair:locales
-   ```
-   该命令会给已存在的 namespace 修补缺失的系统级 locale 字典记录(详见综合指南中的 [Locale 字典](/docs/guide#locale-字典))
-5. 确认 `/dashboard` 可正常加载
+4. 确认 `/dashboard` 可正常加载
 
 > **警告**:升级前请务必备份 `data/i18n.db` 与 `data/i18n.db-wal`、`data/i18n.db-shm` 三个文件。drizzle 迁移失败时只能用旧文件回滚。
 
