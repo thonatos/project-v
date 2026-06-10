@@ -3,6 +3,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { getDb } from '~/lib/db.server';
 import { entries, translations, namespaces } from '~/db/schema';
 import { getNamespaceLocales } from '~/lib/services/namespace.server';
+import { getLocale } from '~/lib/services/locale.server';
 import { validateLocaleSubset } from '~/lib/validators';
 import { extractBearer, verifyToken } from '~/lib/api-token.server';
 
@@ -96,6 +97,40 @@ export function getBundle(input: SnapshotInput): { bundle: SnapshotBundle; meta:
       effectiveLocales: target,
     },
   };
+}
+
+export interface LocaleManifestEntry {
+  code: string;
+  label: string;
+  englishLabel: string;
+  nativeLabel: string | null;
+}
+
+export interface LocaleManifest {
+  namespace: string;
+  locales: LocaleManifestEntry[];
+}
+
+/**
+ * 语种清单:返回该 namespace 受支持的语种(effectiveLocales)及其字典元信息。
+ * 字典里缺失的 code 仍会列出,label/englishLabel 降级为 code 自身、nativeLabel 为 null,
+ * 使消费方(pull / codegen)始终能拿到完整语种集。
+ */
+export function getLocaleManifest(slug: string): LocaleManifest {
+  const db = getDb();
+  const ns = db.select().from(namespaces).where(eq(namespaces.slug, slug)).get();
+  if (!ns) throw new Response('Not Found', { status: 404 });
+  const codes = getNamespaceLocales(ns);
+  const locales: LocaleManifestEntry[] = codes.map((code) => {
+    const row = getLocale(code);
+    return {
+      code,
+      label: row?.label ?? code,
+      englishLabel: row?.englishLabel ?? code,
+      nativeLabel: row?.nativeLabel ?? null,
+    };
+  });
+  return { namespace: ns.slug, locales };
 }
 
 export function requireSnapshotAccess(request: Request, slug: string): { isPublic: boolean } {
