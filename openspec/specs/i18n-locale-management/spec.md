@@ -1,7 +1,7 @@
 # i18n-locale-management Specification
 
 ## Purpose
-TBD - created by archiving change i18n-studio-locale-management. Update Purpose after archive.
+定义 i18n-studio 系统级 locale 字典的管理能力:全局 `locales` 字典表与内置 locale、字典 CRUD 服务、内置/被引用 locale 的删除与禁用保护、管理页与多选组件,以及 namespace 语种写入路径的完整性守卫,保证所有 namespace 引用的语言 code 都在字典中已注册且启用。
 ## Requirements
 ### Requirement: 系统级 locale 字典表
 
@@ -180,29 +180,30 @@ i18n-studio SHALL 提供 `app/components/locale-multi-select.tsx`,基于 shadcn 
 - **WHEN** 表单提交
 - **THEN** 表单数据中 `locales` 字段值为字符串 `zh-cn,en-us`
 
-### Requirement: 历史数据修复脚本
+### Requirement: namespace 语种写入路径完整性守卫
 
-i18n-studio SHALL 提供 `app/scripts/repair-locales.ts`,通过 `pnpm -F i18n-studio repair:locales` 触发,默认仅报告字典外 code,`--auto-add` 模式将其入字典。
+所有写入 `namespaces.locales` 的服务路径(创建与更新 namespace)SHALL 在持久化前调用 `assertLocalesExist`,确保引用的每个 locale code 都已存在于字典且 `enabled=1`,从源头杜绝产生「引用字典外 code」的孤儿数据。`namespaces.locales` 的解析 SHALL 收敛到单一工具函数(如 `parseNsLocales`),消除散落多处的重复 `JSON.parse` + `Array.isArray` 防御性代码。
 
-#### Scenario: 默认模式发现遗留 code 时退出非零
+#### Scenario: 创建 namespace 引用字典外 code 被拒
 
-- **GIVEN** 一个数据库中存在 namespace `legacy`,其 `locales` JSON 包含字典里没有的 code `xx-yy`
-- **WHEN** 不带参数运行 `repair:locales`
-- **THEN** 标准输出列出 `legacy` 与 `xx-yy`
-- **AND** 进程以非零退出码结束
-- **AND** 数据库未修改
+- **GIVEN** 字典中不存在 `xx-yy`
+- **WHEN** 以包含 `xx-yy` 的 locales 创建 namespace
+- **THEN** 服务层经 `assertLocalesExist` 抛错(`locale_not_found`),namespace 不被创建
 
-#### Scenario: --auto-add 模式自动入字典
+#### Scenario: 更新 namespace 引用禁用 code 被拒
 
-- **GIVEN** 一个数据库中存在 namespace 引用字典外 code `xx-yy`
-- **WHEN** 运行 `repair:locales --auto-add`
-- **THEN** 字典新增一行 `code='xx-yy', isBuiltin=false, enabled=true`,label/englishLabel 为 `xx-yy` 的占位值
-- **AND** 进程以零退出码结束
-- **AND** 之后的 `createNamespace` / `updateNamespace` 校验对该 code 通过
+- **GIVEN** 字典中 `de-de` 为 disabled
+- **WHEN** 把某 namespace 的 locales 更新为包含 `de-de`
+- **THEN** 服务层抛错(`locale_disabled`),更新不生效
 
-#### Scenario: 无遗留 code 时直接通过
+#### Scenario: 合法写入通过
 
-- **GIVEN** 所有 namespace 引用的 code 都已存在于字典
-- **WHEN** 运行 `repair:locales`(任意模式)
-- **THEN** 输出 "No repair needed.",进程以零退出码结束
+- **GIVEN** 字典含 enabled `zh-cn`、`en-us`
+- **WHEN** 以 `['zh-cn','en-us']` 创建或更新 namespace
+- **THEN** 写入成功
 
+#### Scenario: 解析收敛到单一工具
+
+- **GIVEN** 代码库中需要读取 `namespaces.locales` JSON 的位置(如 `listReferencingNamespaces`)
+- **WHEN** 检查实现
+- **THEN** 它们调用同一个 `parseNsLocales` 工具函数,不再各自内联 `JSON.parse` + `try/catch` + `Array.isArray` 检查

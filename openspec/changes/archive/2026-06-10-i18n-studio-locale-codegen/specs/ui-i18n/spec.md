@@ -1,8 +1,5 @@
-# ui-i18n Specification
+## MODIFIED Requirements
 
-## Purpose
-定义 i18n-studio 界面国际化的运行时行为:i18next 实例初始化、语言 cookie 持久化与校验、SSR 语言注入与 hydration 一致性、用户侧语言切换控件,以及高频界面文案的 key 化,使界面文案可随当前语言切换。
-## Requirements
 ### Requirement: 界面语言初始化
 
 系统 SHALL 在服务端与客户端使用同一份 i18next 配置初始化界面国际化实例，注册的语种集与各语种资源 SHALL 来源于 `app/i18n/generated.ts`(由 codegen 扫描 `app/i18n/locales/` 生成),而非在 `config.ts` / `lib/i18n.ts` 中手写;系统按命名空间（namespace）组织资源，使界面文案可通过 `useTranslation` 在组件中读取。默认/回退语言 SHALL 为 `zh-cn`。
@@ -40,22 +37,6 @@
 - **WHEN** 服务端读取语言
 - **THEN** 系统忽略该值并回退到默认语言 `zh-cn`
 
-### Requirement: SSR 语言注入与 hydration 一致性
-
-系统 SHALL 在 root loader 中读取 `lang` cookie 得出当前语言，将其注入服务端渲染，使服务端首屏 HTML 与客户端 hydration 使用相同语言，避免 hydration mismatch；`<html lang>` 属性 SHALL 反映当前界面语言。
-
-#### Scenario: SSR 与客户端语言一致
-
-- **GIVEN** 请求携带 `lang=en-us`
-- **WHEN** 页面完成服务端渲染并在浏览器 hydration
-- **THEN** 服务端输出与客户端首帧均为 `en-us`，控制台无 hydration mismatch 警告
-
-#### Scenario: html lang 属性反映当前语言
-
-- **GIVEN** 当前界面语言为 `en-us`
-- **WHEN** 页面渲染
-- **THEN** `<html>` 元素的 `lang` 属性为 `en-us`（默认语言时为 `zh-cn`）
-
 ### Requirement: 用户侧语言切换
 
 系统 SHALL 在公共外壳头部提供语言切换控件，控件 SHALL 基于 shadcn `Popover` + `Command` 实现可搜索的单选下拉(而非平铺 toggle),选项 SHALL 遍历 `SUPPORTED_LANGS` 动态生成而非手写,每项显示名 SHALL 优先使用母语名 `nativeLabel`、回退 `label`、再回退 `code`;控件提交到 `/api/lang` action；该 action SHALL 校验语言值、写入 `lang` cookie 并返回成功结果，使切换后无需手动刷新即可应用新语言。控件 SHALL 在语种数量为 3 个及以上时仍可用(不因横向空间溢出而失效)。
@@ -76,19 +57,3 @@
 
 - **WHEN** 向 `/api/lang` 提交不受支持的语言值
 - **THEN** action 返回 4xx 错误且不写入 cookie
-
-### Requirement: 界面文案 key 化
-
-系统 SHALL 将「公共外壳 + Dashboard 框架」的高频界面文案（app-shell 导航与菜单、landing hero/features、dashboard 导航与布局标签）抽取为 i18next key，消除这些区域中英文混杂的硬编码文案，使其随当前语言切换。
-
-#### Scenario: 外壳文案随语言切换
-
-- **GIVEN** 用户已切换界面语言到 `en-us`
-- **WHEN** 渲染公共外壳与 Dashboard 框架
-- **THEN** 已抽取区域（导航、菜单项、落地页标题等）显示英文文案，无残留硬编码中文
-
-#### Scenario: 默认语言下文案统一
-
-- **GIVEN** 默认语言 `zh-cn`
-- **WHEN** 渲染首批被抽取的界面区域
-- **THEN** 这些区域不再出现中英文混杂，统一显示简体中文文案
