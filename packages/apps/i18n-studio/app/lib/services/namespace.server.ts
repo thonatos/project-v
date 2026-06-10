@@ -4,7 +4,7 @@ import { getDb } from '~/lib/db.server';
 import { newId, nowMs } from '~/lib/id.server';
 import { namespaces, memberships, entries, translations, translationVersions } from '~/db/schema';
 import type { Namespace } from '~/db/schema';
-import { localeSchema, slugSchema } from '~/lib/validators';
+import { localeSchema, parseNsLocales, slugSchema } from '~/lib/validators';
 import { jsonError } from '~/lib/api.server';
 import { assertLocalesExist, listEnabledLocales } from '~/lib/services/locale.server';
 
@@ -110,7 +110,7 @@ export function updateNamespace(slug: string, patch: UpdateNamespaceInput): Name
     if (patch.name !== undefined) next.name = patch.name;
     if (patch.publicRead !== undefined) next.publicRead = patch.publicRead;
 
-    let nextLocales: string[] = JSON.parse(ns.locales) as string[];
+    let nextLocales: string[] = parseNsLocales(ns.locales);
     if (patch.locales) {
       for (const l of patch.locales) localeSchema.parse(l);
       nextLocales = Array.from(new Set(patch.locales));
@@ -127,7 +127,7 @@ export function updateNamespace(slug: string, patch: UpdateNamespaceInput): Name
     }
 
     // 校验:被移除的 locale 不能有 published 翻译
-    const oldLocales: string[] = JSON.parse(ns.locales) as string[];
+    const oldLocales: string[] = parseNsLocales(ns.locales);
     const removed = oldLocales.filter((l) => !nextLocales.includes(l));
     if (removed.length > 0) {
       const refs = tx
@@ -166,7 +166,7 @@ export function deleteNamespace(slug: string): void {
 }
 
 export function getNamespaceLocales(ns: Namespace): string[] {
-  return JSON.parse(ns.locales) as string[];
+  return parseNsLocales(ns.locales);
 }
 
 export interface NamespaceStats {

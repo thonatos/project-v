@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { localeSchema, flatKeySchema, parseEntries } from '~/lib/validators';
+import { localeSchema, flatKeySchema, parseEntries, parseNsLocales } from '~/lib/validators';
 
 describe('localeSchema', () => {
   it.each([['zh-cn'], ['en-us'], ['ja-jp'], ['zh'], ['pt-br']])('accepts %s', (v) => {
@@ -41,5 +41,23 @@ describe('parseEntries', () => {
   it('rejects non-object input', () => {
     const r = parseEntries('not-an-object');
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('parseNsLocales', () => {
+  it('parses a valid JSON string array', () => {
+    expect(parseNsLocales('["zh-cn","en-us"]')).toEqual(['zh-cn', 'en-us']);
+  });
+  it('returns [] for invalid JSON', () => {
+    expect(parseNsLocales('not json')).toEqual([]);
+  });
+  it('returns [] for non-array JSON', () => {
+    expect(parseNsLocales('{"a":1}')).toEqual([]);
+  });
+  it('drops non-string elements', () => {
+    expect(parseNsLocales('["zh-cn",1,null,"en-us"]')).toEqual(['zh-cn', 'en-us']);
+  });
+  it('handles empty array', () => {
+    expect(parseNsLocales('[]')).toEqual([]);
   });
 });

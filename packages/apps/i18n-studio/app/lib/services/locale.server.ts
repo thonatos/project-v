@@ -4,7 +4,7 @@ import { getDb } from '~/lib/db.server';
 import { nowMs } from '~/lib/id.server';
 import { locales, namespaces } from '~/db/schema';
 import type { Locale } from '~/db/schema';
-import { localeSchema } from '~/lib/validators';
+import { localeSchema, parseNsLocales } from '~/lib/validators';
 import { jsonError } from '~/lib/api.server';
 
 export type { Locale };
@@ -183,13 +183,7 @@ export function listReferencingNamespaces(code: string): Array<{ id: string; slu
     .all();
   const referrers: Array<{ id: string; slug: string }> = [];
   for (const r of rows) {
-    let arr: unknown;
-    try {
-      arr = JSON.parse(r.locales);
-    } catch {
-      continue;
-    }
-    if (Array.isArray(arr) && arr.includes(code)) {
+    if (parseNsLocales(r.locales).includes(code)) {
       referrers.push({ id: r.id, slug: r.slug });
     }
   }
