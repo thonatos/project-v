@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { eq } from 'drizzle-orm';
 
 import { setupTestDbFromTemplate, bootstrap, seedWorld, type TestCtx } from '../helpers';
 
@@ -213,6 +214,38 @@ describe('export & snapshot', () => {
     it('未启用 locale → 抛 422', async () => {
       await seedDocsPublished();
       expect(() => ctx.api.snapshot.getBundle({ slug: 'docs', locales: ['fr-fr'] })).toThrow();
+    });
+  });
+
+  describe('locale manifest', () => {
+    it('返回 namespace 受支持语种 + 字典元信息', async () => {
+      await seedWorld(ctx);
+      const m = ctx.api.snapshot.getLocaleManifest('docs');
+      expect(m.namespace).toBe('docs');
+      expect(m.locales.map((l) => l.code).sort()).toEqual(['en-us', 'zh-cn', 'zh-tw']);
+      const zh = m.locales.find((l) => l.code === 'zh-cn')!;
+      expect(zh.label).toBe('简体中文');
+      expect(zh.nativeLabel).toBe('中文(简体)');
+    });
+
+    it('字典缺失 code 降级为 code 自身 / nativeLabel=null', async () => {
+      await seedWorld(ctx);
+      // 绕过写入守卫,直接写入一个字典外 code 模拟历史/异常数据
+      const d = ctx.api.db.getDb();
+      d.update(ctx.api.schema.namespaces)
+        .set({ locales: JSON.stringify(['zh-cn', 'xx-yy']) })
+        .where(eq(ctx.api.schema.namespaces.slug, 'docs'))
+        .run();
+      const m = ctx.api.snapshot.getLocaleManifest('docs');
+      const xx = m.locales.find((l) => l.code === 'xx-yy')!;
+      expect(xx.label).toBe('xx-yy');
+      expect(xx.englishLabel).toBe('xx-yy');
+      expect(xx.nativeLabel).toBeNull();
+    });
+
+    it('不存在的 namespace → 抛 404', async () => {
+      await seedWorld(ctx);
+      expect(() => ctx.api.snapshot.getLocaleManifest('nope')).toThrow();
     });
   });
 });

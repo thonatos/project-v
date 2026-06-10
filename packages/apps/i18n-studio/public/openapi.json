@@ -1749,6 +1749,54 @@
         }
       }
     },
+    "/snapshot/{slug}/meta": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "getSnapshotMeta",
+        "tags": ["snapshot"],
+        "summary": "Get locale manifest",
+        "description": "返回命名空间受支持的语种清单及其字典元信息(`code` / `label` / `englishLabel` / `nativeLabel`)。供 pull 脚本与 codegen 派生语种列表与显示名。鉴权与 `/snapshot/{slug}` 一致:`publicRead=true` 时无需 token;否则要求 `readonlyBearer`。",
+        "security": [{}, { "readonlyBearer": [] }],
+        "responses": {
+          "200": {
+            "description": "语种清单",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "namespace": { "type": "string" },
+                    "locales": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": { "type": "string" },
+                          "label": { "type": "string" },
+                          "englishLabel": { "type": "string" },
+                          "nativeLabel": { "type": "string", "nullable": true }
+                        },
+                        "required": ["code", "label", "englishLabel", "nativeLabel"]
+                      }
+                    }
+                  },
+                  "required": ["namespace", "locales"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "私有 namespace 缺少有效 readonly token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
     "/snapshot/{slug}/{locale}": {
       "parameters": [
         { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
