@@ -5,10 +5,8 @@
  * committed `app/i18n/locales/` tree + `_meta.json`. Re-run codegen after
  * changing those; CI asserts this file is in sync.
  */
-import zhCn_common from './locales/zh-cn/common.json';
-import zhCn_landing from './locales/zh-cn/landing.json';
-import enUs_common from './locales/en-us/common.json';
-import enUs_landing from './locales/en-us/landing.json';
+import zhCn_studioUi from './locales/zh-cn/studio-ui.json';
+import enUs_studioUi from './locales/en-us/studio-ui.json';
 
 export const SUPPORTED_LANGS = ['zh-cn', 'en-us'] as const;
 
@@ -16,16 +14,14 @@ export type Lang = (typeof SUPPORTED_LANGS)[number];
 
 export const DEFAULT_LANG: Lang = 'zh-cn';
 
-export const I18N_NAMESPACES = ['common', 'landing'] as const;
+export const I18N_NAMESPACES = ['studio-ui'] as const;
 
 export const resources = {
   'zh-cn': {
-    common: zhCn_common,
-    landing: zhCn_landing,
+    'studio-ui': zhCn_studioUi,
   },
   'en-us': {
-    common: enUs_common,
-    landing: enUs_landing,
+    'studio-ui': enUs_studioUi,
   },
 } as const;
 

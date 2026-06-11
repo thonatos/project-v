@@ -1,100 +1,123 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { splitFlatByNamespace, mergeChangedBundles, type ResourceStore } from '~/i18n/runtime-merge';
+import { unflattenSnapshot, mergeSnapshot, type ResourceStore } from '~/i18n/runtime-merge';
+import { STUDIO_NAMESPACE } from '~/i18n/config';
 
-const NS = ['common', 'landing'] as const;
-
-describe('splitFlatByNamespace', () => {
-  it('splits flat keys into per-namespace nested bundles by first segment', () => {
+describe('unflattenSnapshot', () => {
+  it('unflattens flat dotted keys into one nested bundle', () => {
     const flat = {
       'common.auth.login': 'Sign in',
       'common.nav.dashboard': 'Dashboard',
       'landing.hero.title': 'Hi',
     };
-    expect(splitFlatByNamespace(flat, NS)).toEqual({
-      common: { 'auth.login': 'Sign in', 'nav.dashboard': 'Dashboard' },
-      landing: { 'hero.title': 'Hi' },
+    expect(unflattenSnapshot(flat)).toEqual({
+      common: { auth: { login: 'Sign in' }, nav: { dashboard: 'Dashboard' } },
+      landing: { hero: { title: 'Hi' } },
     });
   });
 
-  it('drops keys whose prefix is not a known namespace', () => {
-    expect(splitFlatByNamespace({ 'unknown.k': 'x', 'common.k': 'y' }, NS)).toEqual({
-      common: { k: 'y' },
-    });
+  it('treats every dot as a nesting boundary (no ns segment)', () => {
+    expect(unflattenSnapshot({ 'common.a.b.c': 'x' })).toEqual({ common: { a: { b: { c: 'x' } } } });
   });
 
-  it('drops keys without a dot separator', () => {
-    expect(splitFlatByNamespace({ orphan: 'x', 'common.k': 'y' }, NS)).toEqual({
-      common: { k: 'y' },
-    });
+  it('maps a single-segment key to a top-level leaf', () => {
+    expect(unflattenSnapshot({ orphan: 'x', 'common.k': 'y' })).toEqual({ orphan: 'x', common: { k: 'y' } });
   });
 
-  it('returns empty object for an empty snapshot', () => {
-    expect(splitFlatByNamespace({}, NS)).toEqual({});
+  it('drops edge keys with leading/trailing dots', () => {
+    expect(unflattenSnapshot({ '.bad': 'x', 'bad.': 'y', 'common.k': 'z' })).toEqual({ common: { k: 'z' } });
+  });
+
+  it('returns an empty object for an empty snapshot', () => {
+    expect(unflattenSnapshot({})).toEqual({});
   });
 });
 
 /** A minimal in-memory ResourceStore for asserting merge behavior. */
-function fakeStore(seed: Record<string, Record<string, unknown>>): ResourceStore & {
-  bundles: Record<string, Record<string, unknown>>;
+function fakeStore(seed: Record<string, unknown>): ResourceStore & {
+  bundle: Record<string, unknown>;
   addResourceBundle: ReturnType<typeof vi.fn>;
 } {
-  const bundles: Record<string, Record<string, unknown>> = structuredClone(seed);
+  // Single ns store keyed by `${lng}/studio-ui`, holding a nested object. Diff
+  // reads resolve dotted keys along the nested tree (i18next keySeparator).
+  const store: Record<string, Record<string, unknown>> = {};
+  store[`zh-cn/${STUDIO_NAMESPACE}`] = structuredClone(seed);
+  store[`en-us/${STUDIO_NAMESPACE}`] = structuredClone(seed);
+
+  function resolve(obj: Record<string, unknown> | undefined, key: string): unknown {
+    if (!obj) return undefined;
+    let cursor: unknown = obj;
+    for (const seg of key.split('.')) {
+      if (cursor === null || typeof cursor !== 'object') return undefined;
+      cursor = (cursor as Record<string, unknown>)[seg];
+    }
+    return cursor;
+  }
+  function deepMerge(target: Record<string, unknown>, src: Record<string, unknown>): void {
+    for (const [k, v] of Object.entries(src)) {
+      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+        const next = (target[k] ??= {}) as Record<string, unknown>;
+        deepMerge(next, v as Record<string, unknown>);
+      } else {
+        target[k] = v;
+      }
+    }
+  }
   const addResourceBundle = vi.fn((lng: string, ns: string, resources: Record<string, unknown>) => {
-    const key = `${lng}/${ns}`;
-    bundles[key] = { ...bundles[key], ...resources };
+    deepMerge((store[`${lng}/${ns}`] ??= {}), resources);
   });
   return {
-    bundles,
+    get bundle() {
+      return store[`zh-cn/${STUDIO_NAMESPACE}`];
+    },
     addResourceBundle,
     getResource(lng: string, ns: string, key: string) {
-      return bundles[`${lng}/${ns}`]?.[key];
+      return resolve(store[`${lng}/${ns}`], key);
     },
   };
 }
 
-describe('mergeChangedBundles', () => {
-  it('overrides the bundled fallback when the snapshot value differs', () => {
-    const store = fakeStore({ 'en-us/common': { 'auth.login': 'Sign in' } });
-    const merged = mergeChangedBundles(store, 'en-us', { common: { 'auth.login': 'Log in' } });
-    expect(merged).toEqual(['common']);
+describe('mergeSnapshot', () => {
+  it('overrides the bundled nested value when the snapshot differs', () => {
+    const store = fakeStore({ common: { auth: { login: 'Sign in' } } });
+    const merged = mergeSnapshot(store, 'en-us', { 'common.auth.login': 'Log in' });
+    expect(merged).toBe(true);
     expect(store.addResourceBundle).toHaveBeenCalledTimes(1);
-    expect(store.getResource('en-us', 'common', 'auth.login')).toBe('Log in');
+    expect(store.getResource('en-us', STUDIO_NAMESPACE, 'common.auth.login')).toBe('Log in');
   });
 
   it('does not merge (no re-render) when every value is identical', () => {
-    const store = fakeStore({ 'en-us/common': { 'auth.login': 'Sign in' } });
-    const merged = mergeChangedBundles(store, 'en-us', { common: { 'auth.login': 'Sign in' } });
-    expect(merged).toEqual([]);
+    const store = fakeStore({ common: { auth: { login: 'Sign in' } } });
+    const merged = mergeSnapshot(store, 'en-us', { 'common.auth.login': 'Sign in' });
+    expect(merged).toBe(false);
     expect(store.addResourceBundle).not.toHaveBeenCalled();
   });
 
-  it('merges only the namespaces that changed', () => {
-    const store = fakeStore({
-      'en-us/common': { k: 'same' },
-      'en-us/landing': { t: 'old' },
-    });
-    const merged = mergeChangedBundles(store, 'en-us', {
-      common: { k: 'same' },
-      landing: { t: 'new' },
-    });
-    expect(merged).toEqual(['landing']);
+  it('merges when at least one of several keys changed', () => {
+    const store = fakeStore({ common: { k: 'same' }, landing: { t: 'old' } });
+    const merged = mergeSnapshot(store, 'en-us', { 'common.k': 'same', 'landing.t': 'new' });
+    expect(merged).toBe(true);
     expect(store.addResourceBundle).toHaveBeenCalledTimes(1);
-    expect(store.addResourceBundle).toHaveBeenCalledWith('en-us', 'landing', { t: 'new' }, true, true);
+    expect(store.addResourceBundle).toHaveBeenCalledWith(
+      'en-us',
+      STUDIO_NAMESPACE,
+      { common: { k: 'same' }, landing: { t: 'new' } },
+      true,
+      true,
+    );
+    expect(store.getResource('en-us', STUDIO_NAMESPACE, 'landing.t')).toBe('new');
   });
 
   it('treats a missing local key as a change (pull fills the gap)', () => {
-    const store = fakeStore({ 'en-us/common': {} });
-    const merged = mergeChangedBundles(store, 'en-us', { common: { fresh: 'value' } });
-    expect(merged).toEqual(['common']);
-    expect(store.getResource('en-us', 'common', 'fresh')).toBe('value');
+    const store = fakeStore({ common: {} });
+    const merged = mergeSnapshot(store, 'en-us', { 'common.fresh': 'value' });
+    expect(merged).toBe(true);
+    expect(store.getResource('en-us', STUDIO_NAMESPACE, 'common.fresh')).toBe('value');
   });
-});
 
-describe('split + merge pipeline (304 / failure paths handled by caller)', () => {
-  it('an empty split yields no merges and never throws', () => {
-    const store = fakeStore({ 'en-us/common': { k: 'v' } });
-    expect(() => mergeChangedBundles(store, 'en-us', splitFlatByNamespace({}, NS))).not.toThrow();
+  it('an empty snapshot yields no merge and never throws', () => {
+    const store = fakeStore({ common: { k: 'v' } });
+    expect(() => mergeSnapshot(store, 'en-us', {})).not.toThrow();
     expect(store.addResourceBundle).not.toHaveBeenCalled();
   });
 });

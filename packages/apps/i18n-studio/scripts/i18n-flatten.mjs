@@ -1,33 +1,42 @@
 /**
- * Pure conversion helpers between i18next nested resources and studio's flat
- * key/value model. Shared by `i18n-push.mjs` (flatten) and `i18n-pull.mjs`
- * (unflatten); kept side-effect free so they can be unit tested directly
- * (see `tests/unit/i18n-sync.test.ts`).
+ * Pure conversion helpers between the studio-ui namespace's nested resources and
+ * studio's flat key/value model. Shared by `i18n-push.mjs` (flatten) and
+ * `i18n-pull.mjs` (unflatten); kept side-effect free so they can be unit tested
+ * directly (see `tests/unit/i18n-sync.test.ts`).
  *
- * Mapping convention (see openspec change i18n-studio-react-i18next, 决策 7):
- * - Local resources live at `app/i18n/locales/<lang>/<ns>.json`, where each ns
- *   file is a NESTED object, e.g. `common.json = { nav: { dashboard: "..." } }`.
- *   i18next uses the default `.` keySeparator, so `t('nav.dashboard')` resolves
- *   the nested path — the JSON must stay nested for the app to work.
- * - Studio stores flat keys prefixed by the i18next namespace, e.g.
- *   `common.nav.dashboard`. The full nested path is encoded, not just the ns.
+ * Single-namespace model (see openspec change i18n-studio-single-namespace):
+ * - Local resources live at `app/i18n/locales/<lang>/studio-ui.json`, a single
+ *   NESTED object, e.g. `{ common: { nav: { dashboard: "..." } }, landing: {…} }`.
+ *   i18next uses the default `.` keySeparator, so `t('common.nav.dashboard')`
+ *   resolves the nested path — the JSON must stay nested for the app to work.
+ * - Studio stores flat keys = the full nested path, e.g. `common.nav.dashboard`.
+ *   There is NO namespace prefix to strip/add: `common`/`landing` are just the
+ *   first key segments inside the one `studio-ui` namespace.
  *
- * `flatten` / `unflatten` are exact inverses for any nested ns map whose leaves
+ * `flatten` / `unflatten` are exact inverses for any nested object whose leaves
  * are strings and whose keys contain no empty segments.
  */
 
 /**
- * @param {Record<string, unknown>} obj nested object (one namespace's content)
+ * Flatten a nested object (the content of one `studio-ui.json`) into studio flat
+ * keys. The full dotted path is the studio key — no namespace prefixing.
+ *
+ * @param {Record<string, unknown>} obj nested object, e.g. `{ common: { nav: { dashboard: "…" } } }`
  * @param {string} prefix accumulated dotted prefix (internal recursion arg)
- * @returns {Record<string, string>} flat `{ "a.b.c": value }` for this subtree
+ * @returns {Record<string, string>} flat `{ "common.nav.dashboard": "…" }`
  */
-function flattenObject(obj, prefix = '') {
+export function flatten(obj, prefix = '') {
   /** @type {Record<string, string>} */
   const out = {};
   for (const [key, val] of Object.entries(obj)) {
     const path = prefix ? `${prefix}.${key}` : key;
-    if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
-      Object.assign(out, flattenObject(val, path));
+    if (val === null || Array.isArray(val)) {
+      // Defensive: skip null / array branches rather than stringifying them —
+      // studio resources are nested string leaves, these shouldn't occur.
+      continue;
+    }
+    if (typeof val === 'object') {
+      Object.assign(out, flatten(val, path));
     } else {
       out[path] = String(val);
     }
@@ -36,43 +45,22 @@ function flattenObject(obj, prefix = '') {
 }
 
 /**
- * Flatten an i18next ns map into studio flat keys prefixed by namespace.
- *
- * @param {Record<string, Record<string, unknown>>} nsMap `{ common: {...}, landing: {...} }`
- * @returns {Record<string, string>} `{ "common.nav.dashboard": "Dashboard", ... }`
- */
-export function flatten(nsMap) {
-  /** @type {Record<string, string>} */
-  const out = {};
-  for (const [ns, content] of Object.entries(nsMap)) {
-    if (content === null || typeof content !== 'object' || Array.isArray(content)) continue;
-    Object.assign(out, flattenObject(content, ns));
-  }
-  return out;
-}
-
-/**
- * Restore studio flat keys back into an i18next ns map. The first dotted
- * segment is the namespace; the remainder rebuilds the nested structure. Keys
- * therefore may contain dots (e.g. `common.hero.title` → ns `common`, nested
- * `hero.title`), so we always split on every `.` after the ns prefix.
+ * Restore studio flat keys back into the nested object for `studio-ui.json`.
+ * Every `.` is a nesting boundary (no namespace segment to peel off), so a key
+ * like `common.nav.dashboard` rebuilds `{ common: { nav: { dashboard } } }`.
  *
  * @param {Record<string, string>} flatMap `{ "common.nav.dashboard": "Dashboard", ... }`
- * @returns {Record<string, Record<string, unknown>>} `{ common: { nav: { dashboard: "Dashboard" } } }`
+ * @returns {Record<string, unknown>} `{ common: { nav: { dashboard: "Dashboard" } } }`
  */
 export function unflatten(flatMap) {
-  /** @type {Record<string, Record<string, unknown>>} */
+  /** @type {Record<string, unknown>} */
   const out = {};
   for (const [flatKey, value] of Object.entries(flatMap)) {
-    const sep = flatKey.indexOf('.');
-    // No ns prefix → skip (studio always prefixes; defensive against bad data).
-    if (sep <= 0 || sep === flatKey.length - 1) continue;
-    const ns = flatKey.slice(0, sep);
-    const rest = flatKey.slice(sep + 1);
-    if (!out[ns]) out[ns] = {};
-    const segments = rest.split('.');
+    // Skip empty / edge keys defensively (leading/trailing dot, empty string).
+    if (!flatKey || flatKey.startsWith('.') || flatKey.endsWith('.')) continue;
+    const segments = flatKey.split('.');
     /** @type {Record<string, unknown>} */
-    let cursor = out[ns];
+    let cursor = out;
     for (let i = 0; i < segments.length - 1; i++) {
       const seg = segments[i];
       if (cursor[seg] === null || typeof cursor[seg] !== 'object' || Array.isArray(cursor[seg])) {

@@ -454,6 +454,49 @@ namespace B.locales = ['zh-cn', 'ja-jp']
 
 namespace 引用的每个 locale 在创建/更新时都会经字典校验(`assertLocalesExist`),引用字典外或已禁用的 code 会被直接拒绝(`locale_not_found` / `locale_disabled`),因此不会产生悬空引用,运维无需定期巡检修补。
 
+## 界面文案同步(extract → push → 翻译 → pull)
+
+i18n-studio 自身的界面文案也是它管理的翻译数据。词条的**权威来源是源码**:组件里写 `t('ns.key')`,由 [i18next-cli](https://www.i18next.com/how-to/extracting-translations) 提取 key,经 push 进入 `studio-ui` namespace,翻译完成后再 pull 回灌打包。整条链路如下:
+
+```
+源码 t('ns.key') ──extract──▶ locales/zh-cn/*.json ──push──▶ studio (studio-ui)
+                                                                  │
+                                                              译者翻译
+                                                                  │
+       generated.ts ◀──codegen── locales/<lang>/*.json ◀──pull───┘
+```
+
+### 约定:组件只写 key
+
+界面组件**只写 `t('ns.key')`**,不在源码里携带默认文案。源语言(`zh-cn`)的实际文字写在 `app/i18n/locales/zh-cn/<ns>.json`(或在 studio 里维护),其余语种由译者在 studio 翻译。namespace 由 `useTranslation('<ns>')` 绑定决定。
+
+### extract:从源码提取 key
+
+```bash
+pnpm -F i18n-studio i18n:extract
+```
+
+i18next-cli 扫描 `app/**/*.{ts,tsx}`,把新出现的 `t()` key 以空占位写入对应 `locales/<lang>/<ns>.json`(嵌套、排序),并移除源码中已删除的静态 key(`removeUnusedKeys`)。运行时动态拼接的 key(如 `t(\`features.${k}.title\`)`)由配置里的 `preservePatterns`显式保留,避免被误删——见`i18next.config.ts`。
+
+CI 可用 `pnpm -F i18n-studio i18n:extract:ci` 检测「源码新增了 key 但资源文件未提交」的漂移(有差异即非零退出)。
+
+### push:仅推送新增 key
+
+```bash
+pnpm -F i18n-studio i18n:push   # 内部会先 extract
+```
+
+push 先 extract 刷新本地 `zh-cn` key,再 `GET /snapshot/studio-ui/zh-cn` 取系统现有 key 做 diff,**仅把新增的 key** 及其本地源文案导入到 `zh-cn`。系统里已存在的 key、以及其它语种的人工翻译**都不会被覆盖**。需要 `write` token,经 `.env` 配置(`STUDIO_BASE_URL` / `STUDIO_NAMESPACE` / `STUDIO_WRITE_TOKEN`)。
+
+### pull:回灌 + 占位补齐
+
+```bash
+pnpm -F i18n-studio i18n:pull
+pnpm -F i18n-studio i18n:codegen   # 重新生成 generated.ts
+```
+
+pull 先 `GET /snapshot/studio-ui/meta` 取语种清单(不硬编码语种),逐语种拉取文案落地为本地资源,并回写 `_meta.json`。对系统某语种尚未翻译的 key,以本地 `zh-cn` key 全集为基准**写占位**(源语言用本地源文案,其余语种用空串),保证 codegen/build 不缺 key。占位只写本地 bundle,**不回写 studio**。
+
 ## 下一步
 
 - 完整接口与字段:[API 参考](/docs/api) 与 [openapi.json](/openapi.json)
