@@ -17,6 +17,13 @@ import { DEFAULT_LANG, SUPPORTED_LANGS, I18N_NAMESPACES, resources } from './gen
 
 export { I18N_NAMESPACES, resources };
 
+/**
+ * The studio's single i18next namespace. Codegen derives `I18N_NAMESPACES` from
+ * the on-disk locale filenames (now just `studio-ui.json`), so this is the sole
+ * entry — exported as a named constant for the runtime merge + scripts to share.
+ */
+export const STUDIO_NAMESPACE = 'studio-ui';
+
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
     resources,
@@ -29,7 +36,11 @@ if (!i18n.isInitialized) {
     // return raw keys. `lowerCaseLng` forces lookup codes lowercase so they line
     // up with the resource keys.
     lowerCaseLng: true,
-    defaultNS: 'common',
+    // Single namespace model: the studio has exactly one namespace (`studio-ui`).
+    // `common` / `landing` are key prefixes inside it, not separate namespaces —
+    // so components call useTranslation() with no ns arg and pass the full key
+    // path (e.g. the `common.nav.dashboard` form) to the translator.
+    defaultNS: STUDIO_NAMESPACE,
     ns: I18N_NAMESPACES as readonly string[] as string[],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },

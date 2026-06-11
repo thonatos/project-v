@@ -1,0 +1,96 @@
+{
+  "common": {
+    "auth": {
+      "createAccount": "Create account",
+      "displayName": "Display name (optional)",
+      "email": "Email",
+      "goLogin": "Sign in",
+      "goRegister": "Sign up",
+      "hasAccount": "Already have an account?",
+      "loggingIn": "Signing in…",
+      "login": "Sign in",
+      "loginHint": "Use the email and password you registered with",
+      "loginSubtitle": "Sign in to manage your localization entries",
+      "logout": "Logout",
+      "noAccount": "No account yet?",
+      "password": "Password",
+      "register": "Sign up",
+      "registerHint": "The first user automatically becomes superuser",
+      "registerSubtitle": "Create an account to start managing localization entries",
+      "submitting": "Submitting…"
+    },
+    "dashboard": {
+      "commandPaletteHint": "Press ⌘K to open the command palette.",
+      "namespaces": "Namespaces",
+      "namespacesDescription": "Manage the localization namespaces you belong to.",
+      "newNamespace": "New namespace"
+    },
+    "lang": {
+      "label": "Switch language"
+    },
+    "menu": {
+      "manageLocales": "Manage locales",
+      "namespaces": "Namespaces"
+    },
+    "namespaceNav": {
+      "entries": "Entries",
+      "members": "Members",
+      "openSidebar": "Open sidebar",
+      "overview": "Overview",
+      "settings": "Settings",
+      "sync": "Sync",
+      "tasks": "Tasks"
+    },
+    "nav": {
+      "dashboard": "Dashboard"
+    },
+    "shell": {
+      "commandKeyHint": "Command palette shortcut",
+      "mainNav": "Main navigation",
+      "mobileNav": "Mobile navigation",
+      "openMenu": "Open menu"
+    },
+    "sidebar": {
+      "drafts": "Drafts",
+      "entries": "Entries",
+      "members": "Members"
+    }
+  },
+  "landing": {
+    "features": {
+      "crossNamespaceSync": {
+        "body": "Pull or push from a source namespace by prefix / entry_ids allowlist, with selectable strategy.",
+        "title": "Cross-namespace sync"
+      },
+      "draftPublishHistory": {
+        "body": "Dual-track draft and published states, per-entry publish/discard/revert, with traceable version history.",
+        "title": "Draft / Publish / History"
+      },
+      "heading": "Everything a multilingual team needs",
+      "singleFileDeploy": {
+        "body": "SQLite + better-sqlite3 in WAL mode — runs in a single Docker container.",
+        "title": "Single-file deployment"
+      },
+      "snapshotChannel": {
+        "body": "Read-only snapshot path decoupled from the admin API, ETag 304 + bundle_version, cacheable at runtime.",
+        "title": "Snapshot channel"
+      },
+      "subheading": "From entry management to runtime consumption — no extra services to wire up.",
+      "systemLocaleDictionary": {
+        "body": "A unified site-wide locale library with toggle control; namespaces only reference the enabled set.",
+        "title": "System-wide locale dictionary"
+      },
+      "taskCollaboration": {
+        "body": "Slice translation work into tasks, mint scoped Bearer tokens, workers claim and write back.",
+        "title": "Task-based collaboration"
+      }
+    },
+    "hero": {
+      "enterDashboard": "Enter Dashboard",
+      "login": "Sign in",
+      "readDocs": "Read the docs",
+      "subtitle": "i18n-studio models “draft → publish → history” as a cross-namespace collaboration flow, with built-in translation tasks, a Snapshot caching channel and OpenAPI docs. Single-container deployment, one SQLite file does it all.",
+      "title": "Turn localization management into a Pull Request style workflow"
+    }
+  }
+}

@@ -44,18 +44,18 @@ interface NavItem {
 export default function NamespaceLayout() {
   const { namespace, role, user, stats, locales } = useLoaderData<typeof loader>();
   const { theme, lang } = useOutletContext<DashboardContext>();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const navItems: NavItem[] = [
-    { to: '.', label: t('namespaceNav.overview'), icon: Boxes, end: true },
-    { to: 'entries', label: t('namespaceNav.entries'), icon: FileText },
-    { to: 'tasks', label: t('namespaceNav.tasks'), icon: ListChecks },
-    { to: 'sync', label: t('namespaceNav.sync'), icon: RefreshCw },
+    { to: '.', label: t('common.namespaceNav.overview'), icon: Boxes, end: true },
+    { to: 'entries', label: t('common.namespaceNav.entries'), icon: FileText },
+    { to: 'tasks', label: t('common.namespaceNav.tasks'), icon: ListChecks },
+    { to: 'sync', label: t('common.namespaceNav.sync'), icon: RefreshCw },
   ];
   if (role === 'admin') {
-    navItems.push({ to: 'members', label: t('namespaceNav.members'), icon: Users });
-    navItems.push({ to: 'settings', label: t('namespaceNav.settings'), icon: Settings });
+    navItems.push({ to: 'members', label: t('common.namespaceNav.members'), icon: Users });
+    navItems.push({ to: 'settings', label: t('common.namespaceNav.settings'), icon: Settings });
   }
 
   const crumbs = [{ label: 'Namespaces', to: '/dashboard' }, { label: namespace.name }];
@@ -72,7 +72,7 @@ export default function NamespaceLayout() {
             <SheetTrigger asChild>
               <Button type="button" variant="ghost" size="icon" className="md:hidden">
                 <Menu className="size-5" />
-                <span className="sr-only">{t('namespaceNav.openSidebar')}</span>
+                <span className="sr-only">{t('common.namespaceNav.openSidebar')}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0">
@@ -148,15 +148,15 @@ function SidebarMeta({
   bundleVersion: number;
   compact?: boolean;
 }) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   return (
     <div className={cn('mt-4 rounded-md border bg-background p-3 text-xs text-muted-foreground', compact && 'mt-3')}>
       <div className="flex items-center justify-between">
-        <span>{t('sidebar.entries')}</span>
+        <span>{t('common.sidebar.entries')}</span>
         <span className="font-medium text-foreground">{stats.entriesCount}</span>
       </div>
       <div className="mt-1 flex items-center justify-between">
-        <span>{t('sidebar.drafts')}</span>
+        <span>{t('common.sidebar.drafts')}</span>
         <span
           className={cn('font-medium', stats.draftCount > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground')}
         >
@@ -164,7 +164,7 @@ function SidebarMeta({
         </span>
       </div>
       <div className="mt-1 flex items-center justify-between">
-        <span>{t('sidebar.members')}</span>
+        <span>{t('common.sidebar.members')}</span>
         <span className="font-medium text-foreground">{stats.membersCount}</span>
       </div>
       <div className="mt-2 border-t pt-2 text-[10px] uppercase tracking-wider">bundle v{bundleVersion}</div>

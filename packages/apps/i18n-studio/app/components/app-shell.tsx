@@ -65,25 +65,25 @@ interface NavLinks {
 }
 
 function PrimaryNav({ user }: NavLinks) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   if (!user) return null;
   return (
-    <nav className="hidden items-center gap-0.5 md:flex" aria-label={t('shell.mainNav')}>
+    <nav className="hidden items-center gap-0.5 md:flex" aria-label={t('common.shell.mainNav')}>
       <NavLink to="/dashboard" className={navLinkClass}>
-        {t('nav.dashboard')}
+        {t('common.nav.dashboard')}
       </NavLink>
     </nav>
   );
 }
 
 function MobileNav({ user }: NavLinks) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const close = () => setOpen(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="md:hidden" aria-label={t('shell.openMenu')}>
+        <Button type="button" variant="ghost" size="icon" className="md:hidden" aria-label={t('common.shell.openMenu')}>
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
@@ -91,10 +91,10 @@ function MobileNav({ user }: NavLinks) {
         <SheetHeader>
           <SheetTitle>i18n-studio</SheetTitle>
         </SheetHeader>
-        <nav className="mt-6 flex flex-col gap-1 px-4" aria-label={t('shell.mobileNav')}>
+        <nav className="mt-6 flex flex-col gap-1 px-4" aria-label={t('common.shell.mobileNav')}>
           {user ? (
             <Link to="/dashboard" onClick={close} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
-              {t('nav.dashboard')}
+              {t('common.nav.dashboard')}
             </Link>
           ) : null}
           {user ? <div className="my-2 border-t" /> : null}
@@ -106,20 +106,20 @@ function MobileNav({ user }: NavLinks) {
                 className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-accent"
               >
                 <LogOut className="size-4" />
-                {t('auth.logout')}
+                {t('common.auth.logout')}
               </button>
             </Form>
           ) : (
             <>
               <Link to="/login" onClick={close} className="rounded-md px-3 py-2 text-sm hover:bg-accent">
-                {t('auth.login')}
+                {t('common.auth.login')}
               </Link>
               <Link
                 to="/register"
                 onClick={close}
                 className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
               >
-                {t('auth.register')}
+                {t('common.auth.register')}
               </Link>
             </>
           )}
@@ -130,7 +130,7 @@ function MobileNav({ user }: NavLinks) {
 }
 
 export function AppShellHeader({ user, theme, lang, crumbs, leadingSlot }: AppShellHeaderProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-3 px-4">
@@ -171,7 +171,7 @@ export function AppShellHeader({ user, theme, lang, crumbs, leadingSlot }: AppSh
           <PrimaryNav user={user} />
           <span
             className="hidden items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground lg:flex"
-            aria-label={t('shell.commandKeyHint')}
+            aria-label={t('common.shell.commandKeyHint')}
           >
             <CommandIcon className="size-3" />
             <span>K</span>
@@ -198,14 +198,14 @@ export function AppShellHeader({ user, theme, lang, crumbs, leadingSlot }: AppSh
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard">
                     <UserIcon className="size-4" />
-                    {t('menu.namespaces')}
+                    {t('common.menu.namespaces')}
                   </Link>
                 </DropdownMenuItem>
                 {user.isSuperuser ? (
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/locales">
                       <Languages className="size-4" />
-                      {t('menu.manageLocales')}
+                      {t('common.menu.manageLocales')}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
@@ -214,7 +214,7 @@ export function AppShellHeader({ user, theme, lang, crumbs, leadingSlot }: AppSh
                   <DropdownMenuItem asChild>
                     <button type="submit" className="w-full">
                       <LogOut className="size-4" />
-                      {t('auth.logout')}
+                      {t('common.auth.logout')}
                     </button>
                   </DropdownMenuItem>
                 </Form>
@@ -223,10 +223,10 @@ export function AppShellHeader({ user, theme, lang, crumbs, leadingSlot }: AppSh
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
               <Button variant="ghost" asChild size="sm">
-                <Link to="/login">{t('auth.login')}</Link>
+                <Link to="/login">{t('common.auth.login')}</Link>
               </Button>
               <Button asChild size="sm">
-                <Link to="/register">{t('auth.register')}</Link>
+                <Link to="/register">{t('common.auth.register')}</Link>
               </Button>
             </div>
           )}

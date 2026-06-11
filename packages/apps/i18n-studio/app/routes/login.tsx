@@ -1,5 +1,6 @@
 import { Form, Link, redirect, useActionData, useNavigation } from 'react-router';
 import { Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { loginAndCreateSession, loginWithPassword, getUserId } from '~/lib/auth.server';
 import { Button } from '~/components/ui/button';
@@ -34,6 +35,7 @@ export function meta() {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const actionData = useActionData<typeof action>();
   const nav = useNavigation();
   const submitting = nav.state === 'submitting';
@@ -45,32 +47,32 @@ export default function LoginPage() {
             <Sparkles className="size-5" />
           </span>
           <h1 className="text-xl font-semibold tracking-tight">i18n-studio</h1>
-          <p className="text-sm text-muted-foreground">登录以管理你的多语言词条</p>
+          <p className="text-sm text-muted-foreground">{t('common.auth.loginSubtitle')}</p>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>登录</CardTitle>
-            <CardDescription>使用注册时的邮箱与密码</CardDescription>
+            <CardTitle>{t('common.auth.login')}</CardTitle>
+            <CardDescription>{t('common.auth.loginHint')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form method="post" className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email">邮箱</Label>
+                <Label htmlFor="email">{t('common.auth.email')}</Label>
                 <Input id="email" name="email" type="email" autoComplete="email" required />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="password">密码</Label>
+                <Label htmlFor="password">{t('common.auth.password')}</Label>
                 <Input id="password" name="password" type="password" autoComplete="current-password" required />
               </div>
               {actionData?.error ? <p className="text-sm text-destructive">{actionData.error}</p> : null}
               <Button type="submit" disabled={submitting} className="mt-1">
-                {submitting ? '登录中…' : '登录'}
+                {submitting ? t('common.auth.loggingIn') : t('common.auth.login')}
               </Button>
             </Form>
             <p className="mt-4 text-center text-sm text-muted-foreground">
-              没有账号?{' '}
+              {t('common.auth.noAccount')}{' '}
               <Link to="/register" className="font-medium text-foreground hover:underline">
-                去注册
+                {t('common.auth.goRegister')}
               </Link>
             </p>
           </CardContent>

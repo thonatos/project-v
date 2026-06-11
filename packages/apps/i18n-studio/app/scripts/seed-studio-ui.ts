@@ -3,13 +3,15 @@
  *
  * Run: `pnpm -F i18n-studio i18n:seed`
  *
- * Source of truth is the local i18next resources at `app/i18n/locales/<lang>/*.json`
- * (produced by the frontend). We flatten each lang's namespaces into studio flat
- * keys (`<ns>.<nested.path>`) and feed them through `importFlat` — the exact same
- * landing path the HTTP import route uses — so translation status (published) and
- * versioning stay consistent with normal imports. Re-running is idempotent:
- * `importFlat` upserts entries by (namespace_id, key) and appends a new published
- * version rather than duplicating entries.
+ * Source of truth is the local i18next resources at
+ * `app/i18n/locales/<lang>/studio-ui.json` (produced by the frontend). We
+ * flatten each lang's single `studio-ui` namespace into studio flat keys (the
+ * full dotted path, e.g. `common.nav.dashboard`) and feed them through
+ * `importFlat` — the exact same landing path the HTTP import route uses — so
+ * translation status (published) and versioning stay consistent with normal
+ * imports. Re-running is idempotent: `importFlat` upserts entries by
+ * (namespace_id, key) and appends a new published version rather than
+ * duplicating entries.
  *
  * If the local resources don't exist yet, the script exits 0 with a hint: the
  * frontend worker must produce `app/i18n/locales/` first.
@@ -29,6 +31,8 @@ import { flatten } from '../../scripts/i18n-flatten.mjs';
 
 const TARGET_SLUG = process.env.STUDIO_NAMESPACE ?? 'studio-ui';
 const LOCALES_DIR = path.resolve('./app/i18n/locales');
+// 唯一 namespace 文件名(= studio-ui.json)。
+const NS_FILE = 'studio-ui.json';
 
 interface SeedResult {
   locale: string;
@@ -37,14 +41,8 @@ interface SeedResult {
   errors: Array<{ key: string; reason: string }>;
 }
 
-function readLangNsMap(langDir: string): Record<string, Record<string, unknown>> {
-  const nsMap: Record<string, Record<string, unknown>> = {};
-  const files = fs.readdirSync(langDir).filter((f) => f.endsWith('.json'));
-  for (const file of files) {
-    const ns = path.basename(file, '.json');
-    nsMap[ns] = JSON.parse(fs.readFileSync(path.join(langDir, file), 'utf8'));
-  }
-  return nsMap;
+function readLangResource(langDir: string): Record<string, unknown> {
+  return JSON.parse(fs.readFileSync(path.join(langDir, NS_FILE), 'utf8'));
 }
 
 function main(): void {
@@ -79,7 +77,7 @@ function main(): void {
   const results: SeedResult[] = [];
   let failed = false;
   for (const lang of langs) {
-    const entries = flatten(readLangNsMap(path.join(LOCALES_DIR, lang)));
+    const entries = flatten(readLangResource(path.join(LOCALES_DIR, lang)));
     const r = importFlat({
       namespaceId: ns.id,
       locale: lang,
