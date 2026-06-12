@@ -7,14 +7,16 @@ description: i18n-studio 系统能力总览与四类角色导航
 
 > 适用对象:全部用户
 
-i18n-studio 把"草稿 → 发布 → 历史"建模成跨命名空间的协作流程,自带翻译任务、Snapshot 缓存通道与内置 OpenAPI 文档。
+i18n-studio 把"草稿 → 发布 → release → 审计 → 质量检查"建模成跨命名空间的协作流程,自带翻译任务、Snapshot 缓存通道与内置 OpenAPI 文档。
 
 ## 主要能力
 
 - **词条管理**:草稿与已发布双轨,逐条 publish/discard/revert,版本历史可追溯
 - **跨命名空间同步**:按 prefix / entry_ids 白名单从源空间拉取或推送,strategy 可选
 - **任务化协作**:把翻译工作切成 task,生成 scoped Bearer token,worker claim 后写回
-- **Snapshot 通道**:只读快照路径与管理 API 解耦,ETag 304 + bundle_version,前端运行时可缓存
+- **Release Snapshot**:固定 `bundle_version` 基于 immutable release manifest 复现
+- **审计与质量工作台**:追踪高价值写操作,扫描缺失、草稿、过期、占位符、HTML 与长度风险
+- **任务化协作**:把翻译工作切成 `(entry, locale)` item,支持 lease、heartbeat、retry 与日志
 - **系统级 locale 字典**:全站统一 locale 库,启停可控
 
 ## 角色导航

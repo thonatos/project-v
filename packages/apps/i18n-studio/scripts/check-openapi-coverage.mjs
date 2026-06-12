@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 比对 app/routes/api.* 与 snapshot.* 文件 vs openapi.json 的 paths。
-// 仅作信息性输出,不阻塞 CI(本任务允许)。
+// Missing route documentation is a CI failure.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -49,4 +49,6 @@ if (extra.length) {
 
 if (missing.length === 0) {
   console.log('\n✓ 所有路由都已 documented');
+} else {
+  process.exitCode = 1;
 }
