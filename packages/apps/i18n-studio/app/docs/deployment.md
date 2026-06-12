@@ -15,24 +15,24 @@ i18n-studio 是 React Router v7 全栈应用,数据持久化到本地 SQLite(`da
 docker run -d \
   --name i18n-studio \
   -p 3000:3000 \
-  -v /opt/i18n-studio/data:/app/data \
+  -v /opt/i18n-studio/data:/data \
   -e SESSION_SECRET=change-me \
   thonatos/i18n-studio:latest
 ```
 
-挂载 `/app/data` 目录持久化 SQLite 文件,容器重建数据不丢。
+挂载 `/data` 目录持久化 SQLite 文件,容器重建数据不丢。
 
 ## 环境变量
 
-| 变量             | 必填 | 默认值         | 说明                                         |
-| ---------------- | ---- | -------------- | -------------------------------------------- |
-| `SESSION_SECRET` | 是   | —              | cookie session 加密密钥,随机字符串 ≥ 32 字符 |
-| `PORT`           | 否   | `3000`         | 监听端口                                     |
-| `DATABASE_URL`   | 否   | `data/i18n.db` | SQLite 文件路径,相对工作目录                 |
+| 变量             | 必填 | 默认值          | 说明                                         |
+| ---------------- | ---- | --------------- | -------------------------------------------- |
+| `SESSION_SECRET` | 是   | —               | cookie session 加密密钥,随机字符串 ≥ 32 字符 |
+| `PORT`           | 否   | `3000`          | 监听端口                                     |
+| `DATABASE_FILE`  | 否   | `/data/i18n.db` | SQLite 文件路径                              |
 
 ## 数据卷
 
-容器把 SQLite 文件写在 `/app/data` 下,WAL 模式会同时产生:
+容器把 SQLite 文件写在 `/data` 下,WAL 模式会同时产生:
 
 - `i18n.db` — 主库
 - `i18n.db-wal` — write-ahead log
@@ -44,11 +44,12 @@ docker run -d \
 
 1. 拉取新镜像 `docker pull thonatos/i18n-studio:<tag>`
 2. 备份 `data/` 目录(三个 SQLite 文件一起)
-3. 用新镜像重新启动容器,容器入口会自动执行:
+3. 在发布前显式执行数据库迁移:
    ```bash
-   pnpm db:migrate     # drizzle 自动迁移
+   pnpm -F i18n-studio db:migrate
    ```
-4. 确认 `/dashboard` 可正常加载
+4. 用新镜像重新启动容器;容器 `CMD` 只启动 React Router HTTP 服务
+5. 确认 `/dashboard` 可正常加载
 
 > **警告**:升级前请务必备份 `data/i18n.db` 与 `data/i18n.db-wal`、`data/i18n.db-shm` 三个文件。drizzle 迁移失败时只能用旧文件回滚。
 
@@ -65,10 +66,6 @@ location /snapshot/ {
 }
 ```
 
-## 健康检查
+## 存活探针
 
-```bash
-curl -fsS http://localhost:3000/healthz
-```
-
-容器编排可基于 `/healthz` 做存活探针。
+应用不内置专用健康检查路由。容器编排如需探针,请对实际入口页或受控的反向代理探针做 HTTP 检查。

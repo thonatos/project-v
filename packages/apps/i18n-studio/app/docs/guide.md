@@ -148,7 +148,7 @@ draft ──publish──> published
 
 ### bundle_version 与缓存
 
-每次成功 publish(包括批量与 revert)都会让该 namespace 的 `bundle_version` 自增 1。`bundle_version` 同时作为 snapshot 的 ETag,客户端可基于此做 304 缓存,详见 [Snapshot 消费](#snapshot-消费)。
+每次成功 publish(包括批量、import、sync、revert 和可见删除)都会创建 release manifest 并让该 namespace 的 `bundle_version` 自增 1。固定 `bundle_version` snapshot 只从 release manifest 读取,可复现历史发布内容;latest snapshot 仍读取当前已发布翻译。客户端可基于 ETag 做 304 缓存,详见 [Snapshot 消费](#snapshot-消费)。
 
 > **提示**:批量发布是事务性的——任一词条校验失败,整批回滚,`bundle_version` 不会半开。
 
@@ -163,24 +163,23 @@ draft ──publish──> published
 ### 状态机
 
 ```
-pending ──claim──> claimed ──complete──> completed
-                      ├─ fail ─────────> failed
-                      └─ cancel(管理员)─> cancelled
+pending ──claim item lease──> in_progress ──all items done──> completed
+                              ├─ item fail / retry
+                              ├─ heartbeat 延长 lease
+                              └─ cancel(管理员)─> cancelled
 ```
 
 - **pending**:已创建,尚未被领取
-- **claimed**:已被某个 worker 领取,锁定一段时间
-- **completed**:worker 已写回结果并标记完成
-- **failed**:worker 主动报错
+- **in_progress**:至少一个 `(entry, locale)` item 已被 worker claim
+- **completed**:全部 item 已写回结果并完成
+- **failed**:worker 主动报错;失败 item 保留 `last_error` 并可 retry
 - **cancelled**:管理员撤销
 
 ### 管理员视角
 
 #### 1. 创建任务
 
-在 namespace 详情页选择若干 entry 与 locale,提交后系统返回 `task_id` 与 **task token**(scope=task,只能用于该任务)。调用 `POST /api/namespaces/:slug/tasks`。
-
-> **警告**:task token 只在创建响应里出现一次,务必保存。需要重置只能撤销旧 token、重新创建任务。
+在 namespace 详情页选择若干 entry 与 locale,调用 `POST /api/namespaces/:slug/tasks` 创建任务。任务会按 `(entry, target_locale)` 生成 item,`total` 等于 item 总数。
 
 #### 2. 跟踪进度
 

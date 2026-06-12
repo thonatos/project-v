@@ -26,3 +26,26 @@ jobs:
           TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
       - name: Build all projects
         run: pnpm -r build
+  i18n-studio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install pnpm
+        run: npm i -g pnpm
+      - name: Install dependencies
+        run: pnpm install
+        env:
+          TIPTAP_PRO_TOKEN: ${{ secrets.TIPTAP_PRO_TOKEN }}
+      - name: Typecheck i18n-studio
+        run: pnpm -F i18n-studio typecheck
+      - name: Test i18n-studio
+        run: pnpm -F i18n-studio test
+      - name: Check OpenAPI coverage
+        run: pnpm -F i18n-studio check:openapi-coverage
+      - name: Docker build i18n-studio
+        run: docker build -f packages/apps/i18n-studio/Dockerfile -t i18n-studio:ci .

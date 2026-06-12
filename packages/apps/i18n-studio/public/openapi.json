@@ -20,6 +20,9 @@
     { "name": "entries", "description": "词条 CRUD 与发布流" },
     { "name": "versions", "description": "翻译版本与发布历史" },
     { "name": "members", "description": "命名空间成员管理" },
+    { "name": "invitations", "description": "命名空间邀请生命周期" },
+    { "name": "audit", "description": "审计事件查询" },
+    { "name": "quality", "description": "翻译质量工作台" },
     { "name": "tokens", "description": "API token (scope=task / readonly)" },
     { "name": "tasks", "description": "翻译任务编排与 worker 协议" },
     { "name": "sync", "description": "跨命名空间同步" },
@@ -322,6 +325,30 @@
     }
   },
   "paths": {
+    "/api/lang": {
+      "post": {
+        "operationId": "setLanguage",
+        "tags": ["namespaces"],
+        "summary": "Set UI language",
+        "description": "更新 UI 语言 cookie。",
+        "responses": {
+          "200": { "description": "Language updated" },
+          "400": { "$ref": "#/components/responses/validation_error" }
+        }
+      }
+    },
+    "/api/theme": {
+      "post": {
+        "operationId": "setTheme",
+        "tags": ["namespaces"],
+        "summary": "Set UI theme",
+        "description": "更新 UI theme cookie。",
+        "responses": {
+          "200": { "description": "Theme updated" },
+          "400": { "$ref": "#/components/responses/validation_error" }
+        }
+      }
+    },
     "/api/namespaces": {
       "get": {
         "operationId": "listNamespaces",
@@ -1168,6 +1195,112 @@
         }
       }
     },
+    "/api/namespaces/{slug}/invitations/{id}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+      ],
+      "patch": {
+        "operationId": "resendInvitation",
+        "tags": ["invitations"],
+        "summary": "Resend invitation",
+        "description": "刷新 pending invitation 的 token 与过期时间;仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": { "description": "Invitation resent" },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      },
+      "delete": {
+        "operationId": "revokeInvitation",
+        "tags": ["invitations"],
+        "summary": "Revoke invitation",
+        "description": "撤销 pending invitation;仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": { "description": "Invitation revoked" },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/audit": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "listAuditEvents",
+        "tags": ["audit"],
+        "summary": "List audit events",
+        "description": "按 action、actor、resource 和时间范围查询 namespace 审计事件;仅 admin。",
+        "security": [{ "cookieSession": [] }],
+        "parameters": [
+          { "in": "query", "name": "action", "schema": { "type": "string" } },
+          { "in": "query", "name": "actor_id", "schema": { "type": "string" } },
+          { "in": "query", "name": "resource_type", "schema": { "type": "string" } },
+          { "in": "query", "name": "resource_id", "schema": { "type": "string" } },
+          { "in": "query", "name": "from", "schema": { "type": "integer" } },
+          { "in": "query", "name": "to", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Audit events" },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/quality": {
+      "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
+      "get": {
+        "operationId": "listQualityIssues",
+        "tags": ["quality"],
+        "summary": "List quality issues",
+        "description": "按 issue_type、locale、prefix、severity、status 查询质量问题。",
+        "security": [{ "cookieSession": [] }],
+        "parameters": [
+          { "in": "query", "name": "issue_type", "schema": { "type": "string" } },
+          { "in": "query", "name": "locale", "schema": { "type": "string" } },
+          { "in": "query", "name": "prefix", "schema": { "type": "string" } },
+          { "in": "query", "name": "severity", "schema": { "type": "string", "enum": ["info", "warning", "error"] } },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": { "type": "string", "enum": ["open", "resolved", "suppressed"] }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Quality issues" },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      },
+      "post": {
+        "operationId": "scanQualityIssues",
+        "tags": ["quality"],
+        "summary": "Run quality scan",
+        "description": "运行 deterministic quality rules 并写入 quality_issues;需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": { "description": "Scan result" },
+          "403": { "$ref": "#/components/responses/forbidden_error" }
+        }
+      }
+    },
+    "/api/namespaces/{slug}/quality/{id}": {
+      "parameters": [
+        { "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+      ],
+      "patch": {
+        "operationId": "updateQualityIssueStatus",
+        "tags": ["quality"],
+        "summary": "Resolve or suppress quality issue",
+        "description": "将质量问题标记为 resolved 或 suppressed;需 admin/editor。",
+        "security": [{ "cookieSession": [] }],
+        "responses": {
+          "200": { "description": "Quality issue updated" },
+          "403": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" }
+        }
+      }
+    },
     "/api/namespaces/{slug}/tokens": {
       "parameters": [{ "in": "path", "name": "slug", "required": true, "schema": { "type": "string" } }],
       "get": {
@@ -1456,6 +1589,40 @@
             }
           },
           "415": { "$ref": "#/components/responses/unsupported_media_type_error" }
+        }
+      }
+    },
+    "/api/tasks/{id}/heartbeat": {
+      "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }],
+      "post": {
+        "operationId": "heartbeatTask",
+        "tags": ["tasks"],
+        "summary": "Heartbeat task item leases",
+        "description": "Worker 延长当前持有的未过期 item lease。",
+        "security": [{ "taskBearer": [] }],
+        "responses": {
+          "200": { "description": "Heartbeat result" },
+          "401": { "$ref": "#/components/responses/forbidden_error" },
+          "409": { "$ref": "#/components/responses/validation_error" }
+        }
+      }
+    },
+    "/api/tasks/{id}/items/{itemId}/retry": {
+      "parameters": [
+        { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } },
+        { "in": "path", "name": "itemId", "required": true, "schema": { "type": "string" } }
+      ],
+      "post": {
+        "operationId": "retryTaskItem",
+        "tags": ["tasks"],
+        "summary": "Retry failed task item",
+        "description": "将 failed item 重新置为 pending 并清理 lease。",
+        "security": [{ "taskBearer": [] }],
+        "responses": {
+          "200": { "description": "Retry result" },
+          "401": { "$ref": "#/components/responses/forbidden_error" },
+          "404": { "$ref": "#/components/responses/not_found_error" },
+          "409": { "$ref": "#/components/responses/validation_error" }
         }
       }
     },
