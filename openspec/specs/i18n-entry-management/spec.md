@@ -148,7 +148,7 @@
 
 ### Requirement: 多视图词条查询
 
-系统 SHALL 提供按命名空间为根的词条查询，支持以下组合：（a）返回所有启用语言；（b）按一个或多个 `locale` 过滤；（c）按 `version` 快照（每个翻译返回 ≤ 该版本号的最新值，缺失则标记 missing）。所有视图 MUST 保持响应结构一致：词条以 flat key 列表返回，每项包含 `key` 与 `translations: { [locale]: { value, version, missing? } }`。
+系统 SHALL 提供按命名空间为根的词条查询，支持以下组合：（a）返回所有启用语言；（b）按一个或多个 `locale` 过滤；（c）按 release `bundle_version` 快照。带 `bundle_version` 的快照 MUST 基于 release manifest 计算，而不是把 namespace 级 bundle version 当作单条翻译的局部 version。所有视图 MUST 保持响应结构一致：词条以 flat key 列表返回，每项包含 `key` 与 `translations: { [locale]: { value, version, missing? } }`。
 
 #### Scenario: 按空间获取所有语言
 
@@ -174,35 +174,41 @@
 - **WHEN** 查询参数 `locale=de-de`
 - **THEN** 系统返回 422，提示 locale 未启用
 
-#### Scenario: 按版本快照获取（全空间）
+#### Scenario: 按 release 快照获取（全空间）
 
-- **GIVEN** 词条 `home.title` 的 `zh-cn` 历经 `v1=首页 / v2=主页 / v3=回家`
-- **WHEN** 调用 `GET /api/.../entries?at_version=2&locale=zh-cn`
-- **THEN** 返回 `home.title.translations.zh-cn = { value: "主页", version: 2 }`，不返回 v3
+- **GIVEN** 命名空间存在 `bundle_version=12` 的 release manifest
+- **WHEN** 调用 `GET /api/.../entries?bundle_version=12&locale=zh-cn`
+- **THEN** 返回值来自 release manifest 指向的 translation version，而不是 `translation_versions.version <= 12` 的推算结果
 
-#### Scenario: 版本快照与多语言组合
+#### Scenario: release 快照与多语言组合
 
-- **GIVEN** 同一词条 `zh-cn` 的最新版本为 5，`en-us` 最新版本为 3
-- **WHEN** 调用 `at_version=4&locale=zh-cn,en-us`
-- **THEN** `zh-cn` 返回 ≤4 的最新版（如 v4），`en-us` 返回 ≤4 的最新版（如 v3，因后续不存在 v4 仍以 v3 为准）
+- **GIVEN** release manifest 记录了同一词条 `zh-cn` version 5 与 `en-us` version 3
+- **WHEN** 调用 `?bundle_version=12&locale=zh-cn,en-us`
+- **THEN** `zh-cn` 返回 manifest 指向的 version 5，`en-us` 返回 manifest 指向的 version 3
 
-#### Scenario: 版本快照中的"尚未存在"
+#### Scenario: release 快照中的尚未存在
 
-- **GIVEN** 词条 `home.subtitle` 在 `at_version=2` 时刻尚未创建（首版本为 v3）
-- **WHEN** 按 `at_version=2` 查询
-- **THEN** 该词条不出现在结果中（视为不存在），不以 missing 形式返回
+- **GIVEN** 词条 `home.subtitle` 未出现在 `bundle_version=12` 的 release manifest 中
+- **WHEN** 按 `bundle_version=12` 查询
+- **THEN** 该词条不出现在结果中，不以 missing 形式返回
 
-#### Scenario: flat 导出按版本快照
+#### Scenario: flat 导出按 release 快照
 
-- **GIVEN** 命名空间含若干词条与多版本翻译
-- **WHEN** 调用 `GET /api/.../export?locale=zh-cn&at_version=10`
-- **THEN** 返回 `{ "home.title": "<v≤10 的最新值>", ... }`，不包含在 v10 之后才创建的词条与缺 zh-cn 的条目
+- **GIVEN** 命名空间含若干词条与 release manifest
+- **WHEN** 调用 `GET /api/.../export?locale=zh-cn&bundle_version=12`
+- **THEN** 返回 `{ "home.title": "<manifest 指向的值>", ... }`，不包含 manifest 之外的条目
 
-#### Scenario: at_version 与 locale=all 同时存在
+#### Scenario: bundle_version 与 view=all 同时存在
 
-- **GIVEN** 命名空间含三种语言
-- **WHEN** 调用 `?view=all&at_version=20`
-- **THEN** 每条词条按各自语言独立计算 ≤ 20 的最新版本，三种语言都各自标记 `value/version/missing`
+- **GIVEN** 命名空间含三种语言且存在 release manifest
+- **WHEN** 调用 `?view=all&bundle_version=20`
+- **THEN** 每条词条按 manifest 中各自语言的 translation version 返回，三种语言都各自标记 `value/version/missing`
+
+#### Scenario: legacy at_version 兼容
+
+- **GIVEN** 客户端仍调用旧参数 `at_version`
+- **WHEN** 系统尚未移除兼容层
+- **THEN** 系统 MUST 将其映射到明确文档化的 legacy 行为或返回带迁移提示的 422，MUST NOT 悄悄产生与 release 语义冲突的结果
 
 ### Requirement: 响应分组形态
 
