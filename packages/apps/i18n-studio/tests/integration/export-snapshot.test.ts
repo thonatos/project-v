@@ -194,7 +194,7 @@ describe('export & snapshot', () => {
       expect(after.bundle.locales['zh-cn']!['a']).toBe('中A2');
     });
 
-    it('bundleVersion 参数:写入 ETag,且按当前 schema 等价于 atVersion 过滤', async () => {
+    it('bundleVersion 参数:按 release manifest 固定读取', async () => {
       const w = await seedDocsPublished();
       ctx.api.entry.upsertEntry({
         namespaceId: w.docs.id,
@@ -209,6 +209,57 @@ describe('export & snapshot', () => {
       });
       expect(fixed.bundle.locales['zh-cn']!['a']).toBe('中A');
       expect(fixed.meta.etag).toContain('-1"');
+    });
+
+    it('bundleVersion 缺失 release → 404', async () => {
+      await seedDocsPublished();
+      expect(() => ctx.api.snapshot.getBundle({ slug: 'docs', locales: ['zh-cn'], bundleVersion: 999 })).toThrow();
+    });
+
+    it('固定 release 在后续删除词条后仍 immutable', async () => {
+      const w = await seedDocsPublished();
+      ctx.api.entry.deleteEntry(w.docs.id, 'a');
+      const fixed = ctx.api.snapshot.getBundle({
+        slug: 'docs',
+        locales: ['zh-cn'],
+        bundleVersion: 1,
+      });
+      const latest = ctx.api.snapshot.getBundle({ slug: 'docs', locales: ['zh-cn'] });
+      expect(fixed.bundle.locales['zh-cn']!['a']).toBe('中A');
+      expect(latest.bundle.locales['zh-cn']!['a']).toBeUndefined();
+    });
+
+    it('revert 创建新 release,旧 release 保持不变', async () => {
+      const w = await seedDocsPublished();
+      ctx.api.entry.upsertEntry({
+        namespaceId: w.docs.id,
+        key: 'a',
+        translations: { 'zh-cn': '中A2' },
+        actorId: w.alice.id,
+      });
+      const entry = ctx.api.entry.getEntryByKey(w.docs.id, 'a');
+      if (!entry) throw new Error('entry missing');
+      ctx.api.version.revert(entry.id, 'zh-cn', 1, w.alice.id);
+
+      const v1 = ctx.api.snapshot.getBundle({ slug: 'docs', locales: ['zh-cn'], bundleVersion: 1 });
+      const v2 = ctx.api.snapshot.getBundle({ slug: 'docs', locales: ['zh-cn'], bundleVersion: 2 });
+      const latest = ctx.api.snapshot.getBundle({ slug: 'docs', locales: ['zh-cn'] });
+      expect(v1.bundle.locales['zh-cn']!['a']).toBe('中A');
+      expect(v2.bundle.locales['zh-cn']!['a']).toBe('中A2');
+      expect(latest.bundle.locales['zh-cn']!['a']).toBe('中A');
+      expect(latest.bundle.bundleVersion).toBe(3);
+    });
+
+    it('固定单语言 snapshot 响应 immutable cache header', async () => {
+      await seedDocsPublished();
+      ctx.api.namespace.updateNamespace('docs', { publicRead: true });
+      const route = await import('~/routes/snapshot.$slug.$locale');
+      const response = await route.loader({
+        request: new Request('https://x/snapshot/docs/zh-cn?bundle_version=1'),
+        params: { slug: 'docs', locale: 'zh-cn' },
+      } as never);
+      expect(response.headers.get('Cache-Control')).toContain('immutable');
+      expect(response.headers.get('X-Bundle-Version')).toBe('1');
     });
 
     it('未启用 locale → 抛 422', async () => {

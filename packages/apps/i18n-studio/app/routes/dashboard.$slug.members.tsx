@@ -1,9 +1,15 @@
 import * as React from 'react';
-import { useFetcher, useLoaderData, Form, useOutletContext } from 'react-router';
+import { useFetcher, useLoaderData, Form, useActionData, useOutletContext } from 'react-router';
 import { Trash2, UserPlus } from 'lucide-react';
 
 import { requireRole } from '~/lib/auth.server';
-import { listMembers, inviteByEmail, updateRole, removeMember } from '~/lib/services/membership.server';
+import { listMembers, updateRole, removeMember } from '~/lib/services/membership.server';
+import {
+  createInvitation,
+  listInvitations,
+  resendInvitation,
+  revokeInvitation,
+} from '~/lib/services/invitation.server';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
@@ -26,7 +32,12 @@ type MemberRole = 'admin' | 'editor' | 'viewer';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const ctx = await requireRole(request, params.slug!, ['admin']);
-  return { namespace: ctx.namespace, members: listMembers(ctx.namespace.id), self: ctx.user };
+  return {
+    namespace: ctx.namespace,
+    members: listMembers(ctx.namespace.id),
+    invitations: listInvitations(ctx.namespace.id),
+    self: ctx.user,
+  };
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -37,10 +48,28 @@ export async function action({ request, params }: Route.ActionArgs) {
     const email = String(form.get('email') ?? '');
     const role = String(form.get('role') ?? 'editor') as MemberRole;
     try {
-      inviteByEmail(ctx.namespace.id, email, role);
-      return { ok: true };
+      const result = createInvitation({ namespaceId: ctx.namespace.id, email, role, invitedBy: ctx.user.id });
+      return { ok: true, inviteUrl: `/invite/${result.token}` };
     } catch (e) {
       return { error: e instanceof Error ? e.message : 'invite failed' };
+    }
+  }
+  if (intent === 'resend') {
+    const invitationId = String(form.get('invitationId') ?? '');
+    try {
+      const result = resendInvitation(invitationId, ctx.user.id, ctx.namespace.id);
+      return { ok: true, inviteUrl: `/invite/${result.token}` };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : 'resend failed' };
+    }
+  }
+  if (intent === 'revoke') {
+    const invitationId = String(form.get('invitationId') ?? '');
+    try {
+      revokeInvitation(invitationId, ctx.user.id, ctx.namespace.id);
+      return { ok: true };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : 'revoke failed' };
     }
   }
   if (intent === 'update') {
@@ -71,7 +100,8 @@ export function meta({ data }: Route.MetaArgs) {
 
 export default function MembersPage() {
   useOutletContext<NsContext>();
-  const { namespace, members, self } = useLoaderData<typeof loader>();
+  const { namespace, members, invitations, self } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
   const fetcher = useFetcher();
   const [removeTarget, setRemoveTarget] = React.useState<{ userId: string; email: string } | null>(null);
   const [inviteRole, setInviteRole] = React.useState<MemberRole>('editor');
@@ -88,7 +118,7 @@ export default function MembersPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">邀请成员</CardTitle>
-          <CardDescription>对方需先在 i18n-studio 注册并使用同一邮箱。</CardDescription>
+          <CardDescription>邀请会生成 pending invitation,对方登录或注册同一邮箱后接受。</CardDescription>
         </CardHeader>
         <CardContent>
           <Form method="post" className="grid items-end gap-3 sm:grid-cols-[1fr_180px_auto]">
@@ -115,6 +145,76 @@ export default function MembersPage() {
               <UserPlus className="size-4" /> 邀请
             </Button>
           </Form>
+          {actionData?.inviteUrl ? (
+            <p className="mt-3 break-all rounded-md border bg-muted p-2 font-mono text-xs">
+              {new URL(actionData.inviteUrl, 'http://localhost').pathname}
+            </p>
+          ) : null}
+          {actionData?.error ? <p className="mt-3 text-sm text-destructive">{actionData.error}</p> : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">邀请列表 ({invitations.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>email</TableHead>
+                <TableHead>role</TableHead>
+                <TableHead>status</TableHead>
+                <TableHead>expires</TableHead>
+                <TableHead className="w-36 text-right">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invitations.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                    暂无邀请
+                  </TableCell>
+                </TableRow>
+              ) : (
+                invitations.map((invitation) => {
+                  const expired = invitation.status === 'pending' && invitation.expiresAt <= Date.now();
+                  return (
+                    <TableRow key={invitation.id}>
+                      <TableCell>{invitation.email}</TableCell>
+                      <TableCell className="font-mono text-xs">{invitation.role}</TableCell>
+                      <TableCell>
+                        <span className="font-mono text-xs">{expired ? 'expired' : invitation.status}</span>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(invitation.expiresAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {invitation.status === 'pending' ? (
+                          <div className="flex justify-end gap-1">
+                            <Form method="post">
+                              <input type="hidden" name="intent" value="resend" />
+                              <input type="hidden" name="invitationId" value={invitation.id} />
+                              <Button type="submit" size="sm" variant="ghost">
+                                重发
+                              </Button>
+                            </Form>
+                            <Form method="post">
+                              <input type="hidden" name="intent" value="revoke" />
+                              <input type="hidden" name="invitationId" value={invitation.id} />
+                              <Button type="submit" size="sm" variant="ghost">
+                                撤销
+                              </Button>
+                            </Form>
+                          </div>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

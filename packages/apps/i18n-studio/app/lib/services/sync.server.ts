@@ -5,6 +5,8 @@ import { newId, nowMs } from '~/lib/id.server';
 import { entries, translations, namespaces } from '~/db/schema';
 import { getNamespaceLocales } from '~/lib/services/namespace.server';
 import { writeTranslationInTx } from '~/lib/services/entry.server';
+import { createReleaseFromCurrent } from '~/lib/services/release.server';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 import { validateLocaleSubset } from '~/lib/validators';
 
 export type SyncStrategy = 'skip' | 'overwrite' | 'fill_missing';
@@ -229,6 +231,31 @@ export function syncSpaces(input: SyncInput): SyncPlan | (SyncResult & { plan: S
     if (ctx.bundleVersionBumped) {
       const ns = tx.select().from(namespaces).where(eq(namespaces.id, target.id)).get();
       lastBundle = ns?.bundleVersion ?? 0;
+      if (lastBundle) {
+        const release = createReleaseFromCurrent(tx as unknown as ReturnType<typeof getDb>, {
+          namespaceId: target.id,
+          bundleVersion: lastBundle,
+          actorId: input.actorId,
+          source: 'sync',
+          note: `Synced from ${source.slug}`,
+        });
+        writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+          namespaceId: target.id,
+          actorId: input.actorId,
+          action: 'namespace.sync',
+          resourceType: 'namespace',
+          resourceId: target.id,
+          metadata: {
+            sourceNamespaceId: source.id,
+            sourceSlug: source.slug,
+            created: result.created,
+            updated: result.updated,
+            skipped: result.skipped,
+            bundleVersion: lastBundle,
+            releaseId: release.release.id,
+          },
+        });
+      }
     }
   });
 

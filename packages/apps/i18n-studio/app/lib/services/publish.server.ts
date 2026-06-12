@@ -4,6 +4,8 @@ import { getDb } from '~/lib/db.server';
 import { newId, nowMs } from '~/lib/id.server';
 import { translationVersions, translations, entries } from '~/db/schema';
 import { bumpBundleVersion } from '~/lib/services/namespace.server';
+import { createReleaseFromCurrent } from '~/lib/services/release.server';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 
 export interface PublishItem {
   entryId: string;
@@ -82,6 +84,20 @@ export function publishBatch(items: PublishItem[], actorId: string): { published
     let lastBundle = 0;
     for (const nsId of namespaceIds) {
       lastBundle = bumpBundleVersion(tx as unknown as ReturnType<typeof getDb>, nsId);
+      const release = createReleaseFromCurrent(tx as unknown as ReturnType<typeof getDb>, {
+        namespaceId: nsId,
+        bundleVersion: lastBundle,
+        actorId,
+        source: 'publish',
+      });
+      writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+        namespaceId: nsId,
+        actorId,
+        action: 'release.publish',
+        resourceType: 'release',
+        resourceId: release.release.id,
+        metadata: { bundleVersion: lastBundle, published, itemCount: release.itemCount },
+      });
     }
     return { published, bundleVersion: lastBundle };
   });
@@ -109,6 +125,16 @@ export function discard(entryId: string, locale: string, version: number, _actor
     if (row.status !== 'draft')
       throw new Response(`only draft can be discarded: status=${row.status}`, { status: 400 });
     tx.update(translationVersions).set({ status: 'discarded' }).where(eq(translationVersions.id, row.id)).run();
+    const entry = tx.select().from(entries).where(eq(entries.id, entryId)).get();
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId: entry?.namespaceId ?? null,
+      actorId: _actorId,
+      action: 'translation.discard',
+      resourceType: 'translation_version',
+      resourceId: row.id,
+      before: row,
+      metadata: { entryId, locale, version },
+    });
     return true;
   });
 }

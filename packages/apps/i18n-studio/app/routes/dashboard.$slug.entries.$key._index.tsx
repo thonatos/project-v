@@ -6,6 +6,7 @@ import { requireRole } from '~/lib/auth.server';
 import { getNamespaceLocales } from '~/lib/services/namespace.server';
 import { upsertEntry } from '~/lib/services/entry.server';
 import { getEntryDetail } from '~/lib/services/query.server';
+import { listQualityIssues } from '~/lib/services/quality.server';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
@@ -19,11 +20,18 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const ctx = await requireRole(request, params.slug!, ['admin', 'editor', 'viewer']);
   const key = decodeURIComponent(params.key!);
   const detail = key === 'new' ? null : getEntryDetail(ctx.namespace.id, key);
+  const qualityIssues =
+    key === 'new'
+      ? []
+      : listQualityIssues({ namespaceId: ctx.namespace.id, prefix: key, status: 'open', limit: 100 }).filter(
+          (issue) => issue.key === key,
+        );
   return {
     namespace: { slug: ctx.namespace.slug, name: ctx.namespace.name },
     role: ctx.role,
     locales: getNamespaceLocales(ctx.namespace),
     detail,
+    qualityIssues,
     keyParam: key,
   };
 }
@@ -67,7 +75,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function EntryEditPage() {
-  const { namespace, role, locales, detail, keyParam } = useLoaderData<typeof loader>();
+  const { namespace, role, locales, detail, qualityIssues, keyParam } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const nav = useNavigation();
   const submitting = nav.state === 'submitting';
@@ -129,12 +137,20 @@ export default function EntryEditPage() {
             </div>
             {locales.map((locale) => {
               const v = valueFor(locale);
+              const localeIssues = qualityIssues.filter((issue) => issue.locale === locale);
               return (
                 <div key={locale} className="rounded-md border bg-background p-3">
                   <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-                    <Label htmlFor={`t_${locale}`} className="font-mono">
-                      {locale}
-                    </Label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Label htmlFor={`t_${locale}`} className="font-mono">
+                        {locale}
+                      </Label>
+                      {localeIssues.map((issue) => (
+                        <Badge key={issue.id} variant={issue.severity === 'error' ? 'destructive' : 'secondary'}>
+                          {issue.issueType}
+                        </Badge>
+                      ))}
+                    </div>
                     <div className="flex items-center gap-2 text-xs">
                       {v.version ? (
                         <Badge variant="outline" className="font-mono">

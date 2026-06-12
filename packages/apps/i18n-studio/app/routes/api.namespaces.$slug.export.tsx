@@ -17,7 +17,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       : undefined;
     const atVersionRaw = url.searchParams.get('at_version');
     const atVersion = atVersionRaw ? Number(atVersionRaw) : undefined;
-    const data = exportFlat({ namespaceId: ctx.namespace.id, locale, atVersion });
+    const bundleVersionRaw = url.searchParams.get('bundle_version');
+    const bundleVersion = bundleVersionRaw ? Number(bundleVersionRaw) : undefined;
+    const data = exportFlat({ namespaceId: ctx.namespace.id, locale, atVersion, bundleVersion });
     return jsonOk(data);
   } catch (e) {
     return handleError(e);
