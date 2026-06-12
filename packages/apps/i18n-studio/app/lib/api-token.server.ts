@@ -6,6 +6,7 @@ import { getDb } from '~/lib/db.server';
 import { newId, nowMs } from '~/lib/id.server';
 import { apiTokens, namespaces } from '~/db/schema';
 import type { TokenScope, ApiToken } from '~/db/schema';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 
 const TOKEN_PREFIX_LEN = 6;
 
@@ -46,7 +47,17 @@ export function createApiToken(input: {
     createdAt: now,
     revokedAt: null,
   };
-  db.insert(apiTokens).values(row).run();
+  db.transaction((tx) => {
+    tx.insert(apiTokens).values(row).run();
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId: input.namespaceId,
+      actorId: input.createdBy,
+      action: 'token.create',
+      resourceType: 'api_token',
+      resourceId: row.id,
+      metadata: { name: row.name, scope: row.scope, tokenPrefix: row.tokenPrefix },
+    });
+  });
   return { token: row, plaintext };
 }
 
@@ -57,7 +68,23 @@ export function listApiTokens(namespaceId: string): ApiToken[] {
 
 export function revokeApiToken(id: string): void {
   const db = getDb();
-  db.update(apiTokens).set({ revokedAt: nowMs() }).where(eq(apiTokens.id, id)).run();
+  db.transaction((tx) => {
+    const existing = tx.select().from(apiTokens).where(eq(apiTokens.id, id)).get();
+    const revokedAt = nowMs();
+    tx.update(apiTokens).set({ revokedAt }).where(eq(apiTokens.id, id)).run();
+    if (existing) {
+      writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+        namespaceId: existing.namespaceId,
+        actorId: existing.createdBy,
+        action: 'token.revoke',
+        resourceType: 'api_token',
+        resourceId: existing.id,
+        before: { revokedAt: existing.revokedAt },
+        after: { revokedAt },
+        metadata: { name: existing.name, scope: existing.scope, tokenPrefix: existing.tokenPrefix },
+      });
+    }
+  });
 }
 
 export interface VerifiedToken {

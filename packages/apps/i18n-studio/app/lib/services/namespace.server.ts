@@ -7,6 +7,7 @@ import type { Namespace } from '~/db/schema';
 import { localeSchema, parseNsLocales, slugSchema } from '~/lib/validators';
 import { jsonError } from '~/lib/api.server';
 import { assertLocalesExist, listEnabledLocales } from '~/lib/services/locale.server';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 
 const DEFAULT_LOCALE_COUNT = 3;
 
@@ -154,7 +155,17 @@ export function updateNamespace(slug: string, patch: UpdateNamespaceInput): Name
       .where(eq(namespaces.id, ns.id))
       .run();
 
-    return tx.select().from(namespaces).where(eq(namespaces.id, ns.id)).get()!;
+    const updated = tx.select().from(namespaces).where(eq(namespaces.id, ns.id)).get()!;
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId: ns.id,
+      actorId: ns.createdBy,
+      action: 'namespace.update',
+      resourceType: 'namespace',
+      resourceId: ns.id,
+      before: ns,
+      after: updated,
+    });
+    return updated;
   });
 }
 
@@ -162,7 +173,17 @@ export function deleteNamespace(slug: string): void {
   const db = getDb();
   const ns = getNamespaceBySlug(slug);
   if (!ns) return;
-  db.delete(namespaces).where(eq(namespaces.id, ns.id)).run();
+  db.transaction((tx) => {
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId: ns.id,
+      actorId: ns.createdBy,
+      action: 'namespace.delete',
+      resourceType: 'namespace',
+      resourceId: ns.id,
+      before: ns,
+    });
+    tx.delete(namespaces).where(eq(namespaces.id, ns.id)).run();
+  });
 }
 
 export function getNamespaceLocales(ns: Namespace): string[] {

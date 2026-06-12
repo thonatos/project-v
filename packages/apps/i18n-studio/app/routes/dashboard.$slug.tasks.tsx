@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useLoaderData, Form, redirect, useOutletContext } from 'react-router';
+import { useLoaderData, Form, Link, redirect, useOutletContext } from 'react-router';
 import { Plus, X } from 'lucide-react';
 
 import { requireRole } from '~/lib/auth.server';
@@ -174,7 +174,14 @@ export default function TasksPage() {
                   const targetList = JSON.parse(t.targetLocales) as string[];
                   return (
                     <TableRow key={t.id}>
-                      <TableCell className="font-mono text-xs">{t.id.slice(0, 10)}…</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <Link
+                          to={`/dashboard/${namespace.slug}/tasks/${t.id}`}
+                          className="underline-offset-4 hover:underline"
+                        >
+                          {t.id.slice(0, 10)}…
+                        </Link>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={statusVariant(t.status)}>{t.status}</Badge>
                       </TableCell>

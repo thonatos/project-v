@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link, NavLink, Outlet, useLoaderData, useOutletContext } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Boxes, FileText, ListChecks, Menu, RefreshCw, Settings, Users } from 'lucide-react';
+import { Boxes, FileText, History, ListChecks, Menu, RefreshCw, Settings, ShieldCheck, Users } from 'lucide-react';
 
 import { requireRole } from '~/lib/auth.server';
 import { getNamespaceStats, getNamespaceLocales } from '~/lib/services/namespace.server';
@@ -50,10 +50,12 @@ export default function NamespaceLayout() {
   const navItems: NavItem[] = [
     { to: '.', label: t('common.namespaceNav.overview'), icon: Boxes, end: true },
     { to: 'entries', label: t('common.namespaceNav.entries'), icon: FileText },
+    { to: 'quality', label: 'Quality', icon: ShieldCheck },
     { to: 'tasks', label: t('common.namespaceNav.tasks'), icon: ListChecks },
     { to: 'sync', label: t('common.namespaceNav.sync'), icon: RefreshCw },
   ];
   if (role === 'admin') {
+    navItems.push({ to: 'audit', label: 'Audit', icon: History });
     navItems.push({ to: 'members', label: t('common.namespaceNav.members'), icon: Users });
     navItems.push({ to: 'settings', label: t('common.namespaceNav.settings'), icon: Settings });
   }

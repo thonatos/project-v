@@ -3,6 +3,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { getDb } from '~/lib/db.server';
 import { entries, translations, namespaces } from '~/db/schema';
 import { getNamespaceLocales } from '~/lib/services/namespace.server';
+import { readReleaseRows } from '~/lib/services/release.server';
 import { validateLocaleSubset } from '~/lib/validators';
 
 export type ExportPayload = Record<string, string> | Record<string, Record<string, string>>;
@@ -11,6 +12,7 @@ export interface ExportInput {
   namespaceId: string;
   locale?: string[]; // 单 locale 平铺;多 locale 顶层分组
   atVersion?: number;
+  bundleVersion?: number;
 }
 
 export function exportFlat(input: ExportInput): ExportPayload {
@@ -21,6 +23,9 @@ export function exportFlat(input: ExportInput): ExportPayload {
   const target = input.locale && input.locale.length > 0 ? input.locale : allowed;
   const subset = validateLocaleSubset(target, allowed);
   if (!subset.ok) throw new Error(`未启用的 locale: ${subset.invalid.join(', ')}`);
+  if (typeof input.atVersion === 'number' && typeof input.bundleVersion === 'number') {
+    throw new Response(JSON.stringify({ code: 'conflicting_snapshot_params' }), { status: 422 });
+  }
 
   // 仅 published
   type Row = { key: string; locale: string; value: string };
@@ -28,7 +33,20 @@ export function exportFlat(input: ExportInput): ExportPayload {
   const nsId = input.namespaceId.replace(/'/g, "''");
 
   let rows: Row[];
-  if (typeof input.atVersion === 'number') {
+  if (typeof input.bundleVersion === 'number') {
+    const releaseRows = readReleaseRows({
+      namespaceId: input.namespaceId,
+      bundleVersion: input.bundleVersion,
+      locales: target,
+    });
+    if (!releaseRows) {
+      throw new Response(JSON.stringify({ code: 'release_not_found', bundleVersion: input.bundleVersion }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    rows = releaseRows.rows.map((r) => ({ key: r.key, locale: r.locale, value: r.value }));
+  } else if (typeof input.atVersion === 'number') {
     const sqlText = `
       WITH ranked AS (
         SELECT e.key AS key, tv.locale AS locale, tv.value AS value, tv.version,

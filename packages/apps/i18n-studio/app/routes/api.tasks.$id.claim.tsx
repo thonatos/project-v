@@ -8,9 +8,9 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (request.method !== 'POST') return jsonError(405, 'method_not_allowed', 'use POST');
   try {
     requireApiToken(request, 'task');
-    const body = await readJson<{ workerId?: string }>(request);
+    const body = await readJson<{ workerId?: string; leaseMs?: number; limit?: number }>(request);
     const workerId = body.workerId ?? 'unknown';
-    const r = claimTask(params.id!, workerId);
+    const r = claimTask(params.id!, workerId, { leaseMs: body.leaseMs, limit: body.limit });
     return jsonOk(r);
   } catch (e) {
     return handleError(e);
