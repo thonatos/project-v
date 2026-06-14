@@ -1,8 +1,7 @@
 /**
  * Pure conversion helpers between the studio-ui namespace's nested resources and
- * studio's flat key/value model. Shared by `i18n-push.ts` (flatten) and
- * `i18n-pull.ts` (unflatten); kept side-effect free so they can be unit tested
- * directly (see `tests/unit/i18n-sync.test.ts`).
+ * studio's flat key/value model. Shared by workflow scripts, seed scripts, and
+ * tests; kept side-effect free so they can be unit tested directly.
  *
  * Single-namespace model (see openspec change i18n-studio-single-namespace):
  * - Local resources live at `app/i18n/locales/<lang>/studio-ui.json`, a single

@@ -5,8 +5,8 @@
  *
  * The supported language set + default are NOT hand-maintained here — they are
  * derived from `app/i18n/generated.ts`, which codegen produces by scanning the
- * committed `app/i18n/locales/` tree. Add a language by adding its locale dir
- * (via `i18n:pull`) and re-running `i18n:codegen`; no edit to this file needed.
+ * committed `app/i18n/locales/` tree. Add a language by pulling its locale dir
+ * via `i18n:pull`; no edit to this file needed.
  */
 import { SUPPORTED_LANGS, DEFAULT_LANG, type Lang } from '~/i18n/generated';
 

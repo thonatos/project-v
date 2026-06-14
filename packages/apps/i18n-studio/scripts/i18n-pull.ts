@@ -12,7 +12,9 @@
  *      `studio-ui` has public_read=1, so no token is needed), restore flat keys
  *      into the single nested `studio-ui` resource, and write it to
  *      `app/i18n/locales/<lang>/studio-ui.json` (2-space indent, sorted keys).
- * Any failure results in a non-zero exit code. After pulling, run `i18n:codegen`.
+ * Any failure results in a non-zero exit code. The package `i18n:pull` command
+ * chains `i18n:codegen` after this script succeeds, so a successful pull leaves
+ * `app/i18n/generated.ts` refreshed for build/typecheck.
  *
  * Config (via dotenv from `packages/apps/i18n-studio/.env`):
  *   STUDIO_BASE_URL  studio service origin (no trailing slash)
@@ -24,8 +26,8 @@ import { fileURLToPath } from 'node:url';
 
 import { config } from 'dotenv';
 
-import { flatten, unflatten } from './i18n-flatten';
-import { fillPlaceholders } from './i18n-sync-core';
+import { flatten, unflatten } from '../app/lib/i18n-sync/resources';
+import { fillPlaceholders } from '../app/lib/i18n-sync/workflow';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, '..');
@@ -160,7 +162,7 @@ async function main(): Promise<void> {
     console.error('[pull] 存在失败项，退出码非零');
     process.exit(1);
   }
-  console.log('[pull] 完成,请运行 pnpm i18n:codegen 重新生成 generated.ts');
+  console.log('[pull] 完成,即将刷新 generated.ts');
 }
 
 void main();

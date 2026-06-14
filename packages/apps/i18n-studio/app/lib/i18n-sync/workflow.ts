@@ -1,7 +1,7 @@
 /**
  * Pure helpers shared by `i18n-push.ts` and `i18n-pull.ts` for the
  * source-of-truth workflow. Side-effect free so they can be unit tested
- * directly (see `tests/unit/i18n-sync-core.test.ts`).
+ * directly.
  *
  * Model: keys come from source code via `i18next-cli extract` (local source
  * language `zh-cn`). push diffs them against the system; pull fills missing
