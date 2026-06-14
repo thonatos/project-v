@@ -7,7 +7,17 @@ import { newId, nowMs } from '~/lib/id.server';
 import { users, namespaces, memberships } from '~/db/schema';
 import type { User, Role, Namespace } from '~/db/schema';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
+export const DEFAULT_SESSION_SECRET = 'dev-secret-change-me';
+
+function readSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET || DEFAULT_SESSION_SECRET;
+  if (process.env.NODE_ENV === 'production' && (!process.env.SESSION_SECRET || secret === DEFAULT_SESSION_SECRET)) {
+    throw new Error('SESSION_SECRET must be set to a non-default value in production');
+  }
+  return secret;
+}
+
+const SESSION_SECRET = readSessionSecret();
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {

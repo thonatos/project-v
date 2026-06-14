@@ -32,7 +32,7 @@ function displayName(code: string): string {
 export function LangToggle({ lang, className }: LangToggleProps) {
   const [open, setOpen] = React.useState(false);
   const fetcher = useFetcher();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
 
   const setLang = (next: Lang) => {
     void i18n.changeLanguage(next);
@@ -49,7 +49,7 @@ export function LangToggle({ lang, className }: LangToggleProps) {
           size="sm"
           role="combobox"
           aria-expanded={open}
-          aria-label={t('lang.label')}
+          aria-label={t('common.lang.label')}
           className={cn('gap-1.5', className)}
           data-slot="lang-toggle"
         >
@@ -59,9 +59,9 @@ export function LangToggle({ lang, className }: LangToggleProps) {
       </PopoverTrigger>
       <PopoverContent className="w-56 p-0" align="end">
         <Command>
-          <CommandInput placeholder={t('lang.label')} />
+          <CommandInput placeholder={t('common.lang.label')} />
           <CommandList>
-            <CommandEmpty>{t('lang.label')}</CommandEmpty>
+            <CommandEmpty>{t('common.lang.label')}</CommandEmpty>
             <CommandGroup>
               {LOCALE_META.map((opt) => {
                 const selected = opt.code === lang;

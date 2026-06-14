@@ -4,6 +4,8 @@ import { getDb } from '~/lib/db.server';
 import { translationVersions, translations, entries } from '~/db/schema';
 import type { TranslationVersion } from '~/db/schema';
 import { writeTranslationInTx } from '~/lib/services/entry.server';
+import { createReleaseFromCurrent } from '~/lib/services/release.server';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 
 export interface VersionListResult {
   versions: TranslationVersion[];
@@ -104,6 +106,9 @@ export function revert(entryId: string, locale: string, version: number, actorId
     if (target.status === 'discarded') {
       throw new Response('cannot revert to discarded version', { status: 400 });
     }
+    const ctx: { bundleVersionBumped: boolean; bundleVersion?: number; namespaceId?: string } = {
+      bundleVersionBumped: false,
+    };
     const r = writeTranslationInTx(
       tx as unknown as ReturnType<typeof getDb>,
       {
@@ -115,8 +120,32 @@ export function revert(entryId: string, locale: string, version: number, actorId
         actorId,
         metadata: { restored_from: version },
       },
-      { bundleVersionBumped: false },
+      ctx,
     );
+    if (ctx.bundleVersionBumped && ctx.namespaceId && ctx.bundleVersion) {
+      const release = createReleaseFromCurrent(tx as unknown as ReturnType<typeof getDb>, {
+        namespaceId: ctx.namespaceId,
+        bundleVersion: ctx.bundleVersion,
+        actorId,
+        source: 'revert',
+        note: `Restored ${locale} from version ${version}`,
+      });
+      writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+        namespaceId: ctx.namespaceId,
+        actorId,
+        action: 'translation.revert',
+        resourceType: 'translation_version',
+        resourceId: target.id,
+        metadata: {
+          entryId,
+          locale,
+          restoredFrom: version,
+          newVersion: r.version,
+          releaseId: release.release.id,
+          bundleVersion: ctx.bundleVersion,
+        },
+      });
+    }
     return { newVersion: r.version };
   });
 }

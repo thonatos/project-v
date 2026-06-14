@@ -10,25 +10,25 @@ interface HeroProps {
 }
 
 export function Hero({ user }: HeroProps) {
-  const { t } = useTranslation('landing');
+  const { t } = useTranslation();
   return (
     <section className="relative overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 py-20 sm:py-28">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{t('hero.title')}</h1>
-          <p className="mt-5 text-lg text-muted-foreground sm:text-xl">{t('hero.subtitle')}</p>
+          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{t('landing.hero.title')}</h1>
+          <p className="mt-5 text-lg text-muted-foreground sm:text-xl">{t('landing.hero.subtitle')}</p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             {user ? (
               <Button asChild size="lg">
                 <Link to="/dashboard">
-                  {t('hero.enterDashboard')}
+                  {t('landing.hero.enterDashboard')}
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
             ) : (
               <Button asChild size="lg">
                 <Link to="/login">
-                  {t('hero.login')}
+                  {t('landing.hero.login')}
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
@@ -36,7 +36,7 @@ export function Hero({ user }: HeroProps) {
             <Button asChild size="lg" variant="outline">
               <Link to="/docs">
                 <BookOpen className="size-4" />
-                {t('hero.readDocs')}
+                {t('landing.hero.readDocs')}
               </Link>
             </Button>
           </div>

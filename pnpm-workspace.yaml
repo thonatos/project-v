@@ -2,6 +2,7 @@ packages:
   - 'packages/apps/*'
   - 'packages/libs/*'
 allowBuilds:
+  '@swc/core': true
   better-sqlite3: true
   bufferutil: true
   es5-ext: true
@@ -10,5 +11,7 @@ allowBuilds:
   sharp: true
   utf-8-validate: true
   workerd: true
+minimumReleaseAgeExclude:
+  - i18next-cli@1.62.0
 overrides:
   style-to-js: ^1.1.16

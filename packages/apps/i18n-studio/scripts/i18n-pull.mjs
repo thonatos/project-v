@@ -10,8 +10,8 @@
  *      by `i18n:codegen` to build display names).
  *   3. For each manifest lang, GET `${BASE_URL}/snapshot/${NS}/${lang}` (public —
  *      `studio-ui` has public_read=1, so no token is needed), restore flat keys
- *      into nested i18next namespaces, and write each ns to
- *      `app/i18n/locales/<lang>/<ns>.json` (2-space indent, sorted keys).
+ *      into the single nested `studio-ui` resource, and write it to
+ *      `app/i18n/locales/<lang>/studio-ui.json` (2-space indent, sorted keys).
  * Any failure results in a non-zero exit code. After pulling, run `i18n:codegen`.
  *
  * Config (via dotenv from `packages/apps/i18n-studio/.env`):
@@ -24,12 +24,18 @@ import { fileURLToPath } from 'node:url';
 
 import { config } from 'dotenv';
 
-import { unflatten } from './i18n-flatten.mjs';
+import { flatten, unflatten } from './i18n-flatten.mjs';
+import { fillPlaceholders } from './i18n-sync-core.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, '..');
 const LOCALES_DIR = path.join(APP_DIR, 'app', 'i18n', 'locales');
 const META_FILE = path.join(LOCALES_DIR, '_meta.json');
+// 源语言固定为 zh-cn(= generated 的 DEFAULT_LANG)。其本地 key 全集(由 extract 产出)
+// 是「应存在 key」的基准:任何语种缺这些 key 时写占位,保证 bundle 完整、构建不缺 key。
+const SOURCE_LANG = 'zh-cn';
+// 唯一 namespace 文件名(= studio-ui.json)。
+const NS_FILE = 'studio-ui.json';
 
 config({ path: path.join(APP_DIR, '.env') });
 
@@ -50,6 +56,20 @@ function sortKeysDeep(value) {
     sorted[key] = sortKeysDeep(/** @type {Record<string, unknown>} */ (value)[key]);
   }
   return sorted;
+}
+
+/**
+ * Read the local source-language (`zh-cn`) `studio-ui.json` as a flat key→value
+ * map. These keys are the authoritative "should-exist" set produced by
+ * `i18next-cli extract` (i.e. the `t('common.key')` calls in source). Returns an
+ * empty map if the source file is absent (first pull before any extract).
+ *
+ * @returns {Record<string, string>}
+ */
+function readSourceFlatKeys() {
+  const srcFile = path.join(LOCALES_DIR, SOURCE_LANG, NS_FILE);
+  if (!fs.existsSync(srcFile)) return {};
+  return flatten(JSON.parse(fs.readFileSync(srcFile, 'utf8')));
 }
 
 async function main() {
@@ -95,6 +115,10 @@ async function main() {
   console.log(`[pull] 清单: ${langs.join(', ')} → 写入 _meta.json`);
 
   // 3) 逐语种拉取文案
+  // 先捕获本地源语言 key 全集(extract 产物)作为「应存在 key」基准——必须在循环
+  // 覆盖 zh-cn 文件之前读取。系统缺失的 key 会补占位:源语言用本地源文案(避免抹掉
+  // 尚未 push 的词条),其余语种用空串。占位只写本地 bundle,不回写 studio。
+  const sourceKeys = readSourceFlatKeys();
   let failed = false;
   for (const lang of langs) {
     try {
@@ -105,22 +129,22 @@ async function main() {
         continue;
       }
       /** @type {Record<string, string>} */
-      const flatMap = await res.json();
-      const nsMap = unflatten(flatMap);
+      const systemFlat = await res.json();
+
+      // 补占位:本地源 key 在系统该语种缺失时填充,保证构建不缺 key。
+      const { merged: flatMap, placeholders } = fillPlaceholders(systemFlat, sourceKeys, lang, SOURCE_LANG);
+
+      // 单 ns:unflatten 直接得到 studio-ui.json 的嵌套内容,写入单文件。
+      const content = unflatten(flatMap);
       const langDir = path.join(LOCALES_DIR, lang);
       fs.mkdirSync(langDir, { recursive: true });
 
-      let totalKeys = 0;
-      const written = [];
-      for (const [ns, content] of Object.entries(nsMap)) {
-        const file = path.join(langDir, `${ns}.json`);
-        const sorted = sortKeysDeep(content);
-        fs.writeFileSync(file, `${JSON.stringify(sorted, null, 2)}\n`, 'utf8');
-        const nsKeyCount = Object.keys(flatMap).filter((k) => k.startsWith(`${ns}.`)).length;
-        totalKeys += nsKeyCount;
-        written.push(`${ns}.json(${nsKeyCount})`);
-      }
-      console.log(`[pull] ${lang}: 写入 ${written.join(', ')} 共 ${totalKeys} 条`);
+      const totalKeys = Object.keys(flatMap).length;
+      const sorted = sortKeysDeep(content);
+      fs.writeFileSync(path.join(langDir, NS_FILE), `${JSON.stringify(sorted, null, 2)}\n`, 'utf8');
+
+      const phNote = placeholders > 0 ? `,补占位 ${placeholders}` : '';
+      console.log(`[pull] ${lang}: 写入 ${NS_FILE} 共 ${totalKeys} 条${phNote}`);
     } catch (err) {
       failed = true;
       console.error(`[pull] ${lang}: 拉取失败 — ${err instanceof Error ? err.message : String(err)}`);

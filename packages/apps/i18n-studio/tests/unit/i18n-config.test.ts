@@ -10,45 +10,46 @@ beforeEach(async () => {
 });
 
 describe('i18n instance', () => {
-  it('is initialized with both namespaces and zh-cn fallback', () => {
+  it('is initialized with the single studio-ui namespace and zh-cn fallback', () => {
     expect(i18n.isInitialized).toBe(true);
     expect(i18n.options.fallbackLng).toContain('zh-cn');
-    expect(i18n.hasResourceBundle('zh-cn', 'common')).toBe(true);
-    expect(i18n.hasResourceBundle('en-us', 'landing')).toBe(true);
+    expect(i18n.options.defaultNS).toBe('studio-ui');
+    expect(i18n.hasResourceBundle('zh-cn', 'studio-ui')).toBe(true);
+    expect(i18n.hasResourceBundle('en-us', 'studio-ui')).toBe(true);
   });
 
   it('returns 中文 copy under zh-cn', async () => {
     await i18n.changeLanguage('zh-cn');
-    expect(i18n.t('common:auth.login')).toBe('登录');
-    expect(i18n.t('common:auth.logout')).toBe('退出登录');
-    expect(i18n.t('landing:hero.enterDashboard')).toBe('进入后台');
+    expect(i18n.t('common.auth.login')).toBe('登录');
+    expect(i18n.t('common.auth.logout')).toBe('退出登录');
+    expect(i18n.t('landing.hero.enterDashboard')).toBe('进入后台');
   });
 
   it('returns English copy under en-us', async () => {
     await i18n.changeLanguage('en-us');
-    expect(i18n.t('common:auth.login')).toBe('Sign in');
-    expect(i18n.t('common:auth.logout')).toBe('Logout');
-    expect(i18n.t('landing:hero.enterDashboard')).toBe('Enter Dashboard');
+    expect(i18n.t('common.auth.login')).toBe('Sign in');
+    expect(i18n.t('common.auth.logout')).toBe('Logout');
+    expect(i18n.t('landing.hero.enterDashboard')).toBe('Enter Dashboard');
   });
 
   it('keeps brand/term copy identical across languages', async () => {
     await i18n.changeLanguage('zh-cn');
-    const zh = i18n.t('common:nav.dashboard');
+    const zh = i18n.t('common.nav.dashboard');
     await i18n.changeLanguage('en-us');
-    expect(i18n.t('common:nav.dashboard')).toBe(zh);
+    expect(i18n.t('common.nav.dashboard')).toBe(zh);
     expect(zh).toBe('Dashboard');
   });
 
   it('falls back to zh-cn when a key is missing in en-us', async () => {
     // Inject a key only present in zh-cn, then resolve it under en-us.
-    i18n.addResourceBundle('zh-cn', 'common', { onlyZh: '仅中文' }, true, true);
+    i18n.addResourceBundle('zh-cn', 'studio-ui', { common: { onlyZh: '仅中文' } }, true, true);
     await i18n.changeLanguage('en-us');
-    expect(i18n.t('common:onlyZh')).toBe('仅中文');
+    expect(i18n.t('common.onlyZh')).toBe('仅中文');
   });
 
   it('returns the key itself for a wholly unknown key', async () => {
     await i18n.changeLanguage('en-us');
-    expect(i18n.t('common:does.not.exist')).toBe('does.not.exist');
+    expect(i18n.t('common.does.not.exist')).toBe('common.does.not.exist');
   });
 });
 
