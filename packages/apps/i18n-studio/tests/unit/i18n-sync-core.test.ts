@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { diffNewEntries, fillPlaceholders } from '../../scripts/i18n-sync-core';
+import { diffNewEntries, fillPlaceholders } from '../../app/lib/i18n-sync/workflow';
 
 describe('diffNewEntries (push diff)', () => {
   const local = {

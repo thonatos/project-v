@@ -1,8 +1,5 @@
-# i18n-locale-codegen Specification
+## MODIFIED Requirements
 
-## Purpose
-定义 i18n-studio 界面国际化的构建期代码生成(codegen)能力:扫描 `app/i18n/locales/` 产出 `app/i18n/generated.ts`,作为界面 i18next 语种集、资源与语种元信息的唯一来源,保证离线可构建且新增语种无需手改配置或切换器组件。
-## Requirements
 ### Requirement: UI 语种构建期生成(codegen)
 
 i18n-studio SHALL 提供一个构建期 codegen 工具,扫描 `app/i18n/locales/` 目录并生成 `app/i18n/generated.ts`。该工具 SHALL 位于项目级工具目录（如 `packages/apps/i18n-studio/tools/i18n-codegen.ts`）,而非词条同步工作流入口目录,以明确 codegen 是 pull/build/typecheck 的构建期派生动作,不是 `extract -> push -> pull` 词条工作流的一等步骤。生成物 SHALL 导出 `SUPPORTED_LANGS`(语种 code 列表,来源为 `locales/` 的子目录名)、`resources`(各语种各 namespace 的 `<ns>.json` 静态映射)与语种元信息(`label` / `englishLabel` / `nativeLabel`,来源为本地元信息文件)。codegen SHALL **离线可跑**:在数据库为空、studio 服务未运行时(全新 clone / CI 构建)仍能仅凭已提交的 `app/i18n/locales/` 与元信息文件产出正确的 `generated.ts`。系统 SHALL 保留低层 `i18n:codegen` 命令供构建、CI、调试和手动修复使用,并 SHALL 继续在 `build` / `typecheck` 前置运行 codegen。
@@ -36,19 +33,3 @@ i18n-studio SHALL 提供一个构建期 codegen 工具,扫描 `app/i18n/locales/
 - **GIVEN** 开发者查看 `packages/apps/i18n-studio/scripts/` 或文档中的界面文案同步主流程
 - **WHEN** 识别词条工作流的一等步骤
 - **THEN** 只看到 `extract`、`push`、`pull` 三步;codegen 作为 `pull`、`build`、`typecheck` 内部编排的构建期派生动作存在
-
-### Requirement: 生成物为界面 i18next 的唯一语种来源
-
-`app/i18n/config.ts` 与 `app/lib/i18n.ts` SHALL 消费 `app/i18n/generated.ts`,而非各自手写语种集与 `resources` 映射。`SUPPORTED_LANGS`、`Lang` 类型、i18next `resources` / `supportedLngs` / `ns` SHALL 全部从生成物派生。界面 i18next 实例 SHALL 保持同步 init 与静态 bundle,使 SSR 首帧不出现 raw key(无 FOUC)。
-
-#### Scenario: 单一来源派生
-
-- **GIVEN** `generated.ts` 导出 `SUPPORTED_LANGS` 与 `resources`
-- **WHEN** 检查 `lib/i18n.ts` 与 `i18n/config.ts`
-- **THEN** 二者不再硬编码语种 code 列表或逐个 `import` locale JSON,而是引用生成物;`Lang` 类型由 `SUPPORTED_LANGS` 派生
-
-#### Scenario: 同步 init 无 FOUC
-
-- **GIVEN** 任意受支持语种
-- **WHEN** 页面服务端渲染首帧
-- **THEN** 已 key 化文案直接渲染为对应语言文本,不出现原始 key 字符串

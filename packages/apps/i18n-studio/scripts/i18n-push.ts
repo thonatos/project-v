@@ -35,8 +35,8 @@ import { fileURLToPath } from 'node:url';
 
 import { config } from 'dotenv';
 
-import { flatten } from './i18n-flatten';
-import { diffNewEntries } from './i18n-sync-core';
+import { flatten } from '../app/lib/i18n-sync/resources';
+import { diffNewEntries } from '../app/lib/i18n-sync/workflow';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, '..');
