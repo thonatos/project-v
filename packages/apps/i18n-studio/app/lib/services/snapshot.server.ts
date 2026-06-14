@@ -4,6 +4,7 @@ import { getDb } from '~/lib/db.server';
 import { entries, translations, namespaces } from '~/db/schema';
 import { getNamespaceLocales } from '~/lib/services/namespace.server';
 import { getLocale } from '~/lib/services/locale.server';
+import { readReleaseRows } from '~/lib/services/release.server';
 import { validateLocaleSubset } from '~/lib/validators';
 import { extractBearer, verifyToken } from '~/lib/api-token.server';
 
@@ -46,23 +47,21 @@ export function getBundle(input: SnapshotInput): { bundle: SnapshotBundle; meta:
 
   type Row = { key: string; locale: string; value: string };
   let rows: Row[];
+  let effectiveBundleVersion = ns.bundleVersion;
   if (typeof input.bundleVersion === 'number') {
-    // 固定快照:基于 bundleVersion 等价于 atVersion 但更直观;用 ROW_NUMBER 走 versions 表
-    rows = db.all(
-      sql.raw(`
-        WITH ranked AS (
-          SELECT e.key AS key, tv.locale AS locale, tv.value AS value, tv.version,
-                 ROW_NUMBER() OVER (PARTITION BY tv.entry_id, tv.locale ORDER BY tv.version DESC) AS rn
-          FROM translation_versions tv
-          INNER JOIN entries e ON e.id = tv.entry_id
-          WHERE e.namespace_id = '${ns.id}'
-            AND tv.locale IN (${localeList})
-            AND tv.version <= ${input.bundleVersion}
-            AND tv.status='published'
-        )
-        SELECT key, locale, value FROM ranked WHERE rn = 1
-      `),
-    ) as Row[];
+    const releaseRows = readReleaseRows({
+      namespaceId: ns.id,
+      bundleVersion: input.bundleVersion,
+      locales: target,
+    });
+    if (!releaseRows) {
+      throw new Response(JSON.stringify({ code: 'release_not_found', bundleVersion: input.bundleVersion }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    effectiveBundleVersion = releaseRows.release.bundleVersion;
+    rows = releaseRows.rows.map((r) => ({ key: r.key, locale: r.locale, value: r.value }));
   } else {
     rows = db
       .select({ key: entries.key, locale: translations.locale, value: translations.value })
@@ -80,7 +79,7 @@ export function getBundle(input: SnapshotInput): { bundle: SnapshotBundle; meta:
 
   const bundle: SnapshotBundle = {
     namespace: ns.slug,
-    bundleVersion: input.bundleVersion ?? ns.bundleVersion,
+    bundleVersion: effectiveBundleVersion,
     locales: {},
   };
   for (const l of target) bundle.locales[l] = {};

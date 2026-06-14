@@ -27,23 +27,26 @@ export function meta() {
 export default function DashboardIndex() {
   const { namespaces } = useLoaderData<typeof loader>();
   const { user, theme, lang } = useOutletContext<DashboardContext>();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   return (
     <div>
       <AppShellHeader user={user} theme={theme} lang={lang} />
       <main className="mx-auto w-full max-w-7xl px-4 py-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t('dashboard.namespaces')}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{t('common.dashboard.namespaces')}</h1>
             <p className="text-sm text-muted-foreground">
-              {t('dashboard.namespacesDescription')}
-              <span className="hidden text-muted-foreground/80 sm:inline"> {t('dashboard.commandPaletteHint')}</span>
+              {t('common.dashboard.namespacesDescription')}
+              <span className="hidden text-muted-foreground/80 sm:inline">
+                {' '}
+                {t('common.dashboard.commandPaletteHint')}
+              </span>
             </p>
           </div>
           <Button asChild>
             <Link to="/dashboard/new">
               <Plus className="size-4" />
-              {t('dashboard.newNamespace')}
+              {t('common.dashboard.newNamespace')}
             </Link>
           </Button>
         </div>

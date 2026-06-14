@@ -148,7 +148,7 @@ draft ──publish──> published
 
 ### bundle_version 与缓存
 
-每次成功 publish(包括批量与 revert)都会让该 namespace 的 `bundle_version` 自增 1。`bundle_version` 同时作为 snapshot 的 ETag,客户端可基于此做 304 缓存,详见 [Snapshot 消费](#snapshot-消费)。
+每次成功 publish(包括批量、import、sync、revert 和可见删除)都会创建 release manifest 并让该 namespace 的 `bundle_version` 自增 1。固定 `bundle_version` snapshot 只从 release manifest 读取,可复现历史发布内容;latest snapshot 仍读取当前已发布翻译。客户端可基于 ETag 做 304 缓存,详见 [Snapshot 消费](#snapshot-消费)。
 
 > **提示**:批量发布是事务性的——任一词条校验失败,整批回滚,`bundle_version` 不会半开。
 
@@ -163,24 +163,23 @@ draft ──publish──> published
 ### 状态机
 
 ```
-pending ──claim──> claimed ──complete──> completed
-                      ├─ fail ─────────> failed
-                      └─ cancel(管理员)─> cancelled
+pending ──claim item lease──> in_progress ──all items done──> completed
+                              ├─ item fail / retry
+                              ├─ heartbeat 延长 lease
+                              └─ cancel(管理员)─> cancelled
 ```
 
 - **pending**:已创建,尚未被领取
-- **claimed**:已被某个 worker 领取,锁定一段时间
-- **completed**:worker 已写回结果并标记完成
-- **failed**:worker 主动报错
+- **in_progress**:至少一个 `(entry, locale)` item 已被 worker claim
+- **completed**:全部 item 已写回结果并完成
+- **failed**:worker 主动报错;失败 item 保留 `last_error` 并可 retry
 - **cancelled**:管理员撤销
 
 ### 管理员视角
 
 #### 1. 创建任务
 
-在 namespace 详情页选择若干 entry 与 locale,提交后系统返回 `task_id` 与 **task token**(scope=task,只能用于该任务)。调用 `POST /api/namespaces/:slug/tasks`。
-
-> **警告**:task token 只在创建响应里出现一次,务必保存。需要重置只能撤销旧 token、重新创建任务。
+在 namespace 详情页选择若干 entry 与 locale,调用 `POST /api/namespaces/:slug/tasks` 创建任务。任务会按 `(entry, target_locale)` 生成 item,`total` 等于 item 总数。
 
 #### 2. 跟踪进度
 
@@ -453,6 +452,49 @@ namespace B.locales = ['zh-cn', 'ja-jp']
 ### 字典引用完整性
 
 namespace 引用的每个 locale 在创建/更新时都会经字典校验(`assertLocalesExist`),引用字典外或已禁用的 code 会被直接拒绝(`locale_not_found` / `locale_disabled`),因此不会产生悬空引用,运维无需定期巡检修补。
+
+## 界面文案同步(extract → push → 翻译 → pull)
+
+i18n-studio 自身的界面文案也是它管理的翻译数据。词条的**权威来源是源码**:组件里写 `t('ns.key')`,由 [i18next-cli](https://www.i18next.com/how-to/extracting-translations) 提取 key,经 push 进入 `studio-ui` namespace,翻译完成后再 pull 回灌打包。整条链路如下:
+
+```
+源码 t('ns.key') ──extract──▶ locales/zh-cn/*.json ──push──▶ studio (studio-ui)
+                                                                  │
+                                                              译者翻译
+                                                                  │
+       generated.ts ◀──codegen── locales/<lang>/*.json ◀──pull───┘
+```
+
+### 约定:组件只写 key
+
+界面组件**只写 `t('ns.key')`**,不在源码里携带默认文案。源语言(`zh-cn`)的实际文字写在 `app/i18n/locales/zh-cn/<ns>.json`(或在 studio 里维护),其余语种由译者在 studio 翻译。namespace 由 `useTranslation('<ns>')` 绑定决定。
+
+### extract:从源码提取 key
+
+```bash
+pnpm -F i18n-studio i18n:extract
+```
+
+i18next-cli 扫描 `app/**/*.{ts,tsx}`,把新出现的 `t()` key 以空占位写入对应 `locales/<lang>/<ns>.json`(嵌套、排序),并移除源码中已删除的静态 key(`removeUnusedKeys`)。运行时动态拼接的 key(如 `t(\`features.${k}.title\`)`)由配置里的 `preservePatterns`显式保留,避免被误删——见`i18next.config.ts`。
+
+CI 可用 `pnpm -F i18n-studio i18n:extract:ci` 检测「源码新增了 key 但资源文件未提交」的漂移(有差异即非零退出)。
+
+### push:仅推送新增 key
+
+```bash
+pnpm -F i18n-studio i18n:push   # 内部会先 extract
+```
+
+push 先 extract 刷新本地 `zh-cn` key,再 `GET /snapshot/studio-ui/zh-cn` 取系统现有 key 做 diff,**仅把新增的 key** 及其本地源文案导入到 `zh-cn`。系统里已存在的 key、以及其它语种的人工翻译**都不会被覆盖**。需要 `write` token,经 `.env` 配置(`STUDIO_BASE_URL` / `STUDIO_NAMESPACE` / `STUDIO_WRITE_TOKEN`)。
+
+### pull:回灌 + 占位补齐
+
+```bash
+pnpm -F i18n-studio i18n:pull
+pnpm -F i18n-studio i18n:codegen   # 重新生成 generated.ts
+```
+
+pull 先 `GET /snapshot/studio-ui/meta` 取语种清单(不硬编码语种),逐语种拉取文案落地为本地资源,并回写 `_meta.json`。对系统某语种尚未翻译的 key,以本地 `zh-cn` key 全集为基准**写占位**(源语言用本地源文案,其余语种用空串),保证 codegen/build 不缺 key。占位只写本地 bundle,**不回写 studio**。
 
 ## 下一步
 

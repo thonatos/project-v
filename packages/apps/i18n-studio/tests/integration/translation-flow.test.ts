@@ -38,20 +38,22 @@ describe('translation flow', () => {
       return w;
     }
 
-    it('使用 filter.prefix 创建任务,items 数量与 prefix 匹配', async () => {
+    it('使用 filter.prefix 创建任务,按 entry 和 target locale 生成 items', async () => {
       const w = await seed();
       const { task } = ctx.api;
       const t = task.createTask({
         namespaceId: w.docs.id,
         filter: { prefix: 'a.' },
-        targetLocales: ['en-us'],
+        targetLocales: ['zh-tw', 'en-us'],
         sourceLocale: 'zh-cn',
         createdBy: w.alice.id,
       });
-      expect(t.total).toBe(2);
+      expect(t.total).toBe(4);
       const got = task.getTask(t.id)!;
-      expect(got.items.length).toBe(2);
+      expect(got.items.length).toBe(4);
       expect(got.items.every((i) => i.key.startsWith('a.'))).toBe(true);
+      expect(got.items.filter((i) => i.targetLocale === 'zh-tw')).toHaveLength(2);
+      expect(got.items.filter((i) => i.targetLocale === 'en-us')).toHaveLength(2);
     });
 
     it('使用 entry_ids 创建任务;非本 ns 的 id → 422', async () => {
@@ -101,10 +103,15 @@ describe('translation flow', () => {
       const items = claimed.items;
       const r = task.writeResults(
         t.id,
-        items.map((i) => ({ entryId: i.entryId, locale: 'en-us', value: `EN ${i.key}` })),
+        items.map((i) => ({ entryId: i.entryId, locale: i.targetLocale ?? 'en-us', value: `EN ${i.key}` })),
         w.alice.id,
       );
       expect(r.applied).toBe(2);
+      const afterWrite = task.getTask(t.id)!;
+      expect(afterWrite.task.done).toBe(2);
+      expect(afterWrite.task.status).toBe('completed');
+      expect(afterWrite.task.completedAt).toBeTruthy();
+      expect(afterWrite.items.every((i) => i.status === 'completed')).toBe(true);
       const afterBv = db
         .getDb()
         .select()
@@ -136,6 +143,57 @@ describe('translation flow', () => {
       expect(() => task.claimTask(t.id, 'w2')).toThrow();
     });
 
+    it('claim 设置 item lease,heartbeat 续租,过期后可重领', async () => {
+      const w = await seed();
+      const { task, db, schema } = ctx.api;
+      const t = task.createTask({
+        namespaceId: w.docs.id,
+        filter: { prefix: 'a.b' },
+        targetLocales: ['en-us'],
+        sourceLocale: 'zh-cn',
+        createdBy: w.alice.id,
+      });
+
+      const claimed = task.claimTask(t.id, 'w1', { leaseMs: 1_000 });
+      expect(claimed.items).toHaveLength(1);
+      expect(claimed.items[0]!.status).toBe('in_progress');
+      expect(claimed.items[0]!.leasedBy).toBe('w1');
+      expect(claimed.items[0]!.attemptCount).toBe(1);
+      expect(claimed.items[0]!.leaseExpiresAt).toBeGreaterThan(Date.now());
+      expect(() => task.claimTask(t.id, 'w2', { leaseMs: 1_000 })).toThrow();
+
+      const heartbeat = task.heartbeatTask(t.id, 'w1', { leaseMs: 5_000 });
+      expect(heartbeat.items).toHaveLength(1);
+      expect(heartbeat.items[0]!.leaseExpiresAt).toBeGreaterThan(claimed.items[0]!.leaseExpiresAt!);
+
+      db.getDb()
+        .update(schema.translationTaskItems)
+        .set({ leaseExpiresAt: Date.now() - 1_000 })
+        .where(eq(schema.translationTaskItems.id, claimed.items[0]!.id))
+        .run();
+
+      const reclaimed = task.claimTask(t.id, 'w2', { leaseMs: 1_000 });
+      expect(reclaimed.items).toHaveLength(1);
+      expect(reclaimed.items[0]!.leasedBy).toBe('w2');
+      expect(reclaimed.items[0]!.attemptCount).toBe(2);
+      expect(() => task.heartbeatTask(t.id, 'w1', { leaseMs: 1_000 })).toThrow();
+
+      const logs = db
+        .getDb()
+        .select()
+        .from(schema.translationTaskLogs)
+        .where(eq(schema.translationTaskLogs.taskId, t.id))
+        .all();
+      expect(logs.some((log) => log.event === 'claim' && log.workerId === 'w1')).toBe(true);
+      expect(logs.some((log) => log.event === 'heartbeat' && log.workerId === 'w1')).toBe(true);
+      expect(logs.some((log) => log.event === 'claim' && log.workerId === 'w2')).toBe(true);
+      const detail = task.getTaskDetail(t.id)!;
+      expect(detail.summary.statusCounts.in_progress).toBe(1);
+      expect(detail.summary.workerIds).toEqual(['w2']);
+      expect(detail.summary.activeLeaseCount).toBe(1);
+      expect(detail.logs.length).toBeGreaterThanOrEqual(4);
+    });
+
     it('fail 流转 + cancel(对完成态幂等)', async () => {
       const w = await seed();
       const { task } = ctx.api;
@@ -155,6 +213,39 @@ describe('translation flow', () => {
       expect(() => task.cancelTask(t.id)).not.toThrow();
       const after = task.getTask(t.id)!.task;
       expect(after.status).toBe('cancelled');
+      const logs = ctx.api.db
+        .getDb()
+        .select()
+        .from(ctx.api.schema.translationTaskLogs)
+        .where(eq(ctx.api.schema.translationTaskLogs.taskId, t.id))
+        .all();
+      expect(logs.some((log) => log.event === 'fail' && log.message === 'no provider')).toBe(true);
+      expect(logs.some((log) => log.event === 'cancel')).toBe(true);
+    });
+
+    it('failed item 可 retry 并重新 claim', async () => {
+      const w = await seed();
+      const { task } = ctx.api;
+      const t = task.createTask({
+        namespaceId: w.docs.id,
+        filter: { prefix: 'a.b' },
+        targetLocales: ['en-us'],
+        sourceLocale: 'zh-cn',
+        createdBy: w.alice.id,
+      });
+      task.claimTask(t.id, 'w1');
+      task.failTask(t.id, 'provider timeout');
+      const failed = task.getTask(t.id)!;
+      expect(failed.task.status).toBe('failed');
+      expect(failed.items[0]!.status).toBe('failed');
+      expect(failed.items[0]!.lastError).toBe('provider timeout');
+
+      const retried = task.retryTaskItem(t.id, failed.items[0]!.id, w.alice.id);
+      expect(retried.status).toBe('pending');
+      expect(retried.lastError).toBeNull();
+      const reclaimed = task.claimTask(t.id, 'w2');
+      expect(reclaimed.items[0]!.leasedBy).toBe('w2');
+      expect(reclaimed.items[0]!.attemptCount).toBe(2);
     });
 
     it('writeResults 校验:locale 不在 target_locales / entry_id 不在任务 → 422', async () => {
@@ -172,6 +263,49 @@ describe('translation flow', () => {
       expect(() => task.writeResults(t.id, [{ entryId: e.id, locale: 'zh-tw', value: 'X' }], w.alice.id)).toThrow();
       const xy = entry.getEntryByKey(w.docs.id, 'x.y')!;
       expect(() => task.writeResults(t.id, [{ entryId: xy.id, locale: 'en-us', value: 'X' }], w.alice.id)).toThrow();
+      const logs = ctx.api.db
+        .getDb()
+        .select()
+        .from(ctx.api.schema.translationTaskLogs)
+        .where(eq(ctx.api.schema.translationTaskLogs.taskId, t.id))
+        .all();
+      expect(logs.filter((log) => log.event === 'fail')).toHaveLength(2);
+    });
+
+    it('writeResults 只完成对应 locale item', async () => {
+      const w = await seed();
+      const { task, entry } = ctx.api;
+      const t = task.createTask({
+        namespaceId: w.docs.id,
+        entryIds: [entry.getEntryByKey(w.docs.id, 'a.b')!.id],
+        targetLocales: ['zh-tw', 'en-us'],
+        sourceLocale: 'zh-cn',
+        createdBy: w.alice.id,
+      });
+      task.claimTask(t.id, 'w1');
+      const e = entry.getEntryByKey(w.docs.id, 'a.b')!;
+
+      const r = task.writeResults(t.id, [{ entryId: e.id, locale: 'en-us', value: 'English' }], w.alice.id);
+
+      expect(r.applied).toBe(1);
+      const got = task.getTask(t.id)!;
+      expect(got.task.done).toBe(1);
+      expect(got.task.status).toBe('in_progress');
+      expect(got.items.find((i) => i.targetLocale === 'en-us')?.status).toBe('completed');
+      expect(got.items.find((i) => i.targetLocale === 'zh-tw')?.status).toBe('in_progress');
+      expect(() => task.completeTask(t.id)).toThrow();
+      expect(ctx.api.version.listVersions(e.id, 'en-us').versions[0]?.status).toBe('draft');
+      expect(ctx.api.version.listVersions(e.id, 'en-us').versions[0]?.value).toBe('English');
+      expect(ctx.api.version.listVersions(e.id, 'zh-tw').versions).toHaveLength(0);
+
+      const logs = ctx.api.db
+        .getDb()
+        .select()
+        .from(ctx.api.schema.translationTaskLogs)
+        .where(eq(ctx.api.schema.translationTaskLogs.taskId, t.id))
+        .all();
+      const enItem = got.items.find((i) => i.targetLocale === 'en-us')!;
+      expect(logs.some((log) => log.event === 'result' && log.itemId === enItem.id)).toBe(true);
     });
 
     it('getPayload 返回 flat JSON', async () => {

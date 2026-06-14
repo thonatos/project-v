@@ -6,6 +6,8 @@ import { entries, translations, translationVersions, namespaces } from '~/db/sch
 import type { Entry, TranslationSource, TranslationStatus } from '~/db/schema';
 import { flatKeySchema, localeSchema, validateLocaleSubset, parseEntries } from '~/lib/validators';
 import { getNamespaceLocales, bumpBundleVersion } from '~/lib/services/namespace.server';
+import { createReleaseFromCurrent, type ReleaseSource } from '~/lib/services/release.server';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 
 const IMPORT_MAX = 10000;
 
@@ -36,9 +38,27 @@ export function deleteEntry(namespaceId: string, key: string): boolean {
       .where(and(eq(translations.entryId, entry.id), sql`${translations.publishedVersion} IS NOT NULL`))
       .get();
     tx.delete(entries).where(eq(entries.id, entry.id)).run();
+    let metadata: Record<string, unknown> = { key, hadPublished: !!hasPublished };
     if (hasPublished) {
-      bumpBundleVersion(tx as unknown as ReturnType<typeof getDb>, namespaceId);
+      const bundleVersion = bumpBundleVersion(tx as unknown as ReturnType<typeof getDb>, namespaceId);
+      const release = createReleaseFromCurrent(tx as unknown as ReturnType<typeof getDb>, {
+        namespaceId,
+        bundleVersion,
+        actorId: entry.updatedBy,
+        source: 'delete',
+        note: `Deleted entry ${key}`,
+      });
+      metadata = { ...metadata, releaseId: release.release.id, bundleVersion, itemCount: release.itemCount };
     }
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId,
+      actorId: entry.updatedBy,
+      action: 'entry.delete',
+      resourceType: 'entry',
+      resourceId: entry.id,
+      before: entry,
+      metadata,
+    });
     return true;
   });
 }
@@ -56,6 +76,8 @@ export interface WriteTranslationInput {
 interface WriteTranslationContext {
   /** 在外层事务内是否已经为本次操作 +1 过 bundle_version */
   bundleVersionBumped: boolean;
+  bundleVersion?: number;
+  namespaceId?: string;
 }
 
 /**
@@ -68,7 +90,31 @@ export function writeTranslation(input: WriteTranslationInput): { version: numbe
   const db = getDb();
   return db.transaction((tx) => {
     const ctx: WriteTranslationContext = { bundleVersionBumped: false };
-    return writeTranslationInTx(tx as unknown as ReturnType<typeof getDb>, input, ctx);
+    const result = writeTranslationInTx(tx as unknown as ReturnType<typeof getDb>, input, ctx);
+    maybeCreateRelease(tx as unknown as ReturnType<typeof getDb>, ctx, input.actorId, releaseSourceFor(input.source));
+    return result;
+  });
+}
+
+function releaseSourceFor(source: TranslationSource): ReleaseSource {
+  if (source === 'import') return 'import';
+  if (source === 'sync') return 'sync';
+  if (source === 'revert') return 'revert';
+  return 'publish';
+}
+
+function maybeCreateRelease(
+  tx: ReturnType<typeof getDb>,
+  ctx: WriteTranslationContext,
+  actorId: string,
+  source: ReleaseSource,
+): void {
+  if (!ctx.bundleVersionBumped || !ctx.namespaceId || !ctx.bundleVersion) return;
+  createReleaseFromCurrent(tx, {
+    namespaceId: ctx.namespaceId,
+    bundleVersion: ctx.bundleVersion,
+    actorId,
+    source,
   });
 }
 
@@ -137,7 +183,8 @@ export function writeTranslationInTx(
     }
 
     if (!ctx.bundleVersionBumped) {
-      bumpBundleVersion(tx, entry.namespaceId);
+      ctx.bundleVersion = bumpBundleVersion(tx, entry.namespaceId);
+      ctx.namespaceId = entry.namespaceId;
       ctx.bundleVersionBumped = true;
     }
   }
@@ -229,6 +276,21 @@ export function upsertEntry(input: UpsertEntryInput): { entry: Entry; versions: 
       );
       versions[locale] = r.version;
     }
+    maybeCreateRelease(tx as unknown as ReturnType<typeof getDb>, ctx, input.actorId, 'publish');
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId: input.namespaceId,
+      actorId: input.actorId,
+      action: existing ? 'entry.update' : 'entry.create',
+      resourceType: 'entry',
+      resourceId: entry.id,
+      metadata: {
+        key: entry.key,
+        locales: Object.keys(input.translations),
+        asDraft: input.asDraft === true,
+        versions,
+        bundleVersion: ctx.bundleVersion,
+      },
+    });
     return { entry, versions };
   });
 }
@@ -306,6 +368,21 @@ export function importFlat(input: ImportFlatInput): ImportFlatResult {
       );
       imported++;
     }
+    maybeCreateRelease(tx as unknown as ReturnType<typeof getDb>, ctx, input.actorId, 'import');
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId: input.namespaceId,
+      actorId: input.actorId,
+      action: 'entry.import',
+      resourceType: 'namespace',
+      resourceId: input.namespaceId,
+      metadata: {
+        locale: input.locale,
+        imported,
+        total,
+        asDraft: input.asDraft === true,
+        bundleVersion: ctx.bundleVersion,
+      },
+    });
     return { ok: true, imported, total, errors: [] };
   });
 }

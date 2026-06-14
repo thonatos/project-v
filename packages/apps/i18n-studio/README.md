@@ -8,8 +8,11 @@
 - flat key 词条(支持 `home.title.subtitle`)
 - 草稿(draft)/ 已发布(published)双状态;外部任务回写、跨空间同步默认进入 draft
 - 版本控制:append-only 历史 + 单条 / 批量 publish + 任意版本 revert
-- 翻译任务契约:存储 + 状态机,外部 job 通过 `scope=task` token 拉取/回写
+- 翻译任务契约:按 `(entry, locale)` item 跟踪,支持 worker lease、heartbeat、retry、日志与准确进度
 - 跨命名空间同步:prefix / entry_ids 白名单 + skip / overwrite / fill_missing + dry-run
+- Release manifest:每次客户端可见发布创建 immutable bundle,`bundle_version` fixed snapshot 可复现
+- 审计与质量工作台:记录高价值写操作,扫描 missing/draft/stale/placeholder/HTML/ICU/length 风险
+- Pending invitation:支持未注册 email 邀请、重发、撤销、过期校验与接受
 - 客户端快照通道 `/snapshot/:slug`:与管理 API 路径独立,公开匿名或 `scope=readonly` token 访问;`bundle_version` + ETag/304
 
 ## 开发
@@ -119,8 +122,10 @@ sqlite3 ./data/i18n.db ".backup ./data/i18n.backup.db"
   - `entries` 词条列表
   - `entries/:key` 编辑
   - `entries/:key/history?locale=` 历史
+  - `quality` 质量问题队列
   - `tasks` 翻译任务
   - `sync` 跨空间同步
+  - `audit` 审计日志(admin)
   - `members`(admin)
   - `settings`(admin)
 - `/dashboard/locales` 系统级语言字典(superuser 可写)

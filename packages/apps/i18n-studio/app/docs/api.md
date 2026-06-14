@@ -20,15 +20,15 @@ i18n-studio 提供两组 HTTP 接口:
 | Bearer (scope=task)     | 翻译 worker     | `Authorization: Bearer <token>` |
 | Bearer (scope=readonly) | snapshot 消费方 | `Authorization: Bearer <token>` |
 
-cookie session 由 `/login` 颁发;Bearer token 由管理员在 namespace 设置中创建,可指定 scope 与过期时间。task token 仅在创建翻译任务时一次性返回。
+cookie session 由 `/login` 颁发;Bearer token 由管理员在 namespace 设置中创建,当前 token 元数据包含名称、scope、prefix、创建时间与 revoked 状态。
 
 ## 路径前缀
 
-| 前缀                        | 内容                                         | 是否需要登录                  |
-| --------------------------- | -------------------------------------------- | ----------------------------- |
-| `/api/namespaces/...`       | 命名空间 / 词条 / 成员 / token / task / 同步 | cookie session                |
-| `/api/tasks/:id/...`        | worker 操作单个任务                          | task Bearer 或 cookie session |
-| `/snapshot/:slug[/:locale]` | 只读发布快照                                 | 匿名(公共)或 readonly Bearer  |
+| 前缀                        | 内容                                                                  | 是否需要登录                  |
+| --------------------------- | --------------------------------------------------------------------- | ----------------------------- |
+| `/api/namespaces/...`       | 命名空间 / 词条 / 成员 / 邀请 / token / task / audit / quality / 同步 | cookie session                |
+| `/api/tasks/:id/...`        | worker 操作单个任务                                                   | task Bearer 或 cookie session |
+| `/snapshot/:slug[/:locale]` | 只读发布快照                                                          | 匿名(公共)或 readonly Bearer  |
 
 ## 错误格式
 
@@ -86,8 +86,11 @@ OpenAPI tags 分组对应:
 - **versions** — 词条版本历史 + publish / discard / revert / batch
 - **import / export** — 整个 namespace 的 JSON 导入导出
 - **members** — 成员管理与角色
+- **invitations** — pending invitation 创建、重发、撤销、接受
 - **tokens** — `scope=task` / `scope=readonly` API token 管理
-- **tasks** — 翻译任务创建、查询、worker 操作
+- **audit** — 高价值写操作的审计事件查询
+- **quality** — 质量扫描、问题查询、resolve / suppress
+- **tasks** — 翻译任务创建、item 级 lease / heartbeat / retry / results
 - **sync** — 跨命名空间同步
 - **snapshot** — 只读发布通道(`/snapshot/...`)
 

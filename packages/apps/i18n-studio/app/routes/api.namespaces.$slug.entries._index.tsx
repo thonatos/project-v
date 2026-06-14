@@ -19,6 +19,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       : undefined;
     const atVersionRaw = url.searchParams.get('at_version');
     const atVersion = atVersionRaw ? Number(atVersionRaw) : undefined;
+    const bundleVersionRaw = url.searchParams.get('bundle_version');
+    const bundleVersion = bundleVersionRaw ? Number(bundleVersionRaw) : undefined;
     const group = (url.searchParams.get('group') as GroupMode | null) ?? 'key';
     const include = (url.searchParams.get('include') as IncludeMode | null) ?? 'published';
     const status = (url.searchParams.get('status') as StatusFilter | null) ?? 'all';
@@ -30,6 +32,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       view,
       locale,
       atVersion,
+      bundleVersion,
       group,
       include,
       status,

@@ -4,6 +4,7 @@ import { getDb } from '~/lib/db.server';
 import { newId, nowMs } from '~/lib/id.server';
 import { memberships, namespaces, users } from '~/db/schema';
 import type { Membership, Role } from '~/db/schema';
+import { writeAuditEvent } from '~/lib/services/audit.server';
 
 export interface MemberView extends Membership {
   email: string;
@@ -55,7 +56,18 @@ export function inviteByEmail(namespaceId: string, email: string, role: Role): M
     createdAt: now,
     updatedAt: now,
   };
-  db.insert(memberships).values(inserted).run();
+  db.transaction((tx) => {
+    tx.insert(memberships).values(inserted).run();
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId,
+      actorType: 'system',
+      action: 'member.invite_existing',
+      resourceType: 'membership',
+      resourceId: inserted.id,
+      after: inserted,
+      metadata: { email: targetUser.email, role },
+    });
+  });
   return inserted;
 }
 
@@ -79,8 +91,19 @@ export function updateRole(namespaceId: string, userId: string, nextRole: Role):
         throw new Error('命名空间必须保留至少 1 名管理员');
       }
     }
-    tx.update(memberships).set({ role: nextRole, updatedAt: nowMs() }).where(eq(memberships.id, current.id)).run();
-    return { ...current, role: nextRole, updatedAt: nowMs() };
+    const updatedAt = nowMs();
+    tx.update(memberships).set({ role: nextRole, updatedAt }).where(eq(memberships.id, current.id)).run();
+    const updated = { ...current, role: nextRole, updatedAt };
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId,
+      actorType: 'system',
+      action: 'member.role_update',
+      resourceType: 'membership',
+      resourceId: current.id,
+      before: current,
+      after: updated,
+    });
+    return updated;
   });
 }
 
@@ -105,6 +128,14 @@ export function removeMember(namespaceId: string, userId: string): void {
       }
     }
     tx.delete(memberships).where(eq(memberships.id, current.id)).run();
+    writeAuditEvent(tx as unknown as ReturnType<typeof getDb>, {
+      namespaceId,
+      actorType: 'system',
+      action: 'member.remove',
+      resourceType: 'membership',
+      resourceId: current.id,
+      before: current,
+    });
   });
 }
 
