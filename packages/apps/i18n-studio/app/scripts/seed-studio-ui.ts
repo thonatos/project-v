@@ -27,7 +27,7 @@ import { getDb } from '~/lib/db.server';
 import { users } from '~/db/schema';
 import { getNamespaceBySlug } from '~/lib/services/namespace.server';
 import { importFlat } from '~/lib/services/entry.server';
-import { flatten } from '../../scripts/i18n-flatten.mjs';
+import { flatten } from '../../scripts/i18n-flatten';
 
 const TARGET_SLUG = process.env.STUDIO_NAMESPACE ?? 'studio-ui';
 const LOCALES_DIR = path.resolve('./app/i18n/locales');

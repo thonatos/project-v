@@ -33,12 +33,14 @@ const OUT_FILE = path.join(APP_DIR, 'app', 'i18n', 'generated.ts');
 /** Default/fallback UI language — listed first in SUPPORTED_LANGS. */
 const DEFAULT_LANG = 'zh-cn';
 
-/**
- * @typedef {{ label?: string; englishLabel?: string; nativeLabel?: string | null }} MetaEntry
- */
+interface MetaEntry {
+  label?: string;
+  englishLabel?: string;
+  nativeLabel?: string | null;
+}
 
-/** @returns {string[]} sorted lang codes, DEFAULT_LANG first if present */
-function readLangs() {
+/** @returns sorted lang codes, DEFAULT_LANG first if present */
+function readLangs(): string[] {
   const langs = fs
     .readdirSync(LOCALES_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory())
@@ -47,8 +49,8 @@ function readLangs() {
   return langs.includes(DEFAULT_LANG) ? [DEFAULT_LANG, ...langs.filter((l) => l !== DEFAULT_LANG)] : langs;
 }
 
-/** @param {string} lang @returns {string[]} sorted ns names for a lang dir */
-function readNamespaces(lang) {
+/** @returns sorted ns names for a lang dir */
+function readNamespaces(lang: string): string[] {
   return fs
     .readdirSync(path.join(LOCALES_DIR, lang))
     .filter((f) => f.endsWith('.json'))
@@ -56,8 +58,7 @@ function readNamespaces(lang) {
     .sort();
 }
 
-/** @returns {Record<string, MetaEntry>} */
-function readMeta() {
+function readMeta(): Record<string, MetaEntry> {
   if (!fs.existsSync(META_FILE)) return {};
   try {
     return JSON.parse(fs.readFileSync(META_FILE, 'utf8'));
@@ -66,18 +67,18 @@ function readMeta() {
   }
 }
 
-/** @param {string} s */
-function jsStr(s) {
+function jsStr(s: string): string {
   return JSON.stringify(s);
 }
 
 /** Build the import identifier for a (lang, ns) pair, e.g. zh-cn/common → zhCn_common. */
-function importIdent(lang, ns) {
-  const safe = (x) => x.replace(/[^a-zA-Z0-9]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
+function importIdent(lang: string, ns: string): string {
+  const safe = (x: string): string =>
+    x.replace(/[^a-zA-Z0-9]+(.)?/g, (_, c: string | undefined) => (c ? c.toUpperCase() : ''));
   return `${safe(lang)}_${safe(ns)}`;
 }
 
-function main() {
+function main(): void {
   if (!fs.existsSync(LOCALES_DIR)) {
     console.error(`[codegen] 资源目录不存在: ${LOCALES_DIR}`);
     process.exit(1);
@@ -88,18 +89,16 @@ function main() {
     process.exit(1);
   }
   // namespaces = union across all langs (sorted, stable)
-  const nsSet = new Set();
+  const nsSet = new Set<string>();
   for (const lang of langs) for (const ns of readNamespaces(lang)) nsSet.add(ns);
   const namespaces = [...nsSet].sort();
   const meta = readMeta();
 
-  /** @type {string[]} */
-  const importLines = [];
-  /** @type {string[]} */
-  const resourceLangBlocks = [];
+  const importLines: string[] = [];
+  const resourceLangBlocks: string[] = [];
   for (const lang of langs) {
     const nsForLang = readNamespaces(lang);
-    const nsEntries = [];
+    const nsEntries: string[] = [];
     for (const ns of namespaces) {
       if (!nsForLang.includes(ns)) continue;
       const ident = importIdent(lang, ns);

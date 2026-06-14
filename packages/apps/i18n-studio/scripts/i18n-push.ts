@@ -35,8 +35,8 @@ import { fileURLToPath } from 'node:url';
 
 import { config } from 'dotenv';
 
-import { flatten } from './i18n-flatten.mjs';
-import { diffNewEntries } from './i18n-sync-core.mjs';
+import { flatten } from './i18n-flatten';
+import { diffNewEntries } from './i18n-sync-core';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, '..');
@@ -53,13 +53,18 @@ const BASE_URL = process.env.STUDIO_BASE_URL?.replace(/\/+$/, '');
 const NAMESPACE = process.env.STUDIO_NAMESPACE ?? 'studio-ui';
 const TOKEN = process.env.STUDIO_WRITE_TOKEN;
 
+interface ImportResult {
+  imported?: number;
+  total?: number;
+  errors?: unknown[];
+}
+
 /**
  * Read a language's single `studio-ui.json` into its nested object.
  *
- * @param {string} langDir absolute path to `locales/<lang>`
- * @returns {Record<string, unknown>}
+ * @param langDir absolute path to `locales/<lang>`
  */
-function readLangResource(langDir) {
+function readLangResource(langDir: string): Record<string, unknown> {
   const raw = fs.readFileSync(path.join(langDir, NS_FILE), 'utf8');
   return JSON.parse(raw);
 }
@@ -69,21 +74,19 @@ function readLangResource(langDir) {
  * A 404 (namespace/locale not yet present) is treated as "no keys yet" so the
  * first push into a fresh namespace works.
  *
- * @param {string} lang source locale code
- * @returns {Promise<Set<string>>}
+ * @param lang source locale code
  */
-async function fetchExistingKeys(lang) {
+async function fetchExistingKeys(lang: string): Promise<Set<string>> {
   const res = await fetch(`${BASE_URL}/snapshot/${NAMESPACE}/${lang}`);
   if (res.status === 404) return new Set();
   if (!res.ok) {
     throw new Error(`snapshot HTTP ${res.status} — ${await res.text()}`);
   }
-  /** @type {Record<string, string>} */
-  const flat = await res.json();
+  const flat = (await res.json()) as Record<string, string>;
   return new Set(Object.keys(flat));
 }
 
-async function main() {
+async function main(): Promise<void> {
   if (!BASE_URL) {
     console.error('[push] 缺少 STUDIO_BASE_URL，请在 .env 配置后重试');
     process.exit(1);
@@ -107,7 +110,7 @@ async function main() {
   }
 
   // 2) 取系统现有 key,diff 出新增项
-  let existing;
+  let existing: Set<string>;
   try {
     existing = await fetchExistingKeys(SOURCE_LANG);
   } catch (err) {
@@ -137,8 +140,7 @@ async function main() {
       console.error(`[push] ${SOURCE_LANG}: HTTP ${res.status} — ${text}`);
       process.exit(1);
     }
-    /** @type {{ imported?: number; total?: number; errors?: unknown[] } | null} */
-    let body = null;
+    let body: ImportResult | null = null;
     try {
       const parsed = JSON.parse(text);
       body = parsed?.data ?? parsed;

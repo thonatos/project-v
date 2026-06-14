@@ -1,5 +1,5 @@
 /**
- * Pure helpers shared by `i18n-push.mjs` and `i18n-pull.mjs` for the
+ * Pure helpers shared by `i18n-push.ts` and `i18n-pull.ts` for the
  * source-of-truth workflow. Side-effect free so they can be unit tested
  * directly (see `tests/unit/i18n-sync-core.test.ts`).
  *
@@ -8,19 +8,26 @@
  * keys with placeholders so the build never lacks a key.
  */
 
+interface FillResult {
+  merged: Record<string, string>;
+  placeholders: number;
+}
+
 /**
  * Given the local source-language flat entries and the set of flat keys the
  * system already has, return the subset of local entries whose keys are NOT yet
  * in the system — i.e. the keys push should import. Order follows `localEntries`.
  *
- * @param {Record<string, string>} localEntries `{ "<ns>.<path>": value }` from extract
- * @param {Set<string> | Iterable<string>} existingKeys keys already in the system
- * @returns {Record<string, string>} only the new entries
+ * @param localEntries `{ "<ns>.<path>": value }` from extract
+ * @param existingKeys keys already in the system
+ * @returns only the new entries
  */
-export function diffNewEntries(localEntries, existingKeys) {
+export function diffNewEntries(
+  localEntries: Record<string, string>,
+  existingKeys: Set<string> | Iterable<string>,
+): Record<string, string> {
   const have = existingKeys instanceof Set ? existingKeys : new Set(existingKeys);
-  /** @type {Record<string, string>} */
-  const out = {};
+  const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(localEntries)) {
     if (!have.has(k)) out[k] = v;
   }
@@ -34,15 +41,18 @@ export function diffNewEntries(localEntries, existingKeys) {
  * other locale gets an empty string. Existing system values are never
  * overwritten. Returns a NEW object; inputs are not mutated.
  *
- * @param {Record<string, string>} systemFlat keys/values pulled from the system
- * @param {Record<string, string>} sourceEntries local source-language entries (key全集)
- * @param {string} lang the locale being filled
- * @param {string} sourceLang the source locale code (e.g. 'zh-cn')
- * @returns {{ merged: Record<string, string>; placeholders: number }}
+ * @param systemFlat keys/values pulled from the system
+ * @param sourceEntries local source-language entries (key 全集)
+ * @param lang the locale being filled
+ * @param sourceLang the source locale code (e.g. 'zh-cn')
  */
-export function fillPlaceholders(systemFlat, sourceEntries, lang, sourceLang) {
-  /** @type {Record<string, string>} */
-  const merged = { ...systemFlat };
+export function fillPlaceholders(
+  systemFlat: Record<string, string>,
+  sourceEntries: Record<string, string>,
+  lang: string,
+  sourceLang: string,
+): FillResult {
+  const merged: Record<string, string> = { ...systemFlat };
   let placeholders = 0;
   for (const [k, srcVal] of Object.entries(sourceEntries)) {
     if (!(k in merged)) {
