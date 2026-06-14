@@ -24,8 +24,8 @@ import { fileURLToPath } from 'node:url';
 
 import { config } from 'dotenv';
 
-import { flatten, unflatten } from './i18n-flatten.mjs';
-import { fillPlaceholders } from './i18n-sync-core.mjs';
+import { flatten, unflatten } from './i18n-flatten';
+import { fillPlaceholders } from './i18n-sync-core';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, '..');
@@ -42,18 +42,27 @@ config({ path: path.join(APP_DIR, '.env') });
 const BASE_URL = process.env.STUDIO_BASE_URL?.replace(/\/+$/, '');
 const NAMESPACE = process.env.STUDIO_NAMESPACE ?? 'studio-ui';
 
+interface LocaleManifestEntry {
+  code?: unknown;
+  label?: unknown;
+  englishLabel?: unknown;
+  nativeLabel?: unknown;
+}
+
+interface LocaleMeta {
+  label: string;
+  englishLabel: string;
+  nativeLabel: string | null;
+}
+
 /**
  * Recursively sort object keys so serialized output is diff-stable.
- *
- * @param {unknown} value
- * @returns {unknown}
  */
-function sortKeysDeep(value) {
+function sortKeysDeep(value: unknown): unknown {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return value;
-  /** @type {Record<string, unknown>} */
-  const sorted = {};
+  const sorted: Record<string, unknown> = {};
   for (const key of Object.keys(value).sort()) {
-    sorted[key] = sortKeysDeep(/** @type {Record<string, unknown>} */ (value)[key]);
+    sorted[key] = sortKeysDeep((value as Record<string, unknown>)[key]);
   }
   return sorted;
 }
@@ -63,23 +72,21 @@ function sortKeysDeep(value) {
  * map. These keys are the authoritative "should-exist" set produced by
  * `i18next-cli extract` (i.e. the `t('common.key')` calls in source). Returns an
  * empty map if the source file is absent (first pull before any extract).
- *
- * @returns {Record<string, string>}
  */
-function readSourceFlatKeys() {
+function readSourceFlatKeys(): Record<string, string> {
   const srcFile = path.join(LOCALES_DIR, SOURCE_LANG, NS_FILE);
   if (!fs.existsSync(srcFile)) return {};
   return flatten(JSON.parse(fs.readFileSync(srcFile, 'utf8')));
 }
 
-async function main() {
+async function main(): Promise<void> {
   if (!BASE_URL) {
     console.error('[pull] 缺少 STUDIO_BASE_URL，请在 .env 配置后重试');
     process.exit(1);
   }
 
   // 1) 拉取语种清单,决定支持哪些语种 + 元信息(不再硬编码)
-  let manifest;
+  let manifest: { locales?: LocaleManifestEntry[] };
   try {
     const res = await fetch(`${BASE_URL}/snapshot/${NAMESPACE}/meta`);
     if (!res.ok) {
@@ -93,7 +100,7 @@ async function main() {
   }
 
   const locales = Array.isArray(manifest?.locales) ? manifest.locales : [];
-  const langs = locales.map((l) => l.code).filter((c) => typeof c === 'string');
+  const langs = locales.map((l) => l.code).filter((c): c is string => typeof c === 'string');
   if (langs.length === 0) {
     console.error('[pull] 清单未返回任何语种,终止');
     process.exit(1);
@@ -101,8 +108,7 @@ async function main() {
 
   // 2) 回写元信息供 codegen 生成显示名
   fs.mkdirSync(LOCALES_DIR, { recursive: true });
-  /** @type {Record<string, { label: string; englishLabel: string; nativeLabel: string | null }>} */
-  const metaOut = {};
+  const metaOut: Record<string, LocaleMeta> = {};
   for (const l of locales) {
     if (typeof l?.code !== 'string') continue;
     metaOut[l.code] = {
@@ -128,8 +134,7 @@ async function main() {
         console.error(`[pull] ${lang}: HTTP ${res.status} — ${await res.text()}`);
         continue;
       }
-      /** @type {Record<string, string>} */
-      const systemFlat = await res.json();
+      const systemFlat = (await res.json()) as Record<string, string>;
 
       // 补占位:本地源 key 在系统该语种缺失时填充,保证构建不缺 key。
       const { merged: flatMap, placeholders } = fillPlaceholders(systemFlat, sourceKeys, lang, SOURCE_LANG);

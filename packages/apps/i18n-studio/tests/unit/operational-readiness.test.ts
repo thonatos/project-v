@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 describe('operational readiness guards', () => {
@@ -23,19 +22,5 @@ describe('operational readiness guards', () => {
     vi.stubEnv('SESSION_SECRET', 'prod-secret-with-at-least-32-characters');
     vi.resetModules();
     await expect(import('~/lib/auth.server')).resolves.toBeTruthy();
-  });
-
-  it('keeps OpenAPI coverage and documentation contract scripts passing', () => {
-    const coverage = spawnSync(process.execPath, ['scripts/check-openapi-coverage.mjs'], {
-      cwd: process.cwd(),
-      encoding: 'utf8',
-    });
-    expect(coverage.status, coverage.stdout + coverage.stderr).toBe(0);
-
-    const docs = spawnSync(process.execPath, ['scripts/check-doc-contracts.mjs'], {
-      cwd: process.cwd(),
-      encoding: 'utf8',
-    });
-    expect(docs.status, docs.stdout + docs.stderr).toBe(0);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { flatten, unflatten } from '../../scripts/i18n-flatten.mjs';
+import { flatten, unflatten } from '../../scripts/i18n-flatten';
 
 // Single-namespace model: flatten/unflatten convert the single `studio-ui.json`
 // nested object ↔ studio flat keys. `common` / `landing` are just the first key

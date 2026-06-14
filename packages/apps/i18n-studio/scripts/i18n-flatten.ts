@@ -1,7 +1,7 @@
 /**
  * Pure conversion helpers between the studio-ui namespace's nested resources and
- * studio's flat key/value model. Shared by `i18n-push.mjs` (flatten) and
- * `i18n-pull.mjs` (unflatten); kept side-effect free so they can be unit tested
+ * studio's flat key/value model. Shared by `i18n-push.ts` (flatten) and
+ * `i18n-pull.ts` (unflatten); kept side-effect free so they can be unit tested
  * directly (see `tests/unit/i18n-sync.test.ts`).
  *
  * Single-namespace model (see openspec change i18n-studio-single-namespace):
@@ -21,13 +21,12 @@
  * Flatten a nested object (the content of one `studio-ui.json`) into studio flat
  * keys. The full dotted path is the studio key — no namespace prefixing.
  *
- * @param {Record<string, unknown>} obj nested object, e.g. `{ common: { nav: { dashboard: "…" } } }`
- * @param {string} prefix accumulated dotted prefix (internal recursion arg)
- * @returns {Record<string, string>} flat `{ "common.nav.dashboard": "…" }`
+ * @param obj nested object, e.g. `{ common: { nav: { dashboard: "…" } } }`
+ * @param prefix accumulated dotted prefix (internal recursion arg)
+ * @returns flat `{ "common.nav.dashboard": "…" }`
  */
-export function flatten(obj, prefix = '') {
-  /** @type {Record<string, string>} */
-  const out = {};
+export function flatten(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
+  const out: Record<string, string> = {};
   for (const [key, val] of Object.entries(obj)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (val === null || Array.isArray(val)) {
@@ -36,7 +35,7 @@ export function flatten(obj, prefix = '') {
       continue;
     }
     if (typeof val === 'object') {
-      Object.assign(out, flatten(val, path));
+      Object.assign(out, flatten(val as Record<string, unknown>, path));
     } else {
       out[path] = String(val);
     }
@@ -49,24 +48,22 @@ export function flatten(obj, prefix = '') {
  * Every `.` is a nesting boundary (no namespace segment to peel off), so a key
  * like `common.nav.dashboard` rebuilds `{ common: { nav: { dashboard } } }`.
  *
- * @param {Record<string, string>} flatMap `{ "common.nav.dashboard": "Dashboard", ... }`
- * @returns {Record<string, unknown>} `{ common: { nav: { dashboard: "Dashboard" } } }`
+ * @param flatMap `{ "common.nav.dashboard": "Dashboard", ... }`
+ * @returns `{ common: { nav: { dashboard: "Dashboard" } } }`
  */
-export function unflatten(flatMap) {
-  /** @type {Record<string, unknown>} */
-  const out = {};
+export function unflatten(flatMap: Record<string, string>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
   for (const [flatKey, value] of Object.entries(flatMap)) {
     // Skip empty / edge keys defensively (leading/trailing dot, empty string).
     if (!flatKey || flatKey.startsWith('.') || flatKey.endsWith('.')) continue;
     const segments = flatKey.split('.');
-    /** @type {Record<string, unknown>} */
-    let cursor = out;
+    let cursor: Record<string, unknown> = out;
     for (let i = 0; i < segments.length - 1; i++) {
       const seg = segments[i];
       if (cursor[seg] === null || typeof cursor[seg] !== 'object' || Array.isArray(cursor[seg])) {
         cursor[seg] = {};
       }
-      cursor = /** @type {Record<string, unknown>} */ (cursor[seg]);
+      cursor = cursor[seg] as Record<string, unknown>;
     }
     cursor[segments[segments.length - 1]] = value;
   }
