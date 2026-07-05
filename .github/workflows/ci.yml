@@ -24,3 +24,8 @@ jobs:
         run: pnpm install
       - name: Build all projects
         run: pnpm -r build
+        env:
+          # i18n-studio prerender 在 build 期以 production 模式导入 auth.server.ts,
+          # 顶层会校验 SESSION_SECRET 非空且非默认值。CI 构建产物不用于真实生产,
+          # 提供一个非默认占位值以通过该运维防线。
+          SESSION_SECRET: ci-build-placeholder-session-secret-32chars
