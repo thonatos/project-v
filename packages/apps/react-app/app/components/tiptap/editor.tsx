@@ -16,8 +16,8 @@ import {
   getHierarchicalIndexes,
   type TableOfContentData,
   TableOfContents,
-} from '@tiptap-pro/extension-table-of-contents';
-import { UniqueID } from '@tiptap-pro/extension-unique-id';
+} from '@tiptap/extension-table-of-contents';
+import { UniqueID } from '@tiptap/extension-unique-id';
 import css from 'highlight.js/lib/languages/css';
 import js from 'highlight.js/lib/languages/javascript';
 import ts from 'highlight.js/lib/languages/typescript';
