@@ -12,11 +12,7 @@ import Underline from '@tiptap/extension-underline';
 import Youtube from '@tiptap/extension-youtube';
 import { EditorContent, ReactNodeViewRenderer, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import {
-  getHierarchicalIndexes,
-  type TableOfContentData,
-  TableOfContents,
-} from '@tiptap/extension-table-of-contents';
+import { getHierarchicalIndexes, type TableOfContentData, TableOfContents } from '@tiptap/extension-table-of-contents';
 import { UniqueID } from '@tiptap/extension-unique-id';
 import css from 'highlight.js/lib/languages/css';
 import js from 'highlight.js/lib/languages/javascript';
