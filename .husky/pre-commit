@@ -1,3 +1,22 @@
 pnpm lint:fix
 pnpm format:write
 gitleaks protect --staged
+
+# Go: 仅当本次提交涉及 *.go 时才检查（TS-only 提交不受影响）
+staged_go=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
+if [ -n "$staged_go" ]; then
+  echo "› 检测到 Go 变更，运行 gofmt 与 golangci-lint"
+  # gofmt：对 staged 的 .go 文件做格式化校验，未格式化则失败
+  unformatted=$(gofmt -l $staged_go)
+  if [ -n "$unformatted" ]; then
+    echo "✗ 以下文件未格式化，请运行 gofmt -w："
+    echo "$unformatted"
+    exit 1
+  fi
+  # golangci-lint：装了才跑，未安装则跳过（不阻塞提交）
+  if command -v golangci-lint >/dev/null 2>&1; then
+    (cd go && golangci-lint run ./...) || exit 1
+  else
+    echo "› 未安装 golangci-lint，跳过 lint（建议安装：golangci-lint v2）"
+  fi
+fi

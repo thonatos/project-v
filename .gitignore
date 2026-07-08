@@ -117,3 +117,11 @@ commands-config.json
 
 # CodeGraph local index
 .codegraph/
+
+# Go build artifacts
+go/**/*.test
+go/**/*.out
+# 约定的二进制输出目录（go build -o bin/<svc> ./service/<svc>）——一条规则覆盖所有服务
+go/bin/
+# 兜底：不带 -o 时 `go build ./cmd/artusx-api` 会在 go/ 落地同名裸二进制
+go/artusx-api
