@@ -48,6 +48,15 @@
 - UI 用 shadcn/ui + Radix（该 app 内放宽全局"不用 Radix UI"约束）
 - 通知用 Sonner；表单优先 React Router `Form` / `useFetcher`
 
+### go/artusx-api（Go 版）
+
+- Web 框架用 **echo**；依赖注入用**手动构造注入**（不引入 wire 等 DI 框架）
+- 模板用标准库 `html/template` + `go:embed`（不用 Nunjucks）
+- Telegram 用 **Bot API**（标准库 `net/http` 直调，不用 MTProto）
+- 配置从环境变量读取（`config/config.go`）；监听 `7001`，并存靠部署侧端口映射
+- 目录遵循 Go 社区惯例：入口放 `go/cmd/<app>/main.go`（薄入口 + Dockerfile 等部署产物）；业务代码放 `go/internal/<app>/`（本 module 私有，含单服务业务与跨服务共享包）。**无 `apps/`、无 `service/` 层**
+- module path 为 `implements.io/projectv`（本服务业务即 `implements.io/projectv/internal/artusx-api/*`）
+
 ## 开发规范
 
 ### 构建命令
@@ -78,6 +87,15 @@ pnpm format:write
 
 - 用 `node:` 前缀导入内置模块：`import path from 'node:path'`
 - 未使用的 catch 参数用 `_` 前缀
+
+### Go（仅 `go/` 目录）
+
+- 上述 TS/React/Node.js 规范均**不适用**于 Go 代码
+- 格式化用 `gofmt`（提交前 husky 会校验 staged 的 `*.go`）
+- 静态检查用 `golangci-lint`（v2，配置 `go/.golangci.yml`；装了才在 pre-commit 跑）
+- 错误显式处理并 `%w` 包装，不 silent failures
+- 编译检查用 `go build ./...`；测试 `go test ./...`；lint `golangci-lint run ./...`（需装 golangci-lint v2）
+  - 说明：因 `cmd/` + `internal/` 布局下二进制名（`artusx-api`）不与 `go/` 顶层目录同名，`go build ./...` 与 `go build ./cmd/<app>` 均可正常产出，无同名冲突
 
 ### 其他
 
