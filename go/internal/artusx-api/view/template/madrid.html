@@ -1,0 +1,12 @@
+<b>{{ .title }}</b>
+
+<pre>
+<code class="language-bash">
+{{- with .data }}
+- name: {{ .name }}
+- info: {{ .info }}
+- ohlc: {{ .ohlc }}
+- volume: {{ .volume }}
+{{- end }}
+</code>
+</pre>
