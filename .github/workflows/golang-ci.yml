@@ -5,12 +5,12 @@ on:
     branches: ['main']
     paths:
       - 'go/**'
-      - '.github/workflows/go-ci.yml'
+      - '.github/workflows/golang-ci.yml'
   pull_request:
     branches: ['main']
     paths:
       - 'go/**'
-      - '.github/workflows/go-ci.yml'
+      - '.github/workflows/golang-ci.yml'
 
 jobs:
   build:
