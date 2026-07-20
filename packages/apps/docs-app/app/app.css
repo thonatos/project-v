@@ -3,41 +3,49 @@
 @plugin '@tailwindcss/typography';
 
 /* ========================================
-   原配色方案（回滚时可用）
-   --color-primary: #141413;
-   --color-primary-hover: #000000;
-   --color-text: #141413;
-   --color-text-muted: #6b6b6b;
-   --color-bg: #f0f0eb;
-   --color-bg-subtle: #e8e8e3;
-   --color-bg-card: #ffffff;
-   --color-border: #30302e;
-   --color-border-subtle: #d4d4d0;
+   亮色方案（回滚时可整体切回，见 proposal Rollback）
+   --color-primary: #8264ff; --color-text: #1f2937;
+   --color-bg: #ffffff; --color-bg-card: #f9fafb;
+   （下方 dark-first 体系为当前生效方案）
    ======================================== */
 
-/* 紫色系配色主题 */
 @layer base {
   :root {
-    /* 主色调 - 紫色系 */
-    --color-primary: #8264ff;
-    --color-primary-hover: #6b4fff; /* hover 更深 */
-    --color-primary-deep: #5a3fff; /* deep 最深 */
+    /* ---- 主色渐变（violet → fuchsia），暗底发光 ---- */
+    --color-primary: #8b6dff;
+    --color-primary-hover: #a488ff;
+    --color-primary-deep: #6b4fff;
+    --color-accent: #d946ef; /* fuchsia，渐变终点 */
+    --gradient-brand: linear-gradient(120deg, #8b6dff 0%, #d946ef 100%);
 
-    /* 文字颜色 */
-    --color-text: #1f2937; /* gray-800 */
-    --color-text-muted: #6b7280; /* gray-500 */
+    /* ---- 分层深色表面（由深到浅堆叠出纵深）---- */
+    --color-bg: #0a0a0f; /* bg-base，body 最底 */
+    --color-bg-subtle: rgba(139, 109, 255, 0.12); /* 主色薄底，用于 inline code / chip */
+    --color-surface-1: #13131a; /* 卡片基底 */
+    --color-surface-2: #1c1c26; /* 悬浮/hover 表面 */
+    --color-bg-card: #13131a; /* 兼容旧变量名 */
+    --color-glass: rgba(255, 255, 255, 0.04); /* 玻璃拟态填充 */
+    --color-glass-border: rgba(255, 255, 255, 0.08);
 
-    /* 背景颜色 */
-    --color-bg: #ffffff;
-    --color-bg-subtle: #ede9fe; /* violet-100，更明显 */
-    --color-bg-card: #f9fafb; /* gray-50 */
+    /* ---- 文字 ---- */
+    --color-text: #e7e7ea;
+    --color-text-muted: #9a9aa5;
 
-    /* 边框颜色 */
-    --color-border: #e5e7eb; /* gray-200 */
-    --color-border-subtle: #f3f4f6; /* gray-100 */
+    /* ---- 边框 ---- */
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-border-subtle: rgba(255, 255, 255, 0.06);
+
+    /* ---- 阴影 / 辉光 ---- */
+    --shadow-soft: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 24px -4px rgba(139, 109, 255, 0.45);
+
+    /* ---- 圆角 / 动效缓动（统一“手感”）---- */
+    --radius-card: 0.875rem;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration: 0.24s;
 
     /* Grid 栅格颜色 */
-    --color-grid: rgba(139, 92, 246, 0.03); /* violet-500 低透明度 */
+    --color-grid: rgba(139, 109, 255, 0.05);
   }
 
   html {
@@ -45,17 +53,55 @@
   }
 
   body {
-    background: #ffffff;
+    background: var(--color-bg);
     color: var(--color-text);
     font-size: 14px;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
     min-height: 100vh;
+    /* 顶部主色辉光背景，营造纵深 */
+    background-image: radial-gradient(60rem 40rem at 50% -10rem, rgba(139, 109, 255, 0.14), transparent 70%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(139, 109, 255, 0.35);
+    color: #fff;
   }
 }
 
 @layer components {
+  /* 品牌渐变文字 */
+  .text-gradient-brand {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* 玻璃拟态卡片 */
+  .glass-card {
+    background: var(--color-glass);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-soft);
+    transition:
+      border-color var(--duration) var(--ease-out),
+      box-shadow var(--duration) var(--ease-out),
+      background-color var(--duration) var(--ease-out),
+      transform var(--duration) var(--ease-out);
+  }
+
+  .glass-card:hover {
+    border-color: rgba(139, 109, 255, 0.4);
+    background: var(--color-surface-2);
+    box-shadow: var(--shadow-soft), var(--shadow-glow);
+  }
+
   /* Scrollbar none utility */
   .scrollbar-none::-webkit-scrollbar {
     display: none;
@@ -102,8 +148,7 @@
   .prose h3 {
     scroll-margin-top: 4rem;
   }
-
-  /* Article prose styles */
+  /* Article prose styles (dark) */
   .prose {
     max-width: none;
     color: var(--color-text);
@@ -116,9 +161,10 @@
     margin-top: 0;
     margin-bottom: 1rem;
     color: var(--color-text);
-    /* 紫色下划线装饰 */
     padding-bottom: 0.5rem;
-    border-bottom: 3px solid var(--color-primary);
+    /* 渐变下划线装饰 */
+    border-bottom: 2px solid transparent;
+    border-image: var(--gradient-brand) 1;
   }
 
   .prose h2 {
@@ -128,7 +174,6 @@
     margin-top: 2rem;
     margin-bottom: 0.75rem;
     color: var(--color-text);
-    /* 紫色左边框装饰 */
     padding-left: 0.75rem;
     border-left: 3px solid var(--color-primary);
   }
@@ -149,40 +194,42 @@
   }
 
   .prose a {
-    color: var(--color-primary);
+    color: var(--color-primary-hover);
     text-decoration: none;
     font-weight: 500;
   }
 
   .prose a:hover {
-    color: var(--color-primary-hover);
+    color: var(--color-accent);
     text-decoration: underline;
   }
 
   .prose strong {
     font-weight: 600;
-    color: var(--color-text);
+    color: #fff;
   }
 
-  /* Inline code - 紫色背景 */
+  /* Inline code - 半透明主色底 */
   .prose code:not(pre code) {
     font-size: 0.875em;
-    font-weight: 400;
-    color: var(--color-primary-deep);
+    font-weight: 500;
+    color: var(--color-primary-hover);
     background-color: var(--color-bg-subtle);
     padding: 0.125em 0.375em;
     border-radius: 0.25rem;
+    border: 1px solid rgba(139, 109, 255, 0.2);
   }
 
-  /* Code blocks */
+  /* Code blocks - 下沉底色 + 微亮边框 + 内阴影，形成凹陷层次 */
   .prose pre {
     border-radius: 0.5rem;
     overflow-x: auto;
     margin-top: 1.5em;
     margin-bottom: 1.5em;
     padding: 1em;
-    background-color: #1f2937;
+    background-color: #07070b;
     border: 1px solid var(--color-border);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
   }
 
   .prose pre.mermaid {
@@ -193,6 +240,7 @@
     padding: 1em;
     background-color: transparent !important;
     border: none;
+    box-shadow: none;
   }
 
   .prose pre code {
@@ -234,9 +282,35 @@
     margin-bottom: 3em;
   }
 
+  .prose table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .prose th,
+  .prose td {
+    border: 1px solid var(--color-border);
+    padding: 0.5em 0.75em;
+    color: var(--color-text);
+  }
+
+  .prose th {
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .prose thead {
+    background-color: var(--color-surface-2);
+  }
+
+  .prose tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
   /* Mermaid diagram styles */
   .mermaid-diagram {
-    background-color: #1f2937;
+    background-color: #07070b;
+    border: 1px solid var(--color-border);
     border-radius: 0.5rem;
     padding: 1rem;
     text-align: center;
@@ -247,23 +321,10 @@
     height: auto;
   }
 
-  /* Force all mermaid text to be white for visibility on dark background */
-  .mermaid-diagram svg text {
-    fill: #f9fafb !important;
-  }
-
-  /* Flowchart edge labels */
-  .mermaid-diagram svg .edgeLabel text {
-    fill: #f9fafb !important;
-  }
-
-  /* Class diagram text */
+  .mermaid-diagram svg text,
+  .mermaid-diagram svg .edgeLabel text,
   .mermaid-diagram svg .classLabel text,
-  .mermaid-diagram svg .classLabel .label text {
-    fill: #f9fafb !important;
-  }
-
-  /* Sequence diagram text */
+  .mermaid-diagram svg .classLabel .label text,
   .mermaid-diagram svg .actor text,
   .mermaid-diagram svg .messageLineText text,
   .mermaid-diagram svg .labelText text {
@@ -271,53 +332,62 @@
   }
 
   .mermaid-error {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
+    background-color: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.4);
     border-radius: 0.5rem;
     padding: 1rem;
   }
 
-  /* rehype-highlight styles (hljs classes) - 配合紫色主题 */
+  /* rehype-highlight (hljs) - 高对比暗色主题 */
   .hljs {
-    background: #1f2937 !important;
-    color: #e5e7eb;
+    background: transparent !important;
+    color: #c9d1d9;
   }
 
   .hljs-comment,
   .hljs-quote {
-    color: #6b7280;
+    color: #8b949e;
+    font-style: italic;
   }
 
   .hljs-keyword,
   .hljs-selector-tag,
   .hljs-addition {
-    color: #c4b5fd; /* violet-300 */
+    color: #ff7b72; /* red - 关键字 */
+  }
+
+  .hljs-string,
+  .hljs-meta .hljs-meta-string,
+  .hljs-regexp {
+    color: #a5d6ff; /* light blue - 字符串 */
   }
 
   .hljs-number,
-  .hljs-string,
-  .hljs-meta .hljs-meta-string,
   .hljs-literal,
-  .hljs-doctag,
-  .hljs-regexp {
-    color: #a78bfa; /* violet-400 */
+  .hljs-doctag {
+    color: #79c0ff; /* blue - 数字/字面量 */
   }
 
   .hljs-title,
   .hljs-section,
   .hljs-name,
-  .hljs-selector-id,
-  .hljs-selector-class {
-    color: #8b5cf6; /* violet-500 */
+  .hljs-title.function_ {
+    color: #d2a8ff; /* purple - 函数/标题 */
   }
 
   .hljs-attribute,
   .hljs-attr,
   .hljs-variable,
   .hljs-template-variable,
+  .hljs-selector-id,
+  .hljs-selector-class {
+    color: #79c0ff;
+  }
+
+  .hljs-type,
   .hljs-class .hljs-title,
-  .hljs-type {
-    color: #7c3aed; /* violet-600 */
+  .hljs-built_in {
+    color: #ffa657; /* orange - 类型/内建 */
   }
 
   .hljs-symbol,
@@ -328,12 +398,11 @@
   .hljs-selector-attr,
   .hljs-selector-pseudo,
   .hljs-link {
-    color: #34d399; /* emerald-400 */
+    color: #7ee787; /* green */
   }
 
-  .hljs-built_in,
   .hljs-deletion {
-    color: #f87171;
+    color: #ffa198;
   }
 
   .hljs-emphasis {
@@ -344,13 +413,15 @@
     font-weight: bold;
   }
 
-  /* 文档标题区域层次感样式 */
+  /* 文档标题区域层次 */
   .doc-header-card {
-    background-color: rgba(249, 250, 251, 0.5); /* gray-50/50 */
-    border: 1px solid #f3f4f6; /* gray-100 */
-    border-radius: 0.5rem;
+    background: var(--color-glass);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--radius-card);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 }
 
@@ -364,4 +435,34 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ========================================
+   @tailwindcss/typography 暗色主题变量覆盖
+   —— 一次性根治 prose 文字配色问题 ——
+   插件通过 @plugin 注入的 .prose 变量位于其专属 cascade layer，
+   层级排在本文件的 @layer base/components 之后；层级顺序优先级高于选择器特异性，
+   因此在 @layer 内声明会被插件默认（浅色模式深灰）值覆盖。
+   本块置于所有 @layer 之外（unlayered），无层规则优先级恒高于任何 layered 规则，
+   从而对全套 --tw-prose-* 生效，无需逐元素打补丁。
+   ======================================== */
+.prose {
+  --tw-prose-body: var(--color-text);
+  --tw-prose-headings: #ffffff;
+  --tw-prose-lead: var(--color-text);
+  --tw-prose-links: var(--color-primary-hover);
+  --tw-prose-bold: #ffffff;
+  --tw-prose-counters: var(--color-text-muted);
+  --tw-prose-bullets: var(--color-text-muted);
+  --tw-prose-hr: var(--color-border);
+  --tw-prose-quotes: var(--color-text-muted);
+  --tw-prose-quote-borders: var(--color-primary);
+  --tw-prose-captions: var(--color-text-muted);
+  --tw-prose-kbd: var(--color-text);
+  --tw-prose-kbd-shadows: 0 0 0 1px var(--color-border);
+  --tw-prose-code: var(--color-primary-hover);
+  --tw-prose-pre-code: #e5e7eb;
+  --tw-prose-pre-bg: #07070b;
+  --tw-prose-th-borders: var(--color-border);
+  --tw-prose-td-borders: var(--color-border);
 }
