@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-07-20
+goal: 引入 frontmatter type/category 内容分类模型,新增 /blog 时间流与 /docs 分类树,落地页做双分区预览
