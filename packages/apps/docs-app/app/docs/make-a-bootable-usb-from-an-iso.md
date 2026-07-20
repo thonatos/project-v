@@ -3,6 +3,8 @@ title: 制作可启动 USB 安装盘
 date: 2023-11-11
 description: 使用 dd 命令将 ISO 写入 USB 设备制作启动盘
 tags: [linux, usb, installation]
+type: docs
+category: System & Server
 ---
 
 ## 查看磁盘列表

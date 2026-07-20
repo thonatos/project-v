@@ -3,6 +3,8 @@ title: PVE 与 RouterOS 安装配置
 date: 2023-11-14
 description: Proxmox VE 与 MikroTik RouterOS 的磁盘管理操作
 tags: [pve, routeros, virtualization]
+type: docs
+category: Virtualization
 ---
 
 ## 下载链接

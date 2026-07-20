@@ -3,6 +3,7 @@ title: TSLA 综合投资分析报告
 date: 2026-05-03
 description: Tesla 2026年Q1财报后的综合投资与15分钟K线价格分析，涵盖估值、基本面、财报解读、量价结构及未来投资建议
 tags: [investment, tesla, stock-analysis, ev, ai, technical-analysis, price-action]
+type: blog
 ---
 
 > 分析日期：2026-05-03 | 数据截至：2026-05-01 收盘 | 技术分析补充日期：2026-05-04

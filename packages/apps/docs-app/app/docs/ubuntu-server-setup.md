@@ -3,6 +3,8 @@ title: Ubuntu Server 基础配置指南
 date: 2023-11-17
 description: 在 Ubuntu 上配置 ssh 密钥认证、nftables 防火墙、samba 文件共享、aria2 下载工具和 coredns DNS 服务
 tags: [linux, ssh, samba, aria2, nftables, coredns, server]
+type: docs
+category: System & Server
 ---
 
 本文档汇总 Ubuntu Server 基础配置，包括 ssh 登录、防火墙和常用服务。

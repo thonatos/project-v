@@ -3,6 +3,8 @@ title: 网络代理与 VPN 配置指南
 date: 2023-11-17
 description: 配置 Clash 代理、Docker 代理、WireGuard VPN 和 Cloudflare WARP
 tags: [proxy, clash, docker, wireguard, warp, vpn, network]
+type: docs
+category: Network & Proxy
 ---
 
 本文档汇总网络代理与 VPN 配置。

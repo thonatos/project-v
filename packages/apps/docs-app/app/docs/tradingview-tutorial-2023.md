@@ -3,6 +3,8 @@ title: TradingView 使用教程
 date: 2023-10-16
 description: TradingView 2023 完整视频教程指南
 tags: [trading, tutorial, tradingview]
+type: docs
+category: Tools & Tutorials
 ---
 
 TradingView 是一个专业的金融市场图表和社交网络平台，提供强大的技术分析工具。
