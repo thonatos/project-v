@@ -3,6 +3,7 @@ title: INTC.US 综合投资分析报告
 date: 2026-05-06
 description: Intel (INTC.US) 综合投资与15分钟K线技术分析报告 — Apple 芯片合作传闻驱动股价创新高，年内涨幅超 100%
 tags: [finance, analysis, INTC, US, semiconductor, apple-deal, 技术分析, 半导体, 突破, 放量]
+type: blog
 ---
 
 # INTC.US 综合投资分析报告
