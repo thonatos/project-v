@@ -13,11 +13,19 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
+    "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "~/*": ["./app/*"]
     },
     "types": ["node", "vite/client"]
   },
-  "include": ["app/**/*.ts", "app/**/*.tsx", "app/**/*.mdx", "vite.config.ts", "react-router.config.ts"],
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "app/**/*.mdx",
+    "vite.config.ts",
+    "react-router.config.ts",
+    ".react-router/types/**/*.ts"
+  ],
   "exclude": ["node_modules", "build"]
 }

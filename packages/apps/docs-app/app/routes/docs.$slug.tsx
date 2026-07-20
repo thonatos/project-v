@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import type { Route } from './+types/docs.$slug';
-import { getDocBySlug } from '~/lib/docs';
+import { getDocBySlug, getDocCategories } from '~/lib/docs';
 import { DocLayout } from '~/components/doc-layout';
 import { TagChip } from '~/components/tag-chip';
 
@@ -9,16 +9,22 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (!doc) {
     throw new Response('Not Found', { status: 404 });
   }
-  return doc;
+  const categories = doc.type === 'docs' ? await getDocCategories() : [];
+  return { ...doc, categories };
 }
 
 export function meta({ data }: Route.MetaArgs) {
-  return [{ title: `ρV - ${data.title}` }, { name: 'description', content: data.description }];
+  return [{ title: `ρV - ${data?.title ?? '文档'}` }, { name: 'description', content: data?.description ?? '' }];
 }
 
 export default function DocPage({ loaderData }: Route.ComponentProps) {
   return (
-    <DocLayout toc={loaderData.toc}>
+    <DocLayout
+      toc={loaderData.toc}
+      categories={loaderData.categories}
+      activeSlug={loaderData.slug}
+      layout={loaderData.layout}
+    >
       <header className="doc-header-card">
         <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{loaderData.date}</time>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text)]">{loaderData.title}</h1>
