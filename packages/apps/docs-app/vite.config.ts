@@ -18,4 +18,11 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
+  // 确保 R3F 生态与应用共用同一份 React，避免 "more than one copy of React"
+  resolve: {
+    dedupe: ['react', 'react-dom', 'three'],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei', '@react-three/postprocessing'],
+  },
 });

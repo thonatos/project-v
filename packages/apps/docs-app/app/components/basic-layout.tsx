@@ -1,18 +1,10 @@
-import { Footer } from './footer';
-import { Header } from './header';
+import { PageShell } from './page-shell';
 
 interface BasicLayoutProps {
   children: React.ReactNode;
 }
 
+/** 兼容封装：等价于 contained 宽度的 PageShell。 */
 export function BasicLayout({ children }: BasicLayoutProps) {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main id="main-content" className="flex flex-1 flex-col">
-        <div className="w-full grow px-4 sm:px-6 lg:px-8 py-12 lg:max-w-7xl lg:mx-auto">{children}</div>
-      </main>
-      <Footer />
-    </div>
-  );
+  return <PageShell width="contained">{children}</PageShell>;
 }
