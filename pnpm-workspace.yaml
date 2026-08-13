@@ -1,6 +1,7 @@
 packages:
   - 'packages/apps/*'
   - 'packages/libs/*'
+  - 'packages/tools/*'
 allowBuilds:
   '@swc/core': true
   better-sqlite3: true
@@ -13,5 +14,8 @@ allowBuilds:
   workerd: true
 minimumReleaseAgeExclude:
   - i18next-cli@1.62.0
+  - '@scriptc/compiler@0.0.28'
+  - '@scriptc/runtime@0.0.28'
+  - scriptc@0.0.28
 overrides:
   style-to-js: ^1.1.16
