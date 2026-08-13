@@ -1,0 +1,26 @@
+{
+  "name": "gpm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clone Git repositories into predictable host-based paths",
+  "bin": {
+    "gpm": "dist/gpm"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "mkdir -p dist && scriptc build src/main.ts --no-keep-c -o dist/gpm",
+    "coverage": "scriptc coverage src/main.ts",
+    "format": "oxfmt format . --check",
+    "lint": "oxlint lint src test",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "scriptc": "0.0.28",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}
