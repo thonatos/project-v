@@ -23,25 +23,46 @@ const styles = `
 `;
 
 function Chevron({ open }) {
-  return h('svg', {
-    width: 14,
-    height: 14,
-    viewBox: '0 0 14 14',
-    fill: 'none',
-    className: 'dsh-tg-chevron',
-    'data-open': open,
-    'aria-hidden': true,
-  }, h('path', {
-    d: 'M11.8486 5.5L11.4238 5.92383L8.69727 8.65137C8.44157 8.90706 8.21562 9.13382 8.01172 9.29785C7.79912 9.46883 7.55595 9.61756 7.25 9.66602C7.08435 9.69222 6.91565 9.69222 6.75 9.66602C6.44405 9.61756 6.20088 9.46883 5.98828 9.29785C5.78438 9.13382 5.55843 8.90706 5.30273 8.65137L2.57617 5.92383L2.15137 5.5L3 4.65137L3.42383 5.07617L6.15137 7.80273C6.42595 8.07732 6.59876 8.24849 6.74023 8.3623C6.87291 8.46904 6.92272 8.47813 6.9375 8.48047C6.97895 8.48703 7.02105 8.48703 7.0625 8.48047C7.07728 8.47813 7.12709 8.46904 7.25977 8.3623C7.40124 8.24849 7.57405 8.07732 7.84863 7.80273L10.5762 5.07617L11 4.65137L11.8486 5.5Z',
-    fill: 'currentColor',
-  }));
+  return h(
+    'svg',
+    {
+      width: 14,
+      height: 14,
+      viewBox: '0 0 14 14',
+      fill: 'none',
+      className: 'dsh-tg-chevron',
+      'data-open': open,
+      'aria-hidden': true,
+    },
+    h('path', {
+      d: 'M11.8486 5.5L11.4238 5.92383L8.69727 8.65137C8.44157 8.90706 8.21562 9.13382 8.01172 9.29785C7.79912 9.46883 7.55595 9.61756 7.25 9.66602C7.08435 9.69222 6.91565 9.69222 6.75 9.66602C6.44405 9.61756 6.20088 9.46883 5.98828 9.29785C5.78438 9.13382 5.55843 8.90706 5.30273 8.65137L2.57617 5.92383L2.15137 5.5L3 4.65137L3.42383 5.07617L6.15137 7.80273C6.42595 8.07732 6.59876 8.24849 6.74023 8.3623C6.87291 8.46904 6.92272 8.47813 6.9375 8.48047C6.97895 8.48703 7.02105 8.48703 7.0625 8.48047C7.07728 8.47813 7.12709 8.46904 7.25977 8.3623C7.40124 8.24849 7.57405 8.07732 7.84863 7.80273L10.5762 5.07617L11 4.65137L11.8486 5.5Z',
+      fill: 'currentColor',
+    }),
+  );
 }
 
-function Field({ id, label, hint, type = 'text', value, wide = false, required = false, optional = false, placeholder, onChange }) {
-  return h('div', { className: `dsh-tg-field${wide ? ' dsh-tg-field-wide' : ''}` },
-    h('label', { className: 'dsh-tg-label', htmlFor: id }, label,
+function Field({
+  id,
+  label,
+  hint,
+  type = 'text',
+  value,
+  wide = false,
+  required = false,
+  optional = false,
+  placeholder,
+  onChange,
+}) {
+  return h(
+    'div',
+    { className: `dsh-tg-field${wide ? ' dsh-tg-field-wide' : ''}` },
+    h(
+      'label',
+      { className: 'dsh-tg-label', htmlFor: id },
+      label,
       required ? h('span', { className: 'dsh-tg-required' }, '必填') : null,
-      optional ? h('span', { className: 'dsh-tg-optional' }, '可选') : null),
+      optional ? h('span', { className: 'dsh-tg-optional' }, '可选') : null,
+    ),
     h('input', {
       id,
       className: 'dsh-tg-input',
@@ -52,11 +73,16 @@ function Field({ id, label, hint, type = 'text', value, wide = false, required =
       value: value ?? '',
       onChange: (event) => onChange(event.target.value),
     }),
-    hint ? h('p', { className: 'dsh-tg-hint' }, hint) : null);
+    hint ? h('p', { className: 'dsh-tg-hint' }, hint) : null,
+  );
 }
 
 function TelegramSettingsCard({ api, scope, workspaceList }) {
-  const snapshot = React.useSyncExternalStore(scope.subscribe.bind(scope), scope.getSnapshot.bind(scope), scope.getSnapshot.bind(scope));
+  const snapshot = React.useSyncExternalStore(
+    scope.subscribe.bind(scope),
+    scope.getSnapshot.bind(scope),
+    scope.getSnapshot.bind(scope),
+  );
   const workspaceSnapshot = React.useSyncExternalStore(
     workspaceList.subscribe.bind(workspaceList),
     workspaceList.getSnapshot.bind(workspaceList),
@@ -90,17 +116,22 @@ function TelegramSettingsCard({ api, scope, workspaceList }) {
   }, [snapshot.revision]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(source);
   const secretDirty = Object.values(secrets).some(Boolean);
-  const requiredMissing = Boolean(draft.enabled) && (
-    !draft.workspaceId?.trim() || !/^[1-9]\d{0,15}$/.test(String(draft.ownerUserId ?? '').trim())
-    || (!credentials.botToken && !secrets.botToken.trim())
-    || (proxyOpen && (!draft.proxy?.ip?.trim() || !Number.isSafeInteger(Number(draft.proxy?.port))
-      || Number(draft.proxy?.port) < 1 || Number(draft.proxy?.port) > 65535))
-  );
+  const requiredMissing =
+    Boolean(draft.enabled) &&
+    (!draft.workspaceId?.trim() ||
+      !/^[1-9]\d{0,15}$/.test(String(draft.ownerUserId ?? '').trim()) ||
+      (!credentials.botToken && !secrets.botToken.trim()) ||
+      (proxyOpen &&
+        (!draft.proxy?.ip?.trim() ||
+          !Number.isSafeInteger(Number(draft.proxy?.port)) ||
+          Number(draft.proxy?.port) < 1 ||
+          Number(draft.proxy?.port) > 65535)));
   const update = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
-  const updateProxy = (field, value) => setDraft((current) => ({
-    ...current,
-    proxy: { ...current.proxy, [field]: value },
-  }));
+  const updateProxy = (field, value) =>
+    setDraft((current) => ({
+      ...current,
+      proxy: { ...current.proxy, [field]: value },
+    }));
   const discard = () => {
     setDraft(source);
     setProxyOpen(Boolean(source.proxy?.ip || source.proxy?.port));
@@ -141,61 +172,238 @@ function TelegramSettingsCard({ api, scope, workspaceList }) {
     }
   };
 
-  return h('li', { className: `dsh-tg-card${open ? ' dsh-tg-card-open' : ''}`, 'data-slot': 'telegram-settings-card' },
-    h('button', {
-      type: 'button',
-      className: 'dsh-tg-header',
-      'aria-expanded': open,
-      onClick: () => setOpen((value) => !value),
-    },
-    h('span', { className: 'dsh-tg-head-text' },
-      h('span', { className: 'dsh-tg-name' }, 'Telegram'),
-      h('span', { className: 'dsh-tg-description' }, '通过 Telegram Bot API 将私聊消息连接到 Harness Workspace。')),
-    h(Chevron, { open })),
-    open ? h('div', { className: 'dsh-tg-body' },
-      snapshot.status !== 'ready' ? h('p', { className: 'dsh-tg-hint' }, '正在读取 Telegram 设置…') : h(React.Fragment, null,
-        h('div', { className: 'dsh-tg-section' },
-          h('div', { className: 'dsh-tg-switch-row' },
-            h('span', { className: 'dsh-tg-switch-copy' },
-              h('span', { className: 'dsh-tg-label' }, '启用 Telegram'),
-              h('span', { className: 'dsh-tg-hint' }, '保存后重建 Telegram 连接。')),
-            h('input', { type: 'checkbox', className: 'dsh-tg-switch', checked: Boolean(draft.enabled), onChange: (event) => update('enabled', event.target.checked) })),
-          h('h4', { className: 'dsh-tg-section-title' }, '连接凭据'),
-          h(Field, { id: `${prefix}-token`, label: 'Bot Token', required: true, type: 'password', value: secrets.botToken, wide: true, placeholder: credentials.botToken ? '已配置，留空保持不变' : '从 @BotFather 获取', hint: credentials.botToken ? '凭据已安全保存。输入新值可替换。' : '运行 Telegram Bot 必需。', onChange: (value) => setSecrets((current) => ({ ...current, botToken: value })) }),
-          h('h4', { className: 'dsh-tg-section-title' }, '消息路由'),
-          h('div', { className: 'dsh-tg-field dsh-tg-field-wide' },
-            h('label', { className: 'dsh-tg-label', htmlFor: `${prefix}-workspace` }, 'Workspace', h('span', { className: 'dsh-tg-required' }, '必填')),
-            h('select', { id: `${prefix}-workspace`, className: 'dsh-tg-select', value: draft.workspaceId ?? '', onChange: (event) => update('workspaceId', event.target.value) },
-              h('option', { value: '' }, workspaceSnapshot.state === 'loading' ? '正在读取 Workspace…' : '请选择 Workspace'),
-              ...(workspaceSnapshot.items ?? []).map((workspace) => h('option', { key: workspace.workspaceId, value: workspace.workspaceId }, workspace.name ?? workspace.path ?? workspace.workspaceId))),
-            h('p', { className: 'dsh-tg-hint' }, 'Telegram 对话会在此 Workspace 中创建 Harness Session。')),
-          h(Field, { id: `${prefix}-owner`, label: 'Owner User ID', required: true, value: draft.ownerUserId, wide: true, hint: '仅接受该用户的私聊，填写数字 User ID。', onChange: (value) => update('ownerUserId', value) }),
-          h('h4', { className: 'dsh-tg-section-title' }, '消息设置'),
-          h(Field, { id: `${prefix}-limit`, label: '消息长度上限', optional: true, type: 'number', value: draft.messageLimit, hint: '默认 4096，通常无需修改。', onChange: (value) => update('messageLimit', value) }),
-          h('h4', { className: 'dsh-tg-section-title' }, '代理'),
-          h('div', { className: 'dsh-tg-switch-row' },
-            h('span', { className: 'dsh-tg-switch-copy' },
-              h('span', { className: 'dsh-tg-label' }, '使用代理', h('span', { className: 'dsh-tg-optional' }, '可选')),
-              h('span', { className: 'dsh-tg-hint' }, '直连 Telegram 不可用时再开启。')),
-            h('input', { type: 'checkbox', className: 'dsh-tg-switch', checked: proxyOpen, onChange: (event) => {
-              setProxyOpen(event.target.checked);
-               if (!event.target.checked) setDraft((current) => ({ ...current, proxy: { type: 'socks5', ip: '', port: 0, username: '', password: '' } }));
-             } })),
-          proxyOpen ? h(React.Fragment, null,
-          h('div', { className: 'dsh-tg-field' },
-            h('label', { className: 'dsh-tg-label', htmlFor: `${prefix}-proxy-type` }, '代理协议', h('span', { className: 'dsh-tg-required' }, '必填')),
-            h('select', { id: `${prefix}-proxy-type`, className: 'dsh-tg-select', value: draft.proxy?.type ?? 'socks5', onChange: (event) => updateProxy('type', event.target.value) },
-              h('option', { value: 'socks5' }, 'SOCKS5'), h('option', { value: 'http' }, 'HTTP'), h('option', { value: 'https' }, 'HTTPS'))),
-          h(Field, { id: `${prefix}-proxy-ip`, label: '代理地址', required: true, value: draft.proxy?.ip, onChange: (value) => updateProxy('ip', value) }),
-          h(Field, { id: `${prefix}-proxy-port`, label: '代理端口', required: true, type: 'number', value: draft.proxy?.port, onChange: (value) => updateProxy('port', value) }),
-          h(Field, { id: `${prefix}-proxy-user`, label: '代理用户名', optional: true, value: draft.proxy?.username, onChange: (value) => updateProxy('username', value) }),
-          h(Field, { id: `${prefix}-proxy-password`, label: '代理密码', optional: true, type: 'password', value: draft.proxy?.password, onChange: (value) => updateProxy('password', value) })) : null),
-        h('div', { className: 'dsh-tg-footer' },
-          feedback ? h('span', { className: 'dsh-tg-feedback', role: 'status' }, feedback) : null,
-          error ? h('span', { className: 'dsh-tg-feedback dsh-tg-error', role: 'alert' }, error) : null,
-          h('button', { type: 'button', className: 'dsh-tg-button dsh-tg-button-secondary', disabled: (!dirty && !secretDirty) || saving, onClick: discard }, '放弃修改'),
-          requiredMissing ? h('span', { className: 'dsh-tg-feedback dsh-tg-error' }, '请先完成所有必填项') : null,
-          h('button', { type: 'button', className: 'dsh-tg-button dsh-tg-button-primary', disabled: (!dirty && !secretDirty) || saving || requiredMissing || !snapshot.writable, onClick: save }, h('span', null, saving ? '保存中…' : '保存'))))) : null);
+  return h(
+    'li',
+    { className: `dsh-tg-card${open ? ' dsh-tg-card-open' : ''}`, 'data-slot': 'telegram-settings-card' },
+    h(
+      'button',
+      {
+        type: 'button',
+        className: 'dsh-tg-header',
+        'aria-expanded': open,
+        onClick: () => setOpen((value) => !value),
+      },
+      h(
+        'span',
+        { className: 'dsh-tg-head-text' },
+        h('span', { className: 'dsh-tg-name' }, 'Telegram'),
+        h('span', { className: 'dsh-tg-description' }, '通过 Telegram Bot API 将私聊消息连接到 Harness Workspace。'),
+      ),
+      h(Chevron, { open }),
+    ),
+    open
+      ? h(
+          'div',
+          { className: 'dsh-tg-body' },
+          snapshot.status !== 'ready'
+            ? h('p', { className: 'dsh-tg-hint' }, '正在读取 Telegram 设置…')
+            : h(
+                React.Fragment,
+                null,
+                h(
+                  'div',
+                  { className: 'dsh-tg-section' },
+                  h(
+                    'div',
+                    { className: 'dsh-tg-switch-row' },
+                    h(
+                      'span',
+                      { className: 'dsh-tg-switch-copy' },
+                      h('span', { className: 'dsh-tg-label' }, '启用 Telegram'),
+                      h('span', { className: 'dsh-tg-hint' }, '保存后重建 Telegram 连接。'),
+                    ),
+                    h('input', {
+                      type: 'checkbox',
+                      className: 'dsh-tg-switch',
+                      checked: Boolean(draft.enabled),
+                      onChange: (event) => update('enabled', event.target.checked),
+                    }),
+                  ),
+                  h('h4', { className: 'dsh-tg-section-title' }, '连接凭据'),
+                  h(Field, {
+                    id: `${prefix}-token`,
+                    label: 'Bot Token',
+                    required: true,
+                    type: 'password',
+                    value: secrets.botToken,
+                    wide: true,
+                    placeholder: credentials.botToken ? '已配置，留空保持不变' : '从 @BotFather 获取',
+                    hint: credentials.botToken ? '凭据已安全保存。输入新值可替换。' : '运行 Telegram Bot 必需。',
+                    onChange: (value) => setSecrets((current) => ({ ...current, botToken: value })),
+                  }),
+                  h('h4', { className: 'dsh-tg-section-title' }, '消息路由'),
+                  h(
+                    'div',
+                    { className: 'dsh-tg-field dsh-tg-field-wide' },
+                    h(
+                      'label',
+                      { className: 'dsh-tg-label', htmlFor: `${prefix}-workspace` },
+                      'Workspace',
+                      h('span', { className: 'dsh-tg-required' }, '必填'),
+                    ),
+                    h(
+                      'select',
+                      {
+                        id: `${prefix}-workspace`,
+                        className: 'dsh-tg-select',
+                        value: draft.workspaceId ?? '',
+                        onChange: (event) => update('workspaceId', event.target.value),
+                      },
+                      h(
+                        'option',
+                        { value: '' },
+                        workspaceSnapshot.state === 'loading' ? '正在读取 Workspace…' : '请选择 Workspace',
+                      ),
+                      ...(workspaceSnapshot.items ?? []).map((workspace) =>
+                        h(
+                          'option',
+                          { key: workspace.workspaceId, value: workspace.workspaceId },
+                          workspace.name ?? workspace.path ?? workspace.workspaceId,
+                        ),
+                      ),
+                    ),
+                    h('p', { className: 'dsh-tg-hint' }, 'Telegram 对话会在此 Workspace 中创建 Harness Session。'),
+                  ),
+                  h(Field, {
+                    id: `${prefix}-owner`,
+                    label: 'Owner User ID',
+                    required: true,
+                    value: draft.ownerUserId,
+                    wide: true,
+                    hint: '仅接受该用户的私聊，填写数字 User ID。',
+                    onChange: (value) => update('ownerUserId', value),
+                  }),
+                  h('h4', { className: 'dsh-tg-section-title' }, '消息设置'),
+                  h(Field, {
+                    id: `${prefix}-limit`,
+                    label: '消息长度上限',
+                    optional: true,
+                    type: 'number',
+                    value: draft.messageLimit,
+                    hint: '默认 4096，通常无需修改。',
+                    onChange: (value) => update('messageLimit', value),
+                  }),
+                  h('h4', { className: 'dsh-tg-section-title' }, '代理'),
+                  h(
+                    'div',
+                    { className: 'dsh-tg-switch-row' },
+                    h(
+                      'span',
+                      { className: 'dsh-tg-switch-copy' },
+                      h(
+                        'span',
+                        { className: 'dsh-tg-label' },
+                        '使用代理',
+                        h('span', { className: 'dsh-tg-optional' }, '可选'),
+                      ),
+                      h('span', { className: 'dsh-tg-hint' }, '直连 Telegram 不可用时再开启。'),
+                    ),
+                    h('input', {
+                      type: 'checkbox',
+                      className: 'dsh-tg-switch',
+                      checked: proxyOpen,
+                      onChange: (event) => {
+                        setProxyOpen(event.target.checked);
+                        if (!event.target.checked)
+                          setDraft((current) => ({
+                            ...current,
+                            proxy: { type: 'socks5', ip: '', port: 0, username: '', password: '' },
+                          }));
+                      },
+                    }),
+                  ),
+                  proxyOpen
+                    ? h(
+                        React.Fragment,
+                        null,
+                        h(
+                          'div',
+                          { className: 'dsh-tg-field' },
+                          h(
+                            'label',
+                            { className: 'dsh-tg-label', htmlFor: `${prefix}-proxy-type` },
+                            '代理协议',
+                            h('span', { className: 'dsh-tg-required' }, '必填'),
+                          ),
+                          h(
+                            'select',
+                            {
+                              id: `${prefix}-proxy-type`,
+                              className: 'dsh-tg-select',
+                              value: draft.proxy?.type ?? 'socks5',
+                              onChange: (event) => updateProxy('type', event.target.value),
+                            },
+                            h('option', { value: 'socks5' }, 'SOCKS5'),
+                            h('option', { value: 'http' }, 'HTTP'),
+                            h('option', { value: 'https' }, 'HTTPS'),
+                          ),
+                        ),
+                        h(Field, {
+                          id: `${prefix}-proxy-ip`,
+                          label: '代理地址',
+                          required: true,
+                          value: draft.proxy?.ip,
+                          onChange: (value) => updateProxy('ip', value),
+                        }),
+                        h(Field, {
+                          id: `${prefix}-proxy-port`,
+                          label: '代理端口',
+                          required: true,
+                          type: 'number',
+                          value: draft.proxy?.port,
+                          onChange: (value) => updateProxy('port', value),
+                        }),
+                        h(Field, {
+                          id: `${prefix}-proxy-user`,
+                          label: '代理用户名',
+                          optional: true,
+                          value: draft.proxy?.username,
+                          onChange: (value) => updateProxy('username', value),
+                        }),
+                        h(Field, {
+                          id: `${prefix}-proxy-password`,
+                          label: '代理密码',
+                          optional: true,
+                          type: 'password',
+                          value: draft.proxy?.password,
+                          onChange: (value) => updateProxy('password', value),
+                        }),
+                      )
+                    : null,
+                ),
+                h(
+                  'div',
+                  { className: 'dsh-tg-footer' },
+                  feedback ? h('span', { className: 'dsh-tg-feedback', role: 'status' }, feedback) : null,
+                  error ? h('span', { className: 'dsh-tg-feedback dsh-tg-error', role: 'alert' }, error) : null,
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'dsh-tg-button dsh-tg-button-secondary',
+                      disabled: (!dirty && !secretDirty) || saving,
+                      onClick: discard,
+                    },
+                    '放弃修改',
+                  ),
+                  requiredMissing
+                    ? h('span', { className: 'dsh-tg-feedback dsh-tg-error' }, '请先完成所有必填项')
+                    : null,
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'dsh-tg-button dsh-tg-button-primary',
+                      disabled: (!dirty && !secretDirty) || saving || requiredMissing || !snapshot.writable,
+                      onClick: save,
+                    },
+                    h('span', null, saving ? '保存中…' : '保存'),
+                  ),
+                ),
+              ),
+        )
+      : null,
+  );
 }
 
 export function apply(ctx) {
@@ -209,9 +417,14 @@ export function apply(ctx) {
   const scope = ctx.settingsScope.bind({ namespace: SETTINGS_NAMESPACE });
   const { api } = ctx.get('connection');
   const workspaces = ctx.get('workspaces');
-  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
-    name: 'settings.plugin.item',
-    key: SETTINGS_NAMESPACE,
-    inject: () => ({ api, scope, workspaceList: workspaces.list }),
-  }, TelegramSettingsCard));
+  ctx.slots.inject('settings.plugin.item', () =>
+    ctx.slots.register(
+      {
+        name: 'settings.plugin.item',
+        key: SETTINGS_NAMESPACE,
+        inject: () => ({ api, scope, workspaceList: workspaces.list }),
+      },
+      TelegramSettingsCard,
+    ),
+  );
 }

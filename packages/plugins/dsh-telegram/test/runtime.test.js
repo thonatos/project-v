@@ -39,7 +39,9 @@ test('routes only owner messages into the bound workspace', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-'));
   const workspace = {
     path: root,
-    async status() { return 'ok'; },
+    async status() {
+      return 'ok';
+    },
     async attachSession() {},
   };
   const followups = [];
@@ -55,14 +57,20 @@ test('routes only owner messages into the bound workspace', async () => {
   let resolveIdle;
   let longRunning = false;
   const cancellations = [];
-  const pendingIdle = new Promise((resolve) => { resolveIdle = resolve; });
+  const pendingIdle = new Promise((resolve) => {
+    resolveIdle = resolve;
+  });
   const ctx = {
     credentials: {
       async resolve(ref) {
         return { value: `${ref}-value`, source: 'test' };
       },
     },
-    workspaceRegistry: { get() { return workspace; } },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
     agentDefaultModel: {
       currentSelection() {
         return { provider: 'deepseek', model: 'deepseek-chat' };
@@ -81,7 +89,9 @@ test('routes only owner messages into the bound workspace', async () => {
         const agent = {
           id,
           session: { header: { cwd: root } },
-          get status() { return longRunning ? 'running' : 'idle'; },
+          get status() {
+            return longRunning ? 'running' : 'idle';
+          },
           followup(message) {
             followups.push(message);
             longRunning = message.content?.[0]?.text === 'long';
@@ -89,41 +99,59 @@ test('routes only owner messages into the bound workspace', async () => {
           whenIdle() {
             return longRunning ? pendingIdle : Promise.resolve();
           },
-           cancel(...args) { cancellations.push(args); },
+          cancel(...args) {
+            cancellations.push(args);
+          },
         };
         return { agent, async dispose() {} };
       },
-      async resume() { throw new Error('not expected'); },
+      async resume() {
+        throw new Error('not expected');
+      },
     },
     on() {},
     effect() {},
   };
-  const runtime = new TelegramRuntime(ctx, {
-    ownerUserId: '7',
-    workspaceId: 'workspace-1',
-    messageLimit: 100,
-  }, {
-    statePath: join(root, 'bindings.json'),
-    async createClient(options) {
-      incoming = options.onMessage;
+  const runtime = new TelegramRuntime(
+    ctx,
+    {
+      ownerUserId: '7',
+      workspaceId: 'workspace-1',
+      messageLimit: 100,
+    },
+    {
+      statePath: join(root, 'bindings.json'),
+      async createClient(options) {
+        incoming = options.onMessage;
         return {
           botId: '99',
           bot: {
             api: {
-             async sendMessage(payload) { sentMessages.push(payload); return { message_id: payload.reply_markup ? 42 : ++sentId }; },
-             async editMessageText(payload) { editedTexts.push(payload); },
-             async editMessageReplyMarkup(payload) { editedCards.push(payload); },
-             async answerCallbackQuery() {},
-             async sendCard(payload) { cards.push(payload); return { message_id: 42 }; },
-             async sendPhoto() {},
+              async sendMessage(payload) {
+                sentMessages.push(payload);
+                return { message_id: payload.reply_markup ? 42 : ++sentId };
+              },
+              async editMessageText(payload) {
+                editedTexts.push(payload);
+              },
+              async editMessageReplyMarkup(payload) {
+                editedCards.push(payload);
+              },
+              async answerCallbackQuery() {},
+              async sendCard(payload) {
+                cards.push(payload);
+                return { message_id: 42 };
+              },
+              async sendPhoto() {},
+            },
           },
-        },
-        botToken: 'token',
-        fetchImpl: fetch,
-        async close() {},
-      };
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
     },
-  });
+  );
   await runtime.start();
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/status' } });
   await runtime.whenSettled('7');
@@ -155,7 +183,9 @@ test('routes only owner messages into the bound workspace', async () => {
     id: 'question-1',
     kind: 'question',
     payload: { question: '继续？', options: [{ label: '是', value: 'yes' }] },
-    respond(answer) { interactionAnswer = answer; },
+    respond(answer) {
+      interactionAnswer = answer;
+    },
   });
   assert.equal(sentMessages.at(-1).text, '继续？');
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'yes' } });
@@ -185,7 +215,13 @@ test('routes only owner messages into the bound workspace', async () => {
 
 test('streams the assistant reply and rejects foreign callback queries', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-'));
-  const workspace = { path: root, async status() { return 'ok'; }, async attachSession() {} };
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
   const sent = [];
   const answered = [];
   let incoming;
@@ -193,51 +229,98 @@ test('streams the assistant reply and rejects foreign callback queries', async (
   let sentId = 0;
   let sessionEvent;
   const ctx = {
-    credentials: { async resolve(ref) { return { value: `${ref}-value` }; } },
-    workspaceRegistry: { get() { return workspace; } },
-    agentDefaultModel: { currentSelection() { return { provider: 'deepseek', model: 'deepseek-chat' }; } },
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return { provider: 'deepseek', model: 'deepseek-chat' };
+      },
+    },
     agents: {
       async create(options) {
         const handlers = new Map();
-        options.setup?.({ on(event, handler) { handlers.set(event, handler); return () => handlers.delete(event); } });
+        options.setup?.({
+          on(event, handler) {
+            handlers.set(event, handler);
+            return () => handlers.delete(event);
+          },
+        });
         sessionEvent = (event) => handlers.get('session/event')?.({}, event);
         const agent = {
           id: options.sessionId,
-          session: { header: { cwd: root }, deriveMessages() { return []; } },
+          session: {
+            header: { cwd: root },
+            deriveMessages() {
+              return [];
+            },
+          },
           // 提交 prompt 时同步 emit 增量文本事件，模拟 Harness 流式输出。
           followup() {
-            sessionEvent({ type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: 'answer ' } } });
+            sessionEvent({
+              type: 'assistant/chunk',
+              data: { chunk: { type: 'text-delta', index: 0, text: 'answer ' } },
+            });
             sessionEvent({ type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: 'body' } } });
           },
-          whenIdle() { return Promise.resolve(); },
+          whenIdle() {
+            return Promise.resolve();
+          },
           cancel() {},
         };
         return { agent, async dispose() {} };
       },
-      async resume() { throw new Error('not expected'); },
+      async resume() {
+        throw new Error('not expected');
+      },
     },
-    on() {}, effect() {},
+    on() {},
+    effect() {},
   };
-  const runtime = new TelegramRuntime(ctx, {
-    ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 6,
-  }, {
-    statePath: join(root, 'bindings.json'),
-    async createClient(options) {
-      incoming = options.onMessage;
-      onCallback = options.onCallbackQuery;
-      return {
-        botId: '99', botToken: 'token', fetchImpl: fetch,
-        bot: { api: {
-          async sendMessage(payload) { sent.push(payload); return { message_id: ++sentId }; },
-          async editMessageText(payload) { sent.push(payload); },
-          async editMessageReplyMarkup() {},
-          async answerCallbackQuery(payload) { answered.push(payload); },
-          async sendPhoto() {},
-        } },
-        async close() {},
-      };
+  const runtime = new TelegramRuntime(
+    ctx,
+    {
+      ownerUserId: '7',
+      workspaceId: 'workspace-1',
+      messageLimit: 6,
     },
-  });
+    {
+      statePath: join(root, 'bindings.json'),
+      async createClient(options) {
+        incoming = options.onMessage;
+        onCallback = options.onCallbackQuery;
+        return {
+          botId: '99',
+          botToken: 'token',
+          fetchImpl: fetch,
+          bot: {
+            api: {
+              async sendMessage(payload) {
+                sent.push(payload);
+                return { message_id: ++sentId };
+              },
+              async editMessageText(payload) {
+                sent.push(payload);
+              },
+              async editMessageReplyMarkup() {},
+              async answerCallbackQuery(payload) {
+                answered.push(payload);
+              },
+              async sendPhoto() {},
+            },
+          },
+          async close() {},
+        };
+      },
+    },
+  );
   await runtime.start();
   // 普通消息触发流式增量输出：messageLimit=6，'answer body' 会被安全分片为多条
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'hi' } });
@@ -245,7 +328,14 @@ test('streams the assistant reply and rejects foreign callback queries', async (
   // 流式期间既有 sendMessage（首片）也有 editMessageText（增长编辑），合并后应还原全文
   const textParts = sent.filter((payload) => typeof payload.text === 'string' && !payload.reply_markup);
   assert.ok(textParts.length >= 1);
-  assert.equal(textParts.map((payload) => payload.text).join('').replace(/\s+/g, '').includes('answer'), true);
+  assert.equal(
+    textParts
+      .map((payload) => payload.text)
+      .join('')
+      .replace(/\s+/g, '')
+      .includes('answer'),
+    true,
+  );
   assert.ok(textParts.every((payload) => payload.text.length <= 6));
   // 陌生用户的 callback 被脱敏拒绝，不改动任何 interaction
   await onCallback({ callback: { id: 'cb-1', senderId: '999', chatId: '7', data: 'dsh:approval:x:approve' } });
@@ -262,7 +352,13 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
   // 二者可能拿到不同 provider/model，导致 system-prompt 与实际请求漂移，
   // DeepSeek 适配器随之走非结构化路径、把工具调用裸写成 <｜｜DSML｜｜...> 文本。
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-sel-'));
-  const workspace = { path: root, async status() { return 'ok'; }, async attachSession() {} };
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
   const setupHandlers = new Map();
   const createOptions = [];
   let calls = 0;
@@ -273,37 +369,82 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
   ];
   let incoming;
   const ctx = {
-    credentials: { async resolve(ref) { return { value: `${ref}-value` }; } },
-    workspaceRegistry: { get() { return workspace; } },
-    agentDefaultModel: { currentSelection() { return selections[Math.min(calls++, selections.length - 1)]; } },
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return selections[Math.min(calls++, selections.length - 1)];
+      },
+    },
     agents: {
       async create(options) {
         createOptions.push(options);
-        options.setup?.({ on(event, handler) { setupHandlers.set(event, handler); return () => setupHandlers.delete(event); } });
+        options.setup?.({
+          on(event, handler) {
+            setupHandlers.set(event, handler);
+            return () => setupHandlers.delete(event);
+          },
+        });
         const agent = {
-          id: options.sessionId, session: { header: { cwd: root } },
-          get status() { return 'idle'; },
-          followup() {}, whenIdle() { return Promise.resolve(); }, cancel() {},
+          id: options.sessionId,
+          session: { header: { cwd: root } },
+          get status() {
+            return 'idle';
+          },
+          followup() {},
+          whenIdle() {
+            return Promise.resolve();
+          },
+          cancel() {},
         };
         return { agent, async dispose() {} };
       },
-      async resume() { throw new Error('not expected'); },
+      async resume() {
+        throw new Error('not expected');
+      },
     },
-    on() {}, effect() {},
+    on() {},
+    effect() {},
   };
-  const runtime = new TelegramRuntime(ctx, {
-    ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100,
-  }, {
-    statePath: join(root, 'bindings.json'),
-    async createClient(options) {
-      incoming = options.onMessage;
-      return {
-        botId: '99',
-        bot: { api: { async sendMessage() { return { message_id: 1 }; }, async editMessageText() {}, async editMessageReplyMarkup() {}, async answerCallbackQuery() {}, async sendPhoto() {} } },
-        botToken: 'token', fetchImpl: fetch, async close() {},
-      };
+  const runtime = new TelegramRuntime(
+    ctx,
+    {
+      ownerUserId: '7',
+      workspaceId: 'workspace-1',
+      messageLimit: 100,
     },
-  });
+    {
+      statePath: join(root, 'bindings.json'),
+      async createClient(options) {
+        incoming = options.onMessage;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage() {
+                return { message_id: 1 };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup() {},
+              async answerCallbackQuery() {},
+              async sendPhoto() {},
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
   await runtime.start();
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/status' } });
   await runtime.whenSettled('7');
@@ -315,7 +456,11 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
   assert.equal(typeof requestHandler, 'function');
   const assembled = await assembleHandler({}, {}, async () => ({ variables: {} }));
   // request 必须复用 assemble 阶段落定的同一 provider/model，而非再取一次 currentSelection
-  const requested = await requestHandler({}, async () => ({ provider: 'STALE', model: 'STALE', reasoningEffort: 'high' }));
+  const requested = await requestHandler({}, async () => ({
+    provider: 'STALE',
+    model: 'STALE',
+    reasoningEffort: 'high',
+  }));
   assert.equal(requested.provider, assembled.variables.provider);
   assert.equal(requested.model, assembled.variables.model);
   assert.equal(requested.provider, 'deepseek');
@@ -328,42 +473,98 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
 test('agent setup mounts the default preset so the agent scope has tools', async () => {
   // 回归锁定：不挂 preset → agent 作用域无工具 → 请求 tools=[] → DeepSeek 裸写 DSML。
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-preset-'));
-  const workspace = { path: root, async status() { return 'ok'; }, async attachSession() {} };
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
   const mountCalls = [];
   let incoming;
   const ctx = {
-    credentials: { async resolve(ref) { return { value: `${ref}-value` }; } },
-    workspaceRegistry: { get() { return workspace; } },
-    agentDefaultModel: { currentSelection() { return { provider: 'deepseek', model: 'deepseek-chat' }; } },
-    agentPresets: { async mount(agentCtx, id) { mountCalls.push({ agentCtx, id }); } },
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return { provider: 'deepseek', model: 'deepseek-chat' };
+      },
+    },
+    agentPresets: {
+      async mount(agentCtx, id) {
+        mountCalls.push({ agentCtx, id });
+      },
+    },
     agents: {
       async create(options) {
-        await options.setup?.({ on() { return () => {}; } });
+        await options.setup?.({
+          on() {
+            return () => {};
+          },
+        });
         const agent = {
-          id: options.sessionId, session: { header: { cwd: root } },
-          get status() { return 'idle'; },
-          followup() {}, whenIdle() { return Promise.resolve(); }, cancel() {},
+          id: options.sessionId,
+          session: { header: { cwd: root } },
+          get status() {
+            return 'idle';
+          },
+          followup() {},
+          whenIdle() {
+            return Promise.resolve();
+          },
+          cancel() {},
         };
         return { agent, async dispose() {} };
       },
-      async resume() { throw new Error('not expected'); },
+      async resume() {
+        throw new Error('not expected');
+      },
     },
-    get(key) { return key === 'agentPresets' ? this.agentPresets : undefined; },
-    on() {}, effect() {},
+    get(key) {
+      return key === 'agentPresets' ? this.agentPresets : undefined;
+    },
+    on() {},
+    effect() {},
   };
-  const runtime = new TelegramRuntime(ctx, {
-    ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100,
-  }, {
-    statePath: join(root, 'bindings.json'),
-    async createClient(options) {
-      incoming = options.onMessage;
-      return {
-        botId: '99',
-        bot: { api: { async sendMessage() { return { message_id: 1 }; }, async editMessageText() {}, async editMessageReplyMarkup() {}, async answerCallbackQuery() {}, async sendPhoto() {} } },
-        botToken: 'token', fetchImpl: fetch, async close() {},
-      };
+  const runtime = new TelegramRuntime(
+    ctx,
+    {
+      ownerUserId: '7',
+      workspaceId: 'workspace-1',
+      messageLimit: 100,
     },
-  });
+    {
+      statePath: join(root, 'bindings.json'),
+      async createClient(options) {
+        incoming = options.onMessage;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage() {
+                return { message_id: 1 };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup() {},
+              async answerCallbackQuery() {},
+              async sendPhoto() {},
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
   await runtime.start();
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/status' } });
   await runtime.whenSettled('7');
@@ -376,46 +577,97 @@ test('agent setup mounts the default preset so the agent scope has tools', async
 
 test('reacts to an incoming owner message with 👀 for immediate feedback', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-react-'));
-  const workspace = { path: root, async status() { return 'ok'; }, async attachSession() {} };
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
   const reactions = [];
   let incoming;
   const ctx = {
-    credentials: { async resolve(ref) { return { value: `${ref}-value` }; } },
-    workspaceRegistry: { get() { return workspace; } },
-    agentDefaultModel: { currentSelection() { return { provider: 'deepseek', model: 'deepseek-chat' }; } },
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return { provider: 'deepseek', model: 'deepseek-chat' };
+      },
+    },
     agents: {
       async create(options) {
-        await options.setup?.({ on() { return () => {}; } });
+        await options.setup?.({
+          on() {
+            return () => {};
+          },
+        });
         const agent = {
-          id: options.sessionId, session: { header: { cwd: root } },
-          get status() { return 'idle'; },
-          followup() {}, whenIdle() { return Promise.resolve(); }, cancel() {},
+          id: options.sessionId,
+          session: { header: { cwd: root } },
+          get status() {
+            return 'idle';
+          },
+          followup() {},
+          whenIdle() {
+            return Promise.resolve();
+          },
+          cancel() {},
         };
         return { agent, async dispose() {} };
       },
-      async resume() { throw new Error('not expected'); },
+      async resume() {
+        throw new Error('not expected');
+      },
     },
-    get() { return undefined; },
-    on() {}, effect() {},
+    get() {
+      return undefined;
+    },
+    on() {},
+    effect() {},
   };
-  const runtime = new TelegramRuntime(ctx, {
-    ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100,
-  }, {
-    statePath: join(root, 'bindings.json'),
-    async createClient(options) {
-      incoming = options.onMessage;
-      return {
-        botId: '99',
-        bot: { api: {
-          async sendMessage() { return { message_id: 1 }; },
-          async editMessageText() {}, async editMessageReplyMarkup() {},
-          async answerCallbackQuery() {}, async sendPhoto() {},
-          async setMessageReaction(payload) { reactions.push(payload); return true; },
-        } },
-        botToken: 'token', fetchImpl: fetch, async close() {},
-      };
+  const runtime = new TelegramRuntime(
+    ctx,
+    {
+      ownerUserId: '7',
+      workspaceId: 'workspace-1',
+      messageLimit: 100,
     },
-  });
+    {
+      statePath: join(root, 'bindings.json'),
+      async createClient(options) {
+        incoming = options.onMessage;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage() {
+                return { message_id: 1 };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup() {},
+              async answerCallbackQuery() {},
+              async sendPhoto() {},
+              async setMessageReaction(payload) {
+                reactions.push(payload);
+                return true;
+              },
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
   await runtime.start();
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', messageId: '42', message: '/status' } });
   await runtime.whenSettled('7');

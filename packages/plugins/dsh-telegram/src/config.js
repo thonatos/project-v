@@ -20,8 +20,11 @@ export const Config = Schema.object({
 
 export function normalizeConfig(value = {}) {
   const config = { ...value };
-  if (!Number.isSafeInteger(config.messageLimit)
-    || config.messageLimit < 1 || config.messageLimit > TELEGRAM_MESSAGE_LIMIT) {
+  if (
+    !Number.isSafeInteger(config.messageLimit) ||
+    config.messageLimit < 1 ||
+    config.messageLimit > TELEGRAM_MESSAGE_LIMIT
+  ) {
     throw new TypeError(`Telegram messageLimit must be between 1 and ${TELEGRAM_MESSAGE_LIMIT}`);
   }
   if (typeof config.workspaceId !== 'string' || !config.workspaceId.trim()) {
@@ -52,7 +55,9 @@ function normalizeProxy(value = {}) {
     throw new TypeError('Telegram proxy port is invalid');
   }
   return Object.freeze({
-    type: value.type ?? 'socks5', ip: value.ip.trim(), port: value.port,
+    type: value.type ?? 'socks5',
+    ip: value.ip.trim(),
+    port: value.port,
     ...(value.username ? { username: value.username } : {}),
     ...(value.password ? { password: value.password } : {}),
   });

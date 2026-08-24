@@ -38,10 +38,12 @@ export function interactionCard(interaction) {
     return {
       text: payload.prompt ?? payload.message ?? '需要审批才能继续。',
       replyMarkup: {
-        inline_keyboard: [[
-          { text: '批准', callback_data: `dsh:approval:${interaction.id}:approve` },
-          { text: '拒绝', callback_data: `dsh:approval:${interaction.id}:reject` },
-        ]],
+        inline_keyboard: [
+          [
+            { text: '批准', callback_data: `dsh:approval:${interaction.id}:approve` },
+            { text: '拒绝', callback_data: `dsh:approval:${interaction.id}:reject` },
+          ],
+        ],
       },
     };
   }
@@ -51,10 +53,12 @@ export function interactionCard(interaction) {
   return {
     text: question.question ?? question.header ?? '请选择一个选项。',
     replyMarkup: {
-      inline_keyboard: options.map((option) => [{
-        text: option.label ?? option.value ?? String(option),
-        callback_data: `dsh:question:${interaction.id}:${encodeURIComponent(option.value ?? option.label ?? option)}`,
-      }]),
+      inline_keyboard: options.map((option) => [
+        {
+          text: option.label ?? option.value ?? String(option),
+          callback_data: `dsh:question:${interaction.id}:${encodeURIComponent(option.value ?? option.label ?? option)}`,
+        },
+      ]),
     },
   };
 }
@@ -82,7 +86,9 @@ export function controlCard(command, { message, detail } = {}) {
       '',
       message ? escapeHtml(message) : '',
       detail ? `<pre>${escapeHtml(detail)}</pre>` : '',
-    ].filter(Boolean).join('\n'),
+    ]
+      .filter(Boolean)
+      .join('\n'),
     parseMode: 'HTML',
   };
 }

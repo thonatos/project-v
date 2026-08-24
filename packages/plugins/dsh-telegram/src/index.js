@@ -2,14 +2,7 @@ import { Config, SETTINGS_NAMESPACE } from './config.js';
 import { TelegramRuntime } from './runtime.js';
 
 export const name = 'dsh-telegram';
-export const inject = [
-  'settings',
-  'credentials',
-  'agents',
-  'agentDefaultModel',
-  'workspaceRegistry',
-  'attachments',
-];
+export const inject = ['settings', 'credentials', 'agents', 'agentDefaultModel', 'workspaceRegistry', 'attachments'];
 
 export { Config };
 export { SETTINGS_NAMESPACE };
