@@ -132,11 +132,13 @@ function normalizeMessage(message) {
     messageId: String(message.message_id ?? ''),
     message: message.text ?? message.caption ?? '',
     photo: photo ? { fileId: photo.file_id } : undefined,
-    document: documentIsImage ? {
-      fileId: message.document.file_id,
-      file_name: message.document.file_name,
-      mime_type: message.document.mime_type,
-    } : undefined,
+    document: documentIsImage
+      ? {
+          fileId: message.document.file_id,
+          file_name: message.document.file_name,
+          mime_type: message.document.mime_type,
+        }
+      : undefined,
   };
 }
 

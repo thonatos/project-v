@@ -73,24 +73,30 @@ export function normalizeInboundMessage(message, { loadMedia } = {}) {
   const text = message?.message ?? '';
   const photo = message?.photo;
   const document = message?.document;
-  const documentIsImage = typeof document?.mimeType === 'string'
-    ? document.mimeType.startsWith('image/')
-    : typeof document?.mime_type === 'string' && document.mime_type.startsWith('image/');
+  const documentIsImage =
+    typeof document?.mimeType === 'string'
+      ? document.mimeType.startsWith('image/')
+      : typeof document?.mime_type === 'string' && document.mime_type.startsWith('image/');
   const media = photo || (documentIsImage ? document : undefined);
   if (!text && !media) return null;
   return {
     text,
-    media: media ? {
-      kind: 'image',
-      name: document?.fileName ?? document?.file_name ?? 'telegram-file',
-      mimeType: document?.mimeType ?? document?.mime_type,
-      load: loadMedia ? () => loadMedia(message) : undefined,
-    } : undefined,
+    media: media
+      ? {
+          kind: 'image',
+          name: document?.fileName ?? document?.file_name ?? 'telegram-file',
+          mimeType: document?.mimeType ?? document?.mime_type,
+          load: loadMedia ? () => loadMedia(message) : undefined,
+        }
+      : undefined,
   };
 }
 
 export function textFromContent(content) {
   if (typeof content === 'string') return content;
   if (!Array.isArray(content)) return '';
-  return content.filter((block) => block?.type === 'text').map((block) => block.text).join('');
+  return content
+    .filter((block) => block?.type === 'text')
+    .map((block) => block.text)
+    .join('');
 }

@@ -6,12 +6,7 @@ import { normalizeInboundMessage, splitMessageText } from './message.js';
 import { SessionStore } from './session-store.js';
 import { createTelegramClient, createTelegramTransport } from './telegram-client.js';
 import { StreamSession } from './stream.js';
-import {
-  classifyContent,
-  controlCard,
-  interactionCard,
-  statusCard,
-} from './outbound.js';
+import { classifyContent, controlCard, interactionCard, statusCard } from './outbound.js';
 
 export class TelegramRuntime {
   #ctx;
@@ -49,7 +44,7 @@ export class TelegramRuntime {
   async start() {
     const workspace = this.#workspaceRegistry?.get(this.#config.workspaceId);
     if (!workspace) throw new Error('Telegram workspaceId does not resolve to a registered Workspace');
-    if (await workspace.status() !== 'ok') throw new Error('Telegram Workspace directory is unavailable');
+    if ((await workspace.status()) !== 'ok') throw new Error('Telegram Workspace directory is unavailable');
     const credentials = await resolveCredentials(this.#credentials);
     this.#bindings = await new SessionStore(this.#state).load();
     this.#connection = await this.#createClient({
@@ -94,8 +89,11 @@ export class TelegramRuntime {
   async #handleMessage(event) {
     if (this.#stopped) return;
     const message = event?.message;
-    if (!message?.isPrivate || String(message.senderId) !== this.#config.ownerUserId
-      || String(message.senderId) === this.#connection.botId) {
+    if (
+      !message?.isPrivate ||
+      String(message.senderId) !== this.#config.ownerUserId ||
+      String(message.senderId) === this.#connection.botId
+    ) {
       return;
     }
     const chatId = String(message.chatId ?? message.senderId);
@@ -243,9 +241,10 @@ export class TelegramRuntime {
     const binding = this.#bindings.get(chatId);
     const fromActive = this.#activeTurns.get(chatId);
     const fromHandles = binding ? this.#sessionHandles.get(binding.sessionId) : undefined;
-    const fromRegistry = binding && this.#ctx.agents.get?.(binding.sessionId)
-      ? { agent: this.#ctx.agents.get(binding.sessionId), async dispose() {} }
-      : undefined;
+    const fromRegistry =
+      binding && this.#ctx.agents.get?.(binding.sessionId)
+        ? { agent: this.#ctx.agents.get(binding.sessionId), async dispose() {} }
+        : undefined;
     const handle = fromActive ?? fromHandles ?? fromRegistry;
     if (!handle) {
       await this.#sendControlCard(chatId, 'stop', { message: '当前没有正在运行的任务。' });
@@ -291,13 +290,15 @@ export class TelegramRuntime {
   async #runCommand(chatId, command) {
     if (command.name === 'unsupported') {
       await this.#sendControlCard(chatId, 'unsupported', {
-        message: '该命令不可用。', detail: '可用命令：/new、/status、/stop、/help',
+        message: '该命令不可用。',
+        detail: '可用命令：/new、/status、/stop、/help',
       });
       return;
     }
     if (command.name === 'help') {
       await this.#sendControlCard(chatId, 'help', {
-        message: '可用命令：', detail: '/new\n/status\n/stop\n/help',
+        message: '可用命令：',
+        detail: '/new\n/status\n/stop\n/help',
       });
       return;
     }
@@ -360,7 +361,9 @@ export class TelegramRuntime {
         await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: this.#config.workspaceId });
         return handle;
       }
-      if (String(resumed.agent.session.header.cwd) !== String(this.#workspaceRegistry.get(this.#config.workspaceId).path)) {
+      if (
+        String(resumed.agent.session.header.cwd) !== String(this.#workspaceRegistry.get(this.#config.workspaceId).path)
+      ) {
         await resumed.dispose();
         await this.#bindings.delete(chatId);
       } else {
@@ -427,13 +430,17 @@ export class TelegramRuntime {
     const assistant = [...messages].reverse().find((message) => message?.role === 'assistant');
     if (!assistant) return;
     const events = classifyContent(assistant.content ?? []);
-    const caption = events.filter((event) => event.type === 'text').map((event) => event.text).join('');
+    const caption = events
+      .filter((event) => event.type === 'text')
+      .map((event) => event.text)
+      .join('');
     for (const event of events) {
       if (event.type !== 'media') continue;
       const { kind, block } = event;
-      const read = this.#ctx.attachments?.[`read${capitalize(kind)}`]
-        ?? (kind === 'document' ? this.#ctx.attachments?.readFile : undefined)
-        ?? (kind === 'image' ? this.#ctx.attachments?.readImage : undefined);
+      const read =
+        this.#ctx.attachments?.[`read${capitalize(kind)}`] ??
+        (kind === 'document' ? this.#ctx.attachments?.readFile : undefined) ??
+        (kind === 'image' ? this.#ctx.attachments?.readImage : undefined);
       if (typeof read !== 'function') {
         await this.#sendText(chatId, `无法交付 ${kind} 类型媒体。`);
         continue;
@@ -557,7 +564,6 @@ function capitalize(value) {
   return value[0].toUpperCase() + value.slice(1);
 }
 
-
 // 会话绑定文件的默认位置：$DSH_HOME/telegram-sessions.json（DSH_HOME 未设时回退
 // 到 ~/.dsh）。刻意不用 process.cwd()——dsh 通常在项目目录启动，落到 cwd 会污染
 // git 工作区。
@@ -568,7 +574,7 @@ export function defaultStatePath() {
 
 function parseCommand(text) {
   const match = /^\/(new|status|stop|help)(?:@[^\s]+)?(?:\s+.*)?$/i.exec(text.trim());
-  return match ? { name: match[1].toLowerCase() } : (text.trim().startsWith('/') ? { name: 'unsupported' } : null);
+  return match ? { name: match[1].toLowerCase() } : text.trim().startsWith('/') ? { name: 'unsupported' } : null;
 }
 
 export function userFacingError(error) {
@@ -577,7 +583,11 @@ export function userFacingError(error) {
   if (status === 429 || /rate|flood|too many requests|429/i.test(message)) {
     return 'Telegram 请求过于频繁，请稍后重试。';
   }
-  if (/Telegram (?:media|image)|attachment service|could not be downloaded|exceeds the supported size limit|Unsupported Telegram media|无法交付/i.test(message)) {
+  if (
+    /Telegram (?:media|image)|attachment service|could not be downloaded|exceeds the supported size limit|Unsupported Telegram media|无法交付/i.test(
+      message,
+    )
+  ) {
     return '媒体处理失败，请确认文件格式和大小后重试。';
   }
   if (/message is not modified|message to edit not found|can't be edited|edit/i.test(message)) {

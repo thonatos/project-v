@@ -7,10 +7,20 @@ function makeTransport() {
   let id = 0;
   return {
     calls,
-    async sendText(chatId, text, opts) { calls.push(['sendText', chatId, text, opts]); return { message_id: ++id }; },
-    async editText(chatId, messageId, text, opts) { calls.push(['editText', chatId, messageId, text, opts]); },
-    async sendCard(chatId, text) { calls.push(['sendCard', chatId, text]); return { message_id: ++id }; },
-    async editCard(chatId, messageId, markup) { calls.push(['editCard', chatId, messageId, markup]); },
+    async sendText(chatId, text, opts) {
+      calls.push(['sendText', chatId, text, opts]);
+      return { message_id: ++id };
+    },
+    async editText(chatId, messageId, text, opts) {
+      calls.push(['editText', chatId, messageId, text, opts]);
+    },
+    async sendCard(chatId, text) {
+      calls.push(['sendCard', chatId, text]);
+      return { message_id: ++id };
+    },
+    async editCard(chatId, messageId, markup) {
+      calls.push(['editCard', chatId, messageId, markup]);
+    },
   };
 }
 
@@ -19,9 +29,15 @@ test('accumulates text-delta chunks and edits one message', async () => {
   // now 固定 → 首次 flush 立即，之后同一时刻不重复；finalize 强制刷新剩余
   let clock = 0;
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => clock });
-  await stream.handleEvent({ type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: 'Hello' } } });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: 'Hello' } },
+  });
   clock += 2000;
-  await stream.handleEvent({ type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: ' world' } } });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: ' world' } },
+  });
   await stream.finalize();
   const sends = transport.calls.filter((c) => c[0] === 'sendText');
   const edits = transport.calls.filter((c) => c[0] === 'editText');
@@ -35,7 +51,10 @@ test('accumulates text-delta chunks and edits one message', async () => {
 test('ignores reasoning-delta chunks', async () => {
   const transport = makeTransport();
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
-  await stream.handleEvent({ type: 'assistant/chunk', data: { chunk: { type: 'reasoning-delta', index: 0, text: '思考中' } } });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'reasoning-delta', index: 0, text: '思考中' } },
+  });
   await stream.finalize();
   assert.equal(transport.calls.length, 0);
   assert.equal(stream.text, '');
@@ -67,7 +86,10 @@ test('marks a tool card as failed when result carries an error', async () => {
 test('flushes accumulated text before opening a tool card', async () => {
   const transport = makeTransport();
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
-  await stream.handleEvent({ type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: '准备执行' } } });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: '准备执行' } },
+  });
   await stream.handleEvent({ type: 'tool/call', data: { callId: 'c3', name: 'bash' } });
   const order = transport.calls.map((c) => c[0]);
   const textSend = order.indexOf('sendText');
@@ -88,7 +110,10 @@ test('escapes HTML in tool names', async () => {
 test('sends body text as MarkdownV2', async () => {
   const transport = makeTransport();
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
-  await stream.handleEvent({ type: 'assistant/chunk', data: { chunk: { type: 'text-delta', index: 0, text: '**hi** a.b' } } });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: '**hi** a.b' } },
+  });
   await stream.finalize();
   const send = transport.calls.find((c) => c[0] === 'sendText');
   assert.equal(send[2], '*hi* a\\.b');
@@ -104,8 +129,12 @@ test('falls back to plain text when MarkdownV2 send fails', async () => {
       if (opts?.parseMode === 'MarkdownV2') throw new Error('400: bad entity');
       return { message_id: ++id };
     },
-    async editText(chatId, messageId, text, opts) { calls.push(['editText', chatId, messageId, text, opts]); },
-    async sendCard() { return { message_id: ++id }; },
+    async editText(chatId, messageId, text, opts) {
+      calls.push(['editText', chatId, messageId, text, opts]);
+    },
+    async sendCard() {
+      return { message_id: ++id };
+    },
     async editCard() {},
   };
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });

@@ -8,6 +8,11 @@
     "dsh-plugin",
     "telegram"
   ],
+  "files": [
+    "cordis.patch.yml",
+    "lib",
+    "src"
+  ],
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
@@ -17,23 +22,6 @@
     "./message": "./src/message.js",
     "./session-store": "./src/session-store.js",
     "./package.json": "./package.json"
-  },
-  "files": [
-    "cordis.patch.yml",
-    "lib",
-    "src"
-  ],
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    },
-    "client": {
-      "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-settings-plugins"
-      ],
-      "platform": "web"
-    }
   },
   "scripts": {
     "build": "node scripts/build-client.mjs",
@@ -48,5 +36,17 @@
   },
   "devDependencies": {
     "esbuild": "0.25.9"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ],
+      "platform": "web"
+    }
   }
 }

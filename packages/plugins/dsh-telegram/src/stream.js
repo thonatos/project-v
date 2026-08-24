@@ -103,7 +103,9 @@ export class StreamSession {
     const snapshot = this.#text;
     this.#flushing = this.#flushing
       .then(() => this.#renderer.update(snapshot))
-      .catch((error) => { console.error('[dsh-telegram] stream flush failed:', error); });
+      .catch((error) => {
+        console.error('[dsh-telegram] stream flush failed:', error);
+      });
     return this.#flushing;
   }
 
@@ -188,5 +190,3 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 }
-
-
