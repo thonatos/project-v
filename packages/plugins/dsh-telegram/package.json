@@ -1,0 +1,52 @@
+{
+  "name": "@project-v/dsh-telegram",
+  "version": "0.3.0",
+  "description": "Telegram Bot API plugin for DeepSeek Harness",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "telegram"
+  ],
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./config": "./src/config.js",
+    "./message": "./src/message.js",
+    "./session-store": "./src/session-store.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib",
+    "src"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-settings-plugins"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build-client.mjs",
+    "patch": "node scripts/write-patch.mjs",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "3.18.1",
+    "node-fetch": "3.3.2",
+    "node-telegram-bot-api": "2.0.0",
+    "proxy-agent": "6.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9"
+  }
+}

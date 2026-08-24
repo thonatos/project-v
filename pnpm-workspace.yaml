@@ -1,6 +1,7 @@
 packages:
   - 'packages/apps/*'
   - 'packages/libs/*'
+  - 'packages/plugins/*'
   - 'packages/tools/*'
 allowBuilds:
   '@swc/core': true

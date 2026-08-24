@@ -1,0 +1,3 @@
+- insert:
+    - id: dsh-telegram
+      name: "@project-v/dsh-telegram"
