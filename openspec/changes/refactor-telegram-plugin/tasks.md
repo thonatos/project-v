@@ -57,4 +57,4 @@
 - [x] 8.1 对照现有 spec 场景逐条回归（命令、路由、interaction、媒体、reaction、错误分类）
 - [x] 8.2 真机手测：文本富文本渲染 ✓、流式编辑增长 ✓、超长分片 ✓、图片入站识别 ✓、/new /status /help + blockquote 卡片 ✓、👀 reaction ✓、并发事件序列化修复 ✓。图片出站：agent 写 markdown 本地路径而非登记 attachment，Telegram HTML 不支持内联图 → 降级为文本（agent 行为，非管线缺陷，用户确认跳过）。interaction 审批：dsh core 从不发射 `interaction/*` 事件（不在 KNOWN_SESSION_EVENT_TYPES），真实审批走 `approval/request` answerer 链，HEAD 与重构后均未注册 answerer → 行为一致零回归，真机不可触发，逻辑由单测覆盖
 - [x] 8.3 `openspec validate refactor-telegram-plugin --json` 通过
-- [ ] 8.4 分批 conventional commits 提交（走 git hooks，不跳过）
+- [x] 8.4 分批 conventional commits 提交（走 git hooks，不跳过）
