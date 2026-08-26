@@ -17,7 +17,7 @@ const result = await build({
 });
 const bundled = result.outputFiles?.[0]?.text;
 if (!bundled) throw new Error('esbuild did not produce a Telegram client bundle');
-const wrapped = `window.__ModuleLoader__.load({\n  id: "@project-v/dsh-telegram",\n  factory: (require) => {\n    var module = { exports: {} };\n    var _exports = module.exports;\n${bundled}\n    return module.exports;\n  },\n});\n`;
+const wrapped = `window.__ModuleLoader__.load({\n  id: "@implementsio/dsh-telegram",\n  factory: (require) => {\n    var module = { exports: {} };\n    var _exports = module.exports;\n${bundled}\n    return module.exports;\n  },\n});\n`;
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, wrapped, 'utf8');
 console.log(`Wrote ${outputPath}`);
