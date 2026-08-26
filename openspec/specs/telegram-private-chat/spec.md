@@ -40,7 +40,7 @@
 
 ### Requirement: 私聊会话路由
 
-系统 SHALL 将单个 Telegram Bot 绑定到一个已验证的 Workspace，并按 Telegram 私聊用户 ID 持久化到 Harness Session ID 的绑定。所有创建或恢复的 Session MUST 属于该 Bot 绑定的 Workspace。
+系统 SHALL 将单个 Telegram Bot 绑定到一个已验证的 Workspace，并按 Telegram 私聊用户 ID 持久化到 Harness Session ID 的绑定。绑定 SHALL 通过 dsh 官方 storage 子系统（`ctx.storageDomain`）持久化，不得由插件自行向工作目录或任意文件路径写入状态文件。所有创建或恢复的 Session MUST 属于该 Bot 绑定的 Workspace。
 
 #### Scenario: 首条普通消息
 
@@ -66,6 +66,11 @@
 
 - **WHEN** Bot 未配置 Workspace，或配置的 Workspace 不存在、未登记或不在 Harness 允许范围内
 - **THEN** 系统 SHALL 拒绝启动 Telegram runtime，并通过内置 Settings 状态报告可操作的 Workspace 配置错误
+
+#### Scenario: 绑定持久化落地
+
+- **WHEN** 系统创建、替换或删除某私聊用户的 Session 绑定
+- **THEN** 系统 SHALL 通过 storage 子系统持久化该变更，使 runtime 重启后能恢复既有绑定，且不得在项目工作目录留下状态文件
 
 ### Requirement: 基础媒体消息
 
@@ -112,7 +117,7 @@
 
 ### Requirement: 出站消息交付
 
-系统 SHALL 将 Harness 文本输出发送到对应 Telegram 私聊，使用可配置的 `messageLimit` 控制单条消息长度，并 SHALL 支持在输出增长期间编辑已发送消息。`messageLimit` 默认 SHALL 为 4096，且不得超过 Telegram `sendMessage` 的 4096 字符上限。
+系统 SHALL 将 Harness 文本输出发送到对应 Telegram 私聊，使用可配置的 `messageLimit` 控制单条消息长度，并 SHALL 支持在输出增长期间编辑已发送消息。文本正文 SHALL 以富文本渲染交付：将 Markdown 转换为 Telegram 支持的受限 HTML 标签子集并使用 HTML parse mode 发送；当渲染结果被 Telegram 拒绝时，系统 SHALL 降级为纯文本发送，不得使消息交付失败。`messageLimit` 默认 SHALL 为 4096，且不得超过 Telegram `sendMessage` 的 4096 字符上限。
 
 #### Scenario: 普通回复
 
@@ -123,6 +128,16 @@
 
 - **WHEN** Harness 产生多个增量文本事件
 - **THEN** 系统 SHALL 优先编辑已发送消息展示最新内容，并在编辑不可用时发送新的文本消息
+
+#### Scenario: 富文本渲染
+
+- **WHEN** Harness 文本包含 Markdown 标记（如粗体、行内代码、代码块、链接）
+- **THEN** 系统 SHALL 将其渲染为 Telegram 支持的受限 HTML 交付，使标记生效而非以字面文本展示
+
+#### Scenario: 渲染降级
+
+- **WHEN** 富文本渲染结果被 Telegram 拒绝（例如流式分片切断了标签）
+- **THEN** 系统 SHALL 降级为纯文本发送同一内容，不得丢弃该次输出或使 Turn 失败
 
 #### Scenario: 超长回复
 
@@ -170,7 +185,7 @@
 #### Scenario: 文本输出
 
 - **WHEN** Harness 输出 `text` 内容或文本增量
-- **THEN** 系统 SHALL 使用 Telegram 文本消息发送或编辑，并按 `messageLimit` 安全分片
+- **THEN** 系统 SHALL 使用 Telegram 文本消息发送或编辑，按 `messageLimit` 安全分片，并将 Markdown 渲染为受限 HTML（渲染失败时降级为纯文本）
 
 #### Scenario: 媒体输出
 
