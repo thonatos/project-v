@@ -1,10 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { escapeHtml, markdownToHtml } from '../src/render/html.js';
+import { escapeHtml, markdownToHtml, stripImageMarkdown } from '../src/render/html.js';
 
 test('escapes only & < > in plain text', () => {
   assert.equal(escapeHtml('a & b < c > d'), 'a &amp; b &lt; c &gt; d');
   assert.equal(markdownToHtml('1 < 2 && 3 > 2'), '1 &lt; 2 &amp;&amp; 3 &gt; 2');
+});
+
+test('strips markdown image syntax, keeping surrounding text', () => {
+  assert.equal(stripImageMarkdown('看图 ![柱状图](chart.png) 好'), '看图  好');
+  assert.equal(stripImageMarkdown('![a](x.png "t")'), '');
+  // markdownToHtml 不应把图片当成链接残留 `!` 前缀
+  assert.equal(markdownToHtml('结果 ![柱状图](chart.png)'), '结果 ');
+  // 普通链接不受影响
+  assert.equal(markdownToHtml('[doc](https://x.io)'), '<a href="https://x.io">doc</a>');
 });
 
 test('converts standard bold to <b>', () => {

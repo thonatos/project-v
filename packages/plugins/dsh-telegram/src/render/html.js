@@ -8,6 +8,16 @@
 // 流式分片可能出现未闭合的围栏/实体，转换结果对 Telegram 可能非法——调用方需在
 // HTML 发送失败时降级为纯文本，故这里只求尽力而为，不追求边界完美。
 
+// 剥离 markdown 图片语法 `![alt](src)`。
+// Telegram 不渲染 markdown 图片，且本地图片会作为独立 photo 消息单独发送
+// （见 runtime #sendLocalImages），正文里再留一个死的 `![](...)` 只会显示成
+// 残缺文本（`[alt](src)` 会被链接规则误当成 <a>，前导 `!` 变成裸字符）。
+// 因此在渲染/纯文本两条出站路径统一先剥掉图片标记，避免与独立图片重复且不残留噪声。
+// 仅移除标记本身，保留前后文字与换行结构。
+export function stripImageMarkdown(input) {
+  return String(input ?? '').replace(/!\[[^\]]*\]\([^)\s]*(?:\s+"[^"]*")?\)/g, '');
+}
+
 // 文本节点转义：& < > 三个字符。
 export function escapeHtml(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -70,7 +80,7 @@ function convertLine(line) {
 }
 
 export function markdownToHtml(input) {
-  const text = String(input ?? '');
+  const text = stripImageMarkdown(input);
   const lines = text.split('\n');
   const out = [];
   let inFence = false;

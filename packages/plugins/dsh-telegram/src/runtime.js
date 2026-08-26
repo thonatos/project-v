@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto';
+import { readFile, realpath } from 'node:fs/promises';
+import { basename, isAbsolute, resolve as resolvePath, sep } from 'node:path';
 import { normalizeConfig, resolveCredentials } from './config.js';
 import { normalizeInboundMessage, splitMessageText } from './transport/inbound.js';
 import { openBindingStore } from './persist.js';
 import { createTelegramClient } from './transport/client.js';
-import { createTelegramTransport } from './transport/transport.js';
+import { createTelegramTransport, TELEGRAM_MEDIA_LIMIT } from './transport/transport.js';
 import { StreamSession } from './render/stream.js';
-import { classifyContent, controlCard, interactionCard, statusCard } from './render/cards.js';
-import { buildAgentSetup, stopAgentTurn } from './agent/integration.js';
+import { approvalCard, classifyContent, controlCard, interactionCard, statusCard } from './render/cards.js';
+import { extractLocalImagePaths } from './render/local-images.js';
+import { buildAgentSetup, installAgentBridges, stopAgentTurn } from './agent/integration.js';
 
 export class TelegramRuntime {
   #ctx;
@@ -23,8 +26,14 @@ export class TelegramRuntime {
   #cancelledChats = new Set();
   #stopping = new Set();
   #interactions = new Map();
+  // 待决审批：approvalId -> { chatId, messageId, settle(outcome), settled }。
+  // approval/request 挂起时登记，回调点击或 signal abort 时 settle。
+  #approvals = new Map();
   #streams = new Map();
   #reactions = new Map();
+  // 已在其 agent-scoped ctx 上装好桥接（session 事件流/审批/交互）的 sessionId 集合。
+  // 「复用已存活 agent」路径不跑 setup，需在此补装；用集合去重避免同一 agent 重复注册。
+  #bridged = new Set();
   #stopped = false;
 
   constructor(ctx, config, { createClient = createTelegramClient, openStore = openBindingStore } = {}) {
@@ -69,6 +78,10 @@ export class TelegramRuntime {
     this.#cancelledChats.clear();
     this.#stopping.clear();
     this.#interactions.clear();
+    // 关闭时把所有待决审批 settle 成 cancelled，让挂起的 answerer 立即返回，
+    // 不残留永久 pending 的 Promise。
+    for (const approval of this.#approvals.values()) approval.settle?.('cancelled');
+    this.#approvals.clear();
     for (const stream of this.#streams.values()) await stream.dispose?.();
     this.#streams.clear();
     await this.#connection?.close?.();
@@ -165,6 +178,18 @@ export class TelegramRuntime {
       await this.#transport.answerCallback(callback.id, '该操作无效。');
       return;
     }
+    // 审批点击：settle 对应的挂起 answerer。approval 走 #approvals，与 interaction 分离。
+    if (kind === 'approval') {
+      const approval = this.#approvals.get(interactionId);
+      if (!approval || approval.chatId !== String(callback.chatId)) {
+        await this.#transport.answerCallback(callback.id, '该审批已失效或已被处理。');
+        return;
+      }
+      const outcome = value === 'approve' ? 'allowed-once' : 'rejected';
+      approval.settle(outcome);
+      await this.#transport.answerCallback(callback.id, value === 'approve' ? '已批准' : '已拒绝');
+      return;
+    }
     const interaction = this.#interactions.get(interactionId);
     if (!interaction || interaction.chatId !== String(callback.chatId)) {
       await this.#transport.answerCallback(callback.id, '该交互已失效或已被处理。');
@@ -181,6 +206,10 @@ export class TelegramRuntime {
 
   #pendingInteraction(chatId) {
     return [...this.#interactions.values()].find((interaction) => interaction.chatId === chatId);
+  }
+
+  #hasPendingApproval(chatId) {
+    return [...this.#approvals.values()].some((approval) => approval.chatId === chatId);
   }
 
   async #respondToInteraction(interaction, answer) {
@@ -311,7 +340,7 @@ export class TelegramRuntime {
         workspaceId: this.#config.workspaceId,
         sessionId: handle.agent.id,
         active: this.#activeTurns.has(chatId),
-        interactionPending: Boolean(this.#pendingInteraction(chatId)),
+        interactionPending: Boolean(this.#pendingInteraction(chatId)) || this.#hasPendingApproval(chatId),
       });
       await this.#sendCard(chatId, card.text, { parseMode: card.parseMode });
       return;
@@ -339,6 +368,9 @@ export class TelegramRuntime {
       if (live) {
         const handle = { agent: live, async dispose() {} };
         this.#sessionHandles.set(current.sessionId, handle);
+        // 复用注册表里的裸 agent：setup 不会再跑，必须在其 agent-scoped ctx 上补装桥接，
+        // 否则 session/event 不路由到 StreamSession（正文丢失）、审批/交互也收不到。
+        this.#ensureBridges(chatId, live);
         return handle;
       }
       let resumed;
@@ -367,12 +399,35 @@ export class TelegramRuntime {
         await this.#bindings.delete(chatId);
       } else {
         this.#sessionHandles.set(current.sessionId, resumed);
+        // resume 的 setup 已装好桥接：登记以防其后走「复用 live agent」路径时重复注册。
+        this.#bridged.add(resumed.agent.id);
         return resumed;
       }
     }
     const handle = await this.#createSession(chatId);
     await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: this.#config.workspaceId });
     return handle;
+  }
+
+  // 本插件依赖的 agent-scoped 桥接参数（交互/审批/session 事件流）。
+  // create/resume 的 setup 与「复用已存活 agent」两条路径共用同一组回调。
+  #bridgeArgs(chatId) {
+    return {
+      onInteractionRequested: (interaction) => this.#handleInteraction(chatId, interaction),
+      onInteractionResolved: (interaction) => this.#resolveInteraction(interaction),
+      onApprovalRequested: (req) => this.#handleApproval(chatId, req),
+      onSessionEvent: (event) => this.#onSessionEvent(chatId, event),
+    };
+  }
+
+  // 在已存活 agent 的 agent-scoped ctx 上补装桥接（仅首次；用 #bridged 去重）。
+  #ensureBridges(chatId, agent) {
+    const id = agent?.id ?? '';
+    if (!id || this.#bridged.has(id)) return;
+    const agentCtx = agent?.ctx;
+    if (typeof agentCtx?.on !== 'function') return;
+    installAgentBridges(agentCtx, this.#bridgeArgs(chatId));
+    this.#bridged.add(id);
   }
 
   // 构造 agent 的 setup 回调，create 与 resume 共用。具体注入逻辑见 agent/integration.js。
@@ -382,9 +437,7 @@ export class TelegramRuntime {
     const presets = this.#ctx.agentPresets;
     return buildAgentSetup({
       mountPreset: presets?.mount ? (agentCtx) => presets.mount(agentCtx, undefined) : undefined,
-      onInteractionRequested: (interaction) => this.#handleInteraction(chatId, interaction),
-      onInteractionResolved: (interaction) => this.#resolveInteraction(interaction),
-      onSessionEvent: (event) => this.#onSessionEvent(chatId, event),
+      ...this.#bridgeArgs(chatId),
     });
   }
 
@@ -399,6 +452,8 @@ export class TelegramRuntime {
     });
     await workspace.attachSession(handle.agent.id);
     this.#sessionHandles.set(handle.agent.id, handle);
+    // create 的 setup 已装好桥接：登记以防其后走「复用 live agent」路径时重复注册。
+    this.#bridged.add(handle.agent.id);
     return handle;
   }
 
@@ -448,6 +503,56 @@ export class TelegramRuntime {
         await this.#sendText(chatId, `无法交付 ${kind} 类型媒体：${userFacingError(error)}`);
       }
     }
+    // 补发正文里以 markdown `![](本地路径)` 内联的图片（agent 未登记为 attachment
+    // 时的降级路径）。仅限当前 workspace 目录内、扩展名为图片的文件，且经 realpath
+    // 校验防目录穿越。
+    await this.#sendLocalImages(chatId, caption);
+  }
+
+  // 扫描正文里的本地图片路径，安全校验后读取并作为独立图片发送。
+  async #sendLocalImages(chatId, text) {
+    const paths = extractLocalImagePaths(text);
+    if (paths.length === 0) return;
+    const workspace = this.#workspaceRegistry.get(this.#config.workspaceId);
+    if (!workspace?.path) return;
+    let root;
+    try {
+      root = await realpath(workspace.path);
+    } catch {
+      return;
+    }
+    // 已发送的真实路径集合，按 realpath 去重（见循环内说明）。
+    const sent = new Set();
+    for (const rawPath of paths) {
+      // 相对路径按 workspace 根解析；绝对路径原样。随后 realpath 归一并校验包含关系。
+      const candidate = isAbsolute(rawPath) ? rawPath : resolvePath(root, rawPath);
+      let real;
+      try {
+        real = await realpath(candidate);
+      } catch {
+        // 文件不存在或无法解析：跳过，不打扰用户（正文文本已交付）。
+        continue;
+      }
+      // 严格包含校验：real 必须等于 root 或位于 root 之下（以 root + 分隔符 开头），
+      // 阻断 `../` 穿越与前缀同名目录（如 /ws-evil 冒充 /ws）。
+      if (real !== root && !real.startsWith(root + sep)) continue;
+      // 按 realpath 去重：同一文件常被正文以多种写法引用（如 `pic.png` 与
+      // `/abs/pic.png`），extractLocalImagePaths 视为不同字符串，realpath 后归一到同一
+      // 真实路径，避免同图重复发送。
+      if (sent.has(real)) continue;
+      sent.add(real);
+      try {
+        const bytes = await readFile(real);
+        if (bytes.byteLength > TELEGRAM_MEDIA_LIMIT) {
+          await this.#sendText(chatId, `图片过大，无法发送：${basename(real)}`);
+          continue;
+        }
+        await this.#transport.sendMedia(chatId, bytes, { kind: 'image', fileName: basename(real) });
+      } catch (error) {
+        console.error('[dsh-telegram] local image delivery failed:', error);
+        await this.#sendText(chatId, `无法发送图片：${userFacingError(error)}`);
+      }
+    }
   }
 
   async #sendCard(chatId, text, interaction) {
@@ -468,6 +573,47 @@ export class TelegramRuntime {
   async #sendControlCard(chatId, command, details) {
     const card = controlCard(command, details);
     return this.#sendCard(chatId, card.text, { parseMode: card.parseMode });
+  }
+
+  // 审批答复者：dsh 请求批准某工具调用时，发一张带「批准/拒绝」按钮的卡片，
+  // 挂起直到 owner 点击（→ 'allowed-once' / 'rejected'）或请求被撤销（signal
+  // abort / 插件关闭 → 'cancelled'）。无超时：按用户选择永久等待人工决定。
+  // 返回的 ApprovalOutcome 由 dsh-user-approval service 消费。
+  #handleApproval(chatId, req) {
+    // 已中止的请求直接放弃，不打扰用户。
+    if (req?.signal?.aborted === true) return Promise.resolve('cancelled');
+    const id = randomUUID();
+    const card = approvalCard(id, { toolName: req?.toolName, reason: req?.reason });
+    return new Promise((resolve) => {
+      let settled = false;
+      const settle = (outcome) => {
+        if (settled) return;
+        settled = true;
+        req?.signal?.removeEventListener?.('abort', onAbort);
+        const record = this.#approvals.get(id);
+        this.#approvals.delete(id);
+        // 收尾时撤掉按钮，避免过期卡片仍可点击。
+        if (record?.messageId) {
+          void this.#transport
+            .editCard(chatId, record.messageId, { inline_keyboard: [] })
+            .catch((error) => console.error('[dsh-telegram] approval card cleanup failed:', error));
+        }
+        resolve(outcome);
+      };
+      const onAbort = () => settle('cancelled');
+      this.#approvals.set(id, { chatId, messageId: '', settle });
+      req?.signal?.addEventListener?.('abort', onAbort, { once: true });
+      // 发送卡片并回填 messageId；发送失败则 fail-closed 到 unavailable。
+      void this.#sendCard(chatId, card.text, { parseMode: card.parseMode, replyMarkup: card.replyMarkup })
+        .then((sent) => {
+          const record = this.#approvals.get(id);
+          if (record) record.messageId = String(sent?.message_id ?? sent?.messageId ?? '');
+        })
+        .catch((error) => {
+          console.error('[dsh-telegram] approval card send failed:', error);
+          settle('unavailable');
+        });
+    });
   }
 
   async #handleInteraction(chatId, interaction) {
