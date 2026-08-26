@@ -3,7 +3,22 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { TelegramRuntime, userFacingError, defaultStatePath } from '../src/runtime.js';
+import { TelegramRuntime, userFacingError } from '../src/runtime.js';
+
+// 内存版绑定存储：替代 openBindingStore，避免测试触碰真实文件或 storage backend。
+function memoryOpenStore() {
+  const rows = new Map();
+  return async () => ({
+    get: (key) => rows.get(String(key)) ?? null,
+    async set(key, binding) {
+      rows.set(String(key), { sessionId: binding.sessionId, workspaceId: binding.workspaceId });
+    },
+    async delete(key) {
+      rows.delete(String(key));
+    },
+    async close() {},
+  });
+}
 
 test('maps errors to redacted user-facing messages without leaking details', () => {
   assert.match(userFacingError({ code: 429 }), /过于频繁/);
@@ -17,24 +32,6 @@ test('maps errors to redacted user-facing messages without leaking details', () 
   assert.doesNotMatch(userFacingError(new Error('token=abc123')), /abc123/);
 });
 
-test('defaultStatePath resolves under DSH_HOME, never under process.cwd()', () => {
-  const original = process.env.DSH_HOME;
-  try {
-    process.env.DSH_HOME = '/tmp/dsh-home-fixture';
-    const resolved = defaultStatePath();
-    assert.equal(resolved, '/tmp/dsh-home-fixture/telegram-sessions.json');
-    // 绝不落在项目工作区（cwd）里
-    assert.ok(!resolved.startsWith(process.cwd()), 'state path must not live under cwd');
-    // 未设 DSH_HOME 时回退到用户家目录下的 .dsh，仍不在 cwd
-    delete process.env.DSH_HOME;
-    const fallback = defaultStatePath();
-    assert.match(fallback, /[/\\]\.dsh[/\\]telegram-sessions\.json$/);
-    assert.ok(!fallback.startsWith(process.cwd()), 'fallback path must not live under cwd');
-  } finally {
-    if (original === undefined) delete process.env.DSH_HOME;
-    else process.env.DSH_HOME = original;
-  }
-});
 test('routes only owner messages into the bound workspace', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-'));
   const workspace = {
@@ -120,7 +117,7 @@ test('routes only owner messages into the bound workspace', async () => {
       messageLimit: 100,
     },
     {
-      statePath: join(root, 'bindings.json'),
+      openStore: memoryOpenStore(),
       async createClient(options) {
         incoming = options.onMessage;
         return {
@@ -162,14 +159,6 @@ test('routes only owner messages into the bound workspace', async () => {
     model: 'deepseek-chat',
   });
   assert.equal(typeof createOptions[0].setup, 'function');
-  const assembled = await setupHandlers.get('system-prompt/assemble')({}, {}, async () => ({
-    variables: { existing: 'yes' },
-  }));
-  assert.deepEqual(assembled.variables, {
-    existing: 'yes',
-    provider: 'deepseek',
-    model: 'deepseek-chat',
-  });
   assert.equal(sentMessages.length, 1);
   assert.match(sentMessages[0].text, /Telegram 状态/);
   assert.equal(sentMessages[0].reply_markup, undefined);
@@ -292,7 +281,7 @@ test('streams the assistant reply and rejects foreign callback queries', async (
       messageLimit: 6,
     },
     {
-      statePath: join(root, 'bindings.json'),
+      openStore: memoryOpenStore(),
       async createClient(options) {
         incoming = options.onMessage;
         onCallback = options.onCallbackQuery;
@@ -347,10 +336,10 @@ test('streams the assistant reply and rejects foreign callback queries', async (
   await rm(root, { recursive: true, force: true });
 });
 
-test('model selection: agent/request uses the assemble-time snapshot, not a fresh currentSelection', async () => {
-  // 回归锁定：曾经的 bug 是 assemble 与 request 各自调用 currentSelection()，
-  // 二者可能拿到不同 provider/model，导致 system-prompt 与实际请求漂移，
-  // DeepSeek 适配器随之走非结构化路径、把工具调用裸写成 <｜｜DSML｜｜...> 文本。
+test('agentOptions on create and resume equal the currentSelection snapshot', async () => {
+  // 契约锁定：provider/model 一致性由 create/resume 两侧统一传入的 agentOptions 保证，
+  // 而非曾经的 installModelSelection 双 waterfall 内联复刻。两侧都必须带上 currentSelection 快照，
+  // 否则 DeepSeek 适配器会因 provider/model 漂移把工具调用裸写成 <｜｜DSML｜｜...> 文本。
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-sel-'));
   const workspace = {
     path: root,
@@ -359,15 +348,34 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
     },
     async attachSession() {},
   };
-  const setupHandlers = new Map();
   const createOptions = [];
-  let calls = 0;
-  const selections = [
-    { provider: 'deepseek', model: 'deepseek-chat' },
-    { provider: 'other', model: 'drifted-model' },
-    { provider: 'third', model: 'drifted-again' },
-  ];
+  const resumeOptions = [];
+  const selection = { provider: 'deepseek', model: 'deepseek-chat' };
+  // 预置绑定 → 首条消息走 resume；随后删除该会话使下一条消息走 create。
+  const rows = new Map([['7', { sessionId: 'telegram-existing', workspaceId: 'workspace-1' }]]);
+  const store = {
+    get: (key) => rows.get(String(key)) ?? null,
+    async set(key, binding) {
+      rows.set(String(key), { sessionId: binding.sessionId, workspaceId: binding.workspaceId });
+    },
+    async delete(key) {
+      rows.delete(String(key));
+    },
+    async close() {},
+  };
   let incoming;
+  const makeAgent = (id) => ({
+    id,
+    session: { header: { cwd: root } },
+    get status() {
+      return 'idle';
+    },
+    followup() {},
+    whenIdle() {
+      return Promise.resolve();
+    },
+    cancel() {},
+  });
   const ctx = {
     credentials: {
       async resolve(ref) {
@@ -381,34 +389,27 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
     },
     agentDefaultModel: {
       currentSelection() {
-        return selections[Math.min(calls++, selections.length - 1)];
+        return { ...selection };
       },
     },
     agents: {
       async create(options) {
         createOptions.push(options);
-        options.setup?.({
-          on(event, handler) {
-            setupHandlers.set(event, handler);
-            return () => setupHandlers.delete(event);
+        await options.setup?.({
+          on() {
+            return () => {};
           },
         });
-        const agent = {
-          id: options.sessionId,
-          session: { header: { cwd: root } },
-          get status() {
-            return 'idle';
-          },
-          followup() {},
-          whenIdle() {
-            return Promise.resolve();
-          },
-          cancel() {},
-        };
-        return { agent, async dispose() {} };
+        return { agent: makeAgent(options.sessionId), async dispose() {} };
       },
-      async resume() {
-        throw new Error('not expected');
+      async resume(options) {
+        resumeOptions.push(options);
+        await options.setup?.({
+          on() {
+            return () => {};
+          },
+        });
+        return { agent: makeAgent(options.resumeSessionId), async dispose() {} };
       },
     },
     on() {},
@@ -422,7 +423,7 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
       messageLimit: 100,
     },
     {
-      statePath: join(root, 'bindings.json'),
+      openStore: async () => store,
       async createClient(options) {
         incoming = options.onMessage;
         return {
@@ -446,26 +447,22 @@ test('model selection: agent/request uses the assemble-time snapshot, not a fres
     },
   );
   await runtime.start();
+  // 首条消息：命中预置绑定 → resume，agentOptions 必须等于快照
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/status' } });
   await runtime.whenSettled('7');
+  assert.equal(resumeOptions.length, 1);
+  assert.equal(resumeOptions[0].resumeSessionId, 'telegram-existing');
+  assert.deepEqual(resumeOptions[0].agentOptions, selection);
+  assert.equal(typeof resumeOptions[0].setup, 'function');
 
-  assert.deepEqual(createOptions[0].agentOptions, { provider: 'deepseek', model: 'deepseek-chat' });
-  const assembleHandler = setupHandlers.get('system-prompt/assemble');
-  const requestHandler = setupHandlers.get('agent/request');
-  assert.equal(typeof assembleHandler, 'function');
-  assert.equal(typeof requestHandler, 'function');
-  const assembled = await assembleHandler({}, {}, async () => ({ variables: {} }));
-  // request 必须复用 assemble 阶段落定的同一 provider/model，而非再取一次 currentSelection
-  const requested = await requestHandler({}, async () => ({
-    provider: 'STALE',
-    model: 'STALE',
-    reasoningEffort: 'high',
-  }));
-  assert.equal(requested.provider, assembled.variables.provider);
-  assert.equal(requested.model, assembled.variables.model);
-  assert.equal(requested.provider, 'deepseek');
-  // 未显式带 effort 时，继承的 reasoningEffort 被剥离
-  assert.equal(requested.reasoningEffort, undefined);
+  // 删除绑定后再发消息 → 无绑定命中 → create，agentOptions 同样等于快照
+  await store.delete('7');
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/status' } });
+  await runtime.whenSettled('7');
+  assert.equal(createOptions.length, 1);
+  assert.match(createOptions[0].sessionId, /^telegram-/);
+  assert.deepEqual(createOptions[0].agentOptions, selection);
+  assert.equal(typeof createOptions[0].setup, 'function');
   await runtime.stop();
   await rm(root, { recursive: true, force: true });
 });
@@ -542,7 +539,7 @@ test('agent setup mounts the default preset so the agent scope has tools', async
       messageLimit: 100,
     },
     {
-      statePath: join(root, 'bindings.json'),
+      openStore: memoryOpenStore(),
       async createClient(options) {
         incoming = options.onMessage;
         return {
@@ -641,7 +638,7 @@ test('reacts to an incoming owner message with 👀 for immediate feedback', asy
       messageLimit: 100,
     },
     {
-      statePath: join(root, 'bindings.json'),
+      openStore: memoryOpenStore(),
       async createClient(options) {
         incoming = options.onMessage;
         return {

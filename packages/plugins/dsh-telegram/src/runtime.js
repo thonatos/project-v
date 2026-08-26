@@ -1,19 +1,19 @@
-import { join } from 'node:path';
-import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { normalizeConfig, resolveCredentials } from './config.js';
-import { normalizeInboundMessage, splitMessageText } from './message.js';
-import { SessionStore } from './session-store.js';
-import { createTelegramClient, createTelegramTransport } from './telegram-client.js';
-import { StreamSession } from './stream.js';
-import { classifyContent, controlCard, interactionCard, statusCard } from './outbound.js';
+import { normalizeInboundMessage, splitMessageText } from './transport/inbound.js';
+import { openBindingStore } from './persist.js';
+import { createTelegramClient } from './transport/client.js';
+import { createTelegramTransport } from './transport/transport.js';
+import { StreamSession } from './render/stream.js';
+import { classifyContent, controlCard, interactionCard, statusCard } from './render/cards.js';
+import { buildAgentSetup, stopAgentTurn } from './agent/integration.js';
 
 export class TelegramRuntime {
   #ctx;
   #config;
   #credentials;
   #workspaceRegistry;
-  #state;
+  #storageDomain;
   #connection;
   #transport;
   #bindings;
@@ -27,26 +27,27 @@ export class TelegramRuntime {
   #reactions = new Map();
   #stopped = false;
 
-  constructor(ctx, config, { createClient = createTelegramClient, statePath } = {}) {
+  constructor(ctx, config, { createClient = createTelegramClient, openStore = openBindingStore } = {}) {
     this.#ctx = ctx;
     this.#config = normalizeConfig(config);
     this.#credentials = ctx.credentials;
     this.#workspaceRegistry = ctx.workspaceRegistry;
-    // 会话绑定持久化到 $DSH_HOME（profile 家目录，默认 ~/.dsh），与 dsh 自身的
-    // $DSH_HOME/cordis.patch.yml 存放惯例一致；绝不写入 process.cwd()，否则 dsh
-    // 在项目目录启动时会把状态文件落进 git 工作区。
-    this.#state = statePath ?? defaultStatePath();
+    // 会话绑定持久化走 dsh 官方 storage 子系统（ctx.storageDomain），由 backend
+    // 负责落盘位置与原子写；插件不再自行选择文件路径。
+    this.#storageDomain = ctx.storageDomain;
     this.#createClient = createClient;
+    this.#openStore = openStore;
   }
 
   #createClient;
+  #openStore;
 
   async start() {
     const workspace = this.#workspaceRegistry?.get(this.#config.workspaceId);
     if (!workspace) throw new Error('Telegram workspaceId does not resolve to a registered Workspace');
     if ((await workspace.status()) !== 'ok') throw new Error('Telegram Workspace directory is unavailable');
     const credentials = await resolveCredentials(this.#credentials);
-    this.#bindings = await new SessionStore(this.#state).load();
+    this.#bindings = await this.#openStore(this.#storageDomain);
     this.#connection = await this.#createClient({
       ...credentials,
       proxy: this.#config.proxy,
@@ -73,6 +74,8 @@ export class TelegramRuntime {
     await this.#connection?.close?.();
     this.#connection = null;
     this.#transport = null;
+    await this.#bindings?.close?.();
+    this.#bindings = null;
   }
 
   // 等待某个聊天（或全部聊天）在途的普通消息处理排空。
@@ -321,16 +324,8 @@ export class TelegramRuntime {
       await this.#sendControlCard(chatId, 'new', { message: '新会话已建立。' });
       return;
     }
-    const binding = this.#bindings.get(chatId);
-    if (!binding) {
-      await this.#sendControlCard(chatId, command.name, { message: '当前没有活动会话。' });
-      return;
-    }
-    const handle = await this.#sessionFor(chatId);
-    if (command.name === 'stop') {
-      handle.agent.cancel({ kind: 'user' });
-      await this.#sendControlCard(chatId, 'stop', { message: '已请求停止当前任务。' });
-    }
+    // parseCommand 只产出 new/status/help/unsupported（均已 return）与 stop
+    // （在 #handleMessage 的 fast-path 拦截），不会走到这里。
   }
 
   async #sessionFor(chatId) {
@@ -348,8 +343,12 @@ export class TelegramRuntime {
       }
       let resumed;
       try {
+        // resume 侧与 create 侧一致地传入 agentOptions（provider/model 快照）：
+        // 这是 dsh 官方防止 provider/model 漂移的机制，取代了曾经的 installModelSelection 内联复刻。
+        const selection = this.#ctx.agentDefaultModel?.currentSelection?.();
         resumed = await this.#ctx.agents.resume({
           resumeSessionId: current.sessionId,
+          ...(selection ? { agentOptions: { provider: selection.provider, model: selection.model } } : {}),
           setup: this.#buildAgentSetup(chatId),
         });
       } catch {
@@ -376,25 +375,17 @@ export class TelegramRuntime {
     return handle;
   }
 
-  // 构造 agent 的 setup 回调，create 与 resume 共用。
-  // 关键职责：注入 model selection、交互桥、session 事件流，并挂载默认 preset。
-  // 缺少 preset.mount 时 agent 作用域没有任何工具 → 请求 tools=[] → DeepSeek 适配器
-  // 不发 tools → 模型把工具调用裸写成 <｜｜DSML｜｜...> 文本泄漏进正文。
-  // 参考 web 入口 dsh-host-apiproxy 的 composeAgent。
-  // selection 由调用方传入以复用同一份快照（create 侧 agentOptions 与 setup 必须一致）；
-  // 未传时（resume 侧）自取一次。
-  #buildAgentSetup(chatId, selection = this.#ctx.agentDefaultModel?.currentSelection?.()) {
-    const presets = this.#ctx.get?.('agentPresets') ?? this.#ctx.agentPresets;
-    return async (agentCtx) => {
-      if (selection) installModelSelection(agentCtx, { current: selection, assembled: undefined });
-      installInteractionBridge(agentCtx, {
-        onRequested: (interaction) => this.#handleInteraction(chatId, interaction),
-        onResolved: (interaction) => this.#resolveInteraction(interaction),
-      });
-      installSessionStream(agentCtx, (event) => this.#onSessionEvent(chatId, event));
-      // 放在最后：mount 失败会回滚整个 agent 创建，前面的注册也随之撤销。
-      if (presets?.mount) await presets.mount(agentCtx, undefined);
-    };
+  // 构造 agent 的 setup 回调，create 与 resume 共用。具体注入逻辑见 agent/integration.js。
+  // provider/model 一致性由 create/resume 两侧的 agentOptions 保证，setup 不再管 selection。
+  // preset 通过官方 ctx.agentPresets.mount 挂载。
+  #buildAgentSetup(chatId) {
+    const presets = this.#ctx.agentPresets;
+    return buildAgentSetup({
+      mountPreset: presets?.mount ? (agentCtx) => presets.mount(agentCtx, undefined) : undefined,
+      onInteractionRequested: (interaction) => this.#handleInteraction(chatId, interaction),
+      onInteractionResolved: (interaction) => this.#resolveInteraction(interaction),
+      onSessionEvent: (event) => this.#onSessionEvent(chatId, event),
+    });
   }
 
   async #createSession(chatId) {
@@ -404,7 +395,7 @@ export class TelegramRuntime {
       sessionId: `telegram-${randomUUID()}`,
       meta: { cwd: workspace.path },
       ...(selection ? { agentOptions: { provider: selection.provider, model: selection.model } } : {}),
-      setup: this.#buildAgentSetup(chatId, selection),
+      setup: this.#buildAgentSetup(chatId),
     });
     await workspace.attachSession(handle.agent.id);
     this.#sessionHandles.set(handle.agent.id, handle);
@@ -498,78 +489,8 @@ export class TelegramRuntime {
   }
 }
 
-// 复刻 @deepseek-ai/dsh-agent 官方 installModelSelection 的快照语义（该包只存在于
-// dsh 运行时、无法作为插件依赖安装，故在此内联）。核心：system-prompt/assemble 阶段
-// 把 selection.current 快照进 selection.assembled，agent/request 阶段读同一份快照，
-// 确保「组装 prompt 的 provider/model」与「实际发请求的 provider/model」严格一致；
-// 二者若漂移，DeepSeek 适配器会走非结构化路径、把工具调用裸写成 DSML 文本。
-function installModelSelection(agentCtx, selection) {
-  agentCtx.on('system-prompt/assemble', async (_assembly, _context, next) => {
-    const selected = selection.current;
-    const assembled = await next();
-    selection.assembled = selected;
-    if (selected === undefined) return assembled;
-    return {
-      ...assembled,
-      variables: {
-        ...assembled.variables,
-        provider: selected.provider,
-        model: selected.model,
-      },
-    };
-  });
-  agentCtx.on('agent/request', async (_payload, next) => {
-    const resolved = await next();
-    const selected = selection.assembled;
-    if (selected === undefined) return resolved;
-    // 剥离 resolved 继承来的 reasoningEffort：仅当所选 selection 显式带 effort 时才回填，
-    // 否则清空以恢复所选模型的 provider/默认行为（与官方实现一致）。
-    const { reasoningEffort: _inheritedEffort, ...withoutInheritedEffort } = resolved;
-    return {
-      ...withoutInheritedEffort,
-      provider: selected.provider,
-      model: selected.model,
-      ...(selected.reasoningEffort === undefined ? {} : { reasoningEffort: selected.reasoningEffort }),
-    };
-  });
-}
-
-function installInteractionBridge(agentCtx, { onRequested, onResolved }) {
-  if (typeof agentCtx?.on !== 'function') return;
-  agentCtx.on('interaction/requested', onRequested);
-  agentCtx.on('interaction/resolved', onResolved);
-}
-
-// 订阅 session 增量事件流（@deepseek-ai/dsh-session `session/event`）。
-// 每次 session log 增长即回调，用于驱动 Telegram 实时流式输出。
-function installSessionStream(agentCtx, onEvent) {
-  if (typeof agentCtx?.on !== 'function') return;
-  agentCtx.on('session/event', (_session, event) => onEvent(event));
-}
-
-async function stopAgentTurn(agent) {
-  // Harness agent 的真实停止 API 是同步的 cancel(cause, options)，返回 void。
-  // 参考 @deepseek-ai/dsh-agent runtime-types.d.ts:
-  //   cancel(cause: AgentCancelCause, options?: CancelOptions): void
-  //   status: AgentStatus = 'idle' | 'running'
-  //   文档明确："若无活动 activity，cancellation 是 no-op"。
-  // 因此 stop 前必须检查 status：idle 时不能谎报"已停止"。
-  if (typeof agent?.cancel !== 'function') return false;
-  if (agent.status !== 'running') return false;
-  agent.cancel({ kind: 'user' }, { keepInbox: true });
-  return true;
-}
-
 function capitalize(value) {
   return value[0].toUpperCase() + value.slice(1);
-}
-
-// 会话绑定文件的默认位置：$DSH_HOME/telegram-sessions.json（DSH_HOME 未设时回退
-// 到 ~/.dsh）。刻意不用 process.cwd()——dsh 通常在项目目录启动，落到 cwd 会污染
-// git 工作区。
-export function defaultStatePath() {
-  const dshHome = process.env.DSH_HOME || join(homedir(), '.dsh');
-  return join(dshHome, 'telegram-sessions.json');
 }
 
 function parseCommand(text) {

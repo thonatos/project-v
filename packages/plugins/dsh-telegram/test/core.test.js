@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { normalizeConfig, resolveCredentials } from '../src/config.js';
-import { normalizeInboundMessage, splitMessageText, StreamRenderer } from '../src/message.js';
-import { SessionStore } from '../src/session-store.js';
-import { createTelegramTransport, TELEGRAM_MEDIA_LIMIT } from '../src/telegram-client.js';
-import { classifyContent, controlCard, interactionCard, statusCard, toolCardText } from '../src/outbound.js';
+import { normalizeInboundMessage, splitMessageText } from '../src/transport/inbound.js';
+import { StreamRenderer } from '../src/render/renderer.js';
+import { createTelegramTransport, TELEGRAM_MEDIA_LIMIT } from '../src/transport/transport.js';
+import { classifyContent, controlCard, interactionCard, statusCard, toolCardText } from '../src/render/cards.js';
 
 test('normalizes the owner-bound Telegram config', () => {
   const config = normalizeConfig({
@@ -68,9 +68,12 @@ test('maps outbound content to native Telegram delivery types', () => {
     interactionPending: false,
   });
   assert.match(status.text, /Workspace.*workspace-1/);
+  assert.match(status.text, /^<blockquote>/, '状态卡片应为 blockquote 面板');
+  assert.match(status.text, /<\/blockquote>$/);
   assert.equal(status.parseMode, 'HTML');
   const help = controlCard('help', { message: '可用命令：', detail: '/new' });
   assert.match(help.text, /可用命令/);
+  assert.match(help.text, /^<blockquote>/, '控制卡片应为 blockquote 面板');
   assert.equal(help.parseMode, 'HTML');
 });
 
@@ -85,15 +88,6 @@ test('keeps media and caption as one inbound message', async () => {
   assert.equal(inbound.text, 'look');
   assert.equal(inbound.media.kind, 'image');
   assert.deepEqual(await inbound.media.load(), Buffer.from('image'));
-});
-
-test('persists session bindings atomically', async () => {
-  const path = new URL('./fixtures/session-bindings.json', import.meta.url).pathname;
-  const store = await new SessionStore(path).load();
-  await store.set('123', { sessionId: 'session-1', workspaceId: 'workspace-1' });
-  const loaded = await new SessionStore(path).load();
-  assert.deepEqual(loaded.get('123'), { sessionId: 'session-1', workspaceId: 'workspace-1' });
-  await loaded.remove();
 });
 
 test('sends text through the Bot API transport and rejects oversized media', async () => {
