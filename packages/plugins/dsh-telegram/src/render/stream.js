@@ -1,5 +1,6 @@
-import { StreamRenderer } from './message.js';
-import { toMarkdownV2 } from './markdown.js';
+import { StreamRenderer } from './renderer.js';
+import { markdownToHtml } from './html.js';
+import { toolCard } from './cards.js';
 
 // 把 Harness `session/event` 增量事件流转换为 Telegram 实时输出。
 //
@@ -25,6 +26,11 @@ export class StreamSession {
   #flushTimer = null;
   #toolCards = new Map();
   #flushing = Promise.resolve();
+  // 事件处理串行队列。runtime 用 `void handleEvent(event)` fire-and-forget 投递，
+  // 事件间不 await；真实网络延迟下 tool/call、text-delta、tool/result 的 async
+  // 处理体会并发交错（resetRenderer 与 flush、卡片定稿相互穿插），导致正文重复、
+  // 工具卡片卡在“执行中”。这里把每次 handleEvent 串到一条链上，保证按到达顺序处理。
+  #queue = Promise.resolve();
 
   constructor({ transport, chatId, limit, flushIntervalMs = 1100, now = () => Date.now() }) {
     if (!transport || typeof transport.sendText !== 'function') {
@@ -38,7 +44,7 @@ export class StreamSession {
     this.#renderer = this.#makeRenderer();
   }
 
-  // 正文渲染器：MarkdownV2 优先，转换或流式半截实体导致 400 时降级为纯文本。
+  // 正文渲染器：HTML 优先，转换或流式半截标签导致 400 时降级为纯文本。
   #makeRenderer() {
     return new StreamRenderer({
       limit: this.#limit,
@@ -50,7 +56,7 @@ export class StreamSession {
   async #sendRich(part) {
     let sent;
     try {
-      sent = await this.#transport.sendText(this.#chatId, toMarkdownV2(part), { parseMode: 'MarkdownV2' });
+      sent = await this.#transport.sendText(this.#chatId, markdownToHtml(part), { parseMode: 'HTML' });
     } catch {
       sent = await this.#transport.sendText(this.#chatId, part);
     }
@@ -59,14 +65,22 @@ export class StreamSession {
 
   async #editRich(messageId, part) {
     try {
-      return await this.#transport.editText(this.#chatId, messageId, toMarkdownV2(part), { parseMode: 'MarkdownV2' });
+      return await this.#transport.editText(this.#chatId, messageId, markdownToHtml(part), { parseMode: 'HTML' });
     } catch {
       return this.#transport.editText(this.#chatId, messageId, part);
     }
   }
 
-  // 消费一个 session 事件。返回 Promise 便于测试串行等待。
-  async handleEvent(event) {
+  // 消费一个 session 事件。串行化到 #queue：即使调用方 fire-and-forget 并发投递，
+  // 事件也按到达顺序逐个处理，返回的 Promise 在该事件处理完成后 resolve。
+  handleEvent(event) {
+    const run = this.#queue.then(() => this.#dispatch(event));
+    // 吞掉链上的 rejection，避免一个事件出错拖垮后续事件的排队。
+    this.#queue = run.catch(() => {});
+    return run;
+  }
+
+  #dispatch(event) {
     const type = event?.type;
     const data = event?.data ?? {};
     if (type === 'assistant/chunk') return this.#onChunk(data.chunk);
@@ -114,7 +128,7 @@ export class StreamSession {
     if (!id) return;
     // 工具开始前先定稿已累积的正文，让工具卡片排在其后。
     await this.#flushNow();
-    const text = toolText(name, 'running');
+    const text = toolCard(name, 'running');
     const sent = await this.#transport.sendCard(this.#chatId, text, { parseMode: 'HTML' });
     this.#toolCards.set(id, {
       messageId: String(sent?.message_id ?? sent?.messageId ?? ''),
@@ -129,7 +143,7 @@ export class StreamSession {
     const card = id ? this.#toolCards.get(id) : undefined;
     if (!card) return;
     this.#toolCards.delete(id);
-    const text = toolText(card.name, error ? 'error' : 'done', error);
+    const text = toolCard(card.name, error ? 'error' : 'done', error);
     try {
       await this.#transport.editText(this.#chatId, card.messageId, text, { parseMode: 'HTML' });
     } catch (caught) {
@@ -152,14 +166,16 @@ export class StreamSession {
     await this.#flush();
   }
 
-  // turn 结束：刷完剩余文本，等待所有在途 edit 落地。
+  // turn 结束：先排空事件队列，再刷完剩余文本，等待所有在途 edit 落地。
   async finalize() {
+    await this.#queue;
     await this.#flushNow();
     await this.#flushing;
   }
 
   // 主动停止（/stop）：定稿当前输出，不再接收后续增量。
   async dispose() {
+    await this.#queue.catch(() => {});
     if (this.#flushTimer) {
       clearTimeout(this.#flushTimer);
       this.#flushTimer = null;
@@ -171,22 +187,4 @@ export class StreamSession {
   get text() {
     return this.#text;
   }
-}
-
-function toolText(name, phase, error) {
-  const label = name ?? '工具';
-  if (phase === 'running') return `🔧 <b>${escapeHtml(label)}</b> 执行中…`;
-  if (phase === 'error') {
-    const detail = error?.name ? `：${escapeHtml(String(error.name))}` : '';
-    return `❌ <b>${escapeHtml(label)}</b> 失败${detail}`;
-  }
-  return `✅ <b>${escapeHtml(label)}</b> 完成`;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
 }

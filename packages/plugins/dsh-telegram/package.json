@@ -19,8 +19,6 @@
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
     "./config": "./src/config.js",
-    "./message": "./src/message.js",
-    "./session-store": "./src/session-store.js",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -29,10 +27,12 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-storage-domain": "0.0.1-rc.1",
     "@deepseek-ai/schemastery": "3.18.1",
     "node-fetch": "3.3.2",
     "node-telegram-bot-api": "2.0.0",
-    "proxy-agent": "6.5.0"
+    "proxy-agent": "6.5.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "esbuild": "0.25.9"

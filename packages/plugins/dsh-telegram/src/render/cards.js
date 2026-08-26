@@ -1,3 +1,22 @@
+import { escapeHtml } from './html.js';
+
+// 统一的「卡片」外观：Telegram HTML 不支持表格/边框，用 <blockquote> 渲染成
+// 左侧带竖线的引用块，得到最接近面板且在窄屏/长文本下不崩的效果。
+// title 会加粗；lines 为已就绪的内容行（调用方负责对动态值做 escapeHtml）。
+// 空行会被过滤，避免引用块里出现突兀的空白行。
+function panel(title, lines = []) {
+  const body = [`<b>${title}</b>`, ...lines].filter((line) => line !== '' && line != null).join('\n');
+  return {
+    text: `<blockquote>${body}</blockquote>`,
+    parseMode: 'HTML',
+  };
+}
+
+// 「标签：值」一行。value 已是就绪 HTML（动态段由调用方 escapeHtml）。
+function field(label, value) {
+  return `${label}：${value}`;
+}
+
 const MEDIA_TYPES = new Map([
   ['image', 'image'],
   ['audio', 'audio'],
@@ -64,39 +83,36 @@ export function interactionCard(interaction) {
 }
 
 export function statusCard({ workspaceId, sessionId, active, interactionPending }) {
-  return {
-    text: [
-      '<b>Telegram 状态</b>',
-      '',
-      `<b>连接</b>：${active ? '运行中' : '空闲'}`,
-      `<b>Workspace</b>：<code>${escapeHtml(workspaceId)}</code>`,
-      `<b>Session</b>：<code>${escapeHtml(sessionId)}</code>`,
-      `<b>任务</b>：${active ? '执行中' : '无活动任务'}`,
-      `<b>交互</b>：${interactionPending ? '等待操作' : '无待处理交互'}`,
-    ].join('\n'),
-    parseMode: 'HTML',
-  };
+  return panel('📱 Telegram 状态', [
+    field('连接', active ? '🟢 运行中' : '⚪ 空闲'),
+    field('Workspace', `<code>${escapeHtml(workspaceId)}</code>`),
+    field('Session', `<code>${escapeHtml(sessionId)}</code>`),
+    field('任务', active ? '执行中' : '无活动任务'),
+    field('交互', interactionPending ? '等待操作' : '无待处理交互'),
+  ]);
 }
 
 export function controlCard(command, { message, detail } = {}) {
-  const labels = { new: '新会话', stop: '停止任务', help: '帮助', unsupported: '不支持的命令' };
-  return {
-    text: [
-      `<b>${labels[command] ?? '控制命令'}</b>`,
-      '',
-      message ? escapeHtml(message) : '',
-      detail ? `<pre>${escapeHtml(detail)}</pre>` : '',
-    ]
-      .filter(Boolean)
-      .join('\n'),
-    parseMode: 'HTML',
+  const labels = {
+    new: '🆕 新会话',
+    stop: '🛑 停止任务',
+    help: '❓ 帮助',
+    unsupported: '⚠️ 不支持的命令',
   };
+  return panel(labels[command] ?? '控制命令', [
+    message ? escapeHtml(message) : '',
+    detail ? `<code>${escapeHtml(detail)}</code>` : '',
+  ]);
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+// 流式工具卡片：与 status/control 同款 blockquote 面板，随阶段更新标题。
+// 返回纯文本（供 sendCard/editText 使用），parseMode 由调用方统一置为 HTML。
+export function toolCard(name, phase, error) {
+  const label = escapeHtml(name ?? '工具');
+  if (phase === 'running') return panel(`🔧 ${label}`, ['状态：执行中…']).text;
+  if (phase === 'error') {
+    const detail = error?.name ? `：${escapeHtml(String(error.name))}` : '';
+    return panel(`❌ ${label}`, [`状态：失败${detail}`]).text;
+  }
+  return panel(`✅ ${label}`, ['状态：完成']).text;
 }
