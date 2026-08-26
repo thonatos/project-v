@@ -128,6 +128,50 @@ test('ignores reasoning-delta chunks', async () => {
   assert.equal(stream.text, '');
 });
 
+test('delivers a text block that arrives whole via block-end (no text-delta)', async () => {
+  // 真机 bug：工具调用后的短回复不发 text-delta，只在 block-end 一次性带上整块正文。
+  // 旧实现只处理 text-delta → Telegram 收不到正文（web 由完整 assistant/message 渲染仍正常）。
+  const transport = makeTransport();
+  const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'block-start', index: 0, blockType: 'text' } },
+  });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'block-end', index: 0, block: { type: 'text', text: '已生成图片。' } } },
+  });
+  await stream.finalize();
+  const sends = transport.calls.filter((c) => c[0] === 'sendText');
+  assert.equal(sends.length, 1);
+  assert.equal(sends[0][2], '已生成图片。');
+  assert.equal(stream.text, '已生成图片。');
+});
+
+test('block-end reconciles with streamed deltas without duplicating', async () => {
+  // delta 流式先累积，block-end 携带同一块权威全文 → 覆盖而非追加，避免正文翻倍。
+  const transport = makeTransport();
+  let clock = 0;
+  const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => clock });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'block-start', index: 0, blockType: 'text' } },
+  });
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'text-delta', index: 0, text: 'Hello' } },
+  });
+  clock += 2000;
+  await stream.handleEvent({
+    type: 'assistant/chunk',
+    data: { chunk: { type: 'block-end', index: 0, block: { type: 'text', text: 'Hello world' } } },
+  });
+  await stream.finalize();
+  assert.equal(stream.text, 'Hello world');
+  const edits = transport.calls.filter((c) => c[0] === 'editText');
+  assert.equal(edits.at(-1)[3], 'Hello world');
+});
+
 test('opens a running tool card and finalizes it on result', async () => {
   const transport = makeTransport();
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });

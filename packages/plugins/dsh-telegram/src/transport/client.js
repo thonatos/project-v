@@ -41,7 +41,19 @@ function createFetch(proxy) {
   if (proxy.username) url.username = proxy.username;
   if (proxy.password) url.password = proxy.password;
   const agent = new ProxyAgent(url);
-  return (input, init) => nodeFetch(input, { ...init, agent });
+  return async (input, init) => {
+    const next = { ...init, agent };
+    // node-telegram-bot-api 的 multipart 上传会把请求体编码成 web 标准
+    // ReadableStream（配合原生 fetch 的 duplex:'half' 流式发送）。node-fetch
+    // 不支持这种 body，会发出空请求体导致 Telegram 返回空响应（EPARSE）。
+    // 这里把流式 body 缓冲成 Buffer 再交给 node-fetch（媒体 <10MB，可接受）。
+    if (next.body instanceof ReadableStream) {
+      next.body = Buffer.from(await new Response(next.body).arrayBuffer());
+    }
+    // duplex 仅对原生 fetch 的流式 body 有意义，node-fetch 不识别。
+    delete next.duplex;
+    return nodeFetch(input, next);
+  };
 }
 
 function normalizeMessage(message) {

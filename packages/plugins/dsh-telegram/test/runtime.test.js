@@ -682,3 +682,366 @@ test('reacts to an incoming owner message with 👀 for immediate feedback', asy
   await runtime.stop();
   await rm(root, { recursive: true, force: true });
 });
+
+test('bridges approval/request to a Telegram card and resolves on the owner tap', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-approval-'));
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
+  const sent = [];
+  const editedCards = [];
+  const answered = [];
+  const setupHandlers = new Map();
+  let incoming;
+  let onCallback;
+  let sentId = 0;
+  const ctx = {
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return { provider: 'deepseek', model: 'deepseek-chat' };
+      },
+    },
+    agents: {
+      async create(options) {
+        options.setup?.({
+          on(event, handler) {
+            setupHandlers.set(event, handler);
+            return () => setupHandlers.delete(event);
+          },
+        });
+        const agent = {
+          id: options.sessionId,
+          session: { header: { cwd: root } },
+          get status() {
+            return 'idle';
+          },
+          followup() {},
+          whenIdle() {
+            return Promise.resolve();
+          },
+          cancel() {},
+        };
+        return { agent, async dispose() {} };
+      },
+      async resume() {
+        throw new Error('not expected');
+      },
+    },
+    on() {},
+    effect() {},
+  };
+  const runtime = new TelegramRuntime(
+    ctx,
+    { ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100 },
+    {
+      openStore: memoryOpenStore(),
+      async createClient(options) {
+        incoming = options.onMessage;
+        onCallback = options.onCallbackQuery;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage(payload) {
+                sent.push(payload);
+                return { message_id: ++sentId };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup(payload) {
+                editedCards.push(payload);
+              },
+              async answerCallbackQuery(payload) {
+                answered.push(payload);
+              },
+              async sendPhoto() {},
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
+  await runtime.start();
+  // 建立会话（注册 approval/request 答复者）
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/status' } });
+  await runtime.whenSettled('7');
+  const answerer = setupHandlers.get('approval/request');
+  assert.equal(typeof answerer, 'function', '必须注册 approval/request 答复者');
+
+  // 触发一次审批：answerer 返回挂起的 outcome，同时发出审批卡片
+  const outcome = answerer({ toolName: 'bash', reason: '删除文件' });
+  await new Promise((resolve) => setImmediate(resolve));
+  const card = sent.find((payload) => payload.reply_markup && /审批请求/.test(payload.text ?? ''));
+  assert.ok(card, '应发送带按钮的审批卡片');
+  assert.equal(card.parse_mode, 'HTML');
+  const approveBtn = card.reply_markup.inline_keyboard[0][0];
+  assert.match(approveBtn.callback_data, /^dsh:approval:[^:]+:approve$/);
+
+  // owner 点「批准」→ answerer resolve 成 allowed-once，按钮被撤下
+  await onCallback({ callback: { id: 'cb-approve', senderId: '7', chatId: '7', data: approveBtn.callback_data } });
+  assert.equal(await outcome, 'allowed-once');
+  assert.match(answered.at(-1).text, /已批准/);
+  assert.deepEqual(editedCards.at(-1).reply_markup, { inline_keyboard: [] });
+
+  // 拒绝路径：另一次审批点「拒绝」→ rejected
+  const outcome2 = answerer({ toolName: 'write', reason: '覆盖文件' });
+  await new Promise((resolve) => setImmediate(resolve));
+  const card2 = sent.filter((payload) => payload.reply_markup && /审批请求/.test(payload.text ?? '')).at(-1);
+  const rejectBtn = card2.reply_markup.inline_keyboard[0][1];
+  await onCallback({ callback: { id: 'cb-reject', senderId: '7', chatId: '7', data: rejectBtn.callback_data } });
+  assert.equal(await outcome2, 'rejected');
+
+  // 已中止的请求直接 cancelled，不发卡片
+  const before = sent.length;
+  assert.equal(await answerer({ toolName: 'bash', signal: { aborted: true } }), 'cancelled');
+  assert.equal(sent.length, before);
+  await runtime.stop();
+  await rm(root, { recursive: true, force: true });
+});
+
+test('delivers in-workspace markdown images and rejects out-of-workspace paths', async () => {
+  const { writeFile, mkdir } = await import('node:fs/promises');
+  const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-img-'));
+  const outside = await mkdtemp(join(tmpdir(), 'dsh-telegram-outside-'));
+  await mkdir(join(root, 'out'), { recursive: true });
+  const pngBytes = Buffer.from('89504e470d0a1a0a', 'hex'); // PNG 魔数即可
+  await writeFile(join(root, 'out', 'chart.png'), pngBytes);
+  await writeFile(join(outside, 'secret.png'), Buffer.from('secret'));
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
+  const photos = [];
+  const texts = [];
+  let incoming;
+  const assistantContent = [
+    {
+      role: 'assistant',
+      content: [
+        {
+          type: 'text',
+          text: `图在这 ![c](./out/chart.png) 还有越界的 ![s](${join(outside, 'secret.png')}) 和缺失的 ![m](./out/missing.png)`,
+        },
+      ],
+    },
+  ];
+  const ctx = {
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return { provider: 'deepseek', model: 'deepseek-chat' };
+      },
+    },
+    agents: {
+      async create(options) {
+        options.setup?.({
+          on() {
+            return () => {};
+          },
+        });
+        const agent = {
+          id: options.sessionId,
+          session: {
+            header: { cwd: root },
+            deriveMessages() {
+              return assistantContent;
+            },
+          },
+          get status() {
+            return 'idle';
+          },
+          followup() {},
+          whenIdle() {
+            return Promise.resolve();
+          },
+          cancel() {},
+        };
+        return { agent, async dispose() {} };
+      },
+      async resume() {
+        throw new Error('not expected');
+      },
+    },
+    on() {},
+    effect() {},
+  };
+  const runtime = new TelegramRuntime(
+    ctx,
+    { ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100 },
+    {
+      openStore: memoryOpenStore(),
+      async createClient(options) {
+        incoming = options.onMessage;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage(payload) {
+                texts.push(payload);
+                return { message_id: 1 };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup() {},
+              async answerCallbackQuery() {},
+              async sendPhoto(payload) {
+                photos.push(payload);
+              },
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
+  await runtime.start();
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'draw me a chart' } });
+  await runtime.whenSettled('7');
+  // 仅工作区内存在的图片被发送；越界与缺失的都不发
+  assert.equal(photos.length, 1);
+  assert.equal(photos[0].chat_id, '7');
+  await runtime.stop();
+  await rm(root, { recursive: true, force: true });
+  await rm(outside, { recursive: true, force: true });
+});
+
+test('dedupes the same in-workspace image referenced multiple ways', async () => {
+  const { writeFile } = await import('node:fs/promises');
+  const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-dedup-'));
+  const pngBytes = Buffer.from('89504e470d0a1a0a', 'hex');
+  await writeFile(join(root, 'blue.png'), pngBytes);
+  const workspace = {
+    path: root,
+    async status() {
+      return 'ok';
+    },
+    async attachSession() {},
+  };
+  const photos = [];
+  let incoming;
+  // 同一文件用相对名与绝对路径各引用一次：realpath 归一后应只发一张。
+  const assistantContent = [
+    {
+      role: 'assistant',
+      content: [
+        {
+          type: 'text',
+          text: `生成了 \`blue.png\`，路径：\`${join(root, 'blue.png')}\``,
+        },
+      ],
+    },
+  ];
+  const ctx = {
+    credentials: {
+      async resolve(ref) {
+        return { value: `${ref}-value` };
+      },
+    },
+    workspaceRegistry: {
+      get() {
+        return workspace;
+      },
+    },
+    agentDefaultModel: {
+      currentSelection() {
+        return { provider: 'deepseek', model: 'deepseek-chat' };
+      },
+    },
+    agents: {
+      async create(options) {
+        options.setup?.({
+          on() {
+            return () => {};
+          },
+        });
+        const agent = {
+          id: options.sessionId,
+          session: {
+            header: { cwd: root },
+            deriveMessages() {
+              return assistantContent;
+            },
+          },
+          get status() {
+            return 'idle';
+          },
+          followup() {},
+          whenIdle() {
+            return Promise.resolve();
+          },
+          cancel() {},
+        };
+        return { agent, async dispose() {} };
+      },
+      async resume() {
+        throw new Error('not expected');
+      },
+    },
+    on() {},
+    effect() {},
+  };
+  const runtime = new TelegramRuntime(
+    ctx,
+    { ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100 },
+    {
+      openStore: memoryOpenStore(),
+      async createClient(options) {
+        incoming = options.onMessage;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage() {
+                return { message_id: 1 };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup() {},
+              async answerCallbackQuery() {},
+              async sendPhoto(payload) {
+                photos.push(payload);
+              },
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
+  await runtime.start();
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'draw blue' } });
+  await runtime.whenSettled('7');
+  assert.equal(photos.length, 1);
+  await runtime.stop();
+  await rm(root, { recursive: true, force: true });
+});

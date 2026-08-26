@@ -82,6 +82,28 @@ export function interactionCard(interaction) {
   };
 }
 
+// 审批卡片：dsh-user-approval `approval/request` 到达时渲染成带「批准/拒绝」按钮的
+// 面板。callback_data 用 `dsh:approval:<id>:approve|reject`，与 #handleCallbackQuery
+// 的解析格式一致。toolName/reason 为动态值，转义后再拼入。
+export function approvalCard(id, { toolName, reason } = {}) {
+  const lines = [field('工具', `<code>${escapeHtml(toolName ?? '未知')}</code>`)];
+  if (reason) lines.push(field('原因', escapeHtml(String(reason))));
+  lines.push('需要你的批准才能继续。');
+  const panelCard = panel('🔐 审批请求', lines);
+  return {
+    text: panelCard.text,
+    parseMode: panelCard.parseMode,
+    replyMarkup: {
+      inline_keyboard: [
+        [
+          { text: '批准', callback_data: `dsh:approval:${id}:approve` },
+          { text: '拒绝', callback_data: `dsh:approval:${id}:reject` },
+        ],
+      ],
+    },
+  };
+}
+
 export function statusCard({ workspaceId, sessionId, active, interactionPending }) {
   return panel('📱 Telegram 状态', [
     field('连接', active ? '🟢 运行中' : '⚪ 空闲'),

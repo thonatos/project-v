@@ -1,5 +1,5 @@
 import { StreamRenderer } from './renderer.js';
-import { markdownToHtml } from './html.js';
+import { markdownToHtml, stripImageMarkdown } from './html.js';
 import { toolCard } from './cards.js';
 
 // 把 Harness `session/event` 增量事件流转换为 Telegram 实时输出。
@@ -26,6 +26,9 @@ export class StreamSession {
   #flushTimer = null;
   #toolCards = new Map();
   #flushing = Promise.resolve();
+  // 当前文本块在 #text 中的起始偏移。block-start 时记录，block-end 时用块的
+  // 权威全文覆盖本块区间（见 #onBlockEnd），从而兼容「无 text-delta」的整块投递。
+  #blockBaseLen = 0;
   // 事件处理串行队列。runtime 用 `void handleEvent(event)` fire-and-forget 投递，
   // 事件间不 await；真实网络延迟下 tool/call、text-delta、tool/result 的 async
   // 处理体会并发交错（resetRenderer 与 flush、卡片定稿相互穿插），导致正文重复、
@@ -58,7 +61,8 @@ export class StreamSession {
     try {
       sent = await this.#transport.sendText(this.#chatId, markdownToHtml(part), { parseMode: 'HTML' });
     } catch {
-      sent = await this.#transport.sendText(this.#chatId, part);
+      // 纯文本降级也要剥掉 markdown 图片语法，避免残留 `![](...)` 噪声。
+      sent = await this.#transport.sendText(this.#chatId, stripImageMarkdown(part));
     }
     return sent?.message_id ?? sent?.messageId ?? '';
   }
@@ -67,7 +71,7 @@ export class StreamSession {
     try {
       return await this.#transport.editText(this.#chatId, messageId, markdownToHtml(part), { parseMode: 'HTML' });
     } catch {
-      return this.#transport.editText(this.#chatId, messageId, part);
+      return this.#transport.editText(this.#chatId, messageId, stripImageMarkdown(part));
     }
   }
 
@@ -90,8 +94,31 @@ export class StreamSession {
   }
 
   #onChunk(chunk) {
-    if (chunk?.type !== 'text-delta' || !chunk.text) return undefined;
+    const kind = chunk?.type;
+    if (kind === 'block-start') return this.#onBlockStart(chunk);
+    if (kind === 'block-end') return this.#onBlockEnd(chunk);
+    if (kind !== 'text-delta' || !chunk.text) return undefined;
     this.#text += chunk.text;
+    this.#pendingText = true;
+    return this.#scheduleFlush();
+  }
+
+  // 文本块开始：记录该块在 #text 中的起点，供 block-end 覆盖对账。
+  #onBlockStart(chunk) {
+    if (chunk?.blockType === 'text') this.#blockBaseLen = this.#text.length;
+    return undefined;
+  }
+
+  // 文本块结束：用块的权威全文覆盖本块区间。
+  // 关键兼容点：许多回复（尤其工具调用后的短回复）不发 text-delta，只在 block-end
+  // 一次性带上整块 block.text。若只处理 text-delta，正文就会整段丢失（web 由
+  // 完整 assistant/message 渲染仍正常，但 Telegram 收不到）。这里以 block.text 为准
+  // 覆盖 [#blockBaseLen, 末尾)：有 delta 时是幂等替换，无 delta 时补齐整段正文。
+  #onBlockEnd(chunk) {
+    if (chunk?.block?.type !== 'text') return undefined;
+    const full = chunk.block.text ?? '';
+    const base = Math.min(this.#blockBaseLen, this.#text.length);
+    this.#text = this.#text.slice(0, base) + full;
     this.#pendingText = true;
     return this.#scheduleFlush();
   }
@@ -114,7 +141,11 @@ export class StreamSession {
     if (!this.#pendingText) return this.#flushing;
     this.#pendingText = false;
     this.#lastFlush = this.#now();
-    const snapshot = this.#text;
+    // 先剥掉 markdown 图片语法再交给 renderer：本地图片作为独立 photo 单独发送，
+    // 正文不应残留 `![](...)`。在此剥离（而非仅在 #sendRich）可让 renderer 基于干净
+    // 文本分片/diff，并使「仅图片、无文字」的回复剥离后为空 → 整体不发空消息。
+    const snapshot = stripImageMarkdown(this.#text).trim();
+    if (!snapshot) return this.#flushing;
     this.#flushing = this.#flushing
       .then(() => this.#renderer.update(snapshot))
       .catch((error) => {
@@ -155,6 +186,7 @@ export class StreamSession {
     this.#renderer = this.#makeRenderer();
     this.#text = '';
     this.#pendingText = false;
+    this.#blockBaseLen = 0;
   }
 
   // 立即刷新待定文本（清除去抖定时器）。工具卡片前、turn 收尾时调用。

@@ -4,7 +4,15 @@ import { normalizeConfig, resolveCredentials } from '../src/config.js';
 import { normalizeInboundMessage, splitMessageText } from '../src/transport/inbound.js';
 import { StreamRenderer } from '../src/render/renderer.js';
 import { createTelegramTransport, TELEGRAM_MEDIA_LIMIT } from '../src/transport/transport.js';
-import { classifyContent, controlCard, interactionCard, statusCard, toolCardText } from '../src/render/cards.js';
+import {
+  approvalCard,
+  classifyContent,
+  controlCard,
+  interactionCard,
+  statusCard,
+  toolCardText,
+} from '../src/render/cards.js';
+import { extractLocalImagePaths } from '../src/render/local-images.js';
 
 test('normalizes the owner-bound Telegram config', () => {
   const config = normalizeConfig({
@@ -194,4 +202,35 @@ test('stream renderer falls back to a new message when editing fails', async () 
 test('rejects invalid stream renderer configuration', () => {
   assert.throws(() => new StreamRenderer({ limit: 0, send() {}, edit() {} }), /positive limit/);
   assert.throws(() => new StreamRenderer({ limit: 5 }), /send and edit/);
+});
+
+test('renders an approval card as a blockquote panel with approve/reject buttons', () => {
+  const card = approvalCard('req-1', { toolName: 'bash', reason: '删除文件 <x>' });
+  assert.equal(card.parseMode, 'HTML');
+  assert.match(card.text, /^<blockquote>/, '审批卡片应为 blockquote 面板');
+  assert.match(card.text, /审批请求/);
+  assert.match(card.text, /bash/);
+  // 动态值转义：reason 里的 < > 不得原样出现
+  assert.match(card.text, /删除文件 &lt;x&gt;/);
+  const [approve, reject] = card.replyMarkup.inline_keyboard[0];
+  assert.equal(approve.callback_data, 'dsh:approval:req-1:approve');
+  assert.equal(reject.callback_data, 'dsh:approval:req-1:reject');
+});
+
+test('extracts local image paths from markdown, inline-code and bare forms; skips remote and non-images', () => {
+  const text = [
+    'markdown 图 ![out](./out/chart.png)',
+    '反引号 `/abs/solid.png` 也认',
+    '裸路径 路径：/Users/me/ws/pic.JPEG',
+    '远程图 ![r](https://example.com/a.png) 不读盘',
+    'data 图 ![d](data:image/png;base64,AAAA) 跳过',
+    '非图片 `./notes.txt` 跳过',
+    '重复 ![dup](./out/chart.png) 去重',
+  ].join('\n');
+  const paths = extractLocalImagePaths(text);
+  assert.deepEqual(paths, ['./out/chart.png', '/abs/solid.png', '/Users/me/ws/pic.JPEG']);
+});
+
+test('decodes percent-encoded local image paths', () => {
+  assert.deepEqual(extractLocalImagePaths('![x](./my%20dir/a.png)'), ['./my dir/a.png']);
 });
