@@ -2,7 +2,7 @@ import * as React from 'react';
 
 const h = React.createElement;
 const SETTINGS_NAMESPACE = 'dsh-telegram';
-const STYLE_ID = 'project-v-dsh-telegram-settings';
+const STYLE_ID = 'implementsio-dsh-telegram-settings';
 
 export const inject = ['connection', 'slots', 'settingsScope', 'workspaces'];
 

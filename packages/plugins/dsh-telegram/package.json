@@ -1,5 +1,5 @@
 {
-  "name": "@project-v/dsh-telegram",
+  "name": "@implementsio/dsh-telegram",
   "version": "0.3.0",
   "description": "Telegram Bot API plugin for DeepSeek Harness",
   "keywords": [
