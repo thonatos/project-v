@@ -2,6 +2,12 @@
   "name": "@implementsio/dsh-telegram",
   "version": "0.3.0",
   "description": "Telegram Bot API plugin for DeepSeek Harness",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "telegram"
+  ],
   "homepage": "https://github.com/thonatos/project-v/tree/main/packages/plugins/dsh-telegram#readme",
   "bugs": {
     "url": "https://github.com/thonatos/project-v/issues"
@@ -11,12 +17,6 @@
     "url": "git+https://github.com/thonatos/project-v.git",
     "directory": "packages/plugins/dsh-telegram"
   },
-  "keywords": [
-    "deepseek-harness",
-    "dsh",
-    "dsh-plugin",
-    "telegram"
-  ],
   "files": [
     "cordis.patch.yml",
     "lib",
@@ -24,17 +24,14 @@
   ],
   "type": "module",
   "main": "./lib/index.js",
-  "engines": {
-    "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
     "./config": "./src/config.js",
     "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "node scripts/build-client.mjs",
@@ -53,6 +50,9 @@
   },
   "devDependencies": {
     "esbuild": "0.25.9"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dsh": {
     "bundle": {
