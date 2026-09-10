@@ -29,6 +29,5 @@ jobs:
           context: '{{defaultContext}}'
           file: packages/apps/artusx-api/Dockerfile
           push: true
+          provenance: false
           tags: registry.cn-hongkong.aliyuncs.com/suyi/artusx-api:latest
-          secrets: |
-            TIPTAP_PRO_TOKEN=${{ secrets.TIPTAP_PRO_TOKEN }}
