@@ -7,8 +7,16 @@ import { openBindingStore } from './persist.js';
 import { createTelegramClient } from './transport/client.js';
 import { createTelegramTransport, TELEGRAM_MEDIA_LIMIT } from './transport/transport.js';
 import { StreamSession } from './render/stream.js';
-import { approvalCard, classifyContent, controlCard, interactionCard, statusCard } from './render/cards.js';
-import { extractLocalImagePaths } from './render/local-images.js';
+import {
+  approvalCard,
+  classifyContent,
+  controlCard,
+  interactionCard,
+  statusCard,
+  workspaceCard,
+} from './render/cards.js';
+import { extractLocalImageLinks, extractLocalImagePaths } from './render/local-images.js';
+import { stripImageMarkdown } from './render/html.js';
 import { buildAgentSetup, installAgentBridges, stopAgentTurn } from './agent/integration.js';
 
 export class TelegramRuntime {
@@ -34,6 +42,7 @@ export class TelegramRuntime {
   // 已在其 agent-scoped ctx 上装好桥接（session 事件流/审批/交互）的 sessionId 集合。
   // 「复用已存活 agent」路径不跑 setup，需在此补装；用集合去重避免同一 agent 重复注册。
   #bridged = new Set();
+  #remoteInteractionDisposers = [];
   #stopped = false;
 
   constructor(ctx, config, { createClient = createTelegramClient, openStore = openBindingStore } = {}) {
@@ -59,11 +68,13 @@ export class TelegramRuntime {
     this.#bindings = await this.#openStore(this.#storageDomain);
     this.#connection = await this.#createClient({
       ...credentials,
+      ownerUserId: this.#config.ownerUserId,
       proxy: this.#config.proxy,
       onMessage: (event) => this.#handleMessage(event),
       onCallbackQuery: (event) => this.#handleCallbackQuery(event),
     });
     this.#transport = createTelegramTransport(this.#connection);
+    this.#installRemoteInteractionBridges();
     this.#ctx.effect?.(() => () => this.stop());
     return this;
   }
@@ -77,11 +88,13 @@ export class TelegramRuntime {
     this.#activeTurns.clear();
     this.#cancelledChats.clear();
     this.#stopping.clear();
-    this.#interactions.clear();
     // 关闭时把所有待决审批 settle 成 cancelled，让挂起的 answerer 立即返回，
     // 不残留永久 pending 的 Promise。
     for (const approval of this.#approvals.values()) approval.settle?.('cancelled');
     this.#approvals.clear();
+    for (const interaction of this.#interactions.values()) interaction.cancel?.();
+    this.#interactions.clear();
+    for (const dispose of this.#remoteInteractionDisposers.splice(0)) dispose?.();
     for (const stream of this.#streams.values()) await stream.dispose?.();
     this.#streams.clear();
     await this.#connection?.close?.();
@@ -178,6 +191,20 @@ export class TelegramRuntime {
       await this.#transport.answerCallback(callback.id, '该操作无效。');
       return;
     }
+    if (kind === 'workspace' && interactionId === 'select') {
+      let workspace;
+      try {
+        workspace = await this.#switchWorkspace(String(callback.chatId), value);
+      } catch {
+        await this.#transport.answerCallback(callback.id, 'Workspace 不存在或不可用。');
+        return;
+      }
+      await this.#transport
+        .editCard(callback.chatId, callback.messageId, { inline_keyboard: [] })
+        .catch((error) => console.error('[dsh-telegram] workspace card cleanup failed:', error));
+      await this.#transport.answerCallback(callback.id, `已切换到 ${workspace.title}`);
+      return;
+    }
     // 审批点击：settle 对应的挂起 answerer。approval 走 #approvals，与 interaction 分离。
     if (kind === 'approval') {
       const approval = this.#approvals.get(interactionId);
@@ -196,7 +223,9 @@ export class TelegramRuntime {
       return;
     }
     try {
-      await this.#respondToInteraction(interaction, { kind, value });
+      const resolvedValue = kind === 'question' ? interaction.values?.[Number(value)] : value;
+      if (kind === 'question' && resolvedValue === undefined) throw new Error('question option is unavailable');
+      await this.#respondToInteraction(interaction, { kind, value: resolvedValue });
       await this.#transport.answerCallback(callback.id, '已提交');
     } catch (error) {
       console.error('[dsh-telegram] interaction response failed:', error);
@@ -232,6 +261,7 @@ export class TelegramRuntime {
       }
       const handle = await this.#sessionFor(chatId);
       const content = await this.#contentFor(inbound);
+      const messageCount = handle.agent.session?.deriveMessages?.().length ?? 0;
       this.#activeTurns.set(chatId, handle);
       // 为本次 turn 建立流式会话：session/event 增量事件由 #onSessionEvent 路由到它。
       const stream = new StreamSession({
@@ -251,8 +281,31 @@ export class TelegramRuntime {
       await handle.agent.whenIdle?.();
       await stream.finalize();
       if (this.#cancelledChats.has(chatId)) return;
-      // 流式已交付正文与工具卡片；此处仅补发非文本媒体产物（图片等）。
-      await this.#sendMediaArtifacts(chatId, handle.agent.session);
+      const events = this.#finalAssistantEvents(handle.agent.session, messageCount);
+      // dsh 0.1.5-rc.1 的最终消息可能已写入 Session，但 agent-scoped
+      // session/event 未送达。仅在本 turn 没有流式正文时用最终消息补发，避免重复。
+      if (!stream.hasTextOutput) {
+        const text = events
+          .filter((event) => event.type === 'text')
+          .map((event) => event.text)
+          .join('');
+        if (text) {
+          await stream.handleEvent({
+            type: 'assistant/chunk',
+            data: { chunk: { type: 'block-end', block: { type: 'text', text } } },
+          });
+          await stream.finalize();
+        }
+      }
+      const promotedLocalImage = await this.#sendMediaArtifacts(chatId, events);
+      if (promotedLocalImage) {
+        for (const messageId of stream.messageIds) {
+          if (!messageId) continue;
+          await this.#transport
+            .deleteMessage(chatId, messageId)
+            .catch((error) => console.error('[dsh-telegram] rich message cleanup failed:', error));
+        }
+      }
     } catch (error) {
       console.error('[dsh-telegram] message processing failed:', error);
       await this.#sendText(chatId, userFacingError(error));
@@ -323,21 +376,25 @@ export class TelegramRuntime {
     if (command.name === 'unsupported') {
       await this.#sendControlCard(chatId, 'unsupported', {
         message: '该命令不可用。',
-        detail: '可用命令：/new、/status、/stop、/help',
+        detail: '可用命令：/new、/status、/stop、/help、/workspace',
       });
       return;
     }
     if (command.name === 'help') {
       await this.#sendControlCard(chatId, 'help', {
         message: '可用命令：',
-        detail: '/new\n/status\n/stop\n/help',
+        detail: '/new\n/status\n/stop\n/help\n/workspace',
       });
       return;
     }
     if (command.name === 'status') {
       const handle = await this.#sessionFor(chatId);
+      const binding = this.#bindings.get(chatId);
+      const workspaceId = binding?.workspaceId ?? this.#config.workspaceId;
+      const workspace = this.#workspaceRegistry.get(workspaceId);
       const card = statusCard({
-        workspaceId: this.#config.workspaceId,
+        workspaceId,
+        workspaceTitle: workspace?.title,
         sessionId: handle.agent.id,
         active: this.#activeTurns.has(chatId),
         interactionPending: Boolean(this.#pendingInteraction(chatId)) || this.#hasPendingApproval(chatId),
@@ -346,26 +403,47 @@ export class TelegramRuntime {
       return;
     }
     if (command.name === 'new') {
-      const previous = this.#bindings.get(chatId);
-      const handle = await this.#createSession(chatId);
-      if (previous) await this.#sessionHandles.get(previous.sessionId)?.dispose?.();
-      await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: this.#config.workspaceId });
+      const workspaceId = this.#bindings.get(chatId)?.workspaceId ?? this.#config.workspaceId;
+      await this.#switchWorkspace(chatId, workspaceId);
       await this.#sendControlCard(chatId, 'new', { message: '新会话已建立。' });
       return;
     }
-    // parseCommand 只产出 new/status/help/unsupported（均已 return）与 stop
+    if (command.name === 'workspace') {
+      const workspaces = this.#workspaceRegistry.list();
+      const currentWorkspaceId = this.#bindings.get(chatId)?.workspaceId ?? this.#config.workspaceId;
+      const card = workspaceCard(workspaces, currentWorkspaceId);
+      await this.#sendCard(chatId, card.text, { parseMode: card.parseMode, replyMarkup: card.replyMarkup });
+      return;
+    }
+    // parseCommand 只产出 new/status/help/workspace/unsupported（均已 return）与 stop
     // （在 #handleMessage 的 fast-path 拦截），不会走到这里。
   }
 
   async #sessionFor(chatId) {
-    const binding = this.#bindings.get(chatId);
-    if (binding?.workspaceId !== this.#config.workspaceId) await this.#bindings.delete(chatId);
-    const current = this.#bindings.get(chatId);
+    let current = this.#bindings.get(chatId);
+    let workspace;
+    try {
+      workspace = await this.#resolveWorkspace(current?.workspaceId ?? this.#config.workspaceId);
+    } catch (error) {
+      if (!current || current.workspaceId === this.#config.workspaceId) throw error;
+      const stale = this.#sessionHandles.get(current.sessionId);
+      await stale?.dispose?.();
+      this.#sessionHandles.delete(current.sessionId);
+      this.#bridged.delete(current.sessionId);
+      await this.#bindings.delete(chatId);
+      current = null;
+      workspace = await this.#resolveWorkspace(this.#config.workspaceId);
+    }
     if (current) {
       const existing = this.#sessionHandles.get(current.sessionId);
-      if (existing) return existing;
+      if (existing && String(existing.agent.session?.header?.cwd) === String(workspace.path)) return existing;
+      if (existing) {
+        await existing.dispose?.();
+        this.#sessionHandles.delete(current.sessionId);
+        this.#bridged.delete(current.sessionId);
+      }
       const live = this.#ctx.agents.get?.(current.sessionId);
-      if (live) {
+      if (live && String(live.session?.header?.cwd) === String(workspace.path)) {
         const handle = { agent: live, async dispose() {} };
         this.#sessionHandles.set(current.sessionId, handle);
         // 复用注册表里的裸 agent：setup 不会再跑，必须在其 agent-scoped ctx 上补装桥接，
@@ -388,13 +466,11 @@ export class TelegramRuntime {
         resumed = undefined;
       }
       if (!resumed) {
-        const handle = await this.#createSession(chatId);
-        await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: this.#config.workspaceId });
+        const handle = await this.#createSession(chatId, workspace);
+        await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: String(workspace.id) });
         return handle;
       }
-      if (
-        String(resumed.agent.session.header.cwd) !== String(this.#workspaceRegistry.get(this.#config.workspaceId).path)
-      ) {
+      if (String(resumed.agent.session.header.cwd) !== String(workspace.path)) {
         await resumed.dispose();
         await this.#bindings.delete(chatId);
       } else {
@@ -404,9 +480,38 @@ export class TelegramRuntime {
         return resumed;
       }
     }
-    const handle = await this.#createSession(chatId);
-    await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: this.#config.workspaceId });
+    const handle = await this.#createSession(chatId, workspace);
+    await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: String(workspace.id) });
     return handle;
+  }
+
+  async #resolveWorkspace(workspaceId) {
+    const workspace = this.#workspaceRegistry.get(workspaceId);
+    if (!workspace || (await workspace.status()) !== 'ok') {
+      throw new Error('Telegram Workspace is not registered or unavailable');
+    }
+    return workspace;
+  }
+
+  async #switchWorkspace(chatId, workspaceId) {
+    const workspace = await this.#resolveWorkspace(workspaceId);
+    const previous = this.#bindings.get(chatId);
+    const handle = await this.#createSession(chatId, workspace);
+    try {
+      await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: String(workspace.id) });
+    } catch (error) {
+      await handle.dispose?.();
+      this.#sessionHandles.delete(handle.agent.id);
+      this.#bridged.delete(handle.agent.id);
+      throw error;
+    }
+    if (previous) {
+      const previousHandle = this.#sessionHandles.get(previous.sessionId);
+      await previousHandle?.dispose?.();
+      this.#sessionHandles.delete(previous.sessionId);
+      this.#bridged.delete(previous.sessionId);
+    }
+    return workspace;
   }
 
   // 本插件依赖的 agent-scoped 桥接参数（交互/审批/session 事件流）。
@@ -415,6 +520,7 @@ export class TelegramRuntime {
     return {
       onInteractionRequested: (interaction) => this.#handleInteraction(chatId, interaction),
       onInteractionResolved: (interaction) => this.#resolveInteraction(interaction),
+      onUserQuestionsRequested: (request) => this.#handleUserQuestions(chatId, request),
       onApprovalRequested: (req) => this.#handleApproval(chatId, req),
       onSessionEvent: (event) => this.#onSessionEvent(chatId, event),
     };
@@ -441,8 +547,7 @@ export class TelegramRuntime {
     });
   }
 
-  async #createSession(chatId) {
-    const workspace = this.#workspaceRegistry.get(this.#config.workspaceId);
+  async #createSession(chatId, workspace) {
     const selection = this.#ctx.agentDefaultModel?.currentSelection?.();
     const handle = await this.#ctx.agents.create({
       sessionId: `telegram-${randomUUID()}`,
@@ -450,7 +555,12 @@ export class TelegramRuntime {
       ...(selection ? { agentOptions: { provider: selection.provider, model: selection.model } } : {}),
       setup: this.#buildAgentSetup(chatId),
     });
-    await workspace.attachSession(handle.agent.id);
+    try {
+      await workspace.attachSession(handle.agent.id);
+    } catch (error) {
+      await handle.dispose?.();
+      throw error;
+    }
     this.#sessionHandles.set(handle.agent.id, handle);
     // create 的 setup 已装好桥接：登记以防其后走「复用 live agent」路径时重复注册。
     this.#bridged.add(handle.agent.id);
@@ -470,12 +580,17 @@ export class TelegramRuntime {
     void stream.handleEvent(event);
   }
 
-  // 流式已交付文本与工具状态；这里只补发 Harness 登记的媒体产物（图片等）。
-  async #sendMediaArtifacts(chatId, session) {
+  #finalAssistantEvents(session, messageCount) {
     const messages = session?.deriveMessages?.() ?? [];
-    const assistant = [...messages].reverse().find((message) => message?.role === 'assistant');
-    if (!assistant) return;
-    const events = classifyContent(assistant.content ?? []);
+    const assistant = messages
+      .slice(messageCount)
+      .reverse()
+      .find((message) => message?.role === 'assistant');
+    return classifyContent(assistant?.content ?? []);
+  }
+
+  // 文本已由流式事件或最终消息兜底交付；这里只补发 Harness 登记的媒体产物（图片等）。
+  async #sendMediaArtifacts(chatId, events) {
     const caption = events
       .filter((event) => event.type === 'text')
       .map((event) => event.text)
@@ -506,23 +621,27 @@ export class TelegramRuntime {
     // 补发正文里以 markdown `![](本地路径)` 内联的图片（agent 未登记为 attachment
     // 时的降级路径）。仅限当前 workspace 目录内、扩展名为图片的文件，且经 realpath
     // 校验防目录穿越。
-    await this.#sendLocalImages(chatId, caption);
+    return this.#sendLocalImages(chatId, caption);
   }
 
   // 扫描正文里的本地图片路径，安全校验后读取并作为独立图片发送。
   async #sendLocalImages(chatId, text) {
     const paths = extractLocalImagePaths(text);
-    if (paths.length === 0) return;
-    const workspace = this.#workspaceRegistry.get(this.#config.workspaceId);
-    if (!workspace?.path) return;
+    if (paths.length === 0) return false;
+    const linkedPaths = new Set(extractLocalImageLinks(text));
+    const workspaceId = this.#bindings.get(chatId)?.workspaceId ?? this.#config.workspaceId;
+    const workspace = this.#workspaceRegistry.get(workspaceId);
+    if (!workspace?.path) return false;
     let root;
     try {
       root = await realpath(workspace.path);
     } catch {
-      return;
+      return false;
     }
     // 已发送的真实路径集合，按 realpath 去重（见循环内说明）。
     const sent = new Set();
+    const caption = stripImageMarkdown(text).trim();
+    let promoted = false;
     for (const rawPath of paths) {
       // 相对路径按 workspace 根解析；绝对路径原样。随后 realpath 归一并校验包含关系。
       const candidate = isAbsolute(rawPath) ? rawPath : resolvePath(root, rawPath);
@@ -547,12 +666,18 @@ export class TelegramRuntime {
           await this.#sendText(chatId, `图片过大，无法发送：${basename(real)}`);
           continue;
         }
-        await this.#transport.sendMedia(chatId, bytes, { kind: 'image', fileName: basename(real) });
+        await this.#transport.sendMedia(chatId, bytes, {
+          kind: 'image',
+          fileName: basename(real),
+          caption: linkedPaths.has(rawPath) && !promoted ? caption : '',
+        });
+        promoted ||= linkedPaths.has(rawPath);
       } catch (error) {
         console.error('[dsh-telegram] local image delivery failed:', error);
         await this.#sendText(chatId, `无法发送图片：${userFacingError(error)}`);
       }
     }
+    return promoted;
   }
 
   async #sendCard(chatId, text, interaction) {
@@ -619,10 +744,94 @@ export class TelegramRuntime {
   async #handleInteraction(chatId, interaction) {
     if (!interaction?.id || !interaction?.kind) return;
     const card = interactionCard(interaction);
+    const question = interaction.payload?.questions?.[0] ?? interaction.payload;
+    const values = question?.options?.map((option) => option.value ?? option.label ?? String(option));
     await this.#sendCard(chatId, card.text, {
       id: interaction.id,
       respond: interaction.respond,
+      values,
       replyMarkup: card.replyMarkup,
+    });
+  }
+
+  // Host 的远程 waterfall 会在根 context 派发，agent-scoped listener 无法跨过该边界。
+  // global listener 先接收事件，再用 request.agent 精确识别 Telegram Session；其它
+  // Session 继续交给 Web。
+  #installRemoteInteractionBridges() {
+    if (typeof this.#ctx.on !== 'function') return;
+    const route = (request) => {
+      const sessionId = request?.agent?.id;
+      if (!sessionId) return null;
+      for (const [chatId, handle] of this.#activeTurns) {
+        if (String(handle.agent.id) === String(sessionId)) return chatId;
+      }
+      const ownerChatId = this.#config.ownerUserId;
+      if (String(this.#bindings.get(ownerChatId)?.sessionId) === String(sessionId)) return ownerChatId;
+      return null;
+    };
+    const runtime = this;
+    const questionsDispose = this.#ctx.on(
+      'user-questions/request',
+      function (request, next) {
+        const chatId = route(request);
+        return chatId ? runtime.#handleUserQuestions(chatId, request) : next();
+      },
+      { global: true, prepend: true },
+    );
+    if (typeof questionsDispose === 'function') this.#remoteInteractionDisposers.push(questionsDispose);
+    const approvalDispose = this.#ctx.on(
+      'approval/request',
+      function (request, next) {
+        const chatId = route(request);
+        return chatId ? runtime.#handleApproval(chatId, request) : next();
+      },
+      { global: true, prepend: true },
+    );
+    if (typeof approvalDispose === 'function') this.#remoteInteractionDisposers.push(approvalDispose);
+  }
+
+  async #handleUserQuestions(chatId, request) {
+    const questions = Array.isArray(request?.questions) ? request.questions : [];
+    if (questions.length === 0) throw new Error('user question request is empty');
+    if (request.signal?.aborted) throw new Error('user question request was cancelled');
+    const id = randomUUID();
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = (callback) => {
+        if (settled) return;
+        settled = true;
+        request.signal?.removeEventListener?.('abort', onAbort);
+        callback();
+      };
+      const onAbort = () => finish(() => reject(new Error('user question request was cancelled')));
+      request.signal?.addEventListener?.('abort', onAbort, { once: true });
+      const respond = ({ value }) => {
+        const first = questions[0];
+        const labels = (first.options ?? []).map((option) => option.label ?? option.value ?? String(option));
+        const selected = labels.includes(value) ? [value] : [];
+        finish(() =>
+          resolve({
+            answers: questions.map((question, index) => ({
+              id: question.id,
+              selected: index === 0 ? selected : [],
+              ...(index === 0 && selected.length === 0 ? { custom: value } : {}),
+            })),
+          }),
+        );
+      };
+      const card = interactionCard({ id, kind: 'question', payload: request });
+      void this.#sendCard(chatId, card.text, {
+        id,
+        respond,
+        cancel: onAbort,
+        values: (questions[0].options ?? []).map((option) => option.value ?? option.label ?? String(option)),
+        replyMarkup: card.replyMarkup,
+      })
+        .then((sent) => {
+          const messageId = sent?.message_id ?? sent?.messageId ?? '';
+          console.info(`[dsh-telegram] user question card sent: chat=${chatId} message=${messageId}`);
+        })
+        .catch((error) => finish(() => reject(error)));
     });
   }
 
@@ -640,8 +849,11 @@ function capitalize(value) {
 }
 
 function parseCommand(text) {
-  const match = /^\/(new|status|stop|help)(?:@[^\s]+)?(?:\s+.*)?$/i.exec(text.trim());
-  return match ? { name: match[1].toLowerCase() } : text.trim().startsWith('/') ? { name: 'unsupported' } : null;
+  const match = /^\/(new|status|stop|help|workspace)(?:@[^\s]+)?(?:\s+(.*))?$/i.exec(text.trim());
+  if (!match) return text.trim().startsWith('/') ? { name: 'unsupported' } : null;
+  const name = match[1].toLowerCase();
+  if (name === 'workspace' && match[2]?.trim()) return { name: 'unsupported' };
+  return { name };
 }
 
 export function userFacingError(error) {

@@ -2,14 +2,40 @@ import { Bot } from 'node-telegram-bot-api';
 import nodeFetch from 'node-fetch';
 import { ProxyAgent } from 'proxy-agent';
 
+export const TELEGRAM_COMMANDS = [
+  { command: 'new', description: '新建会话' },
+  { command: 'status', description: '查看当前状态' },
+  { command: 'stop', description: '停止当前任务' },
+  { command: 'help', description: '查看帮助' },
+  { command: 'workspace', description: '选择或切换 Workspace' },
+];
+
+export const TELEGRAM_COMMAND_SCOPES = [
+  { type: 'all_private_chats' },
+  { type: 'all_group_chats' },
+  { type: 'all_chat_administrators' },
+];
+
+export async function registerTelegramCommands(api, ownerUserId) {
+  // 清除旧版本使用的 Owner chat scope，避免它以更高优先级覆盖私聊 scope。
+  await api.deleteMyCommands({ scope: { type: 'chat', chat_id: ownerUserId } });
+  // BotFather 和旧脚本通常写入 default；它会回退显示，必须一并清除但不重新注册。
+  await api.deleteMyCommands({ scope: { type: 'default' } });
+  for (const scope of TELEGRAM_COMMAND_SCOPES) await api.deleteMyCommands({ scope });
+  for (const scope of TELEGRAM_COMMAND_SCOPES) {
+    await api.setMyCommands({ commands: TELEGRAM_COMMANDS, scope });
+  }
+}
+
 // 建立 Telegram Bot 连接：校验无 webhook、注册事件处理器、启动 long polling。
 // 返回连接句柄（{ bot, botId, botToken, fetchImpl, close }），出站方法封装见 transport.js。
-export async function createTelegramClient({ botToken, proxy, onMessage, onCallbackQuery }) {
+export async function createTelegramClient({ botToken, ownerUserId, proxy, onMessage, onCallbackQuery }) {
   const fetchImpl = createFetch(proxy);
   const bot = new Bot(botToken, fetchImpl ? { fetch: fetchImpl } : {});
   const me = await bot.api.getMe();
   const webhook = await bot.api.getWebhookInfo();
   if (webhook.url) throw new Error('Telegram Bot 已配置 Webhook，无法同时启用 long polling');
+  await registerTelegramCommands(bot.api, ownerUserId);
 
   if (onMessage) bot.on('message', (ctx) => onMessage({ message: normalizeMessage(ctx.message) }));
   if (onCallbackQuery) {

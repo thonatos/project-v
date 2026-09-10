@@ -21,6 +21,9 @@ function makeTransport() {
     async editCard(chatId, messageId, markup) {
       calls.push(['editCard', chatId, messageId, markup]);
     },
+    async deleteMessage(chatId, messageId) {
+      calls.push(['deleteMessage', chatId, messageId]);
+    },
   };
 }
 
@@ -114,6 +117,7 @@ test('accumulates text-delta chunks and edits one message', async () => {
   assert.ok(edits.length >= 1);
   assert.equal(edits.at(-1)[3], 'Hello world');
   assert.equal(stream.text, 'Hello world');
+  assert.equal(stream.hasTextOutput, true);
 });
 
 test('ignores reasoning-delta chunks', async () => {
@@ -126,6 +130,7 @@ test('ignores reasoning-delta chunks', async () => {
   await stream.finalize();
   assert.equal(transport.calls.length, 0);
   assert.equal(stream.text, '');
+  assert.equal(stream.hasTextOutput, false);
 });
 
 test('delivers a text block that arrives whole via block-end (no text-delta)', async () => {
@@ -172,19 +177,24 @@ test('block-end reconciles with streamed deltas without duplicating', async () =
   assert.equal(edits.at(-1)[3], 'Hello world');
 });
 
-test('opens a running tool card and finalizes it on result', async () => {
+test('reuses one ephemeral card for tool calls and deletes it on finalize', async () => {
   const transport = makeTransport();
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
   await stream.handleEvent({ type: 'tool/call', data: { callId: 'c1', name: 'bash' } });
   await stream.handleEvent({ type: 'tool/result', data: { callId: 'c1' } });
+  await stream.handleEvent({ type: 'tool/call', data: { callId: 'c2', name: 'read' } });
+  await stream.handleEvent({ type: 'tool/result', data: { callId: 'c2' } });
+  await stream.finalize();
   const card = transport.calls.find((c) => c[0] === 'sendCard');
-  const done = transport.calls.find((c) => c[0] === 'editText');
+  const edits = transport.calls.filter((c) => c[0] === 'editText');
+  const deleted = transport.calls.find((c) => c[0] === 'deleteMessage');
+  assert.equal(transport.calls.filter((c) => c[0] === 'sendCard').length, 1);
   assert.match(card[2], /bash/);
-  assert.match(card[2], /执行中/);
+  assert.match(card[2], /任务执行中/);
   assert.match(card[2], /^<blockquote>/, '工具卡片应为 blockquote 面板');
-  assert.match(done[3], /bash/);
-  assert.match(done[3], /完成/);
-  assert.match(done[3], /^<blockquote>/, '定稿后仍是 blockquote 面板');
+  assert.ok(edits.some((call) => /read/.test(call[3])));
+  assert.ok(edits.some((call) => /2 个工具调用已完成/.test(call[3])));
+  assert.deepEqual(deleted, ['deleteMessage', '7', '1']);
 });
 
 test('marks a tool card as failed when result carries an error', async () => {
@@ -192,9 +202,22 @@ test('marks a tool card as failed when result carries an error', async () => {
   const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
   await stream.handleEvent({ type: 'tool/call', data: { callId: 'c2', name: 'read' } });
   await stream.handleEvent({ type: 'tool/result', data: { callId: 'c2', error: { name: 'ENOENT', code: 'x' } } });
-  const done = transport.calls.find((c) => c[0] === 'editText');
+  await stream.finalize();
+  const done = transport.calls.filter((c) => c[0] === 'editText').at(-1);
   assert.match(done[3], /失败/);
   assert.match(done[3], /ENOENT/);
+  assert.equal(
+    transport.calls.some((c) => c[0] === 'deleteMessage'),
+    false,
+  );
+});
+
+test('deletes the ephemeral tool card when a stream is disposed', async () => {
+  const transport = makeTransport();
+  const stream = new StreamSession({ transport, chatId: '7', limit: 4096, now: () => 0 });
+  await stream.handleEvent({ type: 'tool/call', data: { callId: 'c1', name: 'bash' } });
+  await stream.dispose();
+  assert.deepEqual(transport.calls.at(-1), ['deleteMessage', '7', '1']);
 });
 
 test('flushes accumulated text before opening a tool card', async () => {

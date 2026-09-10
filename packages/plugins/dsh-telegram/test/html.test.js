@@ -16,6 +16,13 @@ test('strips markdown image syntax, keeping surrounding text', () => {
   assert.equal(markdownToHtml('[doc](https://x.io)'), '<a href="https://x.io">doc</a>');
 });
 
+test('renders local image links as caption text while preserving ordinary links', () => {
+  assert.equal(
+    markdownToHtml('已生成：[下载图片](./solid.png)，参考 [文档](https://example.com/docs)。'),
+    '已生成：下载图片，参考 <a href="https://example.com/docs">文档</a>。',
+  );
+});
+
 test('converts standard bold to <b>', () => {
   assert.equal(markdownToHtml('**bold** text'), '<b>bold</b> text');
   assert.equal(markdownToHtml('__bold__'), '<b>bold</b>');

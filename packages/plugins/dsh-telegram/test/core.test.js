@@ -11,8 +11,11 @@ import {
   interactionCard,
   statusCard,
   toolCardText,
+  workspaceCard,
 } from '../src/render/cards.js';
+import { registerTelegramCommands, TELEGRAM_COMMANDS, TELEGRAM_COMMAND_SCOPES } from '../src/transport/client.js';
 import { extractLocalImagePaths } from '../src/render/local-images.js';
+import { buildAgentSetup } from '../src/agent/integration.js';
 
 test('normalizes the owner-bound Telegram config', () => {
   const config = normalizeConfig({
@@ -69,13 +72,21 @@ test('maps outbound content to native Telegram delivery types', () => {
   assert.match(toolCardText(events[2].block), /search/);
   const card = interactionCard({ id: 'approval-1', kind: 'approval', payload: { prompt: '继续？' } });
   assert.equal(card.replyMarkup.inline_keyboard[0][0].callback_data, 'dsh:approval:approval-1:approve');
+  const question = interactionCard({
+    id: 'question-1',
+    kind: 'question',
+    payload: { questions: [{ question: '继续？', options: [{ label: '一个很长的中文选项' }] }] },
+  });
+  assert.equal(question.replyMarkup.inline_keyboard[0][0].callback_data, 'dsh:question:question-1:0');
   const status = statusCard({
     workspaceId: 'workspace-1',
+    workspaceTitle: 'Main <repo>',
     sessionId: 'session-1',
     active: false,
     interactionPending: false,
   });
   assert.match(status.text, /Workspace.*workspace-1/);
+  assert.match(status.text, /Main &lt;repo&gt;/);
   assert.match(status.text, /^<blockquote>/, '状态卡片应为 blockquote 面板');
   assert.match(status.text, /<\/blockquote>$/);
   assert.equal(status.parseMode, 'HTML');
@@ -83,6 +94,53 @@ test('maps outbound content to native Telegram delivery types', () => {
   assert.match(help.text, /可用命令/);
   assert.match(help.text, /^<blockquote>/, '控制卡片应为 blockquote 面板');
   assert.equal(help.parseMode, 'HTML');
+});
+
+test('clears old commands before registering the supported command scopes', async () => {
+  const calls = [];
+  await registerTelegramCommands(
+    {
+      async deleteMyCommands(payload) {
+        calls.push(['delete', payload]);
+      },
+      async setMyCommands(payload) {
+        calls.push(['set', payload]);
+      },
+    },
+    '456',
+  );
+  assert.deepEqual(calls, [
+    ['delete', { scope: { type: 'chat', chat_id: '456' } }],
+    ['delete', { scope: { type: 'default' } }],
+    ...TELEGRAM_COMMAND_SCOPES.map((scope) => ['delete', { scope }]),
+    ...TELEGRAM_COMMAND_SCOPES.map((scope) => ['set', { commands: TELEGRAM_COMMANDS, scope }]),
+  ]);
+  assert.deepEqual(TELEGRAM_COMMAND_SCOPES, [
+    { type: 'all_private_chats' },
+    { type: 'all_group_chats' },
+    { type: 'all_chat_administrators' },
+  ]);
+  assert.deepEqual(
+    TELEGRAM_COMMANDS.map(({ command }) => command),
+    ['new', 'status', 'stop', 'help', 'workspace'],
+  );
+});
+
+test('renders a workspace selector with the current workspace marked', () => {
+  const card = workspaceCard(
+    [
+      { id: 'workspace-1', title: 'Main <repo>' },
+      { id: 'workspace-2', title: 'Docs' },
+    ],
+    'workspace-1',
+  );
+  assert.equal(card.parseMode, 'HTML');
+  assert.match(card.text, /Main &lt;repo&gt;/);
+  assert.match(card.text, /●.*workspace-1/);
+  assert.deepEqual(card.replyMarkup.inline_keyboard, [
+    [{ text: '✓ Main <repo>', callback_data: 'dsh:workspace:select:workspace-1' }],
+    [{ text: 'Docs', callback_data: 'dsh:workspace:select:workspace-2' }],
+  ]);
 });
 
 test('keeps media and caption as one inbound message', async () => {
@@ -217,20 +275,47 @@ test('renders an approval card as a blockquote panel with approve/reject buttons
   assert.equal(reject.callback_data, 'dsh:approval:req-1:reject');
 });
 
-test('extracts local image paths from markdown, inline-code and bare forms; skips remote and non-images', () => {
+test('extracts explicit local image markup; skips file references, remote URLs and non-images', () => {
   const text = [
     'markdown 图 ![out](./out/chart.png)',
-    '反引号 `/abs/solid.png` 也认',
-    '裸路径 路径：/Users/me/ws/pic.JPEG',
+    '富链接 [下载图片](solid-color.png)',
+    '反引号 `/abs/solid.png` 只是文件引用',
+    '裸路径 路径：/Users/me/ws/pic.JPEG 也只是文件引用',
     '远程图 ![r](https://example.com/a.png) 不读盘',
     'data 图 ![d](data:image/png;base64,AAAA) 跳过',
     '非图片 `./notes.txt` 跳过',
     '重复 ![dup](./out/chart.png) 去重',
   ].join('\n');
   const paths = extractLocalImagePaths(text);
-  assert.deepEqual(paths, ['./out/chart.png', '/abs/solid.png', '/Users/me/ws/pic.JPEG']);
+  assert.deepEqual(paths, ['./out/chart.png', 'solid-color.png']);
 });
 
 test('decodes percent-encoded local image paths', () => {
   assert.deepEqual(extractLocalImagePaths('![x](./my%20dir/a.png)'), ['./my dir/a.png']);
+});
+
+test('installs the Telegram question and approval bridges after preset handlers', async () => {
+  const approvalHandlers = [];
+  const questionHandlers = [];
+  const agentCtx = {
+    on(name, handler, options = {}) {
+      const handlers = name === 'approval/request' ? approvalHandlers : questionHandlers;
+      handlers[options.prepend ? 'unshift' : 'push'](handler);
+    },
+  };
+  const setup = buildAgentSetup({
+    async mountPreset(ctx) {
+      ctx.on('approval/request', () => 'web', { prepend: true });
+      ctx.on('user-questions/request', () => 'web', { prepend: true });
+    },
+    onUserQuestionsRequested: () => 'telegram-question',
+    onApprovalRequested: () => 'telegram',
+  });
+
+  await setup(agentCtx);
+
+  assert.equal(approvalHandlers[0]({}), 'telegram');
+  assert.equal(approvalHandlers[1]({}), 'web');
+  assert.equal(questionHandlers[0]({}), 'telegram-question');
+  assert.equal(questionHandlers[1]({}), 'web');
 });

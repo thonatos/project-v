@@ -21,10 +21,14 @@ export class StreamSession {
   #now;
   #renderer;
   #text = '';
+  #hasTextOutput = false;
   #pendingText = false;
   #lastFlush = Number.NEGATIVE_INFINITY;
   #flushTimer = null;
-  #toolCards = new Map();
+  #toolCalls = new Map();
+  #toolMessageId = '';
+  #completedTools = 0;
+  #toolFailure = null;
   #flushing = Promise.resolve();
   // 当前文本块在 #text 中的起始偏移。block-start 时记录，block-end 时用块的
   // 权威全文覆盖本块区间（见 #onBlockEnd），从而兼容「无 text-delta」的整块投递。
@@ -148,6 +152,9 @@ export class StreamSession {
     if (!snapshot) return this.#flushing;
     this.#flushing = this.#flushing
       .then(() => this.#renderer.update(snapshot))
+      .then(() => {
+        this.#hasTextOutput = true;
+      })
       .catch((error) => {
         console.error('[dsh-telegram] stream flush failed:', error);
       });
@@ -159,24 +166,37 @@ export class StreamSession {
     if (!id) return;
     // 工具开始前先定稿已累积的正文，让工具卡片排在其后。
     await this.#flushNow();
-    const text = toolCard(name, 'running');
-    const sent = await this.#transport.sendCard(this.#chatId, text, { parseMode: 'HTML' });
-    this.#toolCards.set(id, {
-      messageId: String(sent?.message_id ?? sent?.messageId ?? ''),
-      name: name ?? '工具',
+    this.#toolCalls.set(id, name ?? '工具');
+    const text = toolCard(name, 'running', undefined, {
+      completed: this.#completedTools,
+      active: this.#toolCalls.size,
     });
+    if (this.#toolMessageId) {
+      await this.#transport.editText(this.#chatId, this.#toolMessageId, text, { parseMode: 'HTML' });
+    } else {
+      const sent = await this.#transport.sendCard(this.#chatId, text, { parseMode: 'HTML' });
+      this.#toolMessageId = String(sent?.message_id ?? sent?.messageId ?? '');
+    }
     // 工具输出后正文会另起一条消息：重置 renderer 游标。
     this.#resetRenderer();
   }
 
   async #onToolResult({ callId, error }) {
     const id = String(callId ?? '');
-    const card = id ? this.#toolCards.get(id) : undefined;
-    if (!card) return;
-    this.#toolCards.delete(id);
-    const text = toolCard(card.name, error ? 'error' : 'done', error);
+    const name = id ? this.#toolCalls.get(id) : undefined;
+    if (!name) return;
+    this.#toolCalls.delete(id);
+    this.#completedTools += 1;
+    if (error) this.#toolFailure = { name, error };
+    const current = [...this.#toolCalls.values()].at(-1);
+    const text = error
+      ? toolCard(name, 'error', error)
+      : toolCard(current ?? name, current ? 'running' : 'done', undefined, {
+          completed: this.#completedTools,
+          active: this.#toolCalls.size,
+        });
     try {
-      await this.#transport.editText(this.#chatId, card.messageId, text, { parseMode: 'HTML' });
+      await this.#transport.editText(this.#chatId, this.#toolMessageId, text, { parseMode: 'HTML' });
     } catch (caught) {
       console.error('[dsh-telegram] tool card update failed:', caught);
     }
@@ -203,6 +223,7 @@ export class StreamSession {
     await this.#queue;
     await this.#flushNow();
     await this.#flushing;
+    await this.#finishToolStatus();
   }
 
   // 主动停止（/stop）：定稿当前输出，不再接收后续增量。
@@ -214,9 +235,35 @@ export class StreamSession {
     }
     await this.#flush().catch(() => {});
     await this.#flushing.catch(() => {});
+    await this.#finishToolStatus();
+  }
+
+  async #finishToolStatus() {
+    if (!this.#toolMessageId) return;
+    if (this.#toolFailure) {
+      const { name, error } = this.#toolFailure;
+      await this.#transport
+        .editText(this.#chatId, this.#toolMessageId, toolCard(name, 'error', error), { parseMode: 'HTML' })
+        .catch((caught) => console.error('[dsh-telegram] tool failure card update failed:', caught));
+      return;
+    }
+    if (typeof this.#transport.deleteMessage !== 'function') return;
+    const messageId = this.#toolMessageId;
+    this.#toolMessageId = '';
+    await this.#transport
+      .deleteMessage(this.#chatId, messageId)
+      .catch((error) => console.error('[dsh-telegram] ephemeral tool card cleanup failed:', error));
   }
 
   get text() {
     return this.#text;
+  }
+
+  get messageIds() {
+    return this.#renderer.messageIds;
+  }
+
+  get hasTextOutput() {
+    return this.#hasTextOutput;
   }
 }

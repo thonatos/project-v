@@ -72,10 +72,10 @@ export function interactionCard(interaction) {
   return {
     text: question.question ?? question.header ?? '请选择一个选项。',
     replyMarkup: {
-      inline_keyboard: options.map((option) => [
+      inline_keyboard: options.map((option, index) => [
         {
           text: option.label ?? option.value ?? String(option),
-          callback_data: `dsh:question:${interaction.id}:${encodeURIComponent(option.value ?? option.label ?? option)}`,
+          callback_data: `dsh:question:${interaction.id}:${index}`,
         },
       ]),
     },
@@ -104,14 +104,44 @@ export function approvalCard(id, { toolName, reason } = {}) {
   };
 }
 
-export function statusCard({ workspaceId, sessionId, active, interactionPending }) {
+export function statusCard({ workspaceId, workspaceTitle, sessionId, active, interactionPending }) {
   return panel('📱 Telegram 状态', [
     field('连接', active ? '🟢 运行中' : '⚪ 空闲'),
-    field('Workspace', `<code>${escapeHtml(workspaceId)}</code>`),
+    field(
+      'Workspace',
+      `${workspaceTitle ? `${escapeHtml(workspaceTitle)} ` : ''}<code>${escapeHtml(workspaceId)}</code>`,
+    ),
     field('Session', `<code>${escapeHtml(sessionId)}</code>`),
     field('任务', active ? '执行中' : '无活动任务'),
     field('交互', interactionPending ? '等待操作' : '无待处理交互'),
   ]);
+}
+
+export function workspaceCard(workspaces, currentWorkspaceId) {
+  const lines = workspaces.map((workspace) => {
+    const current = String(workspace.id) === String(currentWorkspaceId);
+    return `${current ? '●' : '○'} ${escapeHtml(workspace.title)}：<code>${escapeHtml(workspace.id)}</code>`;
+  });
+  const card = panel('🗂 Workspace', lines.length > 0 ? lines : ['没有已登记的 Workspace。']);
+  return {
+    ...card,
+    replyMarkup: {
+      inline_keyboard: workspaces
+        .map((workspace) => {
+          const id = String(workspace.id);
+          const callbackData = `dsh:workspace:select:${encodeURIComponent(id)}`;
+          if (Buffer.byteLength(callbackData, 'utf8') > 64) return null;
+          const current = id === String(currentWorkspaceId);
+          return [
+            {
+              text: `${current ? '✓ ' : ''}${workspace.title}`,
+              callback_data: callbackData,
+            },
+          ];
+        })
+        .filter(Boolean),
+    },
+  };
 }
 
 export function controlCard(command, { message, detail } = {}) {
@@ -119,6 +149,7 @@ export function controlCard(command, { message, detail } = {}) {
     new: '🆕 新会话',
     stop: '🛑 停止任务',
     help: '❓ 帮助',
+    workspace: '🗂 Workspace',
     unsupported: '⚠️ 不支持的命令',
   };
   return panel(labels[command] ?? '控制命令', [
@@ -127,14 +158,14 @@ export function controlCard(command, { message, detail } = {}) {
   ]);
 }
 
-// 流式工具卡片：与 status/control 同款 blockquote 面板，随阶段更新标题。
-// 返回纯文本（供 sendCard/editText 使用），parseMode 由调用方统一置为 HTML。
-export function toolCard(name, phase, error) {
+// 每轮共用一张临时工具状态卡，避免每次调用都在聊天中留下过程消息。
+export function toolCard(name, phase, error, { completed = 0, active = 0 } = {}) {
   const label = escapeHtml(name ?? '工具');
-  if (phase === 'running') return panel(`🔧 ${label}`, ['状态：执行中…']).text;
   if (phase === 'error') {
     const detail = error?.name ? `：${escapeHtml(String(error.name))}` : '';
-    return panel(`❌ ${label}`, [`状态：失败${detail}`]).text;
+    return panel('❌ 工具执行失败', [field('工具', `<code>${label}</code>`), `状态：失败${detail}`]).text;
   }
-  return panel(`✅ ${label}`, ['状态：完成']).text;
+  const progress = `${completed} 个工具调用已完成${active > 1 ? ` · ${active} 个执行中` : ''}`;
+  if (phase === 'done') return panel('🔧 任务执行中', [field('进度', progress), '正在整理结果…']).text;
+  return panel('🔧 任务执行中', [field('当前', `<code>${label}</code>`), field('进度', progress)]).text;
 }

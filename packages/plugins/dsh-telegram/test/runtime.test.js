@@ -35,6 +35,8 @@ test('maps errors to redacted user-facing messages without leaking details', () 
 test('routes only owner messages into the bound workspace', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-'));
   const workspace = {
+    id: 'workspace-1',
+    title: 'Main Workspace',
     path: root,
     async status() {
       return 'ok';
@@ -164,6 +166,7 @@ test('routes only owner messages into the bound workspace', async () => {
   assert.equal(sentMessages[0].reply_markup, undefined);
   assert.equal(sentMessages[0].parse_mode, 'HTML');
   assert.match(sentMessages[0].text, /Workspace/);
+  assert.match(sentMessages[0].text, /Main Workspace/);
   assert.equal(followups.length, 0);
   await incoming({ message: { isPrivate: true, senderId: '8', message: 'ignored' } });
   assert.equal(followups.length, 0);
@@ -202,6 +205,199 @@ test('routes only owner messages into the bound workspace', async () => {
   await rm(root, { recursive: true, force: true });
 });
 
+test('switches registered workspaces by owner callback while preserving invalid bindings', async () => {
+  const firstRoot = await mkdtemp(join(tmpdir(), 'dsh-telegram-workspace-1-'));
+  const secondRoot = await mkdtemp(join(tmpdir(), 'dsh-telegram-workspace-2-'));
+  const attached = [];
+  const workspaces = [
+    {
+      id: 'workspace-1',
+      title: 'Main',
+      path: firstRoot,
+      async status() {
+        return 'ok';
+      },
+      async attachSession(id) {
+        attached.push(['workspace-1', id]);
+      },
+    },
+    {
+      id: 'workspace-2',
+      title: 'Docs',
+      path: secondRoot,
+      async status() {
+        return 'ok';
+      },
+      async attachSession(id) {
+        attached.push(['workspace-2', id]);
+      },
+    },
+  ];
+  const rows = new Map();
+  const created = [];
+  const disposed = [];
+  const sent = [];
+  const edited = [];
+  const answered = [];
+  let incoming;
+  let callback;
+  const runtime = new TelegramRuntime(
+    {
+      credentials: {
+        async resolve(ref) {
+          return { value: `${ref}-value` };
+        },
+      },
+      workspaceRegistry: {
+        get(id) {
+          return workspaces.find((workspace) => workspace.id === String(id));
+        },
+        list() {
+          return workspaces;
+        },
+      },
+      agents: {
+        async create(options) {
+          created.push(options);
+          const agent = {
+            id: options.sessionId,
+            session: { header: { cwd: options.meta.cwd }, deriveMessages: () => [] },
+            followup() {},
+            whenIdle: () => Promise.resolve(),
+            cancel() {},
+          };
+          return {
+            agent,
+            async dispose() {
+              disposed.push(agent.id);
+            },
+          };
+        },
+        async resume() {
+          throw new Error('not expected');
+        },
+      },
+      on() {},
+      effect() {},
+    },
+    { ownerUserId: '7', workspaceId: 'workspace-1', messageLimit: 100 },
+    {
+      openStore: async () => ({
+        get: (key) => rows.get(String(key)) ?? null,
+        async set(key, value) {
+          rows.set(String(key), { ...value });
+        },
+        async delete(key) {
+          rows.delete(String(key));
+        },
+        async close() {},
+      }),
+      async createClient(options) {
+        assert.equal(options.ownerUserId, '7');
+        incoming = options.onMessage;
+        callback = options.onCallbackQuery;
+        return {
+          botId: '99',
+          bot: {
+            api: {
+              async sendMessage(payload) {
+                sent.push(payload);
+                return { message_id: sent.length };
+              },
+              async editMessageText() {},
+              async editMessageReplyMarkup(payload) {
+                edited.push(payload);
+              },
+              async answerCallbackQuery(payload) {
+                answered.push(payload);
+              },
+            },
+          },
+          botToken: 'token',
+          fetchImpl: fetch,
+          async close() {},
+        };
+      },
+    },
+  );
+
+  await runtime.start();
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/workspace' } });
+  await runtime.whenSettled('7');
+  assert.match(sent.at(-1).text, /Docs/);
+  assert.equal(sent.at(-1).reply_markup.inline_keyboard[0][0].text, '✓ Main');
+  assert.equal(created.length, 0);
+
+  await callback({
+    callback: {
+      id: 'callback-foreign',
+      senderId: '8',
+      chatId: '7',
+      messageId: '1',
+      data: 'dsh:workspace:select:workspace-2',
+    },
+  });
+  assert.equal(created.length, 0);
+
+  await callback({
+    callback: {
+      id: 'callback-owner',
+      senderId: '7',
+      chatId: '7',
+      messageId: '1',
+      data: 'dsh:workspace:select:workspace-2',
+    },
+  });
+  assert.equal(created.length, 1);
+  assert.equal(created[0].meta.cwd, secondRoot);
+  assert.equal(rows.get('7').workspaceId, 'workspace-2');
+  assert.deepEqual(attached[0], ['workspace-2', rows.get('7').sessionId]);
+  assert.deepEqual(edited.at(-1), { chat_id: '7', message_id: '1', reply_markup: { inline_keyboard: [] } });
+  assert.match(answered.at(-1).text, /Docs/);
+
+  await callback({
+    callback: {
+      id: 'callback-missing',
+      senderId: '7',
+      chatId: '7',
+      messageId: '1',
+      data: 'dsh:workspace:select:missing',
+    },
+  });
+  assert.equal(created.length, 1);
+  assert.equal(rows.get('7').workspaceId, 'workspace-2');
+  assert.match(answered.at(-1).text, /不存在或不可用/);
+
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: '/workspace' } });
+  await runtime.whenSettled('7');
+  assert.equal(sent.at(-1).reply_markup.inline_keyboard[1][0].text, '✓ Docs');
+
+  await callback({
+    callback: {
+      id: 'callback-main',
+      senderId: '7',
+      chatId: '7',
+      messageId: '2',
+      data: 'dsh:workspace:select:workspace-1',
+    },
+  });
+  assert.equal(created.length, 2);
+  assert.equal(created[1].meta.cwd, firstRoot);
+  assert.equal(rows.get('7').workspaceId, 'workspace-1');
+  assert.deepEqual(disposed, [created[0].sessionId]);
+
+  rows.set('7', { sessionId: 'stale-session', workspaceId: 'missing' });
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'use the fallback' } });
+  await runtime.whenSettled('7');
+  assert.equal(created.length, 3);
+  assert.equal(created[2].meta.cwd, firstRoot);
+  assert.equal(rows.get('7').workspaceId, 'workspace-1');
+
+  await runtime.stop();
+  await rm(firstRoot, { recursive: true, force: true });
+  await rm(secondRoot, { recursive: true, force: true });
+});
+
 test('streams the assistant reply and rejects foreign callback queries', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-'));
   const workspace = {
@@ -217,6 +413,7 @@ test('streams the assistant reply and rejects foreign callback queries', async (
   let onCallback;
   let sentId = 0;
   let sessionEvent;
+  let assistantMessages = [];
   const ctx = {
     credentials: {
       async resolve(ref) {
@@ -248,11 +445,12 @@ test('streams the assistant reply and rejects foreign callback queries', async (
           session: {
             header: { cwd: root },
             deriveMessages() {
-              return [];
+              return assistantMessages;
             },
           },
           // 提交 prompt 时同步 emit 增量文本事件，模拟 Harness 流式输出。
           followup() {
+            assistantMessages = [{ role: 'assistant', content: [{ type: 'text', text: 'final fallback only' }] }];
             sessionEvent({
               type: 'assistant/chunk',
               data: { chunk: { type: 'text-delta', index: 0, text: 'answer ' } },
@@ -326,6 +524,15 @@ test('streams the assistant reply and rejects foreign callback queries', async (
     true,
   );
   assert.ok(textParts.every((payload) => payload.text.length <= 6));
+  assert.equal(
+    textParts.some((payload) => payload.text.includes('final')),
+    false,
+  );
+  assert.equal(
+    sent.filter((payload) => typeof payload.text === 'string' && !payload.message_id && !payload.reply_markup).length,
+    2,
+    '最终 Session 消息不得在流式正文后重复发送',
+  );
   // 陌生用户的 callback 被脱敏拒绝，不改动任何 interaction
   await onCallback({ callback: { id: 'cb-1', senderId: '999', chatId: '7', data: 'dsh:approval:x:approve' } });
   assert.equal(answered.length, 0);
@@ -696,9 +903,11 @@ test('bridges approval/request to a Telegram card and resolves on the owner tap'
   const editedCards = [];
   const answered = [];
   const setupHandlers = new Map();
+  const rootHandlers = new Map();
   let incoming;
   let onCallback;
   let sentId = 0;
+  let createdSessionId;
   const ctx = {
     credentials: {
       async resolve(ref) {
@@ -717,6 +926,7 @@ test('bridges approval/request to a Telegram card and resolves on the owner tap'
     },
     agents: {
       async create(options) {
+        createdSessionId = options.sessionId;
         options.setup?.({
           on(event, handler) {
             setupHandlers.set(event, handler);
@@ -741,7 +951,20 @@ test('bridges approval/request to a Telegram card and resolves on the owner tap'
         throw new Error('not expected');
       },
     },
-    on() {},
+    reflect: {
+      get(name) {
+        if (name !== 'sessions') return;
+        return {
+          scopeOf(owner) {
+            return owner?.sessionId;
+          },
+        };
+      },
+    },
+    on(event, handler) {
+      rootHandlers.set(event, handler);
+      return () => rootHandlers.delete(event);
+    },
     effect() {},
   };
   const runtime = new TelegramRuntime(
@@ -783,6 +1006,36 @@ test('bridges approval/request to a Telegram card and resolves on the owner tap'
   await runtime.whenSettled('7');
   const answerer = setupHandlers.get('approval/request');
   assert.equal(typeof answerer, 'function', '必须注册 approval/request 答复者');
+  const questionAnswerer = setupHandlers.get('user-questions/request');
+  assert.equal(typeof questionAnswerer, 'function', '必须注册 user-questions/request 答复者');
+  const remoteQuestionAnswerer = rootHandlers.get('user-questions/request');
+  assert.equal(typeof remoteQuestionAnswerer, 'function', '必须注册远程 user-questions/request 答复者');
+
+  // ask_user_question 使用正式 waterfall 协议，Telegram 按钮返回结构化 answer batch。
+  assert.equal(
+    remoteQuestionAnswerer({ agent: { id: 'web-session' } }, () => 'web'),
+    'web',
+  );
+  const questionResult = remoteQuestionAnswerer({
+    agent: { id: createdSessionId },
+    questions: [
+      {
+        id: 'delete-confirmation',
+        question: '是否批准删除 solid-color-caption.png？',
+        options: [{ label: '批准' }, { label: '拒绝' }],
+      },
+    ],
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  const questionCard = sent.find((payload) => /是否批准删除/.test(payload.text ?? ''));
+  assert.ok(questionCard, '用户确认问题应发送到 Telegram');
+  const questionApprove = questionCard.reply_markup.inline_keyboard[0][0];
+  await onCallback({
+    callback: { id: 'cb-question', senderId: '7', chatId: '7', data: questionApprove.callback_data },
+  });
+  assert.deepEqual(await questionResult, {
+    answers: [{ id: 'delete-confirmation', selected: ['批准'] }],
+  });
 
   // 触发一次审批：answerer 返回挂起的 outcome，同时发出审批卡片
   const outcome = answerer({ toolName: 'bash', reason: '删除文件' });
@@ -832,18 +1085,18 @@ test('delivers in-workspace markdown images and rejects out-of-workspace paths',
   };
   const photos = [];
   const texts = [];
+  const deleted = [];
   let incoming;
-  const assistantContent = [
-    {
-      role: 'assistant',
-      content: [
-        {
-          type: 'text',
-          text: `图在这 ![c](./out/chart.png) 还有越界的 ![s](${join(outside, 'secret.png')}) 和缺失的 ![m](./out/missing.png)`,
-        },
-      ],
-    },
-  ];
+  const finalAssistantMessage = {
+    role: 'assistant',
+    content: [
+      {
+        type: 'text',
+        text: `已生成：[下载带 caption 的纯色图](./out/chart.png)。还有越界的 ![s](${join(outside, 'secret.png')}) 和缺失的 ![m](./out/missing.png)`,
+      },
+    ],
+  };
+  const assistantContent = [];
   const ctx = {
     credentials: {
       async resolve(ref) {
@@ -878,7 +1131,9 @@ test('delivers in-workspace markdown images and rejects out-of-workspace paths',
           get status() {
             return 'idle';
           },
-          followup() {},
+          followup() {
+            assistantContent.push(finalAssistantMessage);
+          },
           whenIdle() {
             return Promise.resolve();
           },
@@ -909,6 +1164,9 @@ test('delivers in-workspace markdown images and rejects out-of-workspace paths',
                 return { message_id: 1 };
               },
               async editMessageText() {},
+              async deleteMessage(payload) {
+                deleted.push(payload);
+              },
               async editMessageReplyMarkup() {},
               async answerCallbackQuery() {},
               async sendPhoto(payload) {
@@ -929,12 +1187,16 @@ test('delivers in-workspace markdown images and rejects out-of-workspace paths',
   // 仅工作区内存在的图片被发送；越界与缺失的都不发
   assert.equal(photos.length, 1);
   assert.equal(photos[0].chat_id, '7');
+  assert.equal(photos[0].caption, '已生成：下载带 caption 的纯色图。还有越界的  和缺失的');
+  // Rich Message 成功提升为 photo 后，清理先前的流式链接正文，避免重复。
+  assert.equal(texts.length, 1);
+  assert.deepEqual(deleted, [{ chat_id: '7', message_id: '1' }]);
   await runtime.stop();
   await rm(root, { recursive: true, force: true });
   await rm(outside, { recursive: true, force: true });
 });
 
-test('dedupes the same in-workspace image referenced multiple ways', async () => {
+test('dedupes explicit image markup and does not promote inline-code file references', async () => {
   const { writeFile } = await import('node:fs/promises');
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-dedup-'));
   const pngBytes = Buffer.from('89504e470d0a1a0a', 'hex');
@@ -948,18 +1210,22 @@ test('dedupes the same in-workspace image referenced multiple ways', async () =>
   };
   const photos = [];
   let incoming;
-  // 同一文件用相对名与绝对路径各引用一次：realpath 归一后应只发一张。
-  const assistantContent = [
+  const assistantMessages = [
     {
       role: 'assistant',
-      content: [
-        {
-          type: 'text',
-          text: `生成了 \`blue.png\`，路径：\`${join(root, 'blue.png')}\``,
-        },
-      ],
+      content: [{ type: 'text', text: '已取消，未删除 `blue.png`。' }],
+    },
+    {
+      role: 'assistant',
+      content: [{ type: 'text', text: `已生成 ![blue](blue.png) [下载](${join(root, 'blue.png')})` }],
     },
   ];
+  let turn = 0;
+  const finalAssistantMessage = () => ({
+    role: 'assistant',
+    content: assistantMessages[turn++].content,
+  });
+  const assistantContent = [];
   const ctx = {
     credentials: {
       async resolve(ref) {
@@ -994,7 +1260,9 @@ test('dedupes the same in-workspace image referenced multiple ways', async () =>
           get status() {
             return 'idle';
           },
-          followup() {},
+          followup() {
+            assistantContent.push(finalAssistantMessage());
+          },
           whenIdle() {
             return Promise.resolve();
           },
@@ -1026,6 +1294,7 @@ test('dedupes the same in-workspace image referenced multiple ways', async () =>
               async editMessageText() {},
               async editMessageReplyMarkup() {},
               async answerCallbackQuery() {},
+              async deleteMessage() {},
               async sendPhoto(payload) {
                 photos.push(payload);
               },
@@ -1039,6 +1308,9 @@ test('dedupes the same in-workspace image referenced multiple ways', async () =>
     },
   );
   await runtime.start();
+  await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'cancel delete' } });
+  await runtime.whenSettled('7');
+  assert.equal(photos.length, 0, '取消删除中的文件引用不应发送图片');
   await incoming({ message: { isPrivate: true, senderId: '7', chatId: '7', message: 'draw blue' } });
   await runtime.whenSettled('7');
   assert.equal(photos.length, 1);
