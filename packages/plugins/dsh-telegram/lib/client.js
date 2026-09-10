@@ -44,14 +44,66 @@ window.__ModuleLoader__.load({
     });
     module.exports = __toCommonJS(client_exports);
     var React = __toESM(require('react'), 1);
+
+    // src/client-credentials.js
+    function credentialError(action) {
+      return new Error(
+        action === 'read'
+          ? '\u65E0\u6CD5\u8BFB\u53D6 Telegram \u51ED\u636E\u72B6\u6001'
+          : '\u65E0\u6CD5\u4FDD\u5B58 Telegram Bot Token',
+      );
+    }
+    function getCredentialsApi(ctx) {
+      if (!ctx.remote?.credentials) throw credentialError('read');
+      return ctx.remote.credentials;
+    }
+    async function readCredentialStatuses(credentialsApi, refs) {
+      let response;
+      try {
+        response = await credentialsApi.describe(Object.values(refs));
+      } catch {
+        throw credentialError('read');
+      }
+      if (response?.ok !== true) throw credentialError('read');
+      return Object.fromEntries(
+        Object.entries(refs).map(([key, ref]) => [key, response.value?.[ref]?.configured ?? false]),
+      );
+    }
+    async function writeCredential(credentialsApi, ref, value) {
+      let response;
+      try {
+        response = await credentialsApi.set(ref, value);
+      } catch {
+        throw credentialError('write');
+      }
+      if (response?.ok !== true) throw credentialError('write');
+    }
+    async function saveTelegramSettings({ credentialsApi, scope, sourceEnabled, values, secrets, refs }) {
+      if (sourceEnabled) await scope.set('enabled', false);
+      for (const [field, value] of Object.entries(values)) {
+        if (field !== 'enabled') await scope.set(field, value);
+      }
+      for (const [key, value] of Object.entries(secrets)) {
+        if (value.trim()) await writeCredential(credentialsApi, refs[key], value.trim());
+      }
+      const credentials = await readCredentialStatuses(credentialsApi, refs);
+      if (values.enabled && !credentials.botToken) {
+        throw new Error('Bot Token \u5FC5\u987B\u6210\u529F\u4FDD\u5B58\u540E\u624D\u80FD\u542F\u7528 Telegram');
+      }
+      await scope.set('enabled', values.enabled);
+      return credentials;
+    }
+
+    // src/client.js
     var h = React.createElement;
     var SETTINGS_NAMESPACE = 'dsh-telegram';
     var STYLE_ID = 'implementsio-dsh-telegram-settings';
-    var inject = ['connection', 'slots', 'settingsScope', 'workspaces'];
+    var PLUGIN_VERSION = '0.3.1';
+    var inject = ['remote', 'remote.credentials', 'slots', 'settingsScope', 'workspaces'];
     var styles = `
 .dsh-tg-card{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;list-style:none;transition:border-color .16s,background .16s}.dsh-tg-card:hover{border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-card-open{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-label-dimmed)}
 .dsh-tg-header{appearance:none;width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:12px;align-items:center;gap:12px;padding:14px 16px;display:flex}.dsh-tg-header:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}
-.dsh-tg-head-text{flex-direction:column;flex:1 1 0%;gap:4px;min-width:0;display:flex}.dsh-tg-name{color:var(--dsw-alias-label-primary);font-size:15px;font-weight:600;line-height:1.4}.dsh-tg-description{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}.dsh-tg-hint{margin:0;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
+.dsh-tg-head-text{flex-direction:column;flex:1 1 0%;gap:4px;min-width:0;display:flex}.dsh-tg-title{display:flex;align-items:center;gap:8px}.dsh-tg-name{color:var(--dsw-alias-label-primary);font-size:15px;font-weight:600;line-height:1.4}.dsh-tg-version{border:1px solid var(--dsw-alias-border-l2);border-radius:999px;padding:1px 6px;color:var(--dsw-alias-label-tertiary);font-size:11px;font-weight:500;line-height:1.4}.dsh-tg-description{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}.dsh-tg-hint{margin:0;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
 .dsh-tg-chevron{color:var(--dsw-alias-label-tertiary);flex:0 0 auto;transition:transform .16s}.dsh-tg-chevron[data-open=true]{transform:rotate(180deg)}
 .dsh-tg-body{border-top:1px solid var(--dsw-alias-border-l2);margin:0 16px;padding-bottom:8px}
 .dsh-tg-section{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px;padding:8px 0}.dsh-tg-section-title{grid-column:1/-1;margin:10px 0 2px;color:var(--dsw-alias-label-tertiary);font-size:12px;font-weight:600;line-height:1.5;text-transform:uppercase;letter-spacing:.04em}.dsh-tg-section-title:first-child{margin-top:0}
@@ -116,7 +168,7 @@ window.__ModuleLoader__.load({
         hint ? h('p', { className: 'dsh-tg-hint' }, hint) : null,
       );
     }
-    function TelegramSettingsCard({ api, scope, workspaceList }) {
+    function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
       const snapshot = React.useSyncExternalStore(
         scope.subscribe.bind(scope),
         scope.getSnapshot.bind(scope),
@@ -142,17 +194,14 @@ window.__ModuleLoader__.load({
         botToken: 'DSH_TELEGRAM_BOT_TOKEN',
       };
       const refreshCredentials = async () => {
-        const response = await api.credentials.describe({ refs: Object.values(refs) });
-        if (!response.result.ok) throw new Error('\u65E0\u6CD5\u8BFB\u53D6 Telegram \u51ED\u636E\u72B6\u6001');
-        const values = response.result.value.credentials;
-        const next = Object.fromEntries(
-          Object.entries(refs).map(([key, ref]) => [key, values[ref]?.configured ?? false]),
-        );
+        const next = await readCredentialStatuses(credentialsApi, refs);
         setCredentials(next);
         return next;
       };
       React.useEffect(() => {
-        refreshCredentials().catch(() => setError('\u65E0\u6CD5\u8BFB\u53D6 Telegram \u51ED\u636E\u72B6\u6001'));
+        refreshCredentials().catch((caught) =>
+          setError(caught?.message ?? '\u65E0\u6CD5\u8BFB\u53D6 Telegram \u51ED\u636E\u72B6\u6001'),
+        );
       }, [snapshot.revision]);
       const dirty = JSON.stringify(draft) !== JSON.stringify(source);
       const secretDirty = Object.values(secrets).some(Boolean);
@@ -191,18 +240,15 @@ window.__ModuleLoader__.load({
             messageLimit: Number(draft.messageLimit),
             proxy: { ...draft.proxy, port: Number(draft.proxy?.port ?? 0) },
           };
-          if (source.enabled) await scope.set('enabled', false);
-          for (const [field, value] of Object.entries(values)) {
-            if (field !== 'enabled') await scope.set(field, value);
-          }
-          for (const [key, value] of Object.entries(secrets)) {
-            if (value.trim()) await api.credentials.set({ ref: refs[key], value: value.trim() });
-          }
-          const nextCredentials = await refreshCredentials();
-          if (values.enabled && !nextCredentials.botToken) {
-            throw new Error('Bot Token \u5FC5\u987B\u6210\u529F\u4FDD\u5B58\u540E\u624D\u80FD\u542F\u7528 Telegram');
-          }
-          await scope.set('enabled', values.enabled);
+          const nextCredentials = await saveTelegramSettings({
+            credentialsApi,
+            scope,
+            sourceEnabled: Boolean(source.enabled),
+            values,
+            secrets,
+            refs,
+          });
+          setCredentials(nextCredentials);
           setSecrets({ botToken: '' });
           setFeedback('\u5DF2\u4FDD\u5B58');
         } catch (caught) {
@@ -225,7 +271,16 @@ window.__ModuleLoader__.load({
           h(
             'span',
             { className: 'dsh-tg-head-text' },
-            h('span', { className: 'dsh-tg-name' }, 'Telegram'),
+            h(
+              'span',
+              { className: 'dsh-tg-title' },
+              h('span', { className: 'dsh-tg-name' }, 'Telegram'),
+              h(
+                'span',
+                { className: 'dsh-tg-version', 'aria-label': `\u63D2\u4EF6\u7248\u672C ${PLUGIN_VERSION}` },
+                `v${PLUGIN_VERSION}`,
+              ),
+            ),
             h(
               'span',
               { className: 'dsh-tg-description' },
@@ -479,14 +534,14 @@ window.__ModuleLoader__.load({
         return () => element.remove();
       });
       const scope = ctx.settingsScope.bind({ namespace: SETTINGS_NAMESPACE });
-      const { api } = ctx.get('connection');
+      const credentialsApi = getCredentialsApi(ctx);
       const workspaces = ctx.get('workspaces');
       ctx.slots.inject('settings.plugin.item', () =>
         ctx.slots.register(
           {
             name: 'settings.plugin.item',
             key: SETTINGS_NAMESPACE,
-            inject: () => ({ api, scope, workspaceList: workspaces.list }),
+            inject: () => ({ credentialsApi, scope, workspaceList: workspaces.list }),
           },
           TelegramSettingsCard,
         ),

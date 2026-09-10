@@ -1,15 +1,17 @@
 import * as React from 'react';
+import { getCredentialsApi, readCredentialStatuses, saveTelegramSettings } from './client-credentials.js';
 
 const h = React.createElement;
 const SETTINGS_NAMESPACE = 'dsh-telegram';
 const STYLE_ID = 'implementsio-dsh-telegram-settings';
+const PLUGIN_VERSION = globalThis.__DSH_TELEGRAM_VERSION__ ?? 'dev';
 
-export const inject = ['connection', 'slots', 'settingsScope', 'workspaces'];
+export const inject = ['remote', 'remote.credentials', 'slots', 'settingsScope', 'workspaces'];
 
 const styles = `
 .dsh-tg-card{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;list-style:none;transition:border-color .16s,background .16s}.dsh-tg-card:hover{border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-card-open{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-label-dimmed)}
 .dsh-tg-header{appearance:none;width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:12px;align-items:center;gap:12px;padding:14px 16px;display:flex}.dsh-tg-header:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}
-.dsh-tg-head-text{flex-direction:column;flex:1 1 0%;gap:4px;min-width:0;display:flex}.dsh-tg-name{color:var(--dsw-alias-label-primary);font-size:15px;font-weight:600;line-height:1.4}.dsh-tg-description{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}.dsh-tg-hint{margin:0;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
+.dsh-tg-head-text{flex-direction:column;flex:1 1 0%;gap:4px;min-width:0;display:flex}.dsh-tg-title{display:flex;align-items:center;gap:8px}.dsh-tg-name{color:var(--dsw-alias-label-primary);font-size:15px;font-weight:600;line-height:1.4}.dsh-tg-version{border:1px solid var(--dsw-alias-border-l2);border-radius:999px;padding:1px 6px;color:var(--dsw-alias-label-tertiary);font-size:11px;font-weight:500;line-height:1.4}.dsh-tg-description{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:1.5}.dsh-tg-hint{margin:0;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}
 .dsh-tg-chevron{color:var(--dsw-alias-label-tertiary);flex:0 0 auto;transition:transform .16s}.dsh-tg-chevron[data-open=true]{transform:rotate(180deg)}
 .dsh-tg-body{border-top:1px solid var(--dsw-alias-border-l2);margin:0 16px;padding-bottom:8px}
 .dsh-tg-section{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px;padding:8px 0}.dsh-tg-section-title{grid-column:1/-1;margin:10px 0 2px;color:var(--dsw-alias-label-tertiary);font-size:12px;font-weight:600;line-height:1.5;text-transform:uppercase;letter-spacing:.04em}.dsh-tg-section-title:first-child{margin-top:0}
@@ -77,7 +79,7 @@ function Field({
   );
 }
 
-function TelegramSettingsCard({ api, scope, workspaceList }) {
+function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
   const snapshot = React.useSyncExternalStore(
     scope.subscribe.bind(scope),
     scope.getSnapshot.bind(scope),
@@ -104,15 +106,12 @@ function TelegramSettingsCard({ api, scope, workspaceList }) {
     botToken: 'DSH_TELEGRAM_BOT_TOKEN',
   };
   const refreshCredentials = async () => {
-    const response = await api.credentials.describe({ refs: Object.values(refs) });
-    if (!response.result.ok) throw new Error('无法读取 Telegram 凭据状态');
-    const values = response.result.value.credentials;
-    const next = Object.fromEntries(Object.entries(refs).map(([key, ref]) => [key, values[ref]?.configured ?? false]));
+    const next = await readCredentialStatuses(credentialsApi, refs);
     setCredentials(next);
     return next;
   };
   React.useEffect(() => {
-    refreshCredentials().catch(() => setError('无法读取 Telegram 凭据状态'));
+    refreshCredentials().catch((caught) => setError(caught?.message ?? '无法读取 Telegram 凭据状态'));
   }, [snapshot.revision]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(source);
   const secretDirty = Object.values(secrets).some(Boolean);
@@ -151,18 +150,15 @@ function TelegramSettingsCard({ api, scope, workspaceList }) {
         messageLimit: Number(draft.messageLimit),
         proxy: { ...draft.proxy, port: Number(draft.proxy?.port ?? 0) },
       };
-      if (source.enabled) await scope.set('enabled', false);
-      for (const [field, value] of Object.entries(values)) {
-        if (field !== 'enabled') await scope.set(field, value);
-      }
-      for (const [key, value] of Object.entries(secrets)) {
-        if (value.trim()) await api.credentials.set({ ref: refs[key], value: value.trim() });
-      }
-      const nextCredentials = await refreshCredentials();
-      if (values.enabled && !nextCredentials.botToken) {
-        throw new Error('Bot Token 必须成功保存后才能启用 Telegram');
-      }
-      await scope.set('enabled', values.enabled);
+      const nextCredentials = await saveTelegramSettings({
+        credentialsApi,
+        scope,
+        sourceEnabled: Boolean(source.enabled),
+        values,
+        secrets,
+        refs,
+      });
+      setCredentials(nextCredentials);
       setSecrets({ botToken: '' });
       setFeedback('已保存');
     } catch (caught) {
@@ -186,7 +182,12 @@ function TelegramSettingsCard({ api, scope, workspaceList }) {
       h(
         'span',
         { className: 'dsh-tg-head-text' },
-        h('span', { className: 'dsh-tg-name' }, 'Telegram'),
+        h(
+          'span',
+          { className: 'dsh-tg-title' },
+          h('span', { className: 'dsh-tg-name' }, 'Telegram'),
+          h('span', { className: 'dsh-tg-version', 'aria-label': `插件版本 ${PLUGIN_VERSION}` }, `v${PLUGIN_VERSION}`),
+        ),
         h('span', { className: 'dsh-tg-description' }, '通过 Telegram Bot API 将私聊消息连接到 Harness Workspace。'),
       ),
       h(Chevron, { open }),
@@ -415,14 +416,14 @@ export function apply(ctx) {
     return () => element.remove();
   });
   const scope = ctx.settingsScope.bind({ namespace: SETTINGS_NAMESPACE });
-  const { api } = ctx.get('connection');
+  const credentialsApi = getCredentialsApi(ctx);
   const workspaces = ctx.get('workspaces');
   ctx.slots.inject('settings.plugin.item', () =>
     ctx.slots.register(
       {
         name: 'settings.plugin.item',
         key: SETTINGS_NAMESPACE,
-        inject: () => ({ api, scope, workspaceList: workspaces.list }),
+        inject: () => ({ credentialsApi, scope, workspaceList: workspaces.list }),
       },
       TelegramSettingsCard,
     ),
