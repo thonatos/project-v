@@ -1,5 +1,5 @@
 {
-	"packageManager": "pnpm@11.21.0",
+	"packageManager": "pnpm@12.3.4",
 	"devDependencies": {
 		"@commitlint/cli": "^20.5.0",
 		"@commitlint/config-conventional": "^20.5.0",

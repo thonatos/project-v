@@ -1,3 +1,104 @@
+---
+lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    configDependencies: {}
+    packageManagerDependencies:
+      pnpm:
+        specifier: 12.3.4
+        version: 12.3.4
+
+packages:
+
+  '@pnpm/exe.darwin-arm64@12.3.4':
+    resolution: {integrity: sha512-PAyUol8T1+/+ViOiXAt51ECA+QnfXCqz6foL4bW+LsoX0NcVd5XVEM2mRQu+LV4oc7uRz9zf9U0P+XFfuQeDAw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@pnpm/exe.darwin-x64@12.3.4':
+    resolution: {integrity: sha512-fxP9JCk0Cdye+ePuj+GJJLMUMTqHGWRdb1dtv4How876uQ2ehxvenpgiYAir/ceO9PsYUZkFTtyZdx+rRu5QOA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@pnpm/exe.linux-arm64-musl@12.3.4':
+    resolution: {integrity: sha512-FBOt0/7ye6O6q4AllVV5QMviB6qE6fqkeczV/+MDWQsmo+QJrlfsh6X7CpH/tClVpBZEyIbjpUoT8bNhCYBxEg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-arm64@12.3.4':
+    resolution: {integrity: sha512-t71AVA7LRqiKTyZ5xMYaZc2n5DfdpMbfokZuiIOXHBOM03ECnF0t4iYwaBDqJgVjlKYUOwaF/bRQajGNA4cJ4w==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-x64-musl@12.3.4':
+    resolution: {integrity: sha512-RPmk7Jb/aYaFvL2iyDN/AtMY+hUEsue732WmXpcuQ9tBpMnGyA5py7Z3+e+qmQaJ0zY/4ni9jJiyPBQHujmv6w==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-x64@12.3.4':
+    resolution: {integrity: sha512-2ZqOlSPkfwX1h5cR+FPiWf8+F+2hZT/3TvhUK5sigHqwaQCIiq8R7CGxhndKs63JtcLi2a1Qpo+wX/EoyfjyJQ==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.win32-arm64@12.3.4':
+    resolution: {integrity: sha512-ANyrHqyqco6SXBysUTRF74itDyyraea7IbFsKFdNXTjcFnfycTDx37EwuhdpPYFNSIh2JhUG4fByclsRfiHX7w==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@pnpm/exe.win32-x64@12.3.4':
+    resolution: {integrity: sha512-WH/KqBPY/hq2Tb7SgQltEZytimcjgKRaCRL/aM9CI0c67iKc5TVmHUhIiL3Ux9FB4bWn36i6XewUcScQI+zG8w==}
+    cpu: [x64]
+    os: [win32]
+
+  pnpm@12.3.4:
+    resolution: {integrity: sha512-lhqkH7B32joEpEHZ+OFevAyW2o73ELLrZ7+e58sGEOq9SPH9hfUc/+c4RnhfoPh8VqOocqHYk/hEZ0G1zORUVw==}
+    engines: {node: '>=18.*'}
+    hasBin: true
+
+snapshots:
+
+  '@pnpm/exe.darwin-arm64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.darwin-x64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-arm64-musl@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-arm64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-x64-musl@12.3.4':
+    optional: true
+
+  '@pnpm/exe.linux-x64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.win32-arm64@12.3.4':
+    optional: true
+
+  '@pnpm/exe.win32-x64@12.3.4':
+    optional: true
+
+  pnpm@12.3.4:
+    optionalDependencies:
+      '@pnpm/exe.darwin-arm64': 12.3.4
+      '@pnpm/exe.darwin-x64': 12.3.4
+      '@pnpm/exe.linux-arm64': 12.3.4
+      '@pnpm/exe.linux-arm64-musl': 12.3.4
+      '@pnpm/exe.linux-x64': 12.3.4
+      '@pnpm/exe.linux-x64-musl': 12.3.4
+      '@pnpm/exe.win32-arm64': 12.3.4
+      '@pnpm/exe.win32-x64': 12.3.4
+
+---
 lockfileVersion: '9.0'
 
 settings:
@@ -799,8 +900,8 @@ importers:
         specifier: 3.3.2
         version: 3.3.2
       node-telegram-bot-api:
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: 2.1.0
+        version: 2.1.0
       proxy-agent:
         specifier: 6.5.0
         version: 6.5.0(supports-color@10.2.2)
@@ -9893,8 +9994,8 @@ packages:
   node-releases@2.0.38:
     resolution: {integrity: sha512-3qT/88Y3FbH/Kx4szpQQ4HzUbVrHPKTLVpVocKiLfoYvw9XSGOX2FmD2d6DrXbVYyAQTF2HeF6My8jmzx7/CRw==}
 
-  node-telegram-bot-api@2.0.0:
-    resolution: {integrity: sha512-Gqo1HNYkIfYnHy25rEMKFFMVLqG+EUmH+C5HLsOguXi4WazaGWwIu9vigMLARv+cKONdU6x9Fj4lKNBLf7h/Uw==}
+  node-telegram-bot-api@2.1.0:
+    resolution: {integrity: sha512-IXWp7Qzhwv21DqTw0g1CcppTb4TCzrQ949RVdtAmgiHAu3KbcRPyCAFXLaFAViqWDVx8GLZjnWiWJ7pWSj2PRA==}
     engines: {node: '>=18'}
 
   nodemon@3.0.3:
@@ -22712,7 +22813,7 @@ snapshots:
 
   node-releases@2.0.38: {}
 
-  node-telegram-bot-api@2.0.0: {}
+  node-telegram-bot-api@2.1.0: {}
 
   nodemon@3.0.3:
     dependencies:
