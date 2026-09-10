@@ -17,8 +17,7 @@ WORKDIR /app
 # layer: deps
 FROM base AS deps
 COPY . ./
-RUN --mount=type=secret,id=TIPTAP_PRO_TOKEN,env=TIPTAP_PRO_TOKEN \
-    --mount=type=cache,id=pnpm,target=/pnpm/store \
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 
 # layer: build
