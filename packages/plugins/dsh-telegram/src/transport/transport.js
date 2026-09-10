@@ -22,6 +22,12 @@ export function createTelegramTransport(connection) {
         ...(parseMode ? { parse_mode: parseMode } : {}),
       });
     },
+    async deleteMessage(chatId, messageId) {
+      return bot.api.deleteMessage({
+        chat_id: chatId,
+        message_id: messageId,
+      });
+    },
     async editCard(chatId, messageId, replyMarkup) {
       return bot.api.editMessageReplyMarkup({
         chat_id: chatId,

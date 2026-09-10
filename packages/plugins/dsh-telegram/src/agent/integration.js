@@ -4,6 +4,14 @@ export function installInteractionBridge(agentCtx, { onRequested, onResolved }) 
   agentCtx.on('interaction/resolved', onResolved);
 }
 
+// ask_user_question 使用独立的 user-questions/request waterfall，不会经过
+// interaction/requested。注册在 agent scope 并 prepend，确保 Telegram 先于 Web 的
+// 全局答复者处理当前 agent 的问题，同时由 Cordis context filter 隔离其它 agent。
+export function installUserQuestionsBridge(agentCtx, onRequested) {
+  if (typeof agentCtx?.on !== 'function' || typeof onRequested !== 'function') return;
+  agentCtx.on('user-questions/request', onRequested, { prepend: true });
+}
+
 // 注册审批答复者（dsh-user-approval `approval/request` waterfall，agent-scoped）。
 // 这是 dsh 把「操作需要人工批准」送达外部 UI 的真实机制：service 在 policy='ask'
 // 且无答复者时 fail-closed，因此必须显式注册；返回一个 ApprovalOutcome 认领该请求，
@@ -55,12 +63,13 @@ export async function stopAgentTurn(agent) {
 // 否则 session/event 不会路由到 StreamSession（正文整段丢失）、审批也收不到。
 export function installAgentBridges(
   agentCtx,
-  { onInteractionRequested, onInteractionResolved, onApprovalRequested, onSessionEvent },
+  { onInteractionRequested, onInteractionResolved, onUserQuestionsRequested, onApprovalRequested, onSessionEvent },
 ) {
   installInteractionBridge(agentCtx, {
     onRequested: onInteractionRequested,
     onResolved: onInteractionResolved,
   });
+  installUserQuestionsBridge(agentCtx, onUserQuestionsRequested);
   installApprovalBridge(agentCtx, onApprovalRequested);
   installSessionStream(agentCtx, onSessionEvent);
 }
@@ -70,17 +79,20 @@ export function buildAgentSetup({
   mountPreset,
   onInteractionRequested,
   onInteractionResolved,
+  onUserQuestionsRequested,
   onApprovalRequested,
   onSessionEvent,
 }) {
   return async (agentCtx) => {
+    // preset 可能注册自己的 prepend 审批答复者（例如 Web UI）。先完成 mount，再注册
+    // Telegram 的 prepend bridge，确保它位于该 agent 的 waterfall 最外层。
+    if (mountPreset) await mountPreset(agentCtx);
     installAgentBridges(agentCtx, {
       onInteractionRequested,
       onInteractionResolved,
+      onUserQuestionsRequested,
       onApprovalRequested,
       onSessionEvent,
     });
-    // 放在最后：mount 失败会回滚整个 agent 创建，前面的注册也随之撤销。
-    if (mountPreset) await mountPreset(agentCtx);
   };
 }
