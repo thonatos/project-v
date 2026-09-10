@@ -5,6 +5,28 @@
 
 ## Requirements
 
+### Requirement: 插件单次注册与启动
+
+系统 SHALL 为已安装到 dsh profile 的 `dsh-telegram` 保留包内 bundle patch，使 dsh 能自动注册插件；常规启动不得再通过命令行重复应用同一 Telegram patch。最终组合后的插件树 MUST 只包含一个 `id: dsh-telegram`。显式 `--patch` 模式仅可用于插件尚未安装到目标 profile 的隔离开发场景。
+
+#### Scenario: 已安装插件正常启动
+
+- **GIVEN** `@implementsio/dsh-telegram` 已安装到目标 dsh profile，且包清单声明 `dsh.bundle.patch`
+- **WHEN** 用户运行 `dsh web` 或 `dsh --profile web`
+- **THEN** 系统 SHALL 通过包内 patch 自动注册并加载一次 `dsh-telegram`
+
+#### Scenario: 防止重复注册
+
+- **GIVEN** `@implementsio/dsh-telegram` 已安装到目标 dsh profile
+- **WHEN** 生成或验证最终插件树
+- **THEN** 文档和验证流程 SHALL 要求不再额外传入同一 `cordis.patch.yml`，且最终插件树 MUST 只出现一个 `id: dsh-telegram`
+
+#### Scenario: 未安装插件的隔离开发
+
+- **GIVEN** `@implementsio/dsh-telegram` 尚未安装到目标 dsh profile
+- **WHEN** 开发者需要临时加载本地插件
+- **THEN** 系统 MAY 允许显式应用本地 `cordis.patch.yml`，但该模式 MUST 与 profile 安装模式互斥
+
 ### Requirement: 单 Bot 私聊连接
 
 系统 SHALL 使用 `node-telegram-bot-api` 创建 Bot API long polling 客户端，使用 Bot Token 验证身份，并且同一时间最多只能有一个活动客户端。
@@ -40,37 +62,49 @@
 
 ### Requirement: 私聊会话路由
 
-系统 SHALL 将单个 Telegram Bot 绑定到一个已验证的 Workspace，并按 Telegram 私聊用户 ID 持久化到 Harness Session ID 的绑定。绑定 SHALL 通过 dsh 官方 storage 子系统（`ctx.storageDomain`）持久化，不得由插件自行向工作目录或任意文件路径写入状态文件。所有创建或恢复的 Session MUST 属于该 Bot 绑定的 Workspace。
+系统 SHALL 将单个 Telegram Bot 默认绑定到一个已验证的 Workspace，并按 Telegram 私聊用户 ID 持久化到 Harness Session ID 和当前 Workspace ID 的绑定。绑定 SHALL 通过 dsh 官方 storage 子系统（`ctx.storageDomain`）持久化，不得由插件自行向工作目录或任意文件路径写入状态文件。所有创建或恢复的 Session MUST 属于该私聊当前绑定的 Workspace；没有有效私聊绑定时 SHALL 使用 Bot 配置的默认 Workspace。
 
 #### Scenario: 首条普通消息
 
-- **WHEN** 已授权私聊用户发送普通文本且不存在绑定
-- **THEN** 系统 SHALL 在 Bot 绑定的 Workspace 下创建 Harness Session、保存绑定并将文本提交到该 Session
+- **GIVEN** 已授权私聊用户不存在持久化绑定
+- **WHEN** 用户发送普通文本
+- **THEN** 系统 SHALL 在 Bot 默认 Workspace 下创建 Harness Session、保存含 Workspace ID 的绑定并将文本提交到该 Session
 
 #### Scenario: 已有绑定
 
-- **WHEN** 已授权私聊用户发送普通文本且已经存在绑定
-- **THEN** 系统 SHALL 验证该 Session 仍属于 Bot 绑定的 Workspace 后恢复它，不得创建第二个 Session
+- **GIVEN** 已授权私聊用户已有含 Session ID 和 Workspace ID 的绑定
+- **WHEN** 用户发送普通文本
+- **THEN** 系统 SHALL 验证 Workspace 仍已登记且 Session cwd 属于该 Workspace 后恢复它，不得创建第二个 Session
 
 #### Scenario: 新建会话
 
+- **GIVEN** 私聊已绑定一个有效 Workspace
 - **WHEN** 用户发送 `/new`
-- **THEN** 系统 SHALL 在 Bot 绑定的同一 Workspace 下创建新的 Harness Session、替换当前私聊绑定并回复新会话已建立
+- **THEN** 系统 SHALL 在当前绑定的 Workspace 下创建新的 Harness Session、替换当前私聊绑定并回复新会话已建立
 
 #### Scenario: Workspace 配置变更
 
-- **WHEN** Bot 绑定的 Workspace 被修改
-- **THEN** 系统 SHALL 停止 runtime、使旧 Workspace 下的私聊 Session 路由失效，并只允许新连接创建或恢复新 Workspace 下的 Session
+- **GIVEN** Bot 配置的默认 Workspace 被修改
+- **WHEN** Runtime 重新启动且私聊没有其他有效 Workspace 绑定
+- **THEN** 系统 SHALL 只允许在新默认 Workspace 下创建或恢复 Session
 
 #### Scenario: Workspace 不可用
 
-- **WHEN** Bot 未配置 Workspace，或配置的 Workspace 不存在、未登记或不在 Harness 允许范围内
-- **THEN** 系统 SHALL 拒绝启动 Telegram runtime，并通过内置 Settings 状态报告可操作的 Workspace 配置错误
+- **GIVEN** Bot 配置的默认 Workspace 不存在、未登记或不在 Harness 允许范围内
+- **WHEN** 插件尝试启动 Telegram Runtime
+- **THEN** 系统 SHALL 拒绝启动，并通过内置 Settings 状态报告可操作的 Workspace 配置错误
 
 #### Scenario: 绑定持久化落地
 
-- **WHEN** 系统创建、替换或删除某私聊用户的 Session 绑定
-- **THEN** 系统 SHALL 通过 storage 子系统持久化该变更，使 runtime 重启后能恢复既有绑定，且不得在项目工作目录留下状态文件
+- **GIVEN** 系统需要创建、替换、切换或删除某私聊用户的 Session 绑定
+- **WHEN** 绑定发生变更
+- **THEN** 系统 SHALL 通过 storage 子系统持久化该变更，使 Runtime 重启后能恢复 Session 和当前 Workspace，且不得在项目工作目录留下状态文件
+
+#### Scenario: 绑定 Workspace 失效
+
+- **GIVEN** 持久化绑定引用的 Workspace 已被删除或目录不可用
+- **WHEN** 用户再次发送普通消息
+- **THEN** 系统 SHALL 使该绑定失效并回退到已验证的默认 Workspace 创建新 Session，不得恢复到错误目录
 
 ### Requirement: 基础媒体消息
 
@@ -98,61 +132,71 @@
 
 ### Requirement: 基础命令
 
-首版系统 SHALL 只支持 `/new`、`/status`、`/stop` 和 `/help` 四个 Telegram 命令；其他以 `/` 开头的输入 SHALL 作为普通文本处理或返回“不支持的命令”，不得自动转发到 Harness，不得执行未注册的任意代码或 Shell 文本。所有控制命令结果 SHALL 使用结构化 Telegram card 交付，不得使用普通 Agent 文本交付路径。
+系统 SHALL 支持 `/new`、`/status`、`/stop`、`/help` 和 `/workspace` 五个 Telegram 命令，并 SHALL 在 Bot 启动时通过 Telegram Bot API 将这些命令注册到 direct message、group chat 和 group administrators 标准 scope；命令展示范围不得放宽 Runtime 的 Owner 私聊访问控制。其他以 `/` 开头的输入 SHALL 返回“不支持的命令”，不得自动转发到 Harness，不得执行未注册的任意代码或 Shell 文本。所有控制命令结果 SHALL 使用结构化 Telegram card 交付，不得使用普通 Agent 文本交付路径。
+
+#### Scenario: 注册命令菜单
+
+- **GIVEN** Bot 身份和 webhook 状态已验证
+- **WHEN** Telegram 客户端启动 long polling
+- **THEN** 系统 SHALL 清空 default、direct message、group chat、group administrators 和旧版 Owner chat scope 中已有命令，再仅向 direct message、group chat 和 group administrators 三个标准 scope 分别注册五个支持命令及描述
 
 #### Scenario: 查看状态
 
+- **GIVEN** Owner 私聊已有或可创建有效绑定
 - **WHEN** 用户发送 `/status`
-- **THEN** 系统 SHALL 以结构化 Telegram card 回复连接状态、当前绑定状态、最近一次 Harness 状态和可用控制操作，且不得泄露凭据
+- **THEN** 系统 SHALL 以结构化 Telegram card 回复连接状态、当前 Workspace、当前 Session、最近一次 Harness 状态和可用控制操作，且不得泄露凭据
 
 #### Scenario: 停止任务
 
-- **WHEN** 用户发送 `/stop` 且当前 Session 存在运行中的任务
+- **GIVEN** 当前 Session 存在运行中的任务
+- **WHEN** 用户发送 `/stop`
 - **THEN** 系统 SHALL 请求 Harness 停止该任务并回复处理结果
 
 #### Scenario: 帮助命令
 
+- **GIVEN** Owner 已连接 Bot 私聊
 - **WHEN** 用户发送 `/help`
-- **THEN** 系统 SHALL 以结构化 Telegram card 返回首版支持的命令列表及私聊范围说明
+- **THEN** 系统 SHALL 以结构化 Telegram card 返回五个支持命令的列表及私聊范围说明
+
+#### Scenario: 展示 Workspace 选择卡片
+
+- **GIVEN** Registry 中存在一个或多个 Workspace
+- **WHEN** 用户发送不带参数的 `/workspace`
+- **THEN** 系统 SHALL 返回包含 Workspace 标题、ID、当前选择状态和 inline callback 按钮的选择卡片
+
+#### Scenario: 通过按钮切换 Workspace
+
+- **GIVEN** Owner 点击仍对应已登记且目录可用 Workspace 的选择按钮
+- **WHEN** 系统收到 callback query
+- **THEN** 系统 SHALL 在目标 Workspace 创建新 Session、持久化替换当前绑定并清除原选择卡片的按钮
+
+#### Scenario: 拒绝无效 Workspace
+
+- **GIVEN** Workspace ID 未登记或目录不可用
+- **WHEN** 用户通过 callback 请求切换
+- **THEN** 系统 SHALL 返回脱敏的不可用提示且保持原绑定不变
+
+#### Scenario: 拒绝非 Owner callback
+
+- **GIVEN** callback 发送者不是配置的 Owner
+- **WHEN** 发送者尝试选择 Workspace
+- **THEN** 系统 SHALL 忽略该 callback，不得创建 Session 或修改绑定
 
 ### Requirement: 出站消息交付
 
-系统 SHALL 将 Harness 文本输出发送到对应 Telegram 私聊，使用可配置的 `messageLimit` 控制单条消息长度，并 SHALL 支持在输出增长期间编辑已发送消息。文本正文 SHALL 以富文本渲染交付：将 Markdown 转换为 Telegram 支持的受限 HTML 标签子集并使用 HTML parse mode 发送；当渲染结果被 Telegram 拒绝时，系统 SHALL 降级为纯文本发送，不得使消息交付失败。`messageLimit` 默认 SHALL 为 4096，且不得超过 Telegram `sendMessage` 的 4096 字符上限。
+系统 SHALL 将 Harness 文本输出发送到对应 Telegram 私聊。若本 Turn 没有通过增量事件交付任何有效正文，但 Session 已包含最终 assistant 消息，系统 SHALL 使用该最终消息兜底；若已交付流式正文，则 MUST NOT 重复发送最终正文。
 
-#### Scenario: 普通回复
+#### Scenario: 增量事件缺失时交付最终回复
 
-- **WHEN** Harness 为当前 Turn 产生最终文本
-- **THEN** 系统 SHALL 将文本发送到发起该 Turn 的私聊，并保留回复消息 ID
+- **GIVEN** Harness 已将最终 assistant 消息写入 Session，但本 Turn 没有向 Telegram 桥接任何有效文本增量
+- **WHEN** Agent 进入 idle
+- **THEN** 系统 SHALL 从 Session 最终 assistant 消息补发正文，并沿用相同的富文本、分片和降级规则
 
-#### Scenario: 流式回复
+#### Scenario: 正常流式回复不重复
 
-- **WHEN** Harness 产生多个增量文本事件
-- **THEN** 系统 SHALL 优先编辑已发送消息展示最新内容，并在编辑不可用时发送新的文本消息
-
-#### Scenario: 富文本渲染
-
-- **WHEN** Harness 文本包含 Markdown 标记（如粗体、行内代码、代码块、链接）
-- **THEN** 系统 SHALL 将其渲染为 Telegram 支持的受限 HTML 交付，使标记生效而非以字面文本展示
-
-#### Scenario: 渲染降级
-
-- **WHEN** 富文本渲染结果被 Telegram 拒绝（例如流式分片切断了标签）
-- **THEN** 系统 SHALL 降级为纯文本发送同一内容，不得丢弃该次输出或使 Turn 失败
-
-#### Scenario: 超长回复
-
-- **WHEN** 输出超过配置的 `messageLimit`
-- **THEN** 系统 SHALL 按安全边界拆分为多条消息，且不得截断 Unicode 字符或发送超过 Telegram 上限的请求
-
-#### Scenario: 自定义消息长度
-
-- **WHEN** 用户在 dsh 内置 Settings 中将 `messageLimit` 设置为不超过 4096 的有效值
-- **THEN** 系统 SHALL 使用该值限制普通回复和流式编辑消息的长度
-
-#### Scenario: 无效消息长度
-
-- **WHEN** `messageLimit` 不是正整数或大于 4096
-- **THEN** 系统 SHALL 拒绝保存或启动配置，并通过内置 Settings 报告可操作的配置错误
+- **GIVEN** 本 Turn 已通过增量事件向 Telegram 交付有效正文
+- **WHEN** Agent 进入 idle 且 Session 中存在相同的最终 assistant 消息
+- **THEN** 系统 MUST NOT 再次发送该最终正文
 
 ### Requirement: Harness 交互路由
 
@@ -228,14 +272,34 @@
 
 ### Requirement: 凭据保护
 
-系统 SHALL 将 Bot Token 存储在 Harness credentials 中，其他非敏感配置可以存储在普通 Settings 中，日志和状态接口不得输出 Token 原文。
+系统 SHALL 将 Bot Token 存储在 Harness credentials 中，其他非敏感配置可以存储在普通 Settings 中，日志和状态接口不得输出 Token 原文。dsh 内置 Settings 中的 Telegram 设置页 SHALL 使用当前 credentials RPC 契约读取 Bot Token 的脱敏配置状态并写入新 Token；读取结果只能包含 `configured`、`writable`、`source` 等凭据元信息，不得将已存储 Token 返回客户端。RPC 失败 SHALL 产生可操作且不泄露凭据值的错误反馈。
 
 #### Scenario: 缺少登录材料
 
-- **WHEN** 插件启用但任一必需登录材料缺失或格式无效
+- **GIVEN** Telegram 插件尚未配置有效 Bot Token
+- **WHEN** 用户启用插件或尝试保存启用状态
 - **THEN** 系统 SHALL 进入错误状态并提供可操作的配置错误，不得启动半初始化客户端
+
+#### Scenario: 读取凭据状态
+
+- **GIVEN** dsh Host 已挂载 credentials provider
+- **WHEN** Telegram 设置页读取 `DSH_TELEGRAM_BOT_TOKEN` 状态
+- **THEN** 系统 SHALL 通过当前 credentials RPC 的引用数组参数读取状态，并只向页面提供该引用的脱敏元信息，不得返回 Token 原文
+
+#### Scenario: 保存 Bot Token
+
+- **GIVEN** 用户在 Telegram 设置页输入非空 Bot Token
+- **WHEN** 用户保存设置
+- **THEN** 系统 SHALL 通过当前 credentials RPC 的 `ref` 与 `value` 位置参数写入 Token，并在脱敏状态确认 `configured` 后才允许重新启用 Telegram runtime
+
+#### Scenario: 凭据 RPC 失败
+
+- **GIVEN** credentials RPC 返回失败结果或调用异常
+- **WHEN** Telegram 设置页读取或写入 Bot Token
+- **THEN** 系统 SHALL 显示能区分读取或写入阶段的错误反馈，并且错误文本、日志和 UI 状态不得包含 Token 原文
 
 #### Scenario: 状态查询
 
+- **GIVEN** Bot Token 已配置
 - **WHEN** UI 或 `/status` 查询连接状态
 - **THEN** 系统 SHALL 返回脱敏的连接信息，不得包含 Bot Token
