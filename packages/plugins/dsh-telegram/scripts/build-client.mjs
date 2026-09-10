@@ -1,10 +1,11 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 
 const packageRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const outputPath = resolve(packageRoot, 'lib/client.js');
+const packageMetadata = JSON.parse(await readFile(resolve(packageRoot, 'package.json'), 'utf8'));
 const result = await build({
   entryPoints: [resolve(packageRoot, 'src/client.js')],
   bundle: true,
@@ -12,6 +13,9 @@ const result = await build({
   platform: 'browser',
   target: ['chrome100'],
   external: ['react', 'react-dom'],
+  define: {
+    'globalThis.__DSH_TELEGRAM_VERSION__': JSON.stringify(packageMetadata.version),
+  },
   write: false,
   legalComments: 'none',
 });
