@@ -6,12 +6,16 @@ import { join } from 'node:path';
 import { TelegramRuntime, userFacingError } from '../src/runtime.js';
 
 // 内存版绑定存储：替代 openBindingStore，避免测试触碰真实文件或 storage backend。
+// set 必须复刻真实实现的 merge 语义，否则测试会掩盖「字段被覆盖写抹掉」这类缺陷。
 function memoryOpenStore() {
   const rows = new Map();
   return async () => ({
     get: (key) => rows.get(String(key)) ?? null,
-    async set(key, binding) {
-      rows.set(String(key), { sessionId: binding.sessionId, workspaceId: binding.workspaceId });
+    async set(key, patch) {
+      const current = rows.get(String(key));
+      const next = { ...current, ...patch };
+      if (!next.sessionId || !next.workspaceId) throw new TypeError('A session binding is required');
+      rows.set(String(key), next);
     },
     async delete(key) {
       rows.delete(String(key));

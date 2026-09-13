@@ -13,7 +13,12 @@ import {
   toolCardText,
   workspaceCard,
 } from '../src/render/cards.js';
-import { registerTelegramCommands, TELEGRAM_COMMANDS, TELEGRAM_COMMAND_SCOPES } from '../src/transport/client.js';
+import {
+  registerTelegramCommands,
+  TELEGRAM_COMMANDS,
+  TELEGRAM_COMMAND_NAMES,
+  TELEGRAM_COMMAND_SCOPES,
+} from '../src/transport/client.js';
 import { extractLocalImagePaths } from '../src/render/local-images.js';
 import { buildAgentSetup } from '../src/agent/integration.js';
 
@@ -82,14 +87,24 @@ test('maps outbound content to native Telegram delivery types', () => {
     workspaceId: 'workspace-1',
     workspaceTitle: 'Main <repo>',
     sessionId: 'session-1',
+    model: { provider: 'deepseek', model: 'deepseek-reasoner' },
     active: false,
     interactionPending: false,
   });
   assert.match(status.text, /Workspace.*workspace-1/);
   assert.match(status.text, /Main &lt;repo&gt;/);
+  assert.match(status.text, /模型：<code>deepseek deepseek-reasoner<\/code>/);
   assert.match(status.text, /^<blockquote>/, '状态卡片应为 blockquote 面板');
   assert.match(status.text, /<\/blockquote>$/);
   assert.equal(status.parseMode, 'HTML');
+  // 无选择时不得渲染空的 code 块。
+  const noModel = statusCard({
+    workspaceId: 'workspace-1',
+    sessionId: 'session-1',
+    active: false,
+    interactionPending: false,
+  });
+  assert.match(noModel.text, /模型：未选择/);
   const help = controlCard('help', { message: '可用命令：', detail: '/new' });
   assert.match(help.text, /可用命令/);
   assert.match(help.text, /^<blockquote>/, '控制卡片应为 blockquote 面板');
@@ -122,8 +137,25 @@ test('clears old commands before registering the supported command scopes', asyn
   ]);
   assert.deepEqual(
     TELEGRAM_COMMANDS.map(({ command }) => command),
-    ['new', 'status', 'stop', 'help', 'workspace'],
+    ['new', 'stop', 'help', 'model', 'status', 'workspace'],
   );
+  // 命令按名称长度升序，最长的 /workspace 落在末尾：短命令在前更易扫读。
+  const lengths = TELEGRAM_COMMANDS.map(({ command }) => command.length);
+  assert.deepEqual(
+    lengths,
+    [...lengths].sort((a, b) => a - b),
+    '命令须按名称长度升序',
+  );
+  assert.equal(TELEGRAM_COMMANDS.at(-1).command, 'workspace');
+  // 名称列表由同一来源派生，顺序一致——避免菜单、/help、错误提示三处各维护一份。
+  assert.deepEqual(
+    TELEGRAM_COMMAND_NAMES,
+    TELEGRAM_COMMANDS.map(({ command }) => `/${command}`),
+  );
+  // 每个命令都必须有描述，否则 Telegram 菜单里会显示空白项。
+  for (const { command, description } of TELEGRAM_COMMANDS) {
+    assert.ok(description?.trim(), `${command} 缺少描述`);
+  }
 });
 
 test('renders a workspace selector with the current workspace marked', () => {

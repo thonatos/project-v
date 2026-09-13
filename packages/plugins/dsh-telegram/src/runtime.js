@@ -4,7 +4,7 @@ import { basename, isAbsolute, resolve as resolvePath, sep } from 'node:path';
 import { normalizeConfig, resolveCredentials } from './config.js';
 import { normalizeInboundMessage, splitMessageText } from './transport/inbound.js';
 import { openBindingStore } from './persist.js';
-import { createTelegramClient } from './transport/client.js';
+import { createTelegramClient, TELEGRAM_COMMAND_NAMES } from './transport/client.js';
 import { createTelegramTransport, TELEGRAM_MEDIA_LIMIT } from './transport/transport.js';
 import { StreamSession } from './render/stream.js';
 import {
@@ -12,12 +12,18 @@ import {
   classifyContent,
   controlCard,
   interactionCard,
+  modelListChunks,
   statusCard,
   workspaceCard,
 } from './render/cards.js';
 import { extractLocalImageLinks, extractLocalImagePaths } from './render/local-images.js';
 import { stripImageMarkdown } from './render/html.js';
-import { buildAgentSetup, installAgentBridges, stopAgentTurn } from './agent/integration.js';
+import {
+  buildAgentSetup,
+  installAgentBridges,
+  installAgentModelSelection,
+  stopAgentTurn,
+} from './agent/integration.js';
 
 export class TelegramRuntime {
   #ctx;
@@ -42,6 +48,9 @@ export class TelegramRuntime {
   // 已在其 agent-scoped ctx 上装好桥接（session 事件流/审批/交互）的 sessionId 集合。
   // 「复用已存活 agent」路径不跑 setup，需在此补装；用集合去重避免同一 agent 重复注册。
   #bridged = new Set();
+  // sessionId -> ModelSelectionRef。/model 切换时改写对应 ref 的 current，
+  // 使当前会话的下一个 step 使用新模型（历史保留、不新建 Session）。
+  #selections = new Map();
   #remoteInteractionDisposers = [];
   #stopped = false;
 
@@ -84,6 +93,7 @@ export class TelegramRuntime {
     this.#stopped = true;
     for (const handle of this.#sessionHandles.values()) await handle.dispose?.();
     this.#sessionHandles.clear();
+    this.#selections.clear();
     this.#inflight.clear();
     this.#activeTurns.clear();
     this.#cancelledChats.clear();
@@ -376,14 +386,14 @@ export class TelegramRuntime {
     if (command.name === 'unsupported') {
       await this.#sendControlCard(chatId, 'unsupported', {
         message: '该命令不可用。',
-        detail: '可用命令：/new、/status、/stop、/help、/workspace',
+        detail: `可用命令：${TELEGRAM_COMMAND_NAMES.join('、')}`,
       });
       return;
     }
     if (command.name === 'help') {
       await this.#sendControlCard(chatId, 'help', {
         message: '可用命令：',
-        detail: '/new\n/status\n/stop\n/help\n/workspace',
+        detail: TELEGRAM_COMMAND_NAMES.join('\n'),
       });
       return;
     }
@@ -396,6 +406,7 @@ export class TelegramRuntime {
         workspaceId,
         workspaceTitle: workspace?.title,
         sessionId: handle.agent.id,
+        model: this.#effectiveSelection(handle.agent.id, chatId),
         active: this.#activeTurns.has(chatId),
         interactionPending: Boolean(this.#pendingInteraction(chatId)) || this.#hasPendingApproval(chatId),
       });
@@ -415,12 +426,90 @@ export class TelegramRuntime {
       await this.#sendCard(chatId, card.text, { parseMode: card.parseMode, replyMarkup: card.replyMarkup });
       return;
     }
-    // parseCommand 只产出 new/status/help/workspace/unsupported（均已 return）与 stop
+    if (command.name === 'model') {
+      await this.#runModelCommand(chatId, command.args ?? []);
+      return;
+    }
+    // parseCommand 只产出 new/status/help/workspace/model/unsupported（均已 return）与 stop
     // （在 #handleMessage 的 fast-path 拦截），不会走到这里。
+  }
+
+  // /model：无参数列出目录，恰好两个参数执行切换，其余数量返回用法提示。
+  async #runModelCommand(chatId, args) {
+    if (args.length === 0) {
+      await this.#sendModelList(chatId);
+      return;
+    }
+    if (args.length !== 2) {
+      await this.#sendControlCard(chatId, 'model', {
+        message: '用法不正确。',
+        detail: '/model\n/model <provider> <model>',
+      });
+      return;
+    }
+    await this.#selectModel(chatId, args[0], args[1]);
+  }
+
+  // 模型清单按行分片后逐条发送，每行是一个「点击即复制」的完整 /model 命令。
+  // 不走 #sendCard（不分片）也不走 #sendText（按字符切会劈断 HTML 标签）：
+  // 分片以行为单位在 modelListChunks 内完成，保证每个 <code> 完整落在同一片内。
+  async #sendModelList(chatId) {
+    const handle = this.#sessionHandles.get(this.#bindings.get(chatId)?.sessionId ?? '');
+    const current = this.#effectiveSelection(handle?.agent?.id, chatId);
+    const providers = this.#ctx.llm?.listProviders?.() ?? [];
+    const groups = [];
+    for (const provider of providers) {
+      const id = String(provider?.id ?? provider);
+      try {
+        const models = (await this.#ctx.llm.listModels(id)) ?? [];
+        groups.push({ id, name: provider?.name, models: models.map((entry) => String(entry?.id ?? entry)) });
+      } catch (error) {
+        // 单个 provider 目录失败不得中断整个清单：就地标注并继续列出其余 provider。
+        console.error(`[dsh-telegram] listModels failed for ${id}:`, error);
+        groups.push({ id, name: provider?.name, error: userFacingError(error) });
+      }
+    }
+    for (const chunk of modelListChunks({ current, groups }, this.#config.messageLimit)) {
+      await this.#transport.sendText(chatId, chunk, { parseMode: 'HTML' });
+    }
+  }
+
+  // 切换模型：校验通过后同时改 agent 级 ref（当前会话下一个 step 生效）与持久化绑定
+  // （/new、切 Workspace、resume、重启后继续生效）。校验失败时两者均不动。
+  async #selectModel(chatId, provider, model) {
+    if (!(await this.#isRoutable(provider, model))) {
+      await this.#sendControlCard(chatId, 'model', {
+        message: '该模型不可用，已保持当前选择。',
+        detail: `${provider} ${model}`,
+      });
+      return;
+    }
+    const handle = await this.#sessionFor(chatId);
+    const ref = this.#selections.get(handle.agent.id);
+    if (ref) ref.current = { provider, model };
+    await this.#bindings.set(chatId, { provider, model });
+    await this.#sendControlCard(chatId, 'model', {
+      message: ref ? '已切换模型，当前会话下一轮生效。' : '已切换模型，将在新会话生效。',
+      detail: `${provider} ${model}`,
+    });
+  }
+
+  // 当前实际生效的选择：优先读 agent 级 ref（可能已被 /model 热改），
+  // 回落绑定值。两者在正常路径下一致，但持久化选择失效并回落后会不一致。
+  #effectiveSelection(agentId, chatId) {
+    const ref = agentId ? this.#selections.get(agentId) : undefined;
+    if (ref?.current?.provider && ref.current.model) {
+      return { provider: ref.current.provider, model: ref.current.model };
+    }
+    return boundSelection(this.#bindings.get(chatId)) ?? this.#ctx.agentDefaultModel?.currentSelection?.();
   }
 
   async #sessionFor(chatId) {
     let current = this.#bindings.get(chatId);
+    // 模型选择跟随聊天，而下面有三条分支会 delete 掉整条绑定后重建 Session。
+    // 在任何 delete 之前先取出选择，重建时显式带回；只靠 persist 的 merge 不够，
+    // 因为 delete 之后已无记录可 merge。
+    const carried = boundSelection(current);
     let workspace;
     try {
       workspace = await this.#resolveWorkspace(current?.workspaceId ?? this.#config.workspaceId);
@@ -448,28 +537,27 @@ export class TelegramRuntime {
         this.#sessionHandles.set(current.sessionId, handle);
         // 复用注册表里的裸 agent：setup 不会再跑，必须在其 agent-scoped ctx 上补装桥接，
         // 否则 session/event 不路由到 StreamSession（正文丢失）、审批/交互也收不到。
-        this.#ensureBridges(chatId, live);
+        // 模型选择 ref 同理必须补装，否则 /model 对复用路径上的会话无效。
+        this.#ensureBridges(chatId, live, await this.#resolveSelection(chatId));
         return handle;
       }
+      // resume 失败会删除绑定并重建；模型选择已在函数入口记下（carried）。
       let resumed;
       try {
         // resume 侧与 create 侧一致地传入 agentOptions（provider/model 快照）：
-        // 这是 dsh 官方防止 provider/model 漂移的机制，取代了曾经的 installModelSelection 内联复刻。
-        const selection = this.#ctx.agentDefaultModel?.currentSelection?.();
+        // 这是 dsh 官方防止 provider/model 漂移的机制。快照来源为私聊级选择，
+        // 无私聊级选择时回落 agentDefaultModel.currentSelection()。
+        const selection = await this.#resolveSelection(chatId);
         resumed = await this.#ctx.agents.resume({
           resumeSessionId: current.sessionId,
           ...(selection ? { agentOptions: { provider: selection.provider, model: selection.model } } : {}),
-          setup: this.#buildAgentSetup(chatId),
+          setup: this.#buildAgentSetup(chatId, selection, current.sessionId),
         });
       } catch {
         await this.#bindings.delete(chatId);
         resumed = undefined;
       }
-      if (!resumed) {
-        const handle = await this.#createSession(chatId, workspace);
-        await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: String(workspace.id) });
-        return handle;
-      }
+      if (!resumed) return this.#rebuildSession(chatId, workspace, carried);
       if (String(resumed.agent.session.header.cwd) !== String(workspace.path)) {
         await resumed.dispose();
         await this.#bindings.delete(chatId);
@@ -480,8 +568,18 @@ export class TelegramRuntime {
         return resumed;
       }
     }
-    const handle = await this.#createSession(chatId, workspace);
-    await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: String(workspace.id) });
+    return this.#rebuildSession(chatId, workspace, carried);
+  }
+
+  // 建立新 Session 并写回绑定。carried 为进入本次解析时的模型选择：上游多条分支会
+  // delete 掉整条绑定，因此这里必须显式带回，不能依赖 persist 的 merge。
+  async #rebuildSession(chatId, workspace, carried) {
+    const handle = await this.#createSession(chatId, workspace, carried);
+    await this.#bindings.set(chatId, {
+      sessionId: handle.agent.id,
+      workspaceId: String(workspace.id),
+      ...carried,
+    });
     return handle;
   }
 
@@ -496,9 +594,15 @@ export class TelegramRuntime {
   async #switchWorkspace(chatId, workspaceId) {
     const workspace = await this.#resolveWorkspace(workspaceId);
     const previous = this.#bindings.get(chatId);
-    const handle = await this.#createSession(chatId, workspace);
+    // 模型选择跟随聊天而非 Workspace：新 Session 必须带着当前选择创建。
+    // 绑定侧无需显式带回 —— 该路径不 delete，persist 的 merge 语义已保住这两个字段。
+    const carried = boundSelection(previous);
+    const handle = await this.#createSession(chatId, workspace, carried);
     try {
-      await this.#bindings.set(chatId, { sessionId: handle.agent.id, workspaceId: String(workspace.id) });
+      await this.#bindings.set(chatId, {
+        sessionId: handle.agent.id,
+        workspaceId: String(workspace.id),
+      });
     } catch (error) {
       await handle.dispose?.();
       this.#sessionHandles.delete(handle.agent.id);
@@ -510,8 +614,36 @@ export class TelegramRuntime {
       await previousHandle?.dispose?.();
       this.#sessionHandles.delete(previous.sessionId);
       this.#bridged.delete(previous.sessionId);
+      this.#selections.delete(previous.sessionId);
     }
     return workspace;
+  }
+
+  // 解析本聊天当前应使用的模型选择：私聊级绑定优先，否则回落 dsh 全局默认。
+  // 绑定里的选择若已不可路由，回落全局默认并提示一次（不静默降级）。
+  async #resolveSelection(chatId) {
+    const bound = boundSelection(this.#bindings.get(chatId));
+    if (bound) {
+      if (await this.#isRoutable(bound.provider, bound.model)) return { ...bound };
+      await this.#sendControlCard(chatId, 'model', {
+        message: '已保存的模型当前不可用，已回退到默认模型。',
+        detail: `${bound.provider} ${bound.model}`,
+      }).catch((error) => console.error('[dsh-telegram] stale model notice failed:', error));
+    }
+    const fallback = this.#ctx.agentDefaultModel?.currentSelection?.();
+    return fallback ? { provider: fallback.provider, model: fallback.model } : undefined;
+  }
+
+  // 校验一个 provider/model 路由是否可用。dsh 明确规定模型目录是 advisory 且不控制
+  // 路由，因此校验必须问具体路由（resolveModelInfo），不能用 listModels 当白名单。
+  async #isRoutable(provider, model) {
+    if (typeof this.#ctx.llm?.resolveModelInfo !== 'function') return true;
+    try {
+      await this.#ctx.llm.resolveModelInfo(provider, model);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   // 本插件依赖的 agent-scoped 桥接参数（交互/审批/session 事件流）。
@@ -526,34 +658,47 @@ export class TelegramRuntime {
     };
   }
 
-  // 在已存活 agent 的 agent-scoped ctx 上补装桥接（仅首次；用 #bridged 去重）。
-  #ensureBridges(chatId, agent) {
+  // 在已存活 agent 的 agent-scoped ctx 上补装桥接与模型选择（仅首次；用 #bridged 去重）。
+  #ensureBridges(chatId, agent, selection) {
     const id = agent?.id ?? '';
     if (!id || this.#bridged.has(id)) return;
     const agentCtx = agent?.ctx;
     if (typeof agentCtx?.on !== 'function') return;
     installAgentBridges(agentCtx, this.#bridgeArgs(chatId));
+    this.#installSelection(agentCtx, id, selection);
     this.#bridged.add(id);
   }
 
+  // 安装 agent 级可变模型选择，并登记 ref 供 /model 热切换写入。
+  // 这是「切换后当前会话立刻生效」的唯一机制，细节见 agent/integration.js。
+  #installSelection(agentCtx, agentId, selection) {
+    if (!agentId) return;
+    const ref = installAgentModelSelection(agentCtx, selection);
+    if (ref) this.#selections.set(String(agentId), ref);
+  }
+
   // 构造 agent 的 setup 回调，create 与 resume 共用。具体注入逻辑见 agent/integration.js。
-  // provider/model 一致性由 create/resume 两侧的 agentOptions 保证，setup 不再管 selection。
-  // preset 通过官方 ctx.agentPresets.mount 挂载。
-  #buildAgentSetup(chatId) {
+  // agentOptions 提供创建时的初始快照，ModelSelectionRef 提供后续 step 的可变来源；
+  // 两者由同一个 selection 值喂入以保持同源。preset 通过官方 ctx.agentPresets.mount 挂载。
+  // sessionId 由调用方给出（create 侧自行生成、resume 侧即 resumeSessionId），
+  // 因为 setup 在 agent 发布前执行，不能依赖 agent 参数一定带 id。
+  #buildAgentSetup(chatId, selection, sessionId) {
     const presets = this.#ctx.agentPresets;
     return buildAgentSetup({
       mountPreset: presets?.mount ? (agentCtx) => presets.mount(agentCtx, undefined) : undefined,
+      installSelection: (agentCtx, agent) => this.#installSelection(agentCtx, agent?.id ?? sessionId, selection),
       ...this.#bridgeArgs(chatId),
     });
   }
 
-  async #createSession(chatId, workspace) {
-    const selection = this.#ctx.agentDefaultModel?.currentSelection?.();
+  async #createSession(chatId, workspace, selection) {
+    const resolved = selection ?? (await this.#resolveSelection(chatId));
+    const sessionId = `telegram-${randomUUID()}`;
     const handle = await this.#ctx.agents.create({
-      sessionId: `telegram-${randomUUID()}`,
+      sessionId,
       meta: { cwd: workspace.path },
-      ...(selection ? { agentOptions: { provider: selection.provider, model: selection.model } } : {}),
-      setup: this.#buildAgentSetup(chatId),
+      ...(resolved ? { agentOptions: { provider: resolved.provider, model: resolved.model } } : {}),
+      setup: this.#buildAgentSetup(chatId, resolved, sessionId),
     });
     try {
       await workspace.attachSession(handle.agent.id);
@@ -848,11 +993,25 @@ function capitalize(value) {
   return value[0].toUpperCase() + value.slice(1);
 }
 
+// 从绑定中取出完整的私聊级模型选择。两个字段必须同时存在才算有效选择，
+// 半截记录（只有 provider 或只有 model）视为无选择，交由全局默认接管。
+function boundSelection(binding) {
+  if (!binding?.provider || !binding?.model) return undefined;
+  return { provider: String(binding.provider), model: String(binding.model) };
+}
+
+// 解析控制命令。/model 是第一个接受参数的命令，因此返回值除 name 外还携带 args；
+// 其余命令沿用「带参数即 unsupported」的既有行为。
 function parseCommand(text) {
-  const match = /^\/(new|status|stop|help|workspace)(?:@[^\s]+)?(?:\s+(.*))?$/i.exec(text.trim());
+  const match = /^\/(new|status|stop|help|workspace|model)(?:@[^\s]+)?(?:\s+([\s\S]*))?$/i.exec(text.trim());
   if (!match) return text.trim().startsWith('/') ? { name: 'unsupported' } : null;
   const name = match[1].toLowerCase();
-  if (name === 'workspace' && match[2]?.trim()) return { name: 'unsupported' };
+  const rest = match[2]?.trim() ?? '';
+  if (name === 'model') {
+    // 按空白切分。model id 不含空白，因此「恰好两段」即 provider + model，无歧义。
+    return { name, args: rest ? rest.split(/\s+/) : [] };
+  }
+  if (name === 'workspace' && rest) return { name: 'unsupported' };
   return { name };
 }
 

@@ -1,3 +1,5 @@
+import { installModelSelection } from '@deepseek-ai/dsh-agent';
+
 export function installInteractionBridge(agentCtx, { onRequested, onResolved }) {
   if (typeof agentCtx?.on !== 'function') return;
   agentCtx.on('interaction/requested', onRequested);
@@ -37,6 +39,26 @@ export function installSessionStream(agentCtx, onEvent) {
   agentCtx.on('session/event', (_session, event) => onEvent(event));
 }
 
+// 安装 agent 级可变模型选择（@deepseek-ai/dsh-agent `installModelSelection`）。
+//
+// 这是「/model 切换后当前会话立刻生效」的唯一机制：官方在 prompt assembly 前快照
+// ref.current，因此并发切换落在后续 step 而非撕裂正在进行的请求；provider/model 变化时
+// 官方还会向下次请求追加一条 durable user-role 通知，让模型自己知道换过。
+//
+// 历史说明：本插件曾内联复刻过一份 installModelSelection，2026-08-25 的重构将其删除并
+// 改用 agentOptions —— 删掉的是「手写复刻」（复刻会与官方实现漂移，该结论至今仍然成立
+// 且被遵守），而非「这个机制本身」。当时也没有热切换需求，创建时的快照足够。
+// 现在需求变了，因此引入官方导出的正品：只导入这一个符号，把耦合面压到最小。
+//
+// agentOptions 与本 ref 的分工：前者是创建时的初始快照，后者是后续 step 的可变来源。
+// 两者必须由同一个 selection 值喂入，否则会出现「首轮用 A、次轮莫名换 B」。
+export function installAgentModelSelection(agentCtx, selection) {
+  if (typeof agentCtx?.on !== 'function') return undefined;
+  const ref = { current: selection ? { ...selection } : undefined, assembled: undefined };
+  installModelSelection(agentCtx, ref);
+  return ref;
+}
+
 export async function stopAgentTurn(agent) {
   // Harness agent 的真实停止 API 是同步的 cancel(cause, options)，返回 void。
   // 参考 @deepseek-ai/dsh-agent runtime-types.d.ts:
@@ -74,16 +96,27 @@ export function installAgentBridges(
   installSessionStream(agentCtx, onSessionEvent);
 }
 
-// 不再需要 installModelSelection 的双 waterfall 内联复刻（快照一致性交给 agentOptions）。
+// 组装 agent 的 setup 回调，create 与 resume 共用。
+// 关键职责：注入交互桥、session 事件流、agent 级模型选择，并挂载默认 preset。
+// 缺少 preset.mount 时 agent 作用域没有任何工具 → 请求 tools=[] → DeepSeek 适配器
+// 不发 tools → 模型把工具调用裸写成 <｜｜DSML｜｜...> 文本泄漏进正文。
+// 参考 web 入口 dsh-host-apiproxy 的 composeAgent。
+//
+// 创建时的 provider/model 快照由 create/resume 两侧统一传入的 agentOptions 保证（官方机制）；
+// 后续 step 的可变来源由 installSelection 安装的 ModelSelectionRef 提供，两者同源。
+// create/resume 的 setup 与「复用已存活 agent」两条路径共用：后者拿到的是注册表里的
+// 裸 Agent（ctx.agents.get），setup 不会再跑，必须显式在 live.ctx 上补装这些桥接与选择，
+// 否则 session/event 不会路由到 StreamSession（正文整段丢失）、审批收不到、/model 也无效。
 export function buildAgentSetup({
   mountPreset,
+  installSelection,
   onInteractionRequested,
   onInteractionResolved,
   onUserQuestionsRequested,
   onApprovalRequested,
   onSessionEvent,
 }) {
-  return async (agentCtx) => {
+  return async (agentCtx, agent) => {
     // preset 可能注册自己的 prepend 审批答复者（例如 Web UI）。先完成 mount，再注册
     // Telegram 的 prepend bridge，确保它位于该 agent 的 waterfall 最外层。
     if (mountPreset) await mountPreset(agentCtx);
@@ -94,5 +127,6 @@ export function buildAgentSetup({
       onApprovalRequested,
       onSessionEvent,
     });
+    installSelection?.(agentCtx, agent);
   };
 }
