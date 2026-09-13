@@ -98,7 +98,7 @@ window.__ModuleLoader__.load({
     var h = React.createElement;
     var SETTINGS_NAMESPACE = 'dsh-telegram';
     var STYLE_ID = 'implementsio-dsh-telegram-settings';
-    var PLUGIN_VERSION = '0.3.1';
+    var PLUGIN_VERSION = '0.4.0';
     var inject = ['remote', 'remote.credentials', 'slots', 'settingsScope', 'workspaces'];
     var styles = `
 .dsh-tg-card{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;list-style:none;transition:border-color .16s,background .16s}.dsh-tg-card:hover{border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-card-open{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-label-dimmed)}
