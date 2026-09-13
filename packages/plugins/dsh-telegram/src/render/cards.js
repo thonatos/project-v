@@ -104,7 +104,7 @@ export function approvalCard(id, { toolName, reason } = {}) {
   };
 }
 
-export function statusCard({ workspaceId, workspaceTitle, sessionId, active, interactionPending }) {
+export function statusCard({ workspaceId, workspaceTitle, sessionId, model, active, interactionPending }) {
   return panel('📱 Telegram 状态', [
     field('连接', active ? '🟢 运行中' : '⚪ 空闲'),
     field(
@@ -112,9 +112,73 @@ export function statusCard({ workspaceId, workspaceTitle, sessionId, active, int
       `${workspaceTitle ? `${escapeHtml(workspaceTitle)} ` : ''}<code>${escapeHtml(workspaceId)}</code>`,
     ),
     field('Session', `<code>${escapeHtml(sessionId)}</code>`),
+    field(
+      '模型',
+      model?.provider && model?.model ? `<code>${escapeHtml(`${model.provider} ${model.model}`)}</code>` : '未选择',
+    ),
     field('任务', active ? '执行中' : '无活动任务'),
     field('交互', interactionPending ? '等待操作' : '无待处理交互'),
   ]);
+}
+
+// 模型清单：分组 + 每行一个「点击即复制」的完整命令。
+//
+// 不用单个 blockquote 包裹整张清单：清单长度不可预测（聚合类 provider 可报上百个模型），
+// 而从中间切开会劈断标签。改为按行组装、按行分片，每行的 <code> 自成闭合单元，
+// 因此任意分片边界都落在行与行之间，标签永不断裂。
+//
+// 每行渲染成 <code>/model &lt;provider&gt; &lt;model&gt;</code>：Telegram 的 code 实体
+// 点一下就整段复制，复制出来的正好是可直接发送的命令，无需手工拼接。
+// provider 因此在每行重复，但那是「一行即一条可用命令」的必要代价。
+export function modelListChunks({ current, groups = [] }, limit = 4096) {
+  const lines = ['<b>🧠 模型</b>', ''];
+  lines.push(
+    current?.provider && current?.model
+      ? `当前 · <code>${escapeHtml(`${current.provider} ${current.model}`)}</code>`
+      : '当前 · 未选择',
+  );
+  if (groups.length === 0) {
+    lines.push('', '没有可用 provider。请先在 dsh 中配置至少一个 provider。');
+    return chunkLines(lines, limit);
+  }
+  for (const group of groups) {
+    const id = String(group.id);
+    lines.push('');
+    // provider 标题用其展示名（更好读），后接 id 供辨识；两者相同时不重复。
+    const title = group.name && group.name !== id ? `${escapeHtml(group.name)} · ${escapeHtml(id)}` : escapeHtml(id);
+    lines.push(`<b>${title}</b>`);
+    if (group.error) {
+      lines.push(`  ⚠️ 目录不可用：${escapeHtml(group.error)}`);
+      continue;
+    }
+    if (!group.models || group.models.length === 0) {
+      lines.push('  没有已登记的模型。');
+      continue;
+    }
+    for (const model of group.models) {
+      const value = `${id} ${String(model)}`;
+      const isCurrent = current?.provider === id && String(current?.model) === String(model);
+      lines.push(`${isCurrent ? '✓' : ' '} <code>/model ${escapeHtml(value)}</code>`);
+    }
+  }
+  return chunkLines(lines, limit);
+}
+
+// 按行累积成不超过 limit 的分片。以行为最小单位，保证每个 <code> 完整落在同一片内。
+function chunkLines(lines, limit) {
+  const chunks = [];
+  let buffer = '';
+  for (const line of lines) {
+    const candidate = buffer ? `${buffer}\n${line}` : line;
+    if (candidate.length > limit && buffer) {
+      chunks.push(buffer);
+      buffer = line;
+      continue;
+    }
+    buffer = candidate;
+  }
+  if (buffer) chunks.push(buffer);
+  return chunks;
 }
 
 export function workspaceCard(workspaces, currentWorkspaceId) {
@@ -150,6 +214,7 @@ export function controlCard(command, { message, detail } = {}) {
     stop: '🛑 停止任务',
     help: '❓ 帮助',
     workspace: '🗂 Workspace',
+    model: '🧠 模型',
     unsupported: '⚠️ 不支持的命令',
   };
   return panel(labels[command] ?? '控制命令', [

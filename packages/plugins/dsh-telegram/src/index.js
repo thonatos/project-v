@@ -8,6 +8,7 @@ export const inject = [
   'agents',
   'agentDefaultModel',
   'agentPresets',
+  'llm',
   'workspaceRegistry',
   'attachments',
   'storageDomain',

@@ -2,13 +2,23 @@ import { Bot } from 'node-telegram-bot-api';
 import nodeFetch from 'node-fetch';
 import { ProxyAgent } from 'proxy-agent';
 
-export const TELEGRAM_COMMANDS = [
+// 命令清单的唯一来源：Telegram 命令菜单、/help 与「不支持的命令」提示都由它派生，
+// 避免像过去那样在三处各维护一份（加 /model 时就得同时改三个地方）。
+// 顺序按命令名长度升序，同长度保持下方声明顺序（Array.sort 自 ES2019 起保证稳定）：
+// 短命令在前更易扫读，最长的 /workspace 自然落到末尾。
+const COMMAND_DEFINITIONS = [
   { command: 'new', description: '新建会话' },
   { command: 'status', description: '查看当前状态' },
   { command: 'stop', description: '停止当前任务' },
   { command: 'help', description: '查看帮助' },
   { command: 'workspace', description: '选择或切换 Workspace' },
+  { command: 'model', description: '查看或切换模型' },
 ];
+
+export const TELEGRAM_COMMANDS = [...COMMAND_DEFINITIONS].sort((a, b) => a.command.length - b.command.length);
+
+// `/new`、`/stop` … 形式的命令名列表，供帮助与错误提示复用，顺序同上。
+export const TELEGRAM_COMMAND_NAMES = TELEGRAM_COMMANDS.map(({ command }) => `/${command}`);
 
 export const TELEGRAM_COMMAND_SCOPES = [
   { type: 'all_private_chats' },
