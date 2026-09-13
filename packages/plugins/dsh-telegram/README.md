@@ -2,7 +2,7 @@
 
 Telegram Bot private-chat plugin for DeepSeek Harness.
 
-Version `0.3.1` targets dsh `0.1.5-rc.1` and pins `node-telegram-bot-api` `2.1.0` (Bot API 10.3). The plugin continues to use standard text editing and media methods for streaming compatibility; the SDK's rich-message, ephemeral-message, disabled-button, and generation-stop additions are available for future transport features but do not change current message behavior.
+Version `0.4.0` targets dsh `0.1.5-rc.1` and pins `node-telegram-bot-api` `2.1.0` (Bot API 10.3). The plugin continues to use standard text editing and media methods for streaming compatibility; the SDK's rich-message, ephemeral-message, disabled-button, and generation-stop additions are available for future transport features but do not change current message behavior.
 
 `@deepseek-ai/dsh-agent` is pinned to the exact dsh core version (`0.1.5-rc.1`) rather than a range, because the plugin imports `installModelSelection` from it to switch a live Session's model. That version is an rc, so the symbol's signature may move; bump both together. It is the only symbol imported from that package, keeping the coupling surface minimal.
 
