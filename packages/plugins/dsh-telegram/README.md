@@ -53,6 +53,21 @@ Commands are defined in one place (`COMMAND_DEFINITIONS` in `src/transport/clien
 
 Switching Workspace creates a new Session in that Workspace and persists the chat binding. The configured `workspaceId` remains the default when the chat has no valid binding. Unknown, unregistered, or unavailable Workspaces are rejected without changing the existing binding.
 
+## Language
+
+Every piece of chat copy lives in `src/i18n/messages.js`: the command-menu descriptions, the cards (`/status`, `/model`, `/workspace`, approval, question, control, streaming tool status), control-command receipts, callback toasts, and the `userFacingError` fallback. Three locales ship — `zh` (base and default), `en`, and `ru`.
+
+Pick one in the plugin settings row (the Language select) or directly in the plugin config:
+
+```yaml
+dsh-telegram:
+  language: ru
+```
+
+The default remains `zh`, so an existing deployment reads exactly as before localization. `zh` is also the fallback table: a key missing from another locale renders the Chinese copy instead of an empty string, and an unknown key renders as the key itself, so a template and its call site cannot drift silently. Regional tags (`ru-RU`, `zh-CN`) normalize to their primary language, and an unregistered language falls back to `zh`.
+
+Adding a locale means adding one catalog to `MESSAGES`; the test suite asserts that every locale carries exactly the base key set with identical `{placeholder}` names. The render helpers in `src/render/cards.js` and `StreamSession` take the translator as their last optional argument and default to the base language, so they stay usable standalone. Telegram command descriptions are registered with the menu, and the plugin's settings row already applies with `restart`, so switching language rebuilds the connection and re-registers the menu in the new language.
+
 ## Model Selection
 
 `/model` has two forms:

@@ -235,6 +235,7 @@ window.__ModuleLoader__.load({
         try {
           const values = {
             enabled: Boolean(draft.enabled),
+            language: draft.language ?? 'zh',
             workspaceId: draft.workspaceId ?? '',
             ownerUserId: draft.ownerUserId ?? '',
             messageLimit: Number(draft.messageLimit),
@@ -386,6 +387,33 @@ window.__ModuleLoader__.load({
                         onChange: (value) => update('ownerUserId', value),
                       }),
                       h('h4', { className: 'dsh-tg-section-title' }, '\u6D88\u606F\u8BBE\u7F6E'),
+                      h(
+                        'div',
+                        { className: 'dsh-tg-field' },
+                        h(
+                          'label',
+                          { className: 'dsh-tg-label', htmlFor: `${prefix}-language` },
+                          '\u8BED\u8A00 / Language',
+                        ),
+                        h(
+                          'select',
+                          {
+                            id: `${prefix}-language`,
+                            className: 'dsh-tg-select',
+                            // 选项各自用本语言书写，便于在任意界面语言下辨认。
+                            value: draft.language ?? 'zh',
+                            onChange: (event) => update('language', event.target.value),
+                          },
+                          h('option', { value: 'zh' }, '\u4E2D\u6587'),
+                          h('option', { value: 'en' }, 'English'),
+                          h('option', { value: 'ru' }, '\u0420\u0443\u0441\u0441\u043A\u0438\u0439'),
+                        ),
+                        h(
+                          'p',
+                          { className: 'dsh-tg-hint' },
+                          '\u804A\u5929\u4E0E\u547D\u4EE4\u83DC\u5355\u7684\u8BED\u8A00\uFF1B\u4FDD\u5B58\u540E\u91CD\u5EFA Telegram \u8FDE\u63A5\u3002',
+                        ),
+                      ),
                       h(Field, {
                         id: `${prefix}-limit`,
                         label: '\u6D88\u606F\u957F\u5EA6\u4E0A\u9650',

@@ -1,5 +1,9 @@
+import { translate } from '../i18n/index.js';
 import { escapeHtml } from './html.js';
 
+// 所有面向用户的文案都取自 i18n 目录（见 ../i18n/messages.js）；渲染函数把
+// translator 作为最后一个可选参数，未传入时使用默认语言（zh），既有调用点与测试不变。
+//
 // 统一的「卡片」外观：Telegram HTML 不支持表格/边框，用 <blockquote> 渲染成
 // 左侧带竖线的引用块，得到最接近面板且在窄屏/长文本下不崩的效果。
 // title 会加粗；lines 为已就绪的内容行（调用方负责对动态值做 escapeHtml）。
@@ -13,8 +17,9 @@ function panel(title, lines = []) {
 }
 
 // 「标签：值」一行。value 已是就绪 HTML（动态段由调用方 escapeHtml）。
-function field(label, value) {
-  return `${label}：${value}`;
+// 分隔符随语言变化（中文全角冒号、西文半角冒号），因此整行也是目录里的一条模板。
+function field(label, value, t = translate) {
+  return t('common.field', { label, value });
 }
 
 const MEDIA_TYPES = new Map([
@@ -44,23 +49,23 @@ export function classifyContent(content) {
   });
 }
 
-export function toolCardText(block) {
-  const name = block?.toolName ?? block?.name ?? '工具';
-  const status = block?.status ?? (block?.type === 'tool_error' ? '失败' : '执行中');
+export function toolCardText(block, t = translate) {
+  const name = block?.toolName ?? block?.name ?? t('tool.name.fallback');
+  const status = block?.status ?? (block?.type === 'tool_error' ? t('tool.status.failed') : t('tool.status.running'));
   const summary = block?.summary ?? block?.text ?? '';
   return `[${status}] ${name}${summary ? `\n${summary}` : ''}`;
 }
 
-export function interactionCard(interaction) {
+export function interactionCard(interaction, t = translate) {
   const payload = interaction?.payload ?? {};
   if (interaction?.kind === 'approval') {
     return {
-      text: payload.prompt ?? payload.message ?? '需要审批才能继续。',
+      text: payload.prompt ?? payload.message ?? t('approval.prompt.fallback'),
       replyMarkup: {
         inline_keyboard: [
           [
-            { text: '批准', callback_data: `dsh:approval:${interaction.id}:approve` },
-            { text: '拒绝', callback_data: `dsh:approval:${interaction.id}:reject` },
+            { text: t('approval.button.approve'), callback_data: `dsh:approval:${interaction.id}:approve` },
+            { text: t('approval.button.reject'), callback_data: `dsh:approval:${interaction.id}:reject` },
           ],
         ],
       },
@@ -70,7 +75,7 @@ export function interactionCard(interaction) {
   const question = questions[0] ?? payload;
   const options = Array.isArray(question.options) ? question.options : [];
   return {
-    text: question.question ?? question.header ?? '请选择一个选项。',
+    text: question.question ?? question.header ?? t('question.prompt.fallback'),
     replyMarkup: {
       inline_keyboard: options.map((option, index) => [
         {
@@ -85,39 +90,52 @@ export function interactionCard(interaction) {
 // 审批卡片：dsh-user-approval `approval/request` 到达时渲染成带「批准/拒绝」按钮的
 // 面板。callback_data 用 `dsh:approval:<id>:approve|reject`，与 #handleCallbackQuery
 // 的解析格式一致。toolName/reason 为动态值，转义后再拼入。
-export function approvalCard(id, { toolName, reason } = {}) {
-  const lines = [field('工具', `<code>${escapeHtml(toolName ?? '未知')}</code>`)];
-  if (reason) lines.push(field('原因', escapeHtml(String(reason))));
-  lines.push('需要你的批准才能继续。');
-  const panelCard = panel('🔐 审批请求', lines);
+export function approvalCard(id, { toolName, reason } = {}, t = translate) {
+  const lines = [
+    field(t('approval.card.tool'), `<code>${escapeHtml(toolName ?? t('approval.card.toolUnknown'))}</code>`, t),
+  ];
+  if (reason) lines.push(field(t('approval.card.reason'), escapeHtml(String(reason)), t));
+  lines.push(t('approval.card.hint'));
+  const panelCard = panel(t('approval.card.title'), lines);
   return {
     text: panelCard.text,
     parseMode: panelCard.parseMode,
     replyMarkup: {
       inline_keyboard: [
         [
-          { text: '批准', callback_data: `dsh:approval:${id}:approve` },
-          { text: '拒绝', callback_data: `dsh:approval:${id}:reject` },
+          { text: t('approval.button.approve'), callback_data: `dsh:approval:${id}:approve` },
+          { text: t('approval.button.reject'), callback_data: `dsh:approval:${id}:reject` },
         ],
       ],
     },
   };
 }
 
-export function statusCard({ workspaceId, workspaceTitle, sessionId, model, active, interactionPending }) {
-  return panel('📱 Telegram 状态', [
-    field('连接', active ? '🟢 运行中' : '⚪ 空闲'),
+export function statusCard(
+  { workspaceId, workspaceTitle, sessionId, model, active, interactionPending },
+  t = translate,
+) {
+  return panel(t('status.card.title'), [
+    field(t('status.card.connection'), active ? t('status.card.connection.live') : t('status.card.connection.idle'), t),
     field(
-      'Workspace',
+      t('status.card.workspace'),
       `${workspaceTitle ? `${escapeHtml(workspaceTitle)} ` : ''}<code>${escapeHtml(workspaceId)}</code>`,
+      t,
     ),
-    field('Session', `<code>${escapeHtml(sessionId)}</code>`),
+    field(t('status.card.session'), `<code>${escapeHtml(sessionId)}</code>`, t),
     field(
-      '模型',
-      model?.provider && model?.model ? `<code>${escapeHtml(`${model.provider} ${model.model}`)}</code>` : '未选择',
+      t('status.card.model'),
+      model?.provider && model?.model
+        ? `<code>${escapeHtml(`${model.provider} ${model.model}`)}</code>`
+        : t('status.card.model.none'),
+      t,
     ),
-    field('任务', active ? '执行中' : '无活动任务'),
-    field('交互', interactionPending ? '等待操作' : '无待处理交互'),
+    field(t('status.card.task'), active ? t('status.card.task.running') : t('status.card.task.idle'), t),
+    field(
+      t('status.card.interaction'),
+      interactionPending ? t('status.card.interaction.pending') : t('status.card.interaction.idle'),
+      t,
+    ),
   ]);
 }
 
@@ -130,15 +148,15 @@ export function statusCard({ workspaceId, workspaceTitle, sessionId, model, acti
 // 每行渲染成 <code>/model &lt;provider&gt; &lt;model&gt;</code>：Telegram 的 code 实体
 // 点一下就整段复制，复制出来的正好是可直接发送的命令，无需手工拼接。
 // provider 因此在每行重复，但那是「一行即一条可用命令」的必要代价。
-export function modelListChunks({ current, groups = [] }, limit = 4096) {
-  const lines = ['<b>🧠 模型</b>', ''];
+export function modelListChunks({ current, groups = [] }, limit = 4096, t = translate) {
+  const lines = [`<b>${t('model.list.title')}</b>`, ''];
   lines.push(
     current?.provider && current?.model
-      ? `当前 · <code>${escapeHtml(`${current.provider} ${current.model}`)}</code>`
-      : '当前 · 未选择',
+      ? t('model.list.current', { model: escapeHtml(`${current.provider} ${current.model}`) })
+      : t('model.list.current.none'),
   );
   if (groups.length === 0) {
-    lines.push('', '没有可用 provider。请先在 dsh 中配置至少一个 provider。');
+    lines.push('', t('model.list.empty'));
     return chunkLines(lines, limit);
   }
   for (const group of groups) {
@@ -148,11 +166,11 @@ export function modelListChunks({ current, groups = [] }, limit = 4096) {
     const title = group.name && group.name !== id ? `${escapeHtml(group.name)} · ${escapeHtml(id)}` : escapeHtml(id);
     lines.push(`<b>${title}</b>`);
     if (group.error) {
-      lines.push(`  ⚠️ 目录不可用：${escapeHtml(group.error)}`);
+      lines.push(t('model.list.group.error', { error: escapeHtml(group.error) }));
       continue;
     }
     if (!group.models || group.models.length === 0) {
-      lines.push('  没有已登记的模型。');
+      lines.push(t('model.list.group.empty'));
       continue;
     }
     for (const model of group.models) {
@@ -181,12 +199,16 @@ function chunkLines(lines, limit) {
   return chunks;
 }
 
-export function workspaceCard(workspaces, currentWorkspaceId) {
+export function workspaceCard(workspaces, currentWorkspaceId, t = translate) {
   const lines = workspaces.map((workspace) => {
     const current = String(workspace.id) === String(currentWorkspaceId);
-    return `${current ? '●' : '○'} ${escapeHtml(workspace.title)}：<code>${escapeHtml(workspace.id)}</code>`;
+    return t('workspace.card.line', {
+      marker: current ? '●' : '○',
+      title: escapeHtml(workspace.title),
+      id: escapeHtml(workspace.id),
+    });
   });
-  const card = panel('🗂 Workspace', lines.length > 0 ? lines : ['没有已登记的 Workspace。']);
+  const card = panel(t('workspace.card.title'), lines.length > 0 ? lines : [t('workspace.card.empty')]);
   return {
     ...card,
     replyMarkup: {
@@ -208,29 +230,41 @@ export function workspaceCard(workspaces, currentWorkspaceId) {
   };
 }
 
-export function controlCard(command, { message, detail } = {}) {
+export function controlCard(command, { message, detail } = {}, t = translate) {
   const labels = {
-    new: '🆕 新会话',
-    stop: '🛑 停止任务',
-    help: '❓ 帮助',
-    workspace: '🗂 Workspace',
-    model: '🧠 模型',
-    unsupported: '⚠️ 不支持的命令',
+    new: 'control.new',
+    stop: 'control.stop',
+    help: 'control.help',
+    workspace: 'control.workspace',
+    model: 'control.model',
+    unsupported: 'control.unsupported',
   };
-  return panel(labels[command] ?? '控制命令', [
+  return panel(labels[command] ? t(labels[command]) : t('control.card.title'), [
     message ? escapeHtml(message) : '',
     detail ? `<code>${escapeHtml(detail)}</code>` : '',
   ]);
 }
 
 // 每轮共用一张临时工具状态卡，避免每次调用都在聊天中留下过程消息。
-export function toolCard(name, phase, error, { completed = 0, active = 0 } = {}) {
-  const label = escapeHtml(name ?? '工具');
+export function toolCard(name, phase, error, { completed = 0, active = 0 } = {}, t = translate) {
+  const label = escapeHtml(name ?? t('tool.name.fallback'));
   if (phase === 'error') {
-    const detail = error?.name ? `：${escapeHtml(String(error.name))}` : '';
-    return panel('❌ 工具执行失败', [field('工具', `<code>${label}</code>`), `状态：失败${detail}`]).text;
+    const detail = error?.name ? t('tool.card.errorDetail', { name: escapeHtml(String(error.name)) }) : '';
+    return panel(t('tool.card.error.title'), [
+      field(t('tool.card.field.tool'), `<code>${label}</code>`, t),
+      t('tool.card.status.failed', { detail }),
+    ]).text;
   }
-  const progress = `${completed} 个工具调用已完成${active > 1 ? ` · ${active} 个执行中` : ''}`;
-  if (phase === 'done') return panel('🔧 任务执行中', [field('进度', progress), '正在整理结果…']).text;
-  return panel('🔧 任务执行中', [field('当前', `<code>${label}</code>`), field('进度', progress)]).text;
+  const progress = t('tool.card.progress', {
+    completed,
+    active: active > 1 ? t('tool.card.progress.active', { active }) : '',
+  });
+  if (phase === 'done') {
+    return panel(t('tool.card.title'), [field(t('tool.card.field.progress'), progress, t), t('tool.card.finishing')])
+      .text;
+  }
+  return panel(t('tool.card.title'), [
+    field(t('tool.card.field.current'), `<code>${label}</code>`, t),
+    field(t('tool.card.field.progress'), progress, t),
+  ]).text;
 }

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile, realpath } from 'node:fs/promises';
 import { basename, isAbsolute, resolve as resolvePath, sep } from 'node:path';
 import { normalizeConfig, resolveCredentials } from './config.js';
+import { createTranslator, translate } from './i18n/index.js';
 import { normalizeInboundMessage, splitMessageText } from './transport/inbound.js';
 import { openBindingStore } from './persist.js';
 import { createTelegramClient, TELEGRAM_COMMAND_NAMES } from './transport/client.js';
@@ -28,6 +29,8 @@ import {
 export class TelegramRuntime {
   #ctx;
   #config;
+  // 聊天文案翻译器：由 config.language 建立，贯穿卡片、命令回执与错误兜底。
+  #t;
   #credentials;
   #workspaceRegistry;
   #storageDomain;
@@ -57,6 +60,7 @@ export class TelegramRuntime {
   constructor(ctx, config, { createClient = createTelegramClient, openStore = openBindingStore } = {}) {
     this.#ctx = ctx;
     this.#config = normalizeConfig(config);
+    this.#t = createTranslator(this.#config.language);
     this.#credentials = ctx.credentials;
     this.#workspaceRegistry = ctx.workspaceRegistry;
     // 会话绑定持久化走 dsh 官方 storage 子系统（ctx.storageDomain），由 backend
@@ -79,6 +83,8 @@ export class TelegramRuntime {
       ...credentials,
       ownerUserId: this.#config.ownerUserId,
       proxy: this.#config.proxy,
+      // 命令菜单描述与聊天文案同语言（Telegram 侧的命令列表在注册时定稿）。
+      t: this.#t,
       onMessage: (event) => this.#handleMessage(event),
       onCallbackQuery: (event) => this.#handleCallbackQuery(event),
     });
@@ -194,11 +200,11 @@ export class TelegramRuntime {
     try {
       value = encodedValue ? decodeURIComponent(encodedValue) : '';
     } catch {
-      await this.#transport.answerCallback(callback.id, '该操作无效。');
+      await this.#transport.answerCallback(callback.id, this.#t('callback.invalid'));
       return;
     }
     if (prefix !== 'dsh' || !kind || !interactionId || !value) {
-      await this.#transport.answerCallback(callback.id, '该操作无效。');
+      await this.#transport.answerCallback(callback.id, this.#t('callback.invalid'));
       return;
     }
     if (kind === 'workspace' && interactionId === 'select') {
@@ -206,40 +212,46 @@ export class TelegramRuntime {
       try {
         workspace = await this.#switchWorkspace(String(callback.chatId), value);
       } catch {
-        await this.#transport.answerCallback(callback.id, 'Workspace 不存在或不可用。');
+        await this.#transport.answerCallback(callback.id, this.#t('callback.workspaceUnavailable'));
         return;
       }
       await this.#transport
         .editCard(callback.chatId, callback.messageId, { inline_keyboard: [] })
         .catch((error) => console.error('[dsh-telegram] workspace card cleanup failed:', error));
-      await this.#transport.answerCallback(callback.id, `已切换到 ${workspace.title}`);
+      await this.#transport.answerCallback(
+        callback.id,
+        this.#t('callback.workspaceSwitched', { title: workspace.title }),
+      );
       return;
     }
     // 审批点击：settle 对应的挂起 answerer。approval 走 #approvals，与 interaction 分离。
     if (kind === 'approval') {
       const approval = this.#approvals.get(interactionId);
       if (!approval || approval.chatId !== String(callback.chatId)) {
-        await this.#transport.answerCallback(callback.id, '该审批已失效或已被处理。');
+        await this.#transport.answerCallback(callback.id, this.#t('callback.approvalExpired'));
         return;
       }
       const outcome = value === 'approve' ? 'allowed-once' : 'rejected';
       approval.settle(outcome);
-      await this.#transport.answerCallback(callback.id, value === 'approve' ? '已批准' : '已拒绝');
+      await this.#transport.answerCallback(
+        callback.id,
+        value === 'approve' ? this.#t('callback.approved') : this.#t('callback.rejected'),
+      );
       return;
     }
     const interaction = this.#interactions.get(interactionId);
     if (!interaction || interaction.chatId !== String(callback.chatId)) {
-      await this.#transport.answerCallback(callback.id, '该交互已失效或已被处理。');
+      await this.#transport.answerCallback(callback.id, this.#t('callback.interactionExpired'));
       return;
     }
     try {
       const resolvedValue = kind === 'question' ? interaction.values?.[Number(value)] : value;
       if (kind === 'question' && resolvedValue === undefined) throw new Error('question option is unavailable');
       await this.#respondToInteraction(interaction, { kind, value: resolvedValue });
-      await this.#transport.answerCallback(callback.id, '已提交');
+      await this.#transport.answerCallback(callback.id, this.#t('callback.submitted'));
     } catch (error) {
       console.error('[dsh-telegram] interaction response failed:', error);
-      await this.#transport.answerCallback(callback.id, '提交失败，请稍后重试。');
+      await this.#transport.answerCallback(callback.id, this.#t('callback.submitFailed'));
     }
   }
 
@@ -278,6 +290,7 @@ export class TelegramRuntime {
         transport: this.#transport,
         chatId,
         limit: this.#config.messageLimit,
+        t: this.#t,
       });
       this.#streams.set(chatId, stream);
       if (this.#cancelledChats.has(chatId)) return;
@@ -318,7 +331,7 @@ export class TelegramRuntime {
       }
     } catch (error) {
       console.error('[dsh-telegram] message processing failed:', error);
-      await this.#sendText(chatId, userFacingError(error));
+      await this.#sendText(chatId, userFacingError(error, this.#t));
     } finally {
       const stream = this.#streams.get(chatId);
       if (stream) {
@@ -342,7 +355,7 @@ export class TelegramRuntime {
         : undefined;
     const handle = fromActive ?? fromHandles ?? fromRegistry;
     if (!handle) {
-      await this.#sendControlCard(chatId, 'stop', { message: '当前没有正在运行的任务。' });
+      await this.#sendControlCard(chatId, 'stop', { message: this.#t('stop.none') });
       return;
     }
     this.#stopping.add(chatId);
@@ -358,10 +371,10 @@ export class TelegramRuntime {
     if (stopped === false) {
       this.#cancelledChats.delete(chatId);
       this.#stopping.delete(chatId);
-      await this.#sendControlCard(chatId, 'stop', { message: '当前没有正在运行的任务。' });
+      await this.#sendControlCard(chatId, 'stop', { message: this.#t('stop.none') });
       return;
     }
-    await this.#sendControlCard(chatId, 'stop', { message: '已请求停止当前任务。' });
+    await this.#sendControlCard(chatId, 'stop', { message: this.#t('stop.requested') });
     void Promise.resolve(handle.agent.whenIdle?.()).finally(() => this.#stopping.delete(chatId));
   }
 
@@ -385,14 +398,14 @@ export class TelegramRuntime {
   async #runCommand(chatId, command) {
     if (command.name === 'unsupported') {
       await this.#sendControlCard(chatId, 'unsupported', {
-        message: '该命令不可用。',
-        detail: `可用命令：${TELEGRAM_COMMAND_NAMES.join('、')}`,
+        message: this.#t('help.unavailable'),
+        detail: `${this.#t('help.commands')}${TELEGRAM_COMMAND_NAMES.join(this.#t('common.listSeparator'))}`,
       });
       return;
     }
     if (command.name === 'help') {
       await this.#sendControlCard(chatId, 'help', {
-        message: '可用命令：',
+        message: this.#t('help.commands'),
         detail: TELEGRAM_COMMAND_NAMES.join('\n'),
       });
       return;
@@ -402,27 +415,30 @@ export class TelegramRuntime {
       const binding = this.#bindings.get(chatId);
       const workspaceId = binding?.workspaceId ?? this.#config.workspaceId;
       const workspace = this.#workspaceRegistry.get(workspaceId);
-      const card = statusCard({
-        workspaceId,
-        workspaceTitle: workspace?.title,
-        sessionId: handle.agent.id,
-        model: this.#effectiveSelection(handle.agent.id, chatId),
-        active: this.#activeTurns.has(chatId),
-        interactionPending: Boolean(this.#pendingInteraction(chatId)) || this.#hasPendingApproval(chatId),
-      });
+      const card = statusCard(
+        {
+          workspaceId,
+          workspaceTitle: workspace?.title,
+          sessionId: handle.agent.id,
+          model: this.#effectiveSelection(handle.agent.id, chatId),
+          active: this.#activeTurns.has(chatId),
+          interactionPending: Boolean(this.#pendingInteraction(chatId)) || this.#hasPendingApproval(chatId),
+        },
+        this.#t,
+      );
       await this.#sendCard(chatId, card.text, { parseMode: card.parseMode });
       return;
     }
     if (command.name === 'new') {
       const workspaceId = this.#bindings.get(chatId)?.workspaceId ?? this.#config.workspaceId;
       await this.#switchWorkspace(chatId, workspaceId);
-      await this.#sendControlCard(chatId, 'new', { message: '新会话已建立。' });
+      await this.#sendControlCard(chatId, 'new', { message: this.#t('session.created') });
       return;
     }
     if (command.name === 'workspace') {
       const workspaces = this.#workspaceRegistry.list();
       const currentWorkspaceId = this.#bindings.get(chatId)?.workspaceId ?? this.#config.workspaceId;
-      const card = workspaceCard(workspaces, currentWorkspaceId);
+      const card = workspaceCard(workspaces, currentWorkspaceId, this.#t);
       await this.#sendCard(chatId, card.text, { parseMode: card.parseMode, replyMarkup: card.replyMarkup });
       return;
     }
@@ -442,7 +458,7 @@ export class TelegramRuntime {
     }
     if (args.length !== 2) {
       await this.#sendControlCard(chatId, 'model', {
-        message: '用法不正确。',
+        message: this.#t('model.usage'),
         detail: '/model\n/model <provider> <model>',
       });
       return;
@@ -466,10 +482,10 @@ export class TelegramRuntime {
       } catch (error) {
         // 单个 provider 目录失败不得中断整个清单：就地标注并继续列出其余 provider。
         console.error(`[dsh-telegram] listModels failed for ${id}:`, error);
-        groups.push({ id, name: provider?.name, error: userFacingError(error) });
+        groups.push({ id, name: provider?.name, error: userFacingError(error, this.#t) });
       }
     }
-    for (const chunk of modelListChunks({ current, groups }, this.#config.messageLimit)) {
+    for (const chunk of modelListChunks({ current, groups }, this.#config.messageLimit, this.#t)) {
       await this.#transport.sendText(chatId, chunk, { parseMode: 'HTML' });
     }
   }
@@ -479,7 +495,7 @@ export class TelegramRuntime {
   async #selectModel(chatId, provider, model) {
     if (!(await this.#isRoutable(provider, model))) {
       await this.#sendControlCard(chatId, 'model', {
-        message: '该模型不可用，已保持当前选择。',
+        message: this.#t('model.unavailable'),
         detail: `${provider} ${model}`,
       });
       return;
@@ -489,7 +505,7 @@ export class TelegramRuntime {
     if (ref) ref.current = { provider, model };
     await this.#bindings.set(chatId, { provider, model });
     await this.#sendControlCard(chatId, 'model', {
-      message: ref ? '已切换模型，当前会话下一轮生效。' : '已切换模型，将在新会话生效。',
+      message: ref ? this.#t('model.switched.live') : this.#t('model.switched.new'),
       detail: `${provider} ${model}`,
     });
   }
@@ -626,7 +642,7 @@ export class TelegramRuntime {
     if (bound) {
       if (await this.#isRoutable(bound.provider, bound.model)) return { ...bound };
       await this.#sendControlCard(chatId, 'model', {
-        message: '已保存的模型当前不可用，已回退到默认模型。',
+        message: this.#t('model.fallback'),
         detail: `${bound.provider} ${bound.model}`,
       }).catch((error) => console.error('[dsh-telegram] stale model notice failed:', error));
     }
@@ -748,7 +764,7 @@ export class TelegramRuntime {
         (kind === 'document' ? this.#ctx.attachments?.readFile : undefined) ??
         (kind === 'image' ? this.#ctx.attachments?.readImage : undefined);
       if (typeof read !== 'function') {
-        await this.#sendText(chatId, `无法交付 ${kind} 类型媒体。`);
+        await this.#sendText(chatId, this.#t('media.unsupported', { kind }));
         continue;
       }
       try {
@@ -760,7 +776,10 @@ export class TelegramRuntime {
         });
       } catch (error) {
         console.error('[dsh-telegram] media delivery failed:', error);
-        await this.#sendText(chatId, `无法交付 ${kind} 类型媒体：${userFacingError(error)}`);
+        await this.#sendText(
+          chatId,
+          this.#t('media.unsupported.reason', { kind, reason: userFacingError(error, this.#t) }),
+        );
       }
     }
     // 补发正文里以 markdown `![](本地路径)` 内联的图片（agent 未登记为 attachment
@@ -808,7 +827,7 @@ export class TelegramRuntime {
       try {
         const bytes = await readFile(real);
         if (bytes.byteLength > TELEGRAM_MEDIA_LIMIT) {
-          await this.#sendText(chatId, `图片过大，无法发送：${basename(real)}`);
+          await this.#sendText(chatId, this.#t('media.image.tooLarge', { name: basename(real) }));
           continue;
         }
         await this.#transport.sendMedia(chatId, bytes, {
@@ -819,7 +838,7 @@ export class TelegramRuntime {
         promoted ||= linkedPaths.has(rawPath);
       } catch (error) {
         console.error('[dsh-telegram] local image delivery failed:', error);
-        await this.#sendText(chatId, `无法发送图片：${userFacingError(error)}`);
+        await this.#sendText(chatId, this.#t('media.image.failed', { reason: userFacingError(error, this.#t) }));
       }
     }
     return promoted;
@@ -841,7 +860,7 @@ export class TelegramRuntime {
   }
 
   async #sendControlCard(chatId, command, details) {
-    const card = controlCard(command, details);
+    const card = controlCard(command, details, this.#t);
     return this.#sendCard(chatId, card.text, { parseMode: card.parseMode });
   }
 
@@ -853,7 +872,7 @@ export class TelegramRuntime {
     // 已中止的请求直接放弃，不打扰用户。
     if (req?.signal?.aborted === true) return Promise.resolve('cancelled');
     const id = randomUUID();
-    const card = approvalCard(id, { toolName: req?.toolName, reason: req?.reason });
+    const card = approvalCard(id, { toolName: req?.toolName, reason: req?.reason }, this.#t);
     return new Promise((resolve) => {
       let settled = false;
       const settle = (outcome) => {
@@ -888,7 +907,7 @@ export class TelegramRuntime {
 
   async #handleInteraction(chatId, interaction) {
     if (!interaction?.id || !interaction?.kind) return;
-    const card = interactionCard(interaction);
+    const card = interactionCard(interaction, this.#t);
     const question = interaction.payload?.questions?.[0] ?? interaction.payload;
     const values = question?.options?.map((option) => option.value ?? option.label ?? String(option));
     await this.#sendCard(chatId, card.text, {
@@ -964,7 +983,7 @@ export class TelegramRuntime {
           }),
         );
       };
-      const card = interactionCard({ id, kind: 'question', payload: request });
+      const card = interactionCard({ id, kind: 'question', payload: request }, this.#t);
       void this.#sendCard(chatId, card.text, {
         id,
         respond,
@@ -1015,27 +1034,27 @@ function parseCommand(text) {
   return { name };
 }
 
-export function userFacingError(error) {
-  const message = String(error?.message ?? 'Telegram 消息处理失败');
+export function userFacingError(error, t = translate) {
+  const message = String(error?.message ?? t('error.generic'));
   const status = Number(error?.code ?? error?.status ?? error?.response?.statusCode ?? 0);
   if (status === 429 || /rate|flood|too many requests|429/i.test(message)) {
-    return 'Telegram 请求过于频繁，请稍后重试。';
+    return t('error.rateLimited');
   }
   if (
     /Telegram (?:media|image)|attachment service|could not be downloaded|exceeds the supported size limit|Unsupported Telegram media|无法交付/i.test(
       message,
     )
   ) {
-    return '媒体处理失败，请确认文件格式和大小后重试。';
+    return t('error.media');
   }
   if (/message is not modified|message to edit not found|can't be edited|edit/i.test(message)) {
-    return '消息更新失败，已改为发送新消息。';
+    return t('error.editFallback');
   }
   if (/interaction|expired|已失效|no longer/i.test(message)) {
-    return '该交互已失效或已被处理。';
+    return t('error.interactionExpired');
   }
   if (status >= 400 || /bad request|forbidden|unauthorized|telegram api/i.test(message)) {
-    return 'Telegram 服务返回错误，请稍后重试。';
+    return t('error.service');
   }
-  return '消息处理失败，请稍后重试。';
+  return t('error.fallback');
 }

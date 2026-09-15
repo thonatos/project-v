@@ -1,3 +1,4 @@
+import { translate } from '../i18n/index.js';
 import { StreamRenderer } from './renderer.js';
 import { markdownToHtml, stripImageMarkdown } from './html.js';
 import { toolCard } from './cards.js';
@@ -20,6 +21,8 @@ export class StreamSession {
   #flushIntervalMs;
   #now;
   #renderer;
+  // 语言绑定：工具卡片文案随插件的 language 配置变化，未传入时用默认语言（zh）。
+  #t;
   #text = '';
   #hasTextOutput = false;
   #pendingText = false;
@@ -39,7 +42,7 @@ export class StreamSession {
   // 工具卡片卡在“执行中”。这里把每次 handleEvent 串到一条链上，保证按到达顺序处理。
   #queue = Promise.resolve();
 
-  constructor({ transport, chatId, limit, flushIntervalMs = 1100, now = () => Date.now() }) {
+  constructor({ transport, chatId, limit, flushIntervalMs = 1100, now = () => Date.now(), t = translate }) {
     if (!transport || typeof transport.sendText !== 'function') {
       throw new TypeError('StreamSession requires a transport');
     }
@@ -48,6 +51,7 @@ export class StreamSession {
     this.#limit = limit;
     this.#flushIntervalMs = flushIntervalMs;
     this.#now = now;
+    this.#t = t;
     this.#renderer = this.#makeRenderer();
   }
 
@@ -166,11 +170,17 @@ export class StreamSession {
     if (!id) return;
     // 工具开始前先定稿已累积的正文，让工具卡片排在其后。
     await this.#flushNow();
-    this.#toolCalls.set(id, name ?? '工具');
-    const text = toolCard(name, 'running', undefined, {
-      completed: this.#completedTools,
-      active: this.#toolCalls.size,
-    });
+    this.#toolCalls.set(id, name ?? this.#t('tool.name.fallback'));
+    const text = toolCard(
+      name,
+      'running',
+      undefined,
+      {
+        completed: this.#completedTools,
+        active: this.#toolCalls.size,
+      },
+      this.#t,
+    );
     if (this.#toolMessageId) {
       await this.#transport.editText(this.#chatId, this.#toolMessageId, text, { parseMode: 'HTML' });
     } else {
@@ -190,11 +200,17 @@ export class StreamSession {
     if (error) this.#toolFailure = { name, error };
     const current = [...this.#toolCalls.values()].at(-1);
     const text = error
-      ? toolCard(name, 'error', error)
-      : toolCard(current ?? name, current ? 'running' : 'done', undefined, {
-          completed: this.#completedTools,
-          active: this.#toolCalls.size,
-        });
+      ? toolCard(name, 'error', error, {}, this.#t)
+      : toolCard(
+          current ?? name,
+          current ? 'running' : 'done',
+          undefined,
+          {
+            completed: this.#completedTools,
+            active: this.#toolCalls.size,
+          },
+          this.#t,
+        );
     try {
       await this.#transport.editText(this.#chatId, this.#toolMessageId, text, { parseMode: 'HTML' });
     } catch (caught) {
@@ -243,7 +259,9 @@ export class StreamSession {
     if (this.#toolFailure) {
       const { name, error } = this.#toolFailure;
       await this.#transport
-        .editText(this.#chatId, this.#toolMessageId, toolCard(name, 'error', error), { parseMode: 'HTML' })
+        .editText(this.#chatId, this.#toolMessageId, toolCard(name, 'error', error, {}, this.#t), {
+          parseMode: 'HTML',
+        })
         .catch((caught) => console.error('[dsh-telegram] tool failure card update failed:', caught));
       return;
     }

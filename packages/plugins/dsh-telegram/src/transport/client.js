@@ -1,21 +1,35 @@
 import { Bot } from 'node-telegram-bot-api';
 import nodeFetch from 'node-fetch';
 import { ProxyAgent } from 'proxy-agent';
+import { translate } from '../i18n/index.js';
 
 // 命令清单的唯一来源：Telegram 命令菜单、/help 与「不支持的命令」提示都由它派生，
 // 避免像过去那样在三处各维护一份（加 /model 时就得同时改三个地方）。
+// 这里只声明命令名与文案 key，描述文本在注册时按语言解析（见 buildTelegramCommands）。
 // 顺序按命令名长度升序，同长度保持下方声明顺序（Array.sort 自 ES2019 起保证稳定）：
 // 短命令在前更易扫读，最长的 /workspace 自然落到末尾。
 const COMMAND_DEFINITIONS = [
-  { command: 'new', description: '新建会话' },
-  { command: 'status', description: '查看当前状态' },
-  { command: 'stop', description: '停止当前任务' },
-  { command: 'help', description: '查看帮助' },
-  { command: 'workspace', description: '选择或切换 Workspace' },
-  { command: 'model', description: '查看或切换模型' },
+  { command: 'new', descriptionKey: 'command.new' },
+  { command: 'status', descriptionKey: 'command.status' },
+  { command: 'stop', descriptionKey: 'command.stop' },
+  { command: 'help', descriptionKey: 'command.help' },
+  { command: 'workspace', descriptionKey: 'command.workspace' },
+  { command: 'model', descriptionKey: 'command.model' },
 ];
 
-export const TELEGRAM_COMMANDS = [...COMMAND_DEFINITIONS].sort((a, b) => a.command.length - b.command.length);
+// 按命令名长度升序（稳定排序，故同长度保持声明顺序）。
+function sortCommands(commands) {
+  return [...commands].sort((a, b) => a.command.length - b.command.length);
+}
+
+// 把命令定义翻译成 Telegram setMyCommands 需要的 { command, description }。
+export function buildTelegramCommands(t = translate) {
+  return sortCommands(
+    COMMAND_DEFINITIONS.map(({ command, descriptionKey }) => ({ command, description: t(descriptionKey) })),
+  );
+}
+
+export const TELEGRAM_COMMANDS = buildTelegramCommands();
 
 // `/new`、`/stop` … 形式的命令名列表，供帮助与错误提示复用，顺序同上。
 export const TELEGRAM_COMMAND_NAMES = TELEGRAM_COMMANDS.map(({ command }) => `/${command}`);
@@ -26,26 +40,34 @@ export const TELEGRAM_COMMAND_SCOPES = [
   { type: 'all_chat_administrators' },
 ];
 
-export async function registerTelegramCommands(api, ownerUserId) {
+export async function registerTelegramCommands(api, ownerUserId, t = translate) {
+  const commands = buildTelegramCommands(t);
   // 清除旧版本使用的 Owner chat scope，避免它以更高优先级覆盖私聊 scope。
   await api.deleteMyCommands({ scope: { type: 'chat', chat_id: ownerUserId } });
   // BotFather 和旧脚本通常写入 default；它会回退显示，必须一并清除但不重新注册。
   await api.deleteMyCommands({ scope: { type: 'default' } });
   for (const scope of TELEGRAM_COMMAND_SCOPES) await api.deleteMyCommands({ scope });
   for (const scope of TELEGRAM_COMMAND_SCOPES) {
-    await api.setMyCommands({ commands: TELEGRAM_COMMANDS, scope });
+    await api.setMyCommands({ commands, scope });
   }
 }
 
 // 建立 Telegram Bot 连接：校验无 webhook、注册事件处理器、启动 long polling。
 // 返回连接句柄（{ bot, botId, botToken, fetchImpl, close }），出站方法封装见 transport.js。
-export async function createTelegramClient({ botToken, ownerUserId, proxy, onMessage, onCallbackQuery }) {
+export async function createTelegramClient({
+  botToken,
+  ownerUserId,
+  proxy,
+  onMessage,
+  onCallbackQuery,
+  t = translate,
+}) {
   const fetchImpl = createFetch(proxy);
   const bot = new Bot(botToken, fetchImpl ? { fetch: fetchImpl } : {});
   const me = await bot.api.getMe();
   const webhook = await bot.api.getWebhookInfo();
-  if (webhook.url) throw new Error('Telegram Bot 已配置 Webhook，无法同时启用 long polling');
-  await registerTelegramCommands(bot.api, ownerUserId);
+  if (webhook.url) throw new Error(t('error.webhook'));
+  await registerTelegramCommands(bot.api, ownerUserId, t);
 
   if (onMessage) bot.on('message', (ctx) => onMessage({ message: normalizeMessage(ctx.message) }));
   if (onCallbackQuery) {

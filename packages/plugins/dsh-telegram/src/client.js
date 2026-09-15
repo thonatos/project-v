@@ -145,6 +145,7 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
     try {
       const values = {
         enabled: Boolean(draft.enabled),
+        language: draft.language ?? 'zh',
         workspaceId: draft.workspaceId ?? '',
         ownerUserId: draft.ownerUserId ?? '',
         messageLimit: Number(draft.messageLimit),
@@ -275,6 +276,25 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
                     onChange: (value) => update('ownerUserId', value),
                   }),
                   h('h4', { className: 'dsh-tg-section-title' }, '消息设置'),
+                  h(
+                    'div',
+                    { className: 'dsh-tg-field' },
+                    h('label', { className: 'dsh-tg-label', htmlFor: `${prefix}-language` }, '语言 / Language'),
+                    h(
+                      'select',
+                      {
+                        id: `${prefix}-language`,
+                        className: 'dsh-tg-select',
+                        // 选项各自用本语言书写，便于在任意界面语言下辨认。
+                        value: draft.language ?? 'zh',
+                        onChange: (event) => update('language', event.target.value),
+                      },
+                      h('option', { value: 'zh' }, '中文'),
+                      h('option', { value: 'en' }, 'English'),
+                      h('option', { value: 'ru' }, 'Русский'),
+                    ),
+                    h('p', { className: 'dsh-tg-hint' }, '聊天与命令菜单的语言；保存后重建 Telegram 连接。'),
+                  ),
                   h(Field, {
                     id: `${prefix}-limit`,
                     label: '消息长度上限',
