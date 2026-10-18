@@ -2,8 +2,8 @@
 
 ## 1. 建立迁移基线与 Vite+ 根配置
 
-- [ ] 1.1 将既有 `openspec/specs/oxlint-format/spec.md` 规范化为主规格的 Purpose/Requirements 结构且不改变要求语义，运行严格规格校验确认 archive 前置阻塞已消除
-- [ ] 1.2 在不修改文件的模式下记录现有 Oxlint/Oxfmt 检查结果以及 i18n Studio 22 文件/208 用例、GPM 2 文件/29 用例、DSH Telegram 10 文件/114 用例的全绿基线，并保存可对比输出；不修改 DSH 业务依赖
+- [x] 1.1 将既有 `openspec/specs/oxlint-format/spec.md` 规范化为主规格的 Purpose/Requirements 结构且不改变要求语义，运行严格规格校验确认 archive 前置阻塞已消除
+- [x] 1.2 在不修改文件的模式下记录现有 Oxlint/Oxfmt 检查结果以及 i18n Studio 22 文件/208 用例、GPM 2 文件/29 用例、DSH Telegram 10 文件/114 用例的全绿基线，并保存可对比输出；不修改 DSH 业务依赖
 - [ ] 1.3 在根 `package.json` 精确固定经确认的 Vite+ 版本并更新 `pnpm-lock.yaml`，运行本地解析的 `vp --version` 与 `vp toolchain` 验证没有依赖全局安装
 - [ ] 1.4 创建根级 Vite+ 配置，将现有 Oxlint categories/plugins/ignore 与 Oxfmt 样式/ignore 完整映射，运行 `vp lint` 和 `vp fmt --check` 对比迁移前覆盖范围与结果
 - [ ] 1.5 将根 scripts 的 `lint`、`lint:fix`、`format`、`format:write` 改为 Vite+ 入口并新增组合 `check`，逐个运行脚本验证只读和修复模式符合命名语义
