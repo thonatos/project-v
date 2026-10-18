@@ -2,7 +2,7 @@
 
 ## Context
 
-参见 `proposal.md` 的动机。仓库是 pnpm monorepo，根目录直接维护 Oxlint/Oxfmt，`i18n-studio` 使用 Vitest 2，GPM 与 DSH Telegram 使用基础 `node:test`。当前基线为 34 个 JavaScript/TypeScript 测试文件、351 个用例：i18n Studio 22/208、GPM 2/29、DSH Telegram 10/114，三组均已全量通过。多个应用还各自使用 Vite 5/6、React Router、Wrangler、Storybook 和代码生成流程。
+参见 `proposal.md` 的动机。仓库是 pnpm monorepo，根目录直接维护 Oxlint/Oxfmt，`i18n-studio` 使用 Vitest 2，GPM 与 DSH Telegram 使用基础 `node:test`。实施时确认基线为 34 个 JavaScript/TypeScript 测试文件、352 个用例：i18n Studio 22/208、GPM 2/29、DSH Telegram 10/115，三组均已全量通过。多个应用还各自使用 Vite 5/6、React Router、Wrangler、Storybook 和代码生成流程。
 
 本机全局 `vp` 为 1.3.0，但项目尚未声明本地 Vite+；可复现执行不能依赖这份全局安装。现有测试只使用 Vitest 常规 API或 `node:test` 的基础 `test()`，未使用 Node Test 专属 mock、hook、并发和 reporter API，因此 runner 统一无需重构测试业务逻辑。
 
@@ -91,7 +91,7 @@ Vite+ 的 `check` 默认只承担格式与 lint；不启用其实验性 type-che
 
 ### 5. Git hooks 只收敛 JavaScript/TypeScript 检查
 
-使用 Vite+ staged 配置只处理本次提交涉及的受管文件，避免当前 pre-commit 对整个 `packages` 目录执行写入。现有 gitleaks 和按需 Go 检查继续由 hook 串联，commit-msg 继续运行 commitlint。
+使用 Vite+ staged 配置只处理本次提交涉及的受管文件，避免当前 pre-commit 对整个 `packages` 目录执行写入。项目 hook 从 `.husky/` 迁到 `.vite-hooks/`，根 `prepare` 改为 `vp config --hooks-dir .vite-hooks --no-agent`，并移除 Husky 依赖。现有 gitleaks 和按需 Go 检查继续由 hook 串联，commit-msg 继续运行 commitlint。
 
 ```text
 git commit
@@ -130,12 +130,12 @@ CI 仍通过 pnpm 安装依赖，随后运行本地解析的 `vp check` 和 `vp 
 ## Migration Plan
 
 1. 规范化并严格校验既有 `oxlint-format` 主规格，不改变其要求语义。
-2. 记录现有 Oxlint/Oxfmt 文件集合、诊断和 34 文件/351 用例的测试基线；不在本 change 中修改 DSH 业务依赖。
+2. 记录现有 Oxlint/Oxfmt 文件集合、诊断和 34 文件/352 用例的测试基线；不在本 change 中修改 DSH 业务依赖。
 3. 在根目录精确固定 Vite+，建立仅覆盖横切工具的根配置，并迁移 lint/format 规则。
 4. 对比迁移前后 `vp lint`、`vp fmt --check` 与既有命令的覆盖范围和结果，再移除独立 Oxlint/Oxfmt 入口。
-5. 先迁移 `i18n-studio` 到 Vite+ 测试 API/config 并验证 208 个用例，再迁移 GPM 的 29 个用例和 DSH Telegram 的 114 个用例。
+5. 先迁移 `i18n-studio` 到 Vite+ 测试 API/config 并验证 208 个用例，再迁移 GPM 的 29 个用例和 DSH Telegram 的 115 个用例。
 6. 配置根级测试 projects，验证一次性与 watch/单包执行；清理独立 Vitest 和故意失败的无测试占位脚本。
-7. 将 hooks 收敛到 staged 文件并保留附加检查；将 Node CI 增加 `vp check`、`vp test` 后继续原有构建。
+7. 将项目 hooks 从 Husky 迁到 Vite+ dispatcher，收敛到 staged 文件并保留附加检查；将 Node CI 增加 `vp check`、`vp test` 后继续原有构建。
 8. 更新 README、CLAUDE 等现役开发文档，运行完整质量、测试、类型检查和构建验收。
 
 回滚时按相反顺序恢复 scripts、imports、独立测试与质量工具依赖和配置。由于应用 dev/build/deploy 与完整类型检查实现从未替换，回滚不涉及应用架构或部署流程。

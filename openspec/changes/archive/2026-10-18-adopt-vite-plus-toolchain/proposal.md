@@ -2,7 +2,7 @@
 
 ## Why
 
-仓库当前分别维护 Oxlint、Oxfmt、独立 Vitest 与 `node:test` 的依赖、命令和执行方式，34 个 JavaScript/TypeScript 测试文件、351 个现有用例分散在三套执行入口中。Vite+ 已在本机可用，适合统一代码质量与全部 JavaScript/TypeScript 测试工具，同时保留 React Router、Wrangler、Go 测试和各类业务生成命令的现有职责。
+仓库当前分别维护 Oxlint、Oxfmt、独立 Vitest 与 `node:test` 的依赖、命令和执行方式，34 个 JavaScript/TypeScript 测试文件、352 个现有用例分散在三套执行入口中。Vite+ 已在本机可用，适合统一代码质量与全部 JavaScript/TypeScript 测试工具，同时保留 React Router、Wrangler、Go 测试和各类业务生成命令的现有职责。
 
 ## What Changes
 
@@ -24,13 +24,15 @@
 
 - `oxlint-format`: 将直接调用独立 Oxlint/Oxfmt 的要求调整为由 Vite+ 统一提供 lint、format 和自动修复入口，并保持既有规则与忽略范围。
 - `i18n-studio-testing`: 将独立 Vitest 配置与 runner 要求调整为 Vite+ 内置 Vitest，同时保持测试目录、include、template DB、seed 排除和包级测试命令行为。
+- `secrets-scanning`: 将 gitleaks 的 pre-commit 载体从 Husky 调整为 Vite+ hook dispatcher，保持密钥扫描和阻断行为。
+- `go-workspace`: 将提交前 Go 检查的 hook 载体从 Husky 调整为 Vite+，保持仅 Go 变更触发的行为。
 
 ## Impact
 
 - 归档前需要将既有 `openspec/specs/oxlint-format/spec.md` 从历史 delta 结构规范化为合法主规格结构，保持其现有要求语义，随后本 change 的 delta 才能安全合并。
 - 根目录工具依赖、scripts、Vite+ 配置、Oxlint/Oxfmt 配置与锁文件。
 - `i18n-studio`、GPM、DSH Telegram 共 34 个测试文件的 imports、测试配置与 package scripts；DSH 仅涉及测试工具接入，不修改已完成 change 确立的业务依赖版本与行为。
-- Husky hooks、Node.js CI、README 与开发说明中的质量工具命令。
+- Vite+ hooks、Node.js CI、README 与开发说明中的质量工具命令；移除 Husky 依赖与 `.husky/` 项目脚本。
 - 不改变应用运行时 API、部署方式、React Router/Wrangler 命令或 Go 工具链。
 
 ## Rollback Plan
