@@ -1,7 +1,9 @@
 ## Purpose
 
 定义 i18n-studio 测试组织约定:双层目录(unit / integration)、template db 加速机制、合并粒度、源码目录禁测、vitest 配置范围。
+
 ## Requirements
+
 ### Requirement: 测试目录结构
 
 i18n-studio 的所有测试 SHALL 集中在 `packages/apps/i18n-studio/tests/` 下，并按目录区分单元测试与集成测试，源码目录 SHALL NOT 出现 `*.test.{ts,tsx}` 或 `*.spec.{ts,tsx}` 文件。
@@ -20,9 +22,9 @@ i18n-studio 的所有测试 SHALL 集中在 `packages/apps/i18n-studio/tests/` �
 
 #### Scenario: vitest include 配置
 
-- **GIVEN** `vitest.config.ts`
-- **WHEN** 配置被解析
-- **THEN** `test.include` 为 `['tests/**/*.test.{ts,tsx}']`，不再包含 `app/**`
+- **GIVEN** i18n-studio 的 Vite+ 测试项目配置
+- **WHEN** 配置被 Vite+ 内置 Vitest 解析
+- **THEN** `test.include` 为 `['tests/**/*.test.{ts,tsx}']`，不包含 `app/**`
 
 ### Requirement: 单元测试隔离于数据库
 
@@ -62,7 +64,7 @@ i18n-studio 的所有测试 SHALL 集中在 `packages/apps/i18n-studio/tests/` �
 
 #### Scenario: 全局 setup 构建 template
 
-- **GIVEN** vitest 全局启动钩子
+- **GIVEN** Vite+ 内置 Vitest 的全局启动钩子
 - **WHEN** 测试运行开始
 - **THEN** 在 `tests/.tmp/` 下产出唯一的 `_template.db`，对其执行 `migrate()` 后关闭连接
 
@@ -87,6 +89,7 @@ i18n-studio 的所有测试 SHALL 集中在 `packages/apps/i18n-studio/tests/` �
 - **GIVEN** 合并后的 `tests/integration/`
 - **WHEN** 检查业务域与文件来源
 - **THEN** MUST 使用以下映射：`namespace.test.ts` 合并 integration/isolation/bundle-version，`entry-lifecycle.test.ts` 合并 import/publish/query，`translation-flow.test.ts` 合并 task/sync，`export-snapshot.test.ts` 合并 export/snapshot-channel，`permissions.test.ts` 保持独立，`e2e.test.ts` 承接 e2e-smoke
+
 #### Scenario: 仅存在 6 个集成测试文件
 
 - **GIVEN** `tests/integration/`
@@ -101,13 +104,13 @@ i18n-studio 的所有测试 SHALL 集中在 `packages/apps/i18n-studio/tests/` �
 
 ### Requirement: 开发数据 seed 脚本独立于测试
 
-`tests/seed.ts` SHALL 作为开发期生成示例数据的一次性脚本存在，并 SHALL NOT 被 vitest 收集执行。
+`tests/seed.ts` SHALL 作为开发期生成示例数据的一次性脚本存在，并 SHALL NOT 被 Vite+ 内置 Vitest 收集执行。
 
 #### Scenario: seed.ts 不被 vitest 收集
 
-- **GIVEN** 当前 `vitest.config.ts` 的 include 规则
+- **GIVEN** i18n-studio 测试项目的 include 规则
 - **WHEN** 运行 `pnpm -F i18n-studio test`
-- **THEN** vitest 报告中不出现来自 `tests/seed.ts` 的 suite 或 test
+- **THEN** Vite+ 内置 Vitest 的报告中不出现来自 `tests/seed.ts` 的 suite 或 test
 
 ### Requirement: i18n-studio CI 质量门禁
 
@@ -146,4 +149,3 @@ i18n-studio SHALL 对关键文档契约添加测试或检查，防止文档再�
 - **GIVEN** token schema 未实现 expiresAt
 - **WHEN** 文档契约检查运行
 - **THEN** 若 API 文档声明 token 可配置过期时间，检查失败
-
