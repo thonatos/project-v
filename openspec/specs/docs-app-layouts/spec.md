@@ -1,6 +1,9 @@
-# docs-app-layouts
+# docs-app-layouts Specification
 
-## ADDED Requirements
+## Purpose
+定义文档应用的多布局体系、统一页面容器和布局导出约定，使各类页面能够复用稳定的结构并保持一致的宽度与间距。
+
+## Requirements
 
 ### Requirement: 多布局系统支持
 

@@ -1,7 +1,8 @@
 # i18n-studio-public-shell Specification
 
 ## Purpose
-TBD - created by archiving change i18n-studio-public-shell. Update Purpose after archive.
+定义 i18n-studio 面向未登录用户的公共页面框架、导航、品牌和响应式体验，使登录前入口保持一致、清晰且可访问。
+
 ## Requirements
 ### Requirement: 公开首页
 

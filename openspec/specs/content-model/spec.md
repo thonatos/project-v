@@ -1,7 +1,8 @@
 # content-model Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-blog-docs-split. Update Purpose after archive.
+定义站点文档与博客内容的统一元数据、分类和读取模型，使构建、列表、详情与导航功能能够基于一致且可验证的内容结构运行。
+
 ## Requirements
 ### Requirement: 内容类型分类
 

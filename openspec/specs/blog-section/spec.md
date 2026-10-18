@@ -1,7 +1,8 @@
 # blog-section Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-blog-docs-split. Update Purpose after archive.
+定义站点博客区域的内容来源、列表展示和文章访问行为，使非文档类内容能够独立组织、稳定路由，并与文档区域保持清晰边界。
+
 ## Requirements
 ### Requirement: Blog 时间流列表
 

@@ -1,18 +1,9 @@
-## REMOVED Requirements
+# biome-format Specification
 
-### Requirement: biome-format
+## Purpose
+定义项目从 Biome 与 Prettier 迁移到 Oxlint 后的格式化和静态检查约束，确保旧依赖安全移除、现有规则得到保留，并维持一致的开发者工作流。
 
-**Reason**: oxlint 替代 biome lint 功能，性能更优
-
-**Migration**: 使用 oxlint lint 命令替代 biome lint 命令
-
-### Requirement: prettier 文件移除
-
-**Reason**: 已完成迁移，不再需要此要求
-
-**Migration**: 无需迁移，已在前次变更中完成
-
-## ADDED Requirements
+## Requirements
 
 ### Requirement: biome 依赖移除
 
@@ -25,8 +16,6 @@
 #### Scenario: biome.json 移除
 - **WHEN** oxlint 迁移完成且验证通过
 - **THEN** biome.json SHALL 从项目根目录移除
-
-## MODIFIED Requirements
 
 ### Requirement: oxlint 配置
 

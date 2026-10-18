@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-remark-processing Specification
+
+## Purpose
+定义 Markdown 文档的 Remark 处理管线和代码高亮行为，使内容转换、插件执行与技术代码展示保持可预测和一致。
+
+## Requirements
 
 ### Requirement: Markdown 文件处理
 系统 SHALL 使用 remark/rehype 生态系统处理 Markdown 文件。

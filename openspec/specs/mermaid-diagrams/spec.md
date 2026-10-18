@@ -1,4 +1,9 @@
-## ADDED Requirements
+# mermaid-diagrams Specification
+
+## Purpose
+定义文档中 Mermaid 图表的渲染、组件封装与错误处理行为，使流程图能够稳定展示，并在无效输入时提供可理解的降级反馈。
+
+## Requirements
 
 ### Requirement: Mermaid 流程图渲染
 系统 SHALL 支持 Mermaid 语法流程图的渲染，并与 remark 处理流程兼容。

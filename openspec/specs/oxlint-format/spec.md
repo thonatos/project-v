@@ -1,4 +1,9 @@
-## ADDED Requirements
+# oxlint-format Specification
+
+## Purpose
+定义 Oxlint 的安装、配置、执行命令和 package scripts 集成要求，为项目提供快速、统一且可在持续集成中复用的静态检查流程。
+
+## Requirements
 
 ### Requirement: oxlint 安装
 

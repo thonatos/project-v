@@ -1,7 +1,8 @@
 # site-navigation Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-blog-docs-split. Update Purpose after archive.
+定义站点全局导航的内容分区、链接状态和响应式行为，使用户能够在文档、博客及其他主要页面之间稳定切换。
+
 ## Requirements
 ### Requirement: 主导航入口
 

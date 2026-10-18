@@ -1,4 +1,9 @@
-## ADDED Requirements
+# pnpm-workspace-docker-build Specification
+
+## Purpose
+定义 pnpm workspace 项目的 Docker 多阶段构建方式，使依赖安装、应用构建和运行时镜像能够正确处理 monorepo 包关系。
+
+## Requirements
 
 ### Requirement: pnpm-workspace-docker-build
 

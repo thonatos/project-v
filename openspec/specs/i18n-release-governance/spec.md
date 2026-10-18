@@ -1,7 +1,8 @@
 # i18n-release-governance Specification
 
 ## Purpose
-TBD - created by archiving change modernize-i18n-studio-platform. Update Purpose after archive.
+定义国际化文案从草稿、审核到发布的治理规则与权限边界，使翻译变更具备可追踪、可回滚且受控的发布生命周期。
+
 ## Requirements
 ### Requirement: Release manifest 发布模型
 

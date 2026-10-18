@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# docs-ui Specification
+
+## Purpose
+定义文档站点基础 UI 元数据、滚动定位和主内容语义标识，确保浏览器展示、锚点导航与页面结构符合统一约定。
+
+## Requirements
 
 ### Requirement: 站点标题配置
 系统 SHALL 配置站点标题为 "ρV"，描述为 "undefined project"，并为品牌名添加防翻译标记。
@@ -14,8 +19,6 @@
 #### Scenario: 站点描述
 - **WHEN** 用户查看站点 meta 信息
 - **THEN** 站点描述显示为 "undefined project"
-
-## ADDED Requirements
 
 ### Requirement: Theme Color Meta 标签
 系统 SHALL 添加 `theme-color` meta 标签，匹配页面背景色。

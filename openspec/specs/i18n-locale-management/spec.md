@@ -21,23 +21,14 @@ i18n-studio SHALL 维护一张全局 `locales` 表作为多语言字典,所有�
 
 ### Requirement: 迁移内联默认 12 个内置 locale
 
-drizzle migration **MUST** 在创建 `locales` 表的同一个迁移文件中,以 SQL `INSERT` 的形式注入以下 12 个内置 locale,且 `isBuiltin=1`、`enabled=1`、`sortOrder` 严格递增。
+drizzle migration MUST 在创建 `locales` 表的同一迁移文件中，以 SQL `INSERT` 注入 12 个内置 locale；所有记录 MUST 设置 `isBuiltin=1`、`enabled=1`，且 `sortOrder` 按规定顺序严格递增。
 
-| code | label | englishLabel | nativeLabel | region |
-| ---- | ----- | ------------ | ------------ | ------ |
-| `zh-cn` | 简体中文 | Simplified Chinese | 中文(简体) | CN |
-| `zh-tw` | 繁體中文 | Traditional Chinese | 中文(繁體) | TW |
-| `en-us` | 英语 (美国) | English (US) | English | US |
-| `en-gb` | 英语 (英国) | English (UK) | English | GB |
-| `ja-jp` | 日语 | Japanese | 日本語 | JP |
-| `ko-kr` | 韩语 | Korean | 한국어 | KR |
-| `fr-fr` | 法语 | French | Français | FR |
-| `de-de` | 德语 | German | Deutsch | DE |
-| `es-es` | 西班牙语 | Spanish | Español | ES |
-| `pt-br` | 葡萄牙语 (巴西) | Portuguese (BR) | Português | BR |
-| `ru-ru` | 俄语 | Russian | Русский | RU |
-| `ar-sa` | 阿拉伯语 | Arabic | العربية | SA |
+#### Scenario: 内置 locale 清单
 
+- **GIVEN** 创建 `locales` 表的 drizzle migration
+- **WHEN** 检查其中的 seed SQL
+- **THEN** code 集合 MUST 依次为 `zh-cn`、`zh-tw`、`en-us`、`en-gb`、`ja-jp`、`ko-kr`、`fr-fr`、`de-de`、`es-es`、`pt-br`、`ru-ru`、`ar-sa`
+- **AND** 对应 label / englishLabel / nativeLabel / region MUST 保持原迁移定义的语言名称与区域元信息
 #### Scenario: 全新数据库 seed
 
 - **GIVEN** 新建空白 SQLite 数据库
@@ -54,17 +45,14 @@ drizzle migration **MUST** 在创建 `locales` 表的同一个迁移文件中,�
 
 ### Requirement: locale 字典 CRUD 服务
 
-i18n-studio SHALL 提供 `app/lib/services/locale.server.ts`,导出以下函数,语义如下:
+i18n-studio SHALL 通过 `app/lib/services/locale.server.ts` 提供 locale 查询、创建、更新、启停、删除和存在性校验能力；写操作 MUST 维持内置项、引用关系、启用状态与排序约束。
 
-- `listLocales(opts?: { enabledOnly?: boolean })`:按 `sortOrder` 升序返回所有/仅启用 locale
-- `listEnabledLocales()`:等价 `listLocales({ enabledOnly: true })`
-- `getLocale(code)`:返回单条或 `null`
-- `createLocale({ code, label, englishLabel, nativeLabel?, region? })`:创建非内置 locale
-- `updateLocale(code, patch)`:更新 label / englishLabel / nativeLabel / region(不允许改 code 与 isBuiltin)
-- `setEnabled(code, enabled)`:切换 enabled
-- `deleteLocale(code)`:删除非内置且无引用项
-- `assertLocalesExist(codes)`:全部 code 存在于字典且 `enabled=1`,否则抛带详细信息的错误
+#### Scenario: 服务接口集合
 
+- **GIVEN** `app/lib/services/locale.server.ts`
+- **WHEN** 检查公开接口及语义
+- **THEN** MUST 导出 `listLocales`（按 `sortOrder` 返回全部或仅启用项）、`listEnabledLocales`、`getLocale`、`createLocale`、`updateLocale`、`setEnabled`、`deleteLocale` 与 `assertLocalesExist`
+- **AND** `updateLocale` MUST NOT 修改 code 或 isBuiltin，`deleteLocale` MUST 仅删除非内置且未被引用的 locale，`assertLocalesExist` MUST 拒绝缺失或未启用的 code
 #### Scenario: createLocale 成功
 
 - **GIVEN** 字典中尚不存在 `vi-vn`

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-full-width-layout Specification
+
+## Purpose
+定义文档详情页的全宽内容布局与目录侧栏协作方式，使宽屏内容充分利用可用空间，同时保持导航区域稳定可用。
+
+## Requirements
 
 ### Requirement: 文档页面全屏宽度
 系统 SHALL 使用全屏宽度布局显示文档内容。

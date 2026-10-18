@@ -1,4 +1,9 @@
-## ADDED Requirements
+# gpm-cli Specification
+
+## Purpose
+定义 GPM 命令行工具的初始化、配置校验、仓库解析、确定性克隆和脚本化输出行为，使项目获取流程安全且可自动化。
+
+## Requirements
 
 ### Requirement: gpm 命令接口
 

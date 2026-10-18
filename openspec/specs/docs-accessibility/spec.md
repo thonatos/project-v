@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-accessibility Specification
+
+## Purpose
+定义文档站点的键盘操作、焦点反馈、跳转辅助和品牌文本可访问性要求，确保不同输入方式和辅助技术用户都能可靠浏览主要内容。
+
+## Requirements
 
 ### Requirement: Focus-visible 状态
 系统 SHALL 为所有交互元素提供可见的 focus 状态，支持键盘导航用户识别当前焦点位置。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# navigation-links Specification
+
+## Purpose
+定义站点导航栏结构、专题路由、GitHub 链接和移动端分隔规则，使桌面与移动设备上的全局导航保持完整和一致。
+
+## Requirements
 
 ### Requirement: 导航栏布局结构
 

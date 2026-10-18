@@ -1,4 +1,9 @@
-## ADDED Requirements
+# pnpm-only-monorepo Specification
+
+## Purpose
+定义 monorepo 统一使用 pnpm 的工作区、脚本和遗留工具清理要求，避免多个包管理器并存造成依赖图和命令行为分叉。
+
+## Requirements
 
 ### Requirement: pnpm-only-monorepo
 

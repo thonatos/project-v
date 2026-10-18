@@ -1,7 +1,8 @@
 # i18n-task-observability Specification
 
 ## Purpose
-TBD - created by archiving change modernize-i18n-studio-platform. Update Purpose after archive.
+定义翻译任务的状态、进度、错误、耗时和审计信息展示，使操作者能够持续追踪异步任务从创建到完成的生命周期，识别停滞或失败环节，并依据可观测数据定位和处理故障。
+
 ## Requirements
 ### Requirement: Item 级翻译任务进度
 
@@ -68,4 +69,3 @@ TBD - created by archiving change modernize-i18n-studio-platform. Update Purpose
 - **GIVEN** 任务已有 claim、heartbeat、result 和 fail 日志
 - **WHEN** 用户打开任务详情页
 - **THEN** 页面展示按时间倒序排列的任务事件、worker、item 数和错误摘要
-

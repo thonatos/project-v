@@ -1,7 +1,8 @@
 # dark-code-rendering Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-visual-revamp. Update Purpose after archive.
+定义深色主题下代码块、行内代码及语法高亮的视觉和可读性要求，确保技术内容在不同主题中保持足够对比度与一致展示。
+
 ## Requirements
 ### Requirement: 暗色代码块
 系统 SHALL 在暗色主题下将代码块渲染为下沉底色（深于页面背景）并配合微亮边框与轻内阴影，使其与页面形成清晰的"凹陷"层次而不糊入背景。

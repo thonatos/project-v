@@ -1,8 +1,13 @@
-## ADDED Requirements
+# footer-brand Specification
+
+## Purpose
+定义站点 Footer 中项目描述、技术栈品牌和视觉一致性要求，使页脚在不同页面都能稳定表达产品身份与实现信息。
+
+## Requirements
 
 ### Requirement: Footer 显示项目描述
 
-系统必须在 Footer 区域显示项目描述 "undefined project."，展示项目名称或简介。
+系统 MUST在 Footer 区域显示项目描述 "undefined project."，展示项目名称或简介。
 
 #### Scenario: Footer 显示项目描述文字
 
@@ -11,7 +16,7 @@
 
 ### Requirement: Footer 显示技术栈品牌标识
 
-系统必须在 Footer 区域显示 "Powered By React Router" 品牌标识，展示项目使用的技术栈。
+系统 MUST在 Footer 区域显示 "Powered By React Router" 品牌标识，展示项目使用的技术栈。
 
 #### Scenario: Footer 显示品牌文字
 
@@ -30,7 +35,7 @@
 
 ### Requirement: Footer 品牌样式一致
 
-系统必须确保 Footer 品牌标识样式与 Footer 其他元素保持一致。
+系统 MUST确保 Footer 品牌标识样式与 Footer 其他元素保持一致。
 
 #### Scenario: 品牌标识使用 Footer 主题样式
 

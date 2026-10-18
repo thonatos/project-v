@@ -1,7 +1,8 @@
 # webgl-tag-cloud Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-visual-revamp. Update Purpose after archive.
+定义基于 WebGL 的标签云数据映射、渲染交互、性能边界和降级策略，使用户能够可视化探索标签，同时兼容不支持图形加速的环境。
+
 ## Requirements
 ### Requirement: 真 3D 标签球
 系统 SHALL 在标签页以 WebGL（@react-three/fiber）渲染真正的三维标签球：标签按球面均匀分布，标签文字始终朝向相机，并按文章计数映射字号/辉光强度。

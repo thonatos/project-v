@@ -1,7 +1,8 @@
 # visual-design-system Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-visual-revamp. Update Purpose after archive.
+定义站点颜色、排版、间距、组件状态和响应式呈现的视觉设计体系，使所有页面形成一致、可维护且可访问的产品体验。
+
 ## Requirements
 ### Requirement: 分层深色主题
 系统 SHALL 采用 dark-first 分层深色配色，通过多级表面色（bg-base、surface-1、surface-2、glass）营造纵深，并提供 violet→fuchsia 主色渐变作为全站品牌色。

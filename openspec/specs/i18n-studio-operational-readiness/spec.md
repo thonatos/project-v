@@ -1,7 +1,8 @@
 # i18n-studio-operational-readiness Specification
 
 ## Purpose
-TBD - created by archiving change modernize-i18n-studio-platform. Update Purpose after archive.
+定义 i18n-studio 上线运行所需的健康检查、可观测性、备份恢复和运维文档要求，使部署能够被可靠监控、诊断与恢复。
+
 ## Requirements
 ### Requirement: 生产安全配置门禁
 

@@ -5,8 +5,7 @@
 ## Requirements
 ### Requirement: UI 语种构建期生成(codegen)
 
-i18n-studio SHALL 提供一个构建期 codegen 工具,扫描 `app/i18n/locales/` 目录并生成 `app/i18n/generated.ts`。该工具 SHALL 位于项目级工具目录（如 `packages/apps/i18n-studio/tools/i18n-codegen.ts`）,而非词条同步工作流入口目录,以明确 codegen 是 pull/build/typecheck 的构建期派生动作,不是 `extract -> push -> pull` 词条工作流的一等步骤。生成物 SHALL 导出 `SUPPORTED_LANGS`(语种 code 列表,来源为 `locales/` 的子目录名)、`resources`(各语种各 namespace 的 `<ns>.json` 静态映射)与语种元信息(`label` / `englishLabel` / `nativeLabel`,来源为本地元信息文件)。codegen SHALL **离线可跑**:在数据库为空、studio 服务未运行时(全新 clone / CI 构建)仍能仅凭已提交的 `app/i18n/locales/` 与元信息文件产出正确的 `generated.ts`。系统 SHALL 保留低层 `i18n:codegen` 命令供构建、CI、调试和手动修复使用,并 SHALL 继续在 `build` / `typecheck` 前置运行 codegen。
-
+i18n-studio SHALL 提供离线可运行的构建期 codegen 工具，扫描 `app/i18n/locales/` 并生成 `app/i18n/generated.ts`。工具 SHALL 位于项目级 `tools/` 目录；生成物 MUST 包含稳定的语种列表、各语种 namespace 静态资源和语种元信息。系统 SHALL 保留 `i18n:codegen` 命令，并在 `build` 与 `typecheck` 前运行；codegen 作为 pull/build/typecheck 的派生动作，MUST NOT 成为 extract/push/pull 词条工作流的一等入口。
 #### Scenario: 扫描目录生成语种列表
 
 - **GIVEN** `app/i18n/locales/` 下存在子目录 `zh-cn`、`en-us`,各含 `studio-ui.json`

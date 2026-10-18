@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-home-layout Specification
+
+## Purpose
+定义文档首页的 Hero、文档列表和卡片跳转布局，使用户能够在清晰的首页结构中发现内容并进入对应文档详情。
+
+## Requirements
 
 ### Requirement: 首页文档列表布局
 系统 SHALL 在首页展示文档列表，使用卡片网格布局。

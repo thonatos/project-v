@@ -1,7 +1,8 @@
 # home-knowledge-graph Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-visual-revamp. Update Purpose after archive.
+定义首页知识图谱的节点、关系、交互和降级展示行为，使用户能够直观探索内容关联，并在图形能力不可用时继续访问核心信息。
+
 ## Requirements
 ### Requirement: 知识网络图谱
 系统 SHALL 在首页以 WebGL 渲染一张知识网络图谱：将文章、标签、分类抽象为节点，标签共现与文章-标签关系抽象为边，文章节点按分类着色。

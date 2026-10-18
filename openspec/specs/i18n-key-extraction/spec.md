@@ -1,7 +1,8 @@
 # i18n-key-extraction Specification
 
 ## Purpose
-TBD - created by archiving change i18n-studio-pull-push-workflow. Update Purpose after archive.
+定义从界面源码提取国际化 key、刷新源语言资源和报告异常引用的流程，使待翻译文案集合与实际代码使用保持一致。
+
 ## Requirements
 ### Requirement: 提取引擎与配置
 
