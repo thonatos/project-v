@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vite-plus/test';
 
 import { unflattenSnapshot, mergeSnapshot, type ResourceStore } from '~/i18n/runtime-merge';
 import { STUDIO_NAMESPACE } from '~/i18n/config';

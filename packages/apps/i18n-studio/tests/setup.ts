@@ -1,4 +1,4 @@
-import { beforeAll } from 'vitest';
+import { beforeAll } from 'vite-plus/test';
 
 beforeAll(() => {
   // Each test case still resets DATABASE_FILE inside `setupTestDbFromTemplate`,

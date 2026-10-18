@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import vm from 'node:vm';

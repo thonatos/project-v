@@ -16,8 +16,8 @@
     "i18n:push": "pnpm i18n:extract && tsx scripts/i18n-push.ts",
     "i18n:pull": "tsx scripts/i18n-pull.ts && pnpm i18n:codegen",
     "i18n:seed": "tsx app/scripts/seed-studio-ui.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test watch",
     "release:backfill": "tsx app/scripts/backfill-release-manifests.ts"
   },
   "dependencies": {
@@ -84,7 +84,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^6.2.6",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.8"
+    "vite-plus": "catalog:",
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

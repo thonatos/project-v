@@ -1,5 +1,4 @@
-pnpm lint:fix
-pnpm format:write
+vp staged
 gitleaks protect --staged
 
 # Go: 仅当本次提交涉及 *.go 时才检查（TS-only 提交不受影响）

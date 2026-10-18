@@ -32,6 +32,8 @@ dsh plugin --profile web link /absolute/path/to/packages/plugins/dsh-telegram
 dsh --profile web --dump-config
 ```
 
+测试命令由仓库固定版本的 Vite+ 内置 Vitest 执行。
+
 The package declares `dsh.bundle.patch` in `package.json`, so an installed plugin is registered automatically from `cordis.patch.yml`. Do not pass that patch again on the command line:
 
 ```bash

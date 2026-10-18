@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 import assert from 'node:assert/strict';
 import { z } from 'zod';
 import { descriptorOf } from '@deepseek-ai/dsh-storage-domain';

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 
 import { BOT_TOKEN_REF, Config, snapshotConfig } from '../src/config.js';
 import { install } from '../src/index.js';

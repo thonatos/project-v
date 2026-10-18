@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -7,8 +8,9 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 
 import * as schema from '~/db/schema';
 
-const MIGRATIONS = path.resolve('./drizzle');
-const TMP_ROOT = path.resolve('./tests/.tmp');
+const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const MIGRATIONS = path.join(PACKAGE_ROOT, 'drizzle');
+const TMP_ROOT = path.join(PACKAGE_ROOT, 'tests/.tmp');
 const TEMPLATE_DB = path.join(TMP_ROOT, '_template.db');
 
 export interface TestEnv {

@@ -38,7 +38,7 @@
     "build": "node scripts/build-client.mjs",
     "acceptance:plan": "node scripts/local-acceptance-plan.mjs",
     "patch": "node scripts/write-patch.mjs",
-    "test": "node --test test/*.test.js",
+    "test": "vp test run",
     "prepack": "pnpm run patch && pnpm run build",
     "prepublishOnly": "pnpm run test"
   },
@@ -58,7 +58,8 @@
     "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-settings": "0.2.0-rc.2",
     "esbuild": "0.25.9",
-    "react": "18.3.1"
+    "react": "18.3.1",
+    "vite-plus": "catalog:"
   },
   "engines": {
     "dsh": "0.2.0-rc.2",

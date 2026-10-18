@@ -1,17 +1,18 @@
 {
-	"packageManager": "pnpm@12.3.4",
-	"devDependencies": {
-		"@commitlint/cli": "^20.5.0",
-		"@commitlint/config-conventional": "^20.5.0",
-		"husky": "^9.1.7",
-		"oxfmt": "^0.46.0",
-		"oxlint": "^1.61.0"
-	},
-	"scripts": {
-		"prepare": "husky",
-		"lint": "oxlint lint packages",
-		"lint:fix": "oxlint lint packages --fix",
-		"format": "oxfmt format packages --check",
-		"format:write": "oxfmt format packages --write"
-	}
+  "type": "module",
+  "scripts": {
+    "prepare": "vp config --hooks-dir .vite-hooks --no-agent",
+    "check": "vp check packages",
+    "lint": "vp lint packages",
+    "lint:fix": "vp lint packages --fix",
+    "format": "vp fmt packages --check",
+    "format:write": "vp fmt packages --write",
+    "test": "vp test run"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "vite-plus": "catalog:"
+  },
+  "packageManager": "pnpm@12.3.4"
 }

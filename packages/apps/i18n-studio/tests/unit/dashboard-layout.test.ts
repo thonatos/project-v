@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
 
 import { setupTestDbFromTemplate, type TestEnv } from '../test-db';
 import { bootstrap, seedWorld } from '../helpers';

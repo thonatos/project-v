@@ -1,7 +1,8 @@
 import path from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+  root: __dirname,
   resolve: {
     alias: {
       '~': path.resolve(__dirname, './app'),

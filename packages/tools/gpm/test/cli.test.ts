@@ -3,7 +3,7 @@ import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const entry = path.join(packageRoot, 'src/main.ts');

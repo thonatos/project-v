@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 import { getCredentialsApi, readCredentialStatuses, saveTelegramSettings } from '../src/client-credentials.js';
 
 const refs = { botToken: 'DSH_TELEGRAM_BOT_TOKEN', optional: 'OPTIONAL_TOKEN' };
