@@ -1,8 +1,13 @@
-## ADDED Requirements
+# nav-links Specification
+
+## Purpose
+定义顶部导航栏中的首页与 GitHub 外部链接及其视觉区分方式，使用户能够明确识别站内导航和外部目标。
+
+## Requirements
 
 ### Requirement: 导航栏显示 Home 外部链接
 
-系统必须在导航菜单栏中显示 Home 链接，允许用户点击跳转到项目首页。
+系统 MUST在导航菜单栏中显示 Home 链接，允许用户点击跳转到项目首页。
 
 #### Scenario: 用户点击 Home 链接跳转
 
@@ -16,7 +21,7 @@
 
 ### Requirement: 导航栏显示 GitHub 外部链接（仅图标）
 
-系统必须在导航菜单栏中显示 GitHub 链接（仅使用图标，不显示文字），允许用户点击跳转到项目仓库。
+系统 MUST在导航菜单栏中显示 GitHub 链接（仅使用图标，不显示文字），允许用户点击跳转到项目仓库。
 
 #### Scenario: 用户点击 GitHub 图标跳转
 
@@ -30,7 +35,7 @@
 
 ### Requirement: 外部链接视觉区分
 
-系统必须为外部链接提供视觉标识，区分内部路由链接和外部链接。
+系统 MUST为外部链接提供视觉标识，区分内部路由链接和外部链接。
 
 #### Scenario: 外部链接显示图标标识
 

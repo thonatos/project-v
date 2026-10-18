@@ -20,7 +20,13 @@
 
 ### Requirement: 角色与权限矩阵
 
-系统 SHALL 支持三种角色：`admin`、`editor`、`viewer`，并按下表强制授权：
+系统 SHALL 支持 `admin`、`editor`、`viewer` 三种 namespace 角色，并 MUST 按统一权限矩阵授权所有受保护操作；未经矩阵允许的操作 MUST 被拒绝且不得修改数据。
+
+#### Scenario: 完整角色权限矩阵
+
+- **GIVEN** 用户在 namespace 中具有 `admin`、`editor` 或 `viewer` 角色
+- **WHEN** 系统授权读取、写入、任务、同步、语言、成员或 namespace 管理操作
+- **THEN** 权限 MUST 按下表执行：
 
 | 操作 | admin | editor | viewer |
 | ---- | ----- | ------ | ------ |
@@ -42,7 +48,6 @@
 | 配置语言列表 | ✅ | ❌ | ❌ |
 | 邀请/移除/变更成员角色 | ✅ | ❌ | ❌ |
 | 删除命名空间 | ✅ | ❌ | ❌ |
-
 #### Scenario: viewer 写操作被拒
 
 - **GIVEN** 用户在命名空间内角色为 `viewer`

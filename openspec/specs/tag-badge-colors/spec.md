@@ -1,4 +1,9 @@
-## ADDED Requirements
+# tag-badge-colors Specification
+
+## Purpose
+定义标签组件与标签列表共享的配色来源、颜色分配和交互状态，使标签视觉保持一致并消除页面之间的重复配置。
+
+## Requirements
 
 ### Requirement: 共享配色配置
 
@@ -11,8 +16,6 @@
 #### Scenario: 配色配置结构
 - **WHEN** 访问配色配置
 - **THEN** SHALL 提供 TAG_COLORS 对象和 getTagColor 函数
-
-## MODIFIED Requirements
 
 ### Requirement: Tag Badge 配色方案
 
@@ -37,13 +40,3 @@ Tag Badge SHALL 使用紫色系为主的配色，替代原有的暖色中性色�
 #### Scenario: 标签卡片 hover 效果
 - **WHEN** 用户悬停标签卡片
 - **THEN** SHALL 显示更深色的背景和文字颜色
-
-## REMOVED Requirements
-
-### Requirement: TagBadge 使用暖色中性配色方案
-**Reason**: 替换为紫色系配色方案
-**Migration**: 使用新的紫色系 TAG_COLORS 配色池
-
-### Requirement: 保持标签颜色自动分配逻辑
-**Reason**: 此逻辑保留，但配色方案已变更
-**Migration**: 继续使用哈希分配逻辑，颜色池改为紫色系

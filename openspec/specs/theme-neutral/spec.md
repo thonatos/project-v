@@ -1,8 +1,13 @@
-## ADDED Requirements
+# theme-neutral Specification
+
+## Purpose
+定义站点迁移到 neutral 主题后的全局视觉规则与一致性要求，使各页面和组件在主题调整后仍保持协调、清晰和可用。
+
+## Requirements
 
 ### Requirement: 全局主题风格变更为 neutral
 
-系统必须将全局配色从 slate 色系变更为 neutral 色系，确保视觉风格一致性。
+系统 MUST将全局配色从 slate 色系变更为 neutral 色系，确保视觉风格一致性。
 
 #### Scenario: Slate 色系类名替换为 Neutral
 
@@ -16,7 +21,7 @@
 
 ### Requirement: 主题变更保持视觉一致性
 
-系统必须确保主题变更后，所有组件视觉效果保持一致，无颜色断层或冲突。
+系统 MUST确保主题变更后，所有组件视觉效果保持一致，无颜色断层或冲突。
 
 #### Scenario: 按钮组件配色一致
 

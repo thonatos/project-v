@@ -1,7 +1,8 @@
 # docs-section Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-blog-docs-split. Update Purpose after archive.
+定义站点文档区域的内容组织、入口展示和详情访问行为，使用户能够发现、浏览并区分正式文档与其他内容类型。
+
 ## Requirements
 ### Requirement: Docs 分类树
 

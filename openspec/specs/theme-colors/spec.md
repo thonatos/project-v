@@ -1,4 +1,9 @@
-## ADDED Requirements
+# theme-colors Specification
+
+## Purpose
+定义站点主题的颜色体系、背景、标题、链接和层次表达，使页面在保持可读性的同时形成统一且克制的视觉风格。
+
+## Requirements
 
 ### Requirement: 主题配色系统
 

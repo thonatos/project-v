@@ -1,4 +1,9 @@
-## ADDED Requirements
+# file-routing Specification
+
+## Purpose
+定义基于文件的页面路由和 Loader 数据加载机制，使文档路径能够确定性映射到页面组件并在导航时获取对应内容。
+
+## Requirements
 
 ### Requirement: 路由页面配置
 系统 SHALL 提供路由页面，使用 loader 加载文档数据。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# mdx-content Specification
+
+## Purpose
+定义 MDX 内容的解析渲染、代码高亮、自定义组件和图片预览能力，使富文档内容可安全组合并获得一致的交互体验。
+
+## Requirements
 
 ### Requirement: MDX 文件解析与渲染
 系统 SHALL 支持 MDX 格式文件的解析和渲染，允许在 Markdown 中嵌入 React 组件。

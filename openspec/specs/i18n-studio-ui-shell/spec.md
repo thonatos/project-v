@@ -46,20 +46,13 @@ i18n-studio SHALL 提供统一的应用 shell:
 
 ### Requirement: 主战场页面重做
 
-以下页面 SHALL 按现代后台标准重做,包含图标、Empty state、Skeleton 等基本要素,并使用 shadcn `Table` / `Select` / `Switch` / `Badge` / `Card` 等组件而非裸 `<table>` / `<select>` / 原生 `<input type="checkbox">`:
+i18n-studio 的主要后台与表单页面 SHALL 使用现代后台交互和 shadcn 组件重做，包含图标、Empty state 与 Skeleton；数据表、选择器和布尔开关 MUST 使用对应 shadcn 组件，不得退回裸 HTML 控件。
 
-- `/dashboard`(namespace 列表)
-- `/dashboard/:slug`(overview)
-- `/dashboard/:slug/entries`(词条列表)
-- `/dashboard/:slug/entries/:key`(词条编辑)
-- `/dashboard/:slug/entries/:key/history`(词条历史)
-- `/dashboard/:slug/sync`(跨空间同步)
-- `/dashboard/:slug/tasks`(翻译任务)
-- `/dashboard/:slug/members`(成员管理)
-- `/dashboard/:slug/settings`(设置 + token 管理)
-- `/dashboard/locales`(系统级语言库)
-- `/login`、`/register`、`/dashboard/new`(表单页)
+#### Scenario: 页面覆盖范围
 
+- **GIVEN** i18n-studio 的后台和认证表单路由
+- **WHEN** 检查现代化页面范围
+- **THEN** MUST 覆盖 `/dashboard`、namespace overview、entries 列表/编辑/历史、sync、tasks、members、settings、`/dashboard/locales`、`/login`、`/register` 与 `/dashboard/new`
 #### Scenario: namespace 卡片网格 + empty state
 
 - **GIVEN** 已登录用户访问 `/dashboard`

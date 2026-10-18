@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-motion-preference Specification
+
+## Purpose
+定义文档站点对 reduced-motion 偏好和触摸设备交互的适配要求，在保留可用反馈的同时减少不必要动画和操作阻碍。
+
+## Requirements
 
 ### Requirement: Reduced Motion 支持
 系统 SHALL 尊重用户的 `prefers-reduced-motion` 设置，为需要减少动画的用户禁用过渡效果。

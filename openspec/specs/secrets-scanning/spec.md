@@ -1,4 +1,9 @@
-## ADDED Requirements
+# secrets-scanning Specification
+
+## Purpose
+定义 Gitleaks 配置、例外规则、提交前钩子、CI 扫描和忽略文件要求，防止凭据及其他敏感信息进入版本库或发布流程。
+
+## Requirements
 
 ### Requirement: gitleaks-config-file
 

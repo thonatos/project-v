@@ -1,4 +1,9 @@
-## ADDED Requirements
+# tags-system Specification
+
+## Purpose
+定义文档标签的解析、聚合、查询、列表页、详情页和内容展示行为，使用户可以按标签发现、筛选并浏览相关文档内容。
+
+## Requirements
 
 ### Requirement: Tags 字段解析
 

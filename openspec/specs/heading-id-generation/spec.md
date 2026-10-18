@@ -1,3 +1,8 @@
+# heading-id-generation Specification
+
+## Purpose
+定义文档标题生成 HTML 标识符的规则，覆盖中文与混合文本、重复标题和格式约束，以保证锚点链接稳定且浏览器兼容。
+
 ## Requirements
 
 ### Requirement: 中文标题生成有效 id

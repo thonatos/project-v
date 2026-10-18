@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-api Specification
+
+## Purpose
+定义文档内容的存储、开发环境加载和代码语法高亮能力，使文档数据能够通过稳定接口进入应用并获得一致的技术内容展示。
+
+## Requirements
 
 ### Requirement: 文档存储位置
 系统 SHALL 将文档存储在 `app/docs` 目录下。

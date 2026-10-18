@@ -1,7 +1,8 @@
 # layout-width-system Specification
 
 ## Purpose
-TBD - created by archiving change docs-app-visual-revamp. Update Purpose after archive.
+定义站点页面容器、内容宽度和响应式断点的统一体系，使不同页面类型在各类视口上保持一致的对齐、留白与可读性。
+
 ## Requirements
 ### Requirement: 三级布局宽度体系
 系统 SHALL 提供三种布局宽度模式：full-bleed（100vw 无边距，WebGL 舞台）、contained（max-w-7xl 居中，常规内容）、reading（max-w-3xl 居中，正文阅读），并通过统一的 PageShell 容器组件按页面职能选用。

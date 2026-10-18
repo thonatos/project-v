@@ -1,7 +1,8 @@
 # i18n-quality-workbench Specification
 
 ## Purpose
-TBD - created by archiving change modernize-i18n-studio-platform. Update Purpose after archive.
+定义 i18n-studio 的翻译质量检查、问题聚合和修复工作台能力，使维护者能够发现缺失、过期或不一致文案并跟踪处理结果。
+
 ## Requirements
 ### Requirement: 翻译质量检查
 

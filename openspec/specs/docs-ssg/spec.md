@@ -1,4 +1,9 @@
-## ADDED Requirements
+# docs-ssg Specification
+
+## Purpose
+定义文档应用的静态站点生成、内容读取、Loader 数据注入和生产部署要求，确保构建产物可离线生成并稳定托管。
+
+## Requirements
 
 ### Requirement: React Router SSG 配置
 系统 SHALL 在 `react-router.config.ts` 中配置 SSG 预渲染。

@@ -70,8 +70,14 @@ i18n-studio SHALL 提供 `GET /snapshot/:slug/meta` 作为语种清单端点,返
 
 ### Requirement: 文案推送脚本（push）
 
-系统 SHALL 提供一个 push 脚本,将**源码中实际使用的 key**（由 `i18n-key-extraction` 能力经 i18next-cli extract 刷新到本地 zh-cn 资源)中**系统尚不存在的 key** 推送到目标 namespace（经 `STUDIO_NAMESPACE` 配置,默认 `studio-ui`）,使用 `write` token 鉴权。push SHALL NOT 再盲目上传本地 `locales/` 全量;而是 SHALL 先运行 extract 刷新本地 key 集合,再经 snapshot 取目标 namespace 现有 key 集合,与本地 zh-cn key 做 diff,仅推送**新增/缺失**的 key 到源语言(`zh-cn`)。既有翻译 SHALL NOT 被该流程覆盖。脚本 SHALL 经 `dotenv` 从 `packages/apps/i18n-studio/.env` 读取配置（`STUDIO_BASE_URL` / `STUDIO_NAMESPACE` / `STUDIO_WRITE_TOKEN`）,并在接口返回错误时以非零退出码报告失败。`.env` SHALL 被 git 忽略,仓库仅提交 `.env.example`。
+系统 SHALL 提供 push 脚本：先 extract 源码实际使用的 key，再与目标 namespace 现有 key 做差集，仅使用 `write` token 推送源语言中新增或缺失的 key。脚本 MUST NOT 覆盖既有翻译或盲目上传全量 locales；配置 MUST 由 dotenv 从应用 `.env` 读取，接口失败 MUST 以非零状态退出。
 
+#### Scenario: push 配置与凭据文件
+
+- **GIVEN** 开发者配置界面文案 push
+- **WHEN** 脚本读取运行参数
+- **THEN** SHALL 从 `packages/apps/i18n-studio/.env` 读取 `STUDIO_BASE_URL`、`STUDIO_NAMESPACE` 与 `STUDIO_WRITE_TOKEN`，namespace 默认值为 `studio-ui`
+- **AND** `.env` MUST 被 git 忽略，仓库仅提交 `.env.example`
 #### Scenario: 仅推送新增 key
 
 - **GIVEN** 源码经 extract 后本地 zh-cn 含 `hero.title`、`hero.subtitle`,而系统 `studio-ui` 已存在 `hero.title`
@@ -92,8 +98,7 @@ i18n-studio SHALL 提供 `GET /snapshot/:slug/meta` 作为语种清单端点,返
 
 ### Requirement: 文案拉取脚本（pull）
 
-系统 SHALL 提供一个 pull 脚本，从 studio 系统拉取目标 namespace（经 `STUDIO_NAMESPACE` 配置，默认 `studio-ui`）的文案，落地为本地资源文件。脚本 SHALL NOT 硬编码受支持语种列表;SHALL 先调用语种清单接口 `GET /snapshot/:slug/meta` 获取该 namespace 的语种集与元信息,再据此逐个拉取各语种文案,并将语种元信息(`label`/`englishLabel`/`nativeLabel`)回写到本地元信息文件供 codegen 消费。本地资源 SHALL 落地为**单一文件** `locales/<lang>/<STUDIO_NAMESPACE>.json`(默认 `studio-ui.json`),其内容为该 namespace 的全部 flat key 还原成的嵌套对象(如 `{ common: { nav: { dashboard } }, landing: { hero: { title } } }`),SHALL NOT 按 key 首段前缀拆分为多个文件。pull 走公开 snapshot 时无需 token。脚本 SHALL 在接口返回错误时以非零退出码报告失败。pull 工作流 SHALL 在所有语种资源与元信息成功写入后刷新 `app/i18n/generated.ts`,使开发者执行 `i18n:pull` 后即得到可被构建消费的本地 bundle;若拉取存在失败项,流程 SHALL 以非零退出且 SHALL NOT 基于半成品资源刷新生成物。
-
+系统 SHALL 提供 pull 脚本：从目标 namespace 的 meta 端点发现语种与元信息，再拉取各语种文案并写入单一 `locales/<lang>/<namespace>.json`。脚本 MUST NOT 硬编码语种或按 key 前缀拆分 namespace。全部资源成功后 MUST 刷新 `generated.ts`；任一拉取失败 MUST 非零退出且不得基于半成品刷新生成物。
 #### Scenario: 先查清单再拉文案
 
 - **GIVEN** `studio-ui` 在系统中支持 `zh-cn`、`en-us`、`ja-jp`

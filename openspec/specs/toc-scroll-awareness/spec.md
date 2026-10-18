@@ -1,3 +1,8 @@
+# toc-scroll-awareness Specification
+
+## Purpose
+定义文档目录高亮与用户滚动状态之间的关系，包括初始状态、首次滚动激活和监听器清理，以避免错误定位和资源泄漏。
+
 ## Requirements
 
 ### Requirement: TOC 初始加载时不高亮任何条目

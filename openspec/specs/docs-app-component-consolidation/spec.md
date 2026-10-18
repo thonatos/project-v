@@ -1,6 +1,9 @@
-# docs-app-component-consolidation
+# docs-app-component-consolidation Specification
 
-## ADDED Requirements
+## Purpose
+定义文档应用中标签、文章卡片、内容面板和主题依赖的组件整合要求，减少重复实现并保持不同页面之间的一致行为。
+
+## Requirements
 
 ### Requirement: TagChip 组件统一 tag 相关功能
 

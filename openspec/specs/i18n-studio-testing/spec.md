@@ -80,17 +80,13 @@ i18n-studio 的所有测试 SHALL 集中在 `packages/apps/i18n-studio/tests/` �
 
 ### Requirement: 测试文件合并粒度
 
-集成测试 SHALL 按业务域合并为以下 6 个文件，每个文件以单一顶层 `describe` 包裹多个子 `describe`：
+集成测试 SHALL 按业务域合并为 6 个文件，每个文件 MUST 使用单一顶层 `describe` 包裹多个子 `describe`，并 MUST 保留合并前的全部测试覆盖。
 
-| 文件 | 来源 |
-| ---- | ---- |
-| `tests/integration/namespace.test.ts` | `integration.test.ts` + `isolation.test.ts` + `bundle-version.test.ts` |
-| `tests/integration/entry-lifecycle.test.ts` | `import.test.ts` + `publish.test.ts` + `query.test.ts` |
-| `tests/integration/translation-flow.test.ts` | `task.test.ts` + `sync.test.ts` |
-| `tests/integration/export-snapshot.test.ts` | `export.test.ts` + `snapshot-channel.test.ts` |
-| `tests/integration/permissions.test.ts` | `permissions.test.ts`（保留独立） |
-| `tests/integration/e2e.test.ts` | `e2e-smoke.test.ts` |
+#### Scenario: 集成测试文件映射
 
+- **GIVEN** 合并后的 `tests/integration/`
+- **WHEN** 检查业务域与文件来源
+- **THEN** MUST 使用以下映射：`namespace.test.ts` 合并 integration/isolation/bundle-version，`entry-lifecycle.test.ts` 合并 import/publish/query，`translation-flow.test.ts` 合并 task/sync，`export-snapshot.test.ts` 合并 export/snapshot-channel，`permissions.test.ts` 保持独立，`e2e.test.ts` 承接 e2e-smoke
 #### Scenario: 仅存在 6 个集成测试文件
 
 - **GIVEN** `tests/integration/`

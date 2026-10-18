@@ -1,4 +1,9 @@
-## ADDED Requirements
+# simplified-workflows Specification
+
+## Purpose
+定义项目持续集成工作流的精简结构和执行边界，减少重复步骤，同时保留代码检查、构建与交付所需的可靠验证。
+
+## Requirements
 
 ### Requirement: simplified-workflows
 
