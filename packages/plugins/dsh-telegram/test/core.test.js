@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 import assert from 'node:assert/strict';
 import { normalizeConfig, resolveCredentials } from '../src/config.js';
 import { normalizeInboundMessage, splitMessageText } from '../src/transport/inbound.js';

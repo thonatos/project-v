@@ -65,9 +65,11 @@
 pnpm install
 pnpm -F <pkg> build
 pnpm -F <pkg> dev
+pnpm check
 pnpm lint
 pnpm lint:fix
 pnpm format:write
+pnpm test
 ```
 
 ### TypeScript
@@ -91,7 +93,7 @@ pnpm format:write
 ### Go（仅 `go/` 目录）
 
 - 上述 TS/React/Node.js 规范均**不适用**于 Go 代码
-- 格式化用 `gofmt`（提交前 husky 会校验 staged 的 `*.go`）
+- 格式化用 `gofmt`（提交前 Vite+ hook 会校验 staged 的 `*.go`）
 - 静态检查用 `golangci-lint`（v2，配置 `go/.golangci.yml`；装了才在 pre-commit 跑）
 - 错误显式处理并 `%w` 包装，不 silent failures
 - 编译检查用 `go build ./...`；测试 `go test ./...`；lint `golangci-lint run ./...`（需装 golangci-lint v2）
@@ -105,8 +107,8 @@ pnpm format:write
 
 ## 其他规范
 
-- Oxlint 配置：`oxlint.json`、`.oxfmtrc.json`
+- JavaScript/TypeScript 通用工具由 Vite+ 管理，配置位于根 `vite.config.ts`
+- 测试 API 从 `vite-plus/test` 导入；运行全仓测试使用 `pnpm test`
 - 提交用 conventional commits
 - 浏览器测试后只关 tab，不关浏览器
 - Git 提交：正常提交，使用 git hooks 验证，禁止跳过
-- Oxlint 配置：`oxlint.json`、`.oxfmtrc.json`

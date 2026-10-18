@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vite-plus/test';
 import { eq, and } from 'drizzle-orm';
 
 import { setupTestDbFromTemplate, bootstrap, seedWorld, type TestCtx } from '../helpers';

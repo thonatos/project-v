@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import test from 'node:test';
+import { test } from 'vite-plus/test';
 import { GpmError, getDestination, parseConfig, parseRepository } from '../src/core.ts';
 
 test('parseConfig accepts exactly one absolute root', () => {

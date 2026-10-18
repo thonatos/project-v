@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vite-plus/test';
 
 import { flatten, unflatten } from '../../app/lib/i18n-sync/resources';
 

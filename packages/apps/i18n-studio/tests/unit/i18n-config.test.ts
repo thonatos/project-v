@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vite-plus/test';
 
 import i18n from '~/i18n/config';
 import { DEFAULT_LANG } from '~/lib/i18n';

@@ -10,15 +10,16 @@
   "scripts": {
     "build": "mkdir -p dist && scriptc build src/main.ts --no-keep-c -o dist/gpm",
     "coverage": "scriptc coverage src/main.ts",
-    "format": "oxfmt format . --check",
-    "lint": "oxlint lint src test",
-    "test": "node --test test/*.test.ts",
+    "format": "vp fmt . --check",
+    "lint": "vp lint src test",
+    "test": "vp test run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
     "scriptc": "0.0.28",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=24.0.0"

@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Node.js >= 20
+- Node.js >= 24.11
 - pnpm (`npm install -g pnpm`)
 
 ## Development
@@ -28,10 +28,16 @@ pnpm --filter react-component dev
 
 ```bash
 # Format code
-pnpm biome format --write .
+pnpm format:write
 
 # Lint code
-pnpm biome lint .
+pnpm lint
+
+# Check formatting and lint together
+pnpm check
+
+# Run all JavaScript and TypeScript tests with Vite+
+pnpm test
 ```
 
 ## Deploy
