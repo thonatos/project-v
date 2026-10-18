@@ -19,6 +19,9 @@ async function harness({
   resume,
   resumeCwd,
   workspaces,
+  defaultPreset = 'standard',
+  storedPresets = {},
+  unavailablePresets = [],
 } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'dsh-telegram-model-'));
   const workspaceList = workspaces ?? [{ id: 'workspace-1', title: 'Main', path: root }];
@@ -44,6 +47,9 @@ async function harness({
     async set(key, patch) {
       const current = rows.get(String(key));
       const next = { ...current, ...patch };
+      if (Object.hasOwn(patch ?? {}, 'reasoningEffort') && patch.reasoningEffort === undefined) {
+        delete next.reasoningEffort;
+      }
       if (!next.sessionId || !next.workspaceId) throw new TypeError('A session binding is required');
       rows.set(String(key), next);
     },
@@ -55,6 +61,10 @@ async function harness({
 
   const createOptions = [];
   const resumeOptions = [];
+  const presetResolves = [];
+  const presetMounts = [];
+  const presetLeases = [];
+  const presetObservations = [];
 
   const sent = [];
   const agents = new Map();
@@ -118,7 +128,34 @@ async function harness({
         }),
     },
     agentPresets: {
-      async mount() {},
+      async resolve(requested) {
+        const id = requested ?? defaultPreset;
+        presetResolves.push(id);
+        if (unavailablePresets.includes(id)) throw new Error(`preset ${id} is unavailable`);
+        return { id };
+      },
+      async acquireScope(id) {
+        presetLeases.push(['acquire', id]);
+        return {
+          async [Symbol.asyncDispose]() {
+            presetLeases.push(['release', id]);
+          },
+        };
+      },
+      async mount(_agentCtx, id) {
+        presetMounts.push(id);
+      },
+    },
+    sessionQuery: {
+      async observeSession(sessionId) {
+        presetObservations.push(['open', sessionId]);
+        return {
+          projections: { values: { agentPreset: storedPresets[sessionId] } },
+          [Symbol.dispose]() {
+            presetObservations.push(['close', sessionId]);
+          },
+        };
+      },
     },
     agents: {
       get: (id) => agents.get(String(id)),
@@ -188,6 +225,10 @@ async function harness({
     sent,
     createOptions,
     resumeOptions,
+    presetResolves,
+    presetMounts,
+    presetLeases,
+    presetObservations,
     agents,
     ctx,
     // 投递一条 Owner 私聊消息并等待该聊天的串行队列排空。
@@ -293,6 +334,77 @@ const TWO_MODELS = {
   ],
 };
 
+test('records and mounts one resolved preset while holding its revision lease', async () => {
+  const h = await harness({ defaultPreset: 'standard-v2' });
+  await h.send('hello');
+
+  assert.equal(h.createOptions[0].meta.agentPreset, 'standard-v2');
+  assert.deepEqual(h.presetMounts, ['standard-v2']);
+  assert.deepEqual(h.presetLeases, [
+    ['acquire', 'standard-v2'],
+    ['release', 'standard-v2'],
+  ]);
+  await h.cleanup();
+});
+
+test('resumes with the preset stored in the Session projection', async () => {
+  const h = await harness({
+    defaultPreset: 'new-default',
+    storedPresets: { 'telegram-existing': 'historical' },
+    bindings: [['7', { sessionId: 'telegram-existing', workspaceId: 'workspace-1' }]],
+  });
+  await h.send('hello');
+
+  assert.equal(h.resumeOptions.length, 1);
+  assert.deepEqual(h.presetResolves, ['historical']);
+  assert.deepEqual(h.presetMounts, ['historical']);
+  assert.deepEqual(h.presetObservations, [
+    ['open', 'telegram-existing'],
+    ['close', 'telegram-existing'],
+  ]);
+  await h.cleanup();
+});
+
+test('falls back to the current default preset for a legacy Session', async () => {
+  const h = await harness({
+    defaultPreset: 'current-default',
+    bindings: [['7', { sessionId: 'telegram-legacy', workspaceId: 'workspace-1' }]],
+  });
+  await h.send('hello');
+
+  assert.equal(h.resumeOptions.length, 1);
+  assert.deepEqual(h.presetResolves, ['current-default']);
+  assert.deepEqual(h.presetMounts, ['current-default']);
+  await h.cleanup();
+});
+
+test('rebuilds with the default when a stored preset is unavailable', async () => {
+  const h = await harness({
+    defaultPreset: 'current-default',
+    storedPresets: { 'telegram-stale-preset': 'removed-preset' },
+    unavailablePresets: ['removed-preset'],
+    bindings: [['7', { sessionId: 'telegram-stale-preset', workspaceId: 'workspace-1' }]],
+  });
+  await h.send('hello');
+
+  assert.equal(h.resumeOptions.length, 0);
+  assert.equal(h.createOptions.length, 1);
+  assert.equal(h.createOptions[0].meta.agentPreset, 'current-default');
+  assert.deepEqual(h.presetMounts, ['current-default']);
+  await h.cleanup();
+});
+
+test('does not observe or remount a preset when reusing a live Agent', async () => {
+  const h = await harness();
+  await h.send('hello');
+  const restarted = await h.restart();
+  await restarted.send('again');
+
+  assert.deepEqual(restarted.presetObservations, []);
+  assert.deepEqual(restarted.presetMounts, ['standard']);
+  await restarted.cleanup();
+});
+
 test('prefers the chat-level selection over the global default on create and resume', async () => {
   // tasks 3.4：绑定含选择时，create 与 resume 两侧的 agentOptions 都必须等于绑定值。
   const h = await harness({
@@ -317,6 +429,71 @@ test('prefers the chat-level selection over the global default on create and res
   assert.deepEqual(h.createOptions.at(-1).agentOptions, {
     provider: 'deepseek',
     model: 'deepseek-chat',
+  });
+  await h.cleanup();
+});
+
+test('propagates reasoning effort from bindings and the global default', async () => {
+  const bound = await harness({
+    models: TWO_MODELS,
+    defaultSelection: { provider: 'deepseek', model: 'deepseek-chat', reasoningEffort: 'low' },
+    bindings: [
+      [
+        '7',
+        {
+          sessionId: 'telegram-effort',
+          workspaceId: 'workspace-1',
+          provider: 'deepseek',
+          model: 'deepseek-reasoner',
+          reasoningEffort: 'high',
+        },
+      ],
+    ],
+  });
+  await bound.send('hello');
+  assert.deepEqual(bound.resumeOptions[0].agentOptions, {
+    provider: 'deepseek',
+    model: 'deepseek-reasoner',
+    reasoningEffort: 'high',
+  });
+  await bound.cleanup();
+
+  const fallback = await harness({
+    models: TWO_MODELS,
+    defaultSelection: { provider: 'deepseek', model: 'deepseek-chat', reasoningEffort: 'low' },
+  });
+  await fallback.send('hello');
+  assert.deepEqual(fallback.createOptions[0].agentOptions, {
+    provider: 'deepseek',
+    model: 'deepseek-chat',
+    reasoningEffort: 'low',
+  });
+  await fallback.cleanup();
+});
+
+test('clears an inherited reasoning effort when switching provider and model', async () => {
+  const h = await harness({
+    models: TWO_MODELS,
+    bindings: [
+      [
+        '7',
+        {
+          sessionId: 'telegram-switch-effort',
+          workspaceId: 'workspace-1',
+          provider: 'deepseek',
+          model: 'deepseek-chat',
+          reasoningEffort: 'high',
+        },
+      ],
+    ],
+  });
+  await h.send('hello');
+  await h.send('/model deepseek deepseek-reasoner');
+  assert.deepEqual(h.store.get('7'), {
+    sessionId: 'telegram-switch-effort',
+    workspaceId: 'workspace-1',
+    provider: 'deepseek',
+    model: 'deepseek-reasoner',
   });
   await h.cleanup();
 });

@@ -39,8 +39,10 @@ window.__ModuleLoader__.load({
     // src/client.js
     var client_exports = {};
     __export(client_exports, {
+      TelegramSettingsCard: () => TelegramSettingsCard,
       apply: () => apply,
       inject: () => inject,
+      settingsEditorState: () => settingsEditorState,
     });
     module.exports = __toCommonJS(client_exports);
     var React = __toESM(require('react'), 1);
@@ -78,11 +80,7 @@ window.__ModuleLoader__.load({
       }
       if (response?.ok !== true) throw credentialError('write');
     }
-    async function saveTelegramSettings({ credentialsApi, scope, sourceEnabled, values, secrets, refs }) {
-      if (sourceEnabled) await scope.set('enabled', false);
-      for (const [field, value] of Object.entries(values)) {
-        if (field !== 'enabled') await scope.set(field, value);
-      }
+    async function saveTelegramSettings({ credentialsApi, mutate, revision, values, secrets, refs }) {
       for (const [key, value] of Object.entries(secrets)) {
         if (value.trim()) await writeCredential(credentialsApi, refs[key], value.trim());
       }
@@ -90,16 +88,21 @@ window.__ModuleLoader__.load({
       if (values.enabled && !credentials.botToken) {
         throw new Error('Bot Token \u5FC5\u987B\u6210\u529F\u4FDD\u5B58\u540E\u624D\u80FD\u542F\u7528 Telegram');
       }
-      await scope.set('enabled', values.enabled);
+      const accepted = await mutate(
+        Object.entries(values).map(([field, value]) => ({ op: 'set', path: [field], value })),
+        revision,
+      );
+      if (!accepted)
+        throw new Error('Telegram \u914D\u7F6E\u5DF2\u53D8\u5316\uFF0C\u8BF7\u5237\u65B0\u540E\u91CD\u8BD5');
       return credentials;
     }
 
     // src/client.js
     var h = React.createElement;
-    var SETTINGS_NAMESPACE = 'dsh-telegram';
+    var PLUGIN_ROW_KEY = '@implementsio/dsh-telegram#dsh-telegram';
     var STYLE_ID = 'implementsio-dsh-telegram-settings';
-    var PLUGIN_VERSION = '0.4.0';
-    var inject = ['remote', 'remote.credentials', 'slots', 'settingsScope', 'workspaces'];
+    var PLUGIN_VERSION = '1.0.0-dsh.0.2.0-rc.2';
+    var inject = ['remote', 'remote.credentials', 'slots', 'workspaces'];
     var styles = `
 .dsh-tg-card{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;list-style:none;transition:border-color .16s,background .16s}.dsh-tg-card:hover{border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-card-open{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-label-dimmed)}
 .dsh-tg-header{appearance:none;width:100%;font:inherit;color:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:12px;align-items:center;gap:12px;padding:14px 16px;display:flex}.dsh-tg-header:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}
@@ -115,6 +118,13 @@ window.__ModuleLoader__.load({
 .dsh-tg-button{appearance:none;font:inherit;cursor:pointer;border:1px solid transparent;border-radius:8px;padding:5px 14px;font-size:13px;line-height:1.5}.dsh-tg-button-secondary{border-color:var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);background:0 0}.dsh-tg-button-secondary:hover:not(:disabled){color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-button-primary{background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-layer-3)}.dsh-tg-button:disabled{opacity:.4;cursor:default}.dsh-tg-button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
 @media(max-width:680px){.dsh-tg-section{grid-template-columns:1fr}.dsh-tg-field-wide{grid-column:auto}}
 `;
+    function settingsEditorState(snapshot, workspaceSnapshot) {
+      return {
+        loading: snapshot?.status !== 'ready',
+        writable: snapshot?.status === 'ready' && snapshot.writable === true,
+        workspaceLoading: workspaceSnapshot?.state === 'loading' || workspaceSnapshot?.phase === 'pending',
+      };
+    }
     function Chevron({ open }) {
       return h(
         'svg',
@@ -168,17 +178,14 @@ window.__ModuleLoader__.load({
         hint ? h('p', { className: 'dsh-tg-hint' }, hint) : null,
       );
     }
-    function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
-      const snapshot = React.useSyncExternalStore(
-        scope.subscribe.bind(scope),
-        scope.getSnapshot.bind(scope),
-        scope.getSnapshot.bind(scope),
-      );
+    function TelegramSettingsEditor({ credentialsApi, form, workspaceList }) {
+      const snapshot = form.state;
       const workspaceSnapshot = React.useSyncExternalStore(
         workspaceList.subscribe.bind(workspaceList),
         workspaceList.getSnapshot.bind(workspaceList),
         workspaceList.getSnapshot.bind(workspaceList),
       );
+      const availability = settingsEditorState(snapshot, workspaceSnapshot);
       const source = snapshot.value ?? {};
       const [open, setOpen] = React.useState(false);
       const [draft, setDraft] = React.useState(source);
@@ -242,8 +249,8 @@ window.__ModuleLoader__.load({
           };
           const nextCredentials = await saveTelegramSettings({
             credentialsApi,
-            scope,
-            sourceEnabled: Boolean(source.enabled),
+            mutate: form.mutate,
+            revision: snapshot.revision,
             values,
             secrets,
             refs,
@@ -258,7 +265,7 @@ window.__ModuleLoader__.load({
         }
       };
       return h(
-        'li',
+        'div',
         { className: `dsh-tg-card${open ? ' dsh-tg-card-open' : ''}`, 'data-slot': 'telegram-settings-card' },
         h(
           'button',
@@ -293,7 +300,7 @@ window.__ModuleLoader__.load({
           ? h(
               'div',
               { className: 'dsh-tg-body' },
-              snapshot.status !== 'ready'
+              availability.loading
                 ? h('p', { className: 'dsh-tg-hint' }, '\u6B63\u5728\u8BFB\u53D6 Telegram \u8BBE\u7F6E\u2026')
                 : h(
                     React.Fragment,
@@ -358,7 +365,7 @@ window.__ModuleLoader__.load({
                           h(
                             'option',
                             { value: '' },
-                            workspaceSnapshot.state === 'loading'
+                            availability.workspaceLoading
                               ? '\u6B63\u5728\u8BFB\u53D6 Workspace\u2026'
                               : '\u8BF7\u9009\u62E9 Workspace',
                           ),
@@ -514,7 +521,7 @@ window.__ModuleLoader__.load({
                         {
                           type: 'button',
                           className: 'dsh-tg-button dsh-tg-button-primary',
-                          disabled: (!dirty && !secretDirty) || saving || requiredMissing || !snapshot.writable,
+                          disabled: (!dirty && !secretDirty) || saving || requiredMissing || !availability.writable,
                           onClick: save,
                         },
                         h('span', null, saving ? '\u4FDD\u5B58\u4E2D\u2026' : '\u4FDD\u5B58'),
@@ -525,6 +532,15 @@ window.__ModuleLoader__.load({
           : null,
       );
     }
+    function TelegramSettingsCard({ view, ...props }) {
+      if (view === 'summary')
+        return h(
+          'span',
+          null,
+          '\u901A\u8FC7 Telegram Bot API \u5C06\u79C1\u804A\u6D88\u606F\u8FDE\u63A5\u5230 Harness Workspace\u3002',
+        );
+      return h(TelegramSettingsEditor, props);
+    }
     function apply(ctx) {
       ctx.effect(() => {
         const element = document.createElement('style');
@@ -533,15 +549,14 @@ window.__ModuleLoader__.load({
         document.head.append(element);
         return () => element.remove();
       });
-      const scope = ctx.settingsScope.bind({ namespace: SETTINGS_NAMESPACE });
       const credentialsApi = getCredentialsApi(ctx);
-      const workspaces = ctx.get('workspaces');
-      ctx.slots.inject('settings.plugin.item', () =>
+      const workspaceList = ctx.workspaces.list;
+      ctx.slots.inject('plugins.row.config', () =>
         ctx.slots.register(
           {
-            name: 'settings.plugin.item',
-            key: SETTINGS_NAMESPACE,
-            inject: () => ({ credentialsApi, scope, workspaceList: workspaces.list }),
+            name: 'plugins.row.config',
+            key: PLUGIN_ROW_KEY,
+            inject: () => ({ credentialsApi, workspaceList }),
           },
           TelegramSettingsCard,
         ),

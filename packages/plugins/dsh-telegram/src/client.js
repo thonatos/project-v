@@ -2,11 +2,11 @@ import * as React from 'react';
 import { getCredentialsApi, readCredentialStatuses, saveTelegramSettings } from './client-credentials.js';
 
 const h = React.createElement;
-const SETTINGS_NAMESPACE = 'dsh-telegram';
+const PLUGIN_ROW_KEY = '@implementsio/dsh-telegram#dsh-telegram';
 const STYLE_ID = 'implementsio-dsh-telegram-settings';
 const PLUGIN_VERSION = globalThis.__DSH_TELEGRAM_VERSION__ ?? 'dev';
 
-export const inject = ['remote', 'remote.credentials', 'slots', 'settingsScope', 'workspaces'];
+export const inject = ['remote', 'remote.credentials', 'slots', 'workspaces'];
 
 const styles = `
 .dsh-tg-card{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;list-style:none;transition:border-color .16s,background .16s}.dsh-tg-card:hover{border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-card-open{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-label-dimmed)}
@@ -23,6 +23,14 @@ const styles = `
 .dsh-tg-button{appearance:none;font:inherit;cursor:pointer;border:1px solid transparent;border-radius:8px;padding:5px 14px;font-size:13px;line-height:1.5}.dsh-tg-button-secondary{border-color:var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);background:0 0}.dsh-tg-button-secondary:hover:not(:disabled){color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-label-dimmed)}.dsh-tg-button-primary{background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-layer-3)}.dsh-tg-button:disabled{opacity:.4;cursor:default}.dsh-tg-button:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
 @media(max-width:680px){.dsh-tg-section{grid-template-columns:1fr}.dsh-tg-field-wide{grid-column:auto}}
 `;
+
+export function settingsEditorState(snapshot, workspaceSnapshot) {
+  return {
+    loading: snapshot?.status !== 'ready',
+    writable: snapshot?.status === 'ready' && snapshot.writable === true,
+    workspaceLoading: workspaceSnapshot?.state === 'loading' || workspaceSnapshot?.phase === 'pending',
+  };
+}
 
 function Chevron({ open }) {
   return h(
@@ -79,17 +87,14 @@ function Field({
   );
 }
 
-function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
-  const snapshot = React.useSyncExternalStore(
-    scope.subscribe.bind(scope),
-    scope.getSnapshot.bind(scope),
-    scope.getSnapshot.bind(scope),
-  );
+function TelegramSettingsEditor({ credentialsApi, form, workspaceList }) {
+  const snapshot = form.state;
   const workspaceSnapshot = React.useSyncExternalStore(
     workspaceList.subscribe.bind(workspaceList),
     workspaceList.getSnapshot.bind(workspaceList),
     workspaceList.getSnapshot.bind(workspaceList),
   );
+  const availability = settingsEditorState(snapshot, workspaceSnapshot);
   const source = snapshot.value ?? {};
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState(source);
@@ -152,8 +157,8 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
       };
       const nextCredentials = await saveTelegramSettings({
         credentialsApi,
-        scope,
-        sourceEnabled: Boolean(source.enabled),
+        mutate: form.mutate,
+        revision: snapshot.revision,
         values,
         secrets,
         refs,
@@ -169,7 +174,7 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
   };
 
   return h(
-    'li',
+    'div',
     { className: `dsh-tg-card${open ? ' dsh-tg-card-open' : ''}`, 'data-slot': 'telegram-settings-card' },
     h(
       'button',
@@ -196,7 +201,7 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
       ? h(
           'div',
           { className: 'dsh-tg-body' },
-          snapshot.status !== 'ready'
+          availability.loading
             ? h('p', { className: 'dsh-tg-hint' }, '正在读取 Telegram 设置…')
             : h(
                 React.Fragment,
@@ -253,7 +258,7 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
                       h(
                         'option',
                         { value: '' },
-                        workspaceSnapshot.state === 'loading' ? '正在读取 Workspace…' : '请选择 Workspace',
+                        availability.workspaceLoading ? '正在读取 Workspace…' : '请选择 Workspace',
                       ),
                       ...(workspaceSnapshot.items ?? []).map((workspace) =>
                         h(
@@ -395,7 +400,7 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
                     {
                       type: 'button',
                       className: 'dsh-tg-button dsh-tg-button-primary',
-                      disabled: (!dirty && !secretDirty) || saving || requiredMissing || !snapshot.writable,
+                      disabled: (!dirty && !secretDirty) || saving || requiredMissing || !availability.writable,
                       onClick: save,
                     },
                     h('span', null, saving ? '保存中…' : '保存'),
@@ -407,6 +412,11 @@ function TelegramSettingsCard({ credentialsApi, scope, workspaceList }) {
   );
 }
 
+export function TelegramSettingsCard({ view, ...props }) {
+  if (view === 'summary') return h('span', null, '通过 Telegram Bot API 将私聊消息连接到 Harness Workspace。');
+  return h(TelegramSettingsEditor, props);
+}
+
 export function apply(ctx) {
   ctx.effect(() => {
     const element = document.createElement('style');
@@ -415,15 +425,14 @@ export function apply(ctx) {
     document.head.append(element);
     return () => element.remove();
   });
-  const scope = ctx.settingsScope.bind({ namespace: SETTINGS_NAMESPACE });
   const credentialsApi = getCredentialsApi(ctx);
-  const workspaces = ctx.get('workspaces');
-  ctx.slots.inject('settings.plugin.item', () =>
+  const workspaceList = ctx.workspaces.list;
+  ctx.slots.inject('plugins.row.config', () =>
     ctx.slots.register(
       {
-        name: 'settings.plugin.item',
-        key: SETTINGS_NAMESPACE,
-        inject: () => ({ credentialsApi, scope, workspaceList: workspaces.list }),
+        name: 'plugins.row.config',
+        key: PLUGIN_ROW_KEY,
+        inject: () => ({ credentialsApi, workspaceList }),
       },
       TelegramSettingsCard,
     ),

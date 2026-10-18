@@ -33,9 +33,10 @@ test('reads configured credential statuses with the positional refs argument', a
 
 test('writes a credential with positional arguments and enables only after refreshing status', async () => {
   const calls = [];
-  const scope = {
-    async set(field, value) {
-      calls.push(['settings', field, value]);
+  const form = {
+    async mutate(ops, revision) {
+      calls.push(['settings', ops, revision]);
+      return true;
     },
   };
   const credentialsApi = {
@@ -54,8 +55,8 @@ test('writes a credential with positional arguments and enables only after refre
 
   const statuses = await saveTelegramSettings({
     credentialsApi,
-    scope,
-    sourceEnabled: true,
+    mutate: form.mutate,
+    revision: 4,
     values: { enabled: true, workspaceId: 'workspace-1' },
     secrets: { botToken: '  new-token  ' },
     refs: { botToken: refs.botToken },
@@ -63,29 +64,32 @@ test('writes a credential with positional arguments and enables only after refre
 
   assert.deepEqual(statuses, { botToken: true });
   assert.deepEqual(calls, [
-    ['settings', 'enabled', false],
-    ['settings', 'workspaceId', 'workspace-1'],
     ['credential', 'DSH_TELEGRAM_BOT_TOKEN', 'new-token'],
     ['describe', ['DSH_TELEGRAM_BOT_TOKEN']],
-    ['settings', 'enabled', true],
+    [
+      'settings',
+      [
+        { op: 'set', path: ['enabled'], value: true },
+        { op: 'set', path: ['workspaceId'], value: 'workspace-1' },
+      ],
+      4,
+    ],
   ]);
 });
 
 test('redacts a failed RemoteResult and does not re-enable Telegram', async () => {
   const secret = 'secret-that-must-not-leak';
-  const settings = [];
+  let mutations = 0;
   const operation = saveTelegramSettings({
     credentialsApi: {
       async set() {
         return { ok: false, error: { message: `rejected ${secret}` } };
       },
     },
-    scope: {
-      async set(field, value) {
-        settings.push([field, value]);
-      },
+    mutate: async () => {
+      mutations += 1;
+      return true;
     },
-    sourceEnabled: true,
     values: { enabled: true },
     secrets: { botToken: secret },
     refs: { botToken: refs.botToken },
@@ -96,7 +100,26 @@ test('redacts a failed RemoteResult and does not re-enable Telegram', async () =
     assert.doesNotMatch(error.message, new RegExp(secret));
     return true;
   });
-  assert.deepEqual(settings, [['enabled', false]]);
+  assert.equal(mutations, 0);
+});
+
+test('reports a revision conflict after credentials are confirmed', async () => {
+  await assert.rejects(
+    () =>
+      saveTelegramSettings({
+        credentialsApi: {
+          async describe() {
+            return { ok: true, value: { DSH_TELEGRAM_BOT_TOKEN: { configured: true } } };
+          },
+        },
+        mutate: async () => false,
+        revision: 8,
+        values: { enabled: true },
+        secrets: { botToken: '' },
+        refs: { botToken: refs.botToken },
+      }),
+    /配置已变化/,
+  );
 });
 
 test('redacts thrown credential read errors', async () => {

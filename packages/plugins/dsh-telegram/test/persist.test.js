@@ -127,6 +127,25 @@ test('set accepts a model-only patch on an existing binding', async () => {
   });
 });
 
+test('round-trips reasoning effort and explicitly clears it on model switch', async () => {
+  const bindings = await openBindingStore(makeStorageDomain());
+  await bindings.set('123', {
+    sessionId: 'session-1',
+    workspaceId: 'workspace-1',
+    provider: 'deepseek',
+    model: 'deepseek-reasoner',
+    reasoningEffort: 'high',
+  });
+  assert.equal(bindings.get('123').reasoningEffort, 'high');
+  await bindings.set('123', { provider: 'deepseek', model: 'deepseek-chat', reasoningEffort: undefined });
+  assert.deepEqual(bindings.get('123'), {
+    sessionId: 'session-1',
+    workspaceId: 'workspace-1',
+    provider: 'deepseek',
+    model: 'deepseek-chat',
+  });
+});
+
 test('rejects a model-only patch when no binding exists yet', async () => {
   const bindings = await openBindingStore(makeStorageDomain());
   await assert.rejects(() => bindings.set('123', { provider: 'deepseek', model: 'x' }), /session binding/);
@@ -204,6 +223,9 @@ test('the domain schema accepts records with and without the model fields', () =
   const schema = bindingsDomain.tables.bindings.valueSchema;
   assert.ok(schema.safeParse({ sessionId: 's', workspaceId: 'w' }).success);
   assert.ok(schema.safeParse({ sessionId: 's', workspaceId: 'w', provider: 'p', model: 'm' }).success);
+  assert.ok(
+    schema.safeParse({ sessionId: 's', workspaceId: 'w', provider: 'p', model: 'm', reasoningEffort: 'high' }).success,
+  );
 });
 
 test('an older schema strips the added fields instead of rejecting the record', () => {
@@ -215,6 +237,7 @@ test('an older schema strips the added fields instead of rejecting the record', 
     workspaceId: 'workspace-1',
     provider: 'deepseek',
     model: 'deepseek-reasoner',
+    reasoningEffort: 'high',
   });
   assert.deepEqual(parsed, { sessionId: 'session-1', workspaceId: 'workspace-1' });
 });
