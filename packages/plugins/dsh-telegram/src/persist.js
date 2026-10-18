@@ -19,6 +19,7 @@ const BindingValue = z.object({
   workspaceId: z.string(),
   provider: z.string().optional(),
   model: z.string().optional(),
+  reasoningEffort: z.string().optional(),
 });
 
 export const bindingsDomain = defineDomain({
@@ -48,6 +49,9 @@ export async function openBindingStore(storageDomain) {
       const key = String(conversationKey);
       const current = table.get(key);
       const next = { ...current, ...stripUndefined(patch) };
+      if (Object.hasOwn(patch ?? {}, 'reasoningEffort') && patch.reasoningEffort === undefined) {
+        delete next.reasoningEffort;
+      }
       if (!next.sessionId || !next.workspaceId) throw new TypeError('A session binding is required');
       await table.put(key, next);
     },

@@ -1,6 +1,7 @@
 import { Bot } from 'node-telegram-bot-api';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import nodeFetch from 'node-fetch';
-import { ProxyAgent } from 'proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 
 // 命令清单的唯一来源：Telegram 命令菜单、/help 与「不支持的命令」提示都由它派生，
 // 避免像过去那样在三处各维护一份（加 /model 时就得同时改三个地方）。
@@ -69,14 +70,20 @@ export async function createTelegramClient({ botToken, ownerUserId, proxy, onMes
   };
 }
 
-function createFetch(proxy) {
-  if (!proxy) return undefined;
-  const url = new URL(`${proxy.type ?? 'socks5'}://localhost`);
+export function createProxyAgent(proxy) {
+  const type = proxy.type ?? 'socks5';
+  // SOCKS5 由代理端解析目标域名，避免本地 DNS 污染或把不可达的解析结果交给代理。
+  const url = new URL(`${type === 'socks5' ? 'socks5h' : type}://localhost`);
   url.hostname = proxy.ip;
   url.port = String(proxy.port);
   if (proxy.username) url.username = proxy.username;
   if (proxy.password) url.password = proxy.password;
-  const agent = new ProxyAgent(url);
+  return type === 'http' || type === 'https' ? new HttpsProxyAgent(url) : new SocksProxyAgent(url);
+}
+
+function createFetch(proxy) {
+  if (!proxy) return undefined;
+  const agent = createProxyAgent(proxy);
   return async (input, init) => {
     const next = { ...init, agent };
     // node-telegram-bot-api 的 multipart 上传会把请求体编码成 web 标准

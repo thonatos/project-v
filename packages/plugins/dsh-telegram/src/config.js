@@ -5,18 +5,35 @@ export const TELEGRAM_MESSAGE_LIMIT = 4096;
 export const BOT_TOKEN_REF = 'DSH_TELEGRAM_BOT_TOKEN';
 
 export const Config = Schema.object({
-  enabled: Schema.boolean().default(false),
-  workspaceId: Schema.string().default(''),
-  ownerUserId: Schema.string().default(''),
-  messageLimit: Schema.number().default(TELEGRAM_MESSAGE_LIMIT),
+  enabled: Schema.boolean().default(false).volatile(),
+  workspaceId: Schema.string().default('').volatile(),
+  ownerUserId: Schema.string().default('').volatile(),
+  messageLimit: Schema.number().default(TELEGRAM_MESSAGE_LIMIT).volatile(),
   proxy: Schema.object({
     type: Schema.union(['socks5', 'http', 'https']).default('socks5'),
     ip: Schema.string().default(''),
     port: Schema.number().default(0),
     username: Schema.string().default(''),
     password: Schema.string().default(''),
-  }).default({}),
+  })
+    .default({})
+    .volatile(),
 });
+
+export function snapshotConfig(value = {}) {
+  const proxy = volatileValue(value.proxy) ?? {};
+  return {
+    enabled: Boolean(volatileValue(value.enabled)),
+    workspaceId: volatileValue(value.workspaceId) ?? '',
+    ownerUserId: volatileValue(value.ownerUserId) ?? '',
+    messageLimit: volatileValue(value.messageLimit) ?? TELEGRAM_MESSAGE_LIMIT,
+    proxy: { ...proxy },
+  };
+}
+
+function volatileValue(value) {
+  return typeof value?.get === 'function' ? value.get() : value;
+}
 
 export function normalizeConfig(value = {}) {
   const config = { ...value };

@@ -14,6 +14,7 @@ import {
   workspaceCard,
 } from '../src/render/cards.js';
 import {
+  createProxyAgent,
   registerTelegramCommands,
   TELEGRAM_COMMANDS,
   TELEGRAM_COMMAND_NAMES,
@@ -53,6 +54,19 @@ test('normalizes proxy and never returns the bot token from config', async () =>
   });
   assert.equal('botToken' in config, false);
   assert.deepEqual(await resolveCredentials({ resolve: async () => ({ value: 'token' }) }), { botToken: 'token' });
+});
+
+test('creates a fixed agent for each configured proxy protocol', () => {
+  const socks = createProxyAgent({ type: 'socks5', ip: 'proxy.example', port: 1080 });
+  assert.equal(socks.constructor.name, 'SocksProxyAgent');
+  assert.equal(socks.proxy.type, 5);
+  assert.equal(socks.proxy.host, 'proxy.example');
+  assert.equal(socks.proxy.port, 1080);
+  assert.equal(createProxyAgent({ type: 'http', ip: 'proxy.example', port: 8080 }).constructor.name, 'HttpsProxyAgent');
+  assert.equal(
+    createProxyAgent({ type: 'https', ip: 'proxy.example', port: 8443 }).constructor.name,
+    'HttpsProxyAgent',
+  );
 });
 
 test('splits text without breaking surrogate pairs', () => {

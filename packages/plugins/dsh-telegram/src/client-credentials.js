@@ -31,11 +31,7 @@ async function writeCredential(credentialsApi, ref, value) {
   if (response?.ok !== true) throw credentialError('write');
 }
 
-export async function saveTelegramSettings({ credentialsApi, scope, sourceEnabled, values, secrets, refs }) {
-  if (sourceEnabled) await scope.set('enabled', false);
-  for (const [field, value] of Object.entries(values)) {
-    if (field !== 'enabled') await scope.set(field, value);
-  }
+export async function saveTelegramSettings({ credentialsApi, mutate, revision, values, secrets, refs }) {
   for (const [key, value] of Object.entries(secrets)) {
     if (value.trim()) await writeCredential(credentialsApi, refs[key], value.trim());
   }
@@ -44,6 +40,10 @@ export async function saveTelegramSettings({ credentialsApi, scope, sourceEnable
   if (values.enabled && !credentials.botToken) {
     throw new Error('Bot Token 必须成功保存后才能启用 Telegram');
   }
-  await scope.set('enabled', values.enabled);
+  const accepted = await mutate(
+    Object.entries(values).map(([field, value]) => ({ op: 'set', path: [field], value })),
+    revision,
+  );
+  if (!accepted) throw new Error('Telegram 配置已变化，请刷新后重试');
   return credentials;
 }

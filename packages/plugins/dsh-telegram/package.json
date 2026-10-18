@@ -1,6 +1,6 @@
 {
   "name": "@implementsio/dsh-telegram",
-  "version": "0.4.0",
+  "version": "1.0.0-dsh.0.2.0-rc.2",
   "description": "Telegram Bot API plugin for DeepSeek Harness",
   "keywords": [
     "deepseek-harness",
@@ -36,24 +36,32 @@
   },
   "scripts": {
     "build": "node scripts/build-client.mjs",
+    "acceptance:plan": "node scripts/local-acceptance-plan.mjs",
     "patch": "node scripts/write-patch.mjs",
     "test": "node --test test/*.test.js",
     "prepack": "pnpm run patch && pnpm run build",
     "prepublishOnly": "pnpm run test"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-agent": "0.1.5-rc.1",
-    "@deepseek-ai/dsh-storage-domain": "0.0.1-rc.1",
-    "@deepseek-ai/schemastery": "3.18.1",
+    "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "3.18.5",
+    "https-proxy-agent": "7.0.6",
     "node-fetch": "3.3.2",
     "node-telegram-bot-api": "2.1.0",
-    "proxy-agent": "6.5.0",
+    "socks-proxy-agent": "8.0.5",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "esbuild": "0.25.9"
+    "@deepseek-ai/dsh-api-remotes": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-api-workspace-controller": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-settings": "0.2.0-rc.2",
+    "esbuild": "0.25.9",
+    "react": "18.3.1"
   },
   "engines": {
+    "dsh": "0.2.0-rc.2",
     "node": ">=20"
   },
   "dsh": {
@@ -62,8 +70,10 @@
     },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-settings-plugins"
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-api-workspace-controller",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-plugin-manager"
       ],
       "platform": "web"
     }

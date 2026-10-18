@@ -85,6 +85,7 @@ export class TelegramRuntime {
     this.#transport = createTelegramTransport(this.#connection);
     this.#installRemoteInteractionBridges();
     this.#ctx.effect?.(() => () => this.stop());
+    console.info('[dsh-telegram] runtime started and long polling is active');
     return this;
   }
 
@@ -487,7 +488,7 @@ export class TelegramRuntime {
     const handle = await this.#sessionFor(chatId);
     const ref = this.#selections.get(handle.agent.id);
     if (ref) ref.current = { provider, model };
-    await this.#bindings.set(chatId, { provider, model });
+    await this.#bindings.set(chatId, { provider, model, reasoningEffort: undefined });
     await this.#sendControlCard(chatId, 'model', {
       message: ref ? '已切换模型，当前会话下一轮生效。' : '已切换模型，将在新会话生效。',
       detail: `${provider} ${model}`,
@@ -499,9 +500,11 @@ export class TelegramRuntime {
   #effectiveSelection(agentId, chatId) {
     const ref = agentId ? this.#selections.get(agentId) : undefined;
     if (ref?.current?.provider && ref.current.model) {
-      return { provider: ref.current.provider, model: ref.current.model };
+      return modelSelection(ref.current);
     }
-    return boundSelection(this.#bindings.get(chatId)) ?? this.#ctx.agentDefaultModel?.currentSelection?.();
+    return (
+      boundSelection(this.#bindings.get(chatId)) ?? modelSelection(this.#ctx.agentDefaultModel?.currentSelection?.())
+    );
   }
 
   async #sessionFor(chatId) {
@@ -548,11 +551,17 @@ export class TelegramRuntime {
         // 这是 dsh 官方防止 provider/model 漂移的机制。快照来源为私聊级选择，
         // 无私聊级选择时回落 agentDefaultModel.currentSelection()。
         const selection = await this.#resolveSelection(chatId);
-        resumed = await this.#ctx.agents.resume({
-          resumeSessionId: current.sessionId,
-          ...(selection ? { agentOptions: { provider: selection.provider, model: selection.model } } : {}),
-          setup: this.#buildAgentSetup(chatId, selection, current.sessionId),
-        });
+        const storedPreset = await this.#storedPreset(current.sessionId);
+        const composition = await this.#presetComposition(storedPreset);
+        try {
+          resumed = await this.#ctx.agents.resume({
+            resumeSessionId: current.sessionId,
+            ...(selection ? { agentOptions: selection } : {}),
+            setup: this.#buildAgentSetup(chatId, selection, current.sessionId, composition.id),
+          });
+        } finally {
+          await composition.dispose();
+        }
       } catch {
         await this.#bindings.delete(chatId);
         resumed = undefined;
@@ -631,7 +640,7 @@ export class TelegramRuntime {
       }).catch((error) => console.error('[dsh-telegram] stale model notice failed:', error));
     }
     const fallback = this.#ctx.agentDefaultModel?.currentSelection?.();
-    return fallback ? { provider: fallback.provider, model: fallback.model } : undefined;
+    return modelSelection(fallback);
   }
 
   // 校验一个 provider/model 路由是否可用。dsh 明确规定模型目录是 advisory 且不控制
@@ -682,10 +691,10 @@ export class TelegramRuntime {
   // 两者由同一个 selection 值喂入以保持同源。preset 通过官方 ctx.agentPresets.mount 挂载。
   // sessionId 由调用方给出（create 侧自行生成、resume 侧即 resumeSessionId），
   // 因为 setup 在 agent 发布前执行，不能依赖 agent 参数一定带 id。
-  #buildAgentSetup(chatId, selection, sessionId) {
+  #buildAgentSetup(chatId, selection, sessionId, presetId) {
     const presets = this.#ctx.agentPresets;
     return buildAgentSetup({
-      mountPreset: presets?.mount ? (agentCtx) => presets.mount(agentCtx, undefined) : undefined,
+      mountPreset: presets?.mount ? (agentCtx) => presets.mount(agentCtx, presetId) : undefined,
       installSelection: (agentCtx, agent) => this.#installSelection(agentCtx, agent?.id ?? sessionId, selection),
       ...this.#bridgeArgs(chatId),
     });
@@ -694,12 +703,18 @@ export class TelegramRuntime {
   async #createSession(chatId, workspace, selection) {
     const resolved = selection ?? (await this.#resolveSelection(chatId));
     const sessionId = `telegram-${randomUUID()}`;
-    const handle = await this.#ctx.agents.create({
-      sessionId,
-      meta: { cwd: workspace.path },
-      ...(resolved ? { agentOptions: { provider: resolved.provider, model: resolved.model } } : {}),
-      setup: this.#buildAgentSetup(chatId, resolved, sessionId),
-    });
+    const composition = await this.#presetComposition();
+    let handle;
+    try {
+      handle = await this.#ctx.agents.create({
+        sessionId,
+        meta: { cwd: workspace.path, ...(composition.id ? { agentPreset: composition.id } : {}) },
+        ...(resolved ? { agentOptions: resolved } : {}),
+        setup: this.#buildAgentSetup(chatId, resolved, sessionId, composition.id),
+      });
+    } finally {
+      await composition.dispose();
+    }
     try {
       await workspace.attachSession(handle.agent.id);
     } catch (error) {
@@ -710,6 +725,34 @@ export class TelegramRuntime {
     // create 的 setup 已装好桥接：登记以防其后走「复用 live agent」路径时重复注册。
     this.#bridged.add(handle.agent.id);
     return handle;
+  }
+
+  async #storedPreset(sessionId) {
+    const query = this.#ctx.sessionQuery;
+    if (typeof query?.observeSession !== 'function') return undefined;
+    const observation = await query.observeSession(sessionId);
+    try {
+      return observation?.projections?.values?.agentPreset ?? undefined;
+    } finally {
+      if (typeof observation?.[Symbol.asyncDispose] === 'function') await observation[Symbol.asyncDispose]();
+      else observation?.[Symbol.dispose]?.();
+    }
+  }
+
+  async #presetComposition(requestedId) {
+    const presets = this.#ctx.agentPresets;
+    if (typeof presets?.resolve !== 'function') {
+      return { id: requestedId, async dispose() {} };
+    }
+    const resolved = await presets.resolve(requestedId);
+    const lease = typeof presets.acquireScope === 'function' ? await presets.acquireScope(resolved.id) : undefined;
+    return {
+      id: resolved.id,
+      async dispose() {
+        if (typeof lease?.[Symbol.asyncDispose] === 'function') await lease[Symbol.asyncDispose]();
+        else lease?.[Symbol.dispose]?.();
+      },
+    };
   }
 
   async #sendText(chatId, text) {
@@ -997,7 +1040,16 @@ function capitalize(value) {
 // 半截记录（只有 provider 或只有 model）视为无选择，交由全局默认接管。
 function boundSelection(binding) {
   if (!binding?.provider || !binding?.model) return undefined;
-  return { provider: String(binding.provider), model: String(binding.model) };
+  return modelSelection(binding);
+}
+
+function modelSelection(value) {
+  if (!value?.provider || !value?.model) return undefined;
+  return {
+    provider: String(value.provider),
+    model: String(value.model),
+    ...(value.reasoningEffort ? { reasoningEffort: String(value.reasoningEffort) } : {}),
+  };
 }
 
 // 解析控制命令。/model 是第一个接受参数的命令，因此返回值除 name 外还携带 args；
