@@ -40,7 +40,7 @@
     "@react-router/node": "^7.6.3",
     "@react-router/serve": "^7.6.3",
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "12.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
