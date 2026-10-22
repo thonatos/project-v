@@ -1,0 +1,26 @@
+[package]
+name = "vela-host"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+dispatch2 = "=0.3.1"
+block2.workspace = true
+nsh-core.workspace = true
+nsh-platform-macos.workspace = true
+nsh-ui-mobile.workspace = true
+objc2-app-kit = { workspace = true, features = ["NSSwitch"] }
+objc2-foundation.workspace = true
+objc2-web-kit.workspace = true
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+
+[[bin]]
+name = "vela-host"
+path = "src/main.rs"

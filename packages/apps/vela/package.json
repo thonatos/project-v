@@ -1,0 +1,25 @@
+{
+  "name": "@project-v/vela",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm run build:ui && pnpm run build:host && pnpm run build:core",
+    "build:ui": "sh scripts/nsh.sh build ui/App.tsx --release -o build/ui",
+    "build:host": "cargo build --manifest-path Cargo.toml --package vela-host",
+    "build:core": "mkdir -p build/core && go build -C core -o ../build/core/vela-core ./cmd/vela-core",
+    "build:app": "sh scripts/build-app.sh",
+    "check": "pnpm run check:ui && pnpm run check:host && pnpm run check:core",
+    "check:ui": "sh scripts/nsh.sh check ui/App.tsx",
+    "check:host": "cargo check --manifest-path Cargo.toml --workspace",
+    "check:core": "go test -C core ./...",
+    "test": "cargo test --manifest-path Cargo.toml --workspace && go test -C core ./...",
+    "test:protocol-docs": "sh scripts/verify-protocol-docs.sh",
+    "test:network-isolation": "sh scripts/verify-network-isolation.sh",
+    "test:theme": "node ui/tests/theme.test.mjs",
+    "test:ui-model": "node ui/tests/view-model.test.mjs",
+    "test:ui-layout": "node ui/tests/desktop-layout.test.mjs",
+    "test:docs": "sh scripts/verify-docs.sh",
+    "verify:release": "sh scripts/verify-release.sh"
+  }
+}

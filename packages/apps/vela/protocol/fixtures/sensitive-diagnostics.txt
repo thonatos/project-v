@@ -1,0 +1,7 @@
+Authorization: Bearer private-token
+Proxy-Authorization: Basic cHJveHk6c2VjcmV0
+Cookie: vela_session=secret-cookie
+Set-Cookie: session=server-secret; Secure
+auth key tskey-auth-super-secret
+open https://login.tailscale.com/a/secret-login?token=private-query-token
+request failed at https://example.test/callback?code=private-code

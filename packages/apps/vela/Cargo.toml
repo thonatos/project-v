@@ -1,0 +1,25 @@
+[workspace]
+members = ["host"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+publish = false
+rust-version = "1.98"
+
+[workspace.dependencies]
+nsh-core = "=0.1.1"
+nsh-platform-macos = "=0.1.1"
+nsh-ui-mobile = "=0.1.1"
+block2 = "=0.6.2"
+objc2-app-kit = { version = "=0.3.2", features = ["NSButton", "NSColor", "NSFont", "NSImage", "NSOpenPanel", "NSSavePanel"] }
+objc2-foundation = { version = "=0.3.2", features = ["NSArray", "NSData", "NSError", "NSString", "NSURL", "NSURLResponse"] }
+objc2-web-kit = { version = "=0.3.2", features = ["objc2-app-kit", "objc2-core-foundation", "WKDownload", "WKDownloadDelegate", "WKFrameInfo", "WKNavigation", "WKNavigationAction", "WKNavigationDelegate", "WKNavigationResponse", "WKOpenPanelParameters", "WKUIDelegate", "WKWebView", "WKWebViewConfiguration", "WKWebsiteDataStore"] }
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"

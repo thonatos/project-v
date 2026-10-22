@@ -1,0 +1,19 @@
+{"version":1,"id":"req-status","type":"status.get","payload":{}}
+{"version":1,"id":"req-status","type":"status","payload":{"network":"connected","sharing":true}}
+{"version":1,"id":"req-events","type":"events.subscribe","payload":{}}
+{"version":1,"id":"req-events","type":"events.subscribed","payload":{}}
+{"version":1,"type":"event.network","payload":{"state":"connecting"}}
+{"version":1,"type":"event.service","payload":{"service":"opencode","available":true}}
+{"version":1,"type":"event.remote","payload":{"device":"home-mac","state":"online"}}
+{"version":1,"type":"event.mapping","payload":{"device":"home-mac","service":"opencode","state":"ready"}}
+{"version":1,"id":"req-auth","type":"auth.start","payload":{}}
+{"version":1,"id":"req-auth","type":"auth.url","payload":{"url":"https://login.example.invalid/redacted"}}
+{"version":1,"id":"req-sharing","type":"sharing.update","payload":{"enabled":true,"services":{"opencode":true,"dsh":false}}}
+{"version":1,"id":"req-sharing","type":"sharing","payload":{"enabled":true,"services":{"opencode":true,"dsh":false}}}
+{"version":1,"id":"req-remote","type":"remote.add","payload":{"name":"home-mac.example.ts.net"}}
+{"version":1,"id":"req-remote","type":"remotes","payload":{"items":[]}}
+{"version":1,"id":"req-map","type":"mapping.open","payload":{"device":"home-mac","service":"opencode"}}
+{"version":1,"id":"req-map","type":"mapping","payload":{"url":"http://127.0.0.1:49152"}}
+{"version":1,"id":"req-error","type":"error","payload":{"code":"unsupported_message","message":"unsupported message","retryable":false}}
+{"version":1,"id":"req-shutdown","type":"shutdown","payload":{}}
+{"version":1,"type":"stopped","payload":{}}
