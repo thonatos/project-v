@@ -1,7 +1,7 @@
 // Package sharing decides which configured services are published to the tailnet.
 package sharing
 
-import "github.com/thonatos/vela/core/internal/services"
+import "implements.io/vela/internal/services"
 
 // Selection is the user's persisted sharing choice.
 type Selection struct {

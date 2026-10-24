@@ -1,4 +1,4 @@
-package vela
+package core
 
 import (
 	"encoding/json"

@@ -10,7 +10,7 @@
 | 共享投影                | `shared/ui/projections.test.mjs`                                      | 纯函数投影：设备、服务、转发、日志、诊断                   |
 | iOS 投影                | `shared/ui/ios-projections.test.mjs`                                  | iOS 专属标签、徽标优先级、分组排序                         |
 | 共享流程                | `shared/ui/flows.test.mjs`                                            | 登录/检查/重连/注销、重命名校验、远端增删、偏好            |
-| 主机名规则              | `shared/ui/hostname.test.mjs` + `core/internal/vela/hostname_test.go` | 两端读同一份 `hostname-validation.json`                    |
+| 主机名规则              | `shared/ui/hostname.test.mjs` + `core/internal/core/hostname_test.go` | 两端读同一份 `hostname-validation.json`                    |
 | 发布前验证              | `scripts/verify.sh` → `pnpm -F vela verify`                           | 文档、协议、两端 UI、Rust、Go、依赖边界                    |
 | 打包与签名              | `scripts/verify-release.sh` → `pnpm -F vela verify:release`           | 上面的全部 + 两端组包 + 签名                               |
 

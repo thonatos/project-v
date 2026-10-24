@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/thonatos/vela/core/internal/adapters"
-	"github.com/thonatos/vela/core/internal/authorization"
+	"implements.io/vela/internal/adapters"
+	"implements.io/vela/internal/authorization"
 )
 
 // AuthorizedListener drops denied peers before a proxy can dial its local target.

@@ -26,7 +26,7 @@ packages/apps/vela/
   core/                  单一 Go 模块：读侧共享，两个平台各一个入口
     cmd/vela-core/       macOS 入口：探测、发布、共享编排
     cmd/vela-mobile/     iOS 入口：c-archive + C ABI
-    internal/vela/       共享读侧 Core
+    internal/core/       共享读侧 Core
     internal/app/        macOS 编排
     internal/iosabi/     C ABI 桥
 

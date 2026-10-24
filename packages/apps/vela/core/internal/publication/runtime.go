@@ -10,13 +10,13 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/thonatos/vela/core/internal/authorization"
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/inbound"
-	"github.com/thonatos/vela/core/internal/manifest"
-	"github.com/thonatos/vela/core/internal/services"
-	"github.com/thonatos/vela/core/internal/sharing"
-	"github.com/thonatos/vela/core/internal/tunnel"
+	"implements.io/vela/internal/authorization"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/inbound"
+	"implements.io/vela/internal/manifest"
+	"implements.io/vela/internal/services"
+	"implements.io/vela/internal/sharing"
+	"implements.io/vela/internal/tunnel"
 )
 
 // Node is the only network capability required to publish tailnet listeners.

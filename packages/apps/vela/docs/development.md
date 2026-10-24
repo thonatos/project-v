@@ -41,7 +41,7 @@ pnpm run check
 
 `Cargo.lock` 与 `core/go.sum` 必须随依赖变化一起提交。NSH 的发行 runtime 由固定版本安装器管理，其版本记录在 `.nsh-version`。
 
-Go Core 是单一模块（`core/`）：`cmd/vela-core` 是 macOS 入口，`cmd/vela-mobile` 是 iOS 的 c-archive 入口，共享实现位于 `internal/vela`，macOS 编排位于 `internal/app`，C ABI 位于 `internal/iosabi`。常用命令：
+Go Core 是单一模块（`core/`）：`cmd/vela-core` 是 macOS 入口，`cmd/vela-mobile` 是 iOS 的 c-archive 入口，共享实现位于 `internal/core`，macOS 编排位于 `internal/app`，C ABI 位于 `internal/iosabi`。常用命令：
 
 ```sh
 go build -C core ./...

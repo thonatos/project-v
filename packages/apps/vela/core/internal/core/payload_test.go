@@ -1,4 +1,4 @@
-package vela
+package core
 
 import (
 	"context"
@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/thonatos/vela/core/internal/manifest"
-	velapaths "github.com/thonatos/vela/core/internal/paths"
-	"github.com/thonatos/vela/core/internal/remotes"
+	"implements.io/vela/internal/manifest"
+	velapaths "implements.io/vela/internal/paths"
+	"implements.io/vela/internal/remotes"
 )
 
 // TestStatusPayloadKeySets locks the iOS status contract before the Core is

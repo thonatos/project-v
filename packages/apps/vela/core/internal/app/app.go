@@ -12,28 +12,28 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thonatos/vela/core/internal/adapters"
-	"github.com/thonatos/vela/core/internal/authorization"
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/control"
-	"github.com/thonatos/vela/core/internal/diagnostics"
-	"github.com/thonatos/vela/core/internal/dshauth"
-	"github.com/thonatos/vela/core/internal/network"
-	"github.com/thonatos/vela/core/internal/publication"
-	"github.com/thonatos/vela/core/internal/services"
-	"github.com/thonatos/vela/core/internal/vela"
+	"implements.io/vela/internal/adapters"
+	"implements.io/vela/internal/authorization"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/control"
+	"implements.io/vela/internal/core"
+	"implements.io/vela/internal/diagnostics"
+	"implements.io/vela/internal/dshauth"
+	"implements.io/vela/internal/network"
+	"implements.io/vela/internal/publication"
+	"implements.io/vela/internal/services"
 )
 
 // Node is the embedded network node. Publication needs to open tailnet
 // listeners, which a read-only client never does.
 type Node interface {
-	vela.Node
+	core.Node
 	Listen(network, address string) (net.Listener, error)
 }
 
 // Options wires the macOS layer to the shared core and the embedded node.
 type Options struct {
-	Core    *vela.Core
+	Core    *core.Core
 	Store   *velaconfig.Store
 	Node    Node
 	Journal *diagnostics.Journal
@@ -44,7 +44,7 @@ type Options struct {
 
 // App owns the macOS-only capabilities: probing, publishing and sharing.
 type App struct {
-	core         *vela.Core
+	core         *core.Core
 	store        *velaconfig.Store
 	journal      *diagnostics.Journal
 	logger       *log.Logger

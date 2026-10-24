@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/manifest"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/manifest"
 )
 
 var privateNamePattern = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?$`)

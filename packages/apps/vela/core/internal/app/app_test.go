@@ -7,10 +7,10 @@ import (
 	"net"
 	"testing"
 
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/diagnostics"
-	velapaths "github.com/thonatos/vela/core/internal/paths"
-	"github.com/thonatos/vela/core/internal/vela"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/core"
+	"implements.io/vela/internal/diagnostics"
+	velapaths "implements.io/vela/internal/paths"
 	"tailscale.com/client/local"
 )
 
@@ -37,14 +37,14 @@ func newTestApp(t *testing.T) (*App, *velaconfig.Store) {
 	}
 	journal := diagnostics.NewJournal(50)
 	noRefresh := 0
-	core, err := vela.New(vela.Options{
+	readCore, err := core.New(core.Options{
 		Paths: paths, Node: stubNode{}, Store: store, Journal: journal, RetryAttempts: &noRefresh,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = core.Close() })
-	return New(Options{Core: core, Store: store, Node: stubNode{}, Journal: journal, Home: t.TempDir()}), store
+	t.Cleanup(func() { _ = readCore.Close() })
+	return New(Options{Core: readCore, Store: store, Node: stubNode{}, Journal: journal, Home: t.TempDir()}), store
 }
 
 func upsert(t *testing.T, application *App, fields map[string]any) (any, error) {

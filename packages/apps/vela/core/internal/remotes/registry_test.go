@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	velaconfig "github.com/thonatos/vela/core/internal/config"
+	velaconfig "implements.io/vela/internal/config"
 )
 
 type fakeChecker struct {

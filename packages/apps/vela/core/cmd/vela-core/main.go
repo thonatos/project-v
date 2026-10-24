@@ -9,14 +9,14 @@ import (
 	"log"
 	"os"
 
-	"github.com/thonatos/vela/core/internal/app"
-	"github.com/thonatos/vela/core/internal/buildinfo"
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/diagnostics"
-	velanetwork "github.com/thonatos/vela/core/internal/network"
-	velapaths "github.com/thonatos/vela/core/internal/paths"
-	"github.com/thonatos/vela/core/internal/protocol"
-	"github.com/thonatos/vela/core/internal/vela"
+	"implements.io/vela/internal/app"
+	"implements.io/vela/internal/buildinfo"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/core"
+	"implements.io/vela/internal/diagnostics"
+	velanetwork "implements.io/vela/internal/network"
+	velapaths "implements.io/vela/internal/paths"
+	"implements.io/vela/internal/protocol"
 )
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 	// macOS answers mapping.open from its cached manifest: a service that was
 	// never published is reported immediately instead of being refreshed.
 	noRefresh := 0
-	core, err := vela.New(vela.Options{
+	readCore, err := core.New(core.Options{
 		Paths:         paths,
 		Node:          node,
 		Store:         store,
@@ -52,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 	application := app.New(app.Options{
-		Core:    core,
+		Core:    readCore,
 		Store:   store,
 		Node:    node,
 		Journal: journal,

@@ -10,10 +10,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/thonatos/vela/core/internal/authorization"
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/manifest"
-	"github.com/thonatos/vela/core/internal/services"
+	"implements.io/vela/internal/authorization"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/manifest"
+	"implements.io/vela/internal/services"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
 )

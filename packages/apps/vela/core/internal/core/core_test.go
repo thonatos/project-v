@@ -1,4 +1,4 @@
-package vela
+package core
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/manifest"
-	velapaths "github.com/thonatos/vela/core/internal/paths"
-	"github.com/thonatos/vela/core/internal/remoteclient"
-	"github.com/thonatos/vela/core/internal/remotes"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/manifest"
+	velapaths "implements.io/vela/internal/paths"
+	"implements.io/vela/internal/remoteclient"
+	"implements.io/vela/internal/remotes"
 	"tailscale.com/client/local"
 )
 

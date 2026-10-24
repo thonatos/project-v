@@ -17,7 +17,7 @@ done
 
 # The shared read-side core is the only place iOS obtains control services; keep the
 # check honest if it quietly starts importing a forbidden package.
-DEPS_ACCESS=$(go list -C core -deps ./internal/vela ./internal/iosabi)
+DEPS_ACCESS=$(go list -C core -deps ./internal/core ./internal/iosabi)
 for package in $FORBIDDEN; do
   if printf '%s\n' "$DEPS_ACCESS" | grep -Eq "/internal/${package}$"; then
     echo "iOS read-side core must not depend on internal/${package}" >&2

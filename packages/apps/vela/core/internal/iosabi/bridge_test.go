@@ -7,8 +7,8 @@ import (
 	"net"
 	"testing"
 
-	velapaths "github.com/thonatos/vela/core/internal/paths"
-	"github.com/thonatos/vela/core/internal/vela"
+	"implements.io/vela/internal/core"
+	velapaths "implements.io/vela/internal/paths"
 	"tailscale.com/client/local"
 )
 
@@ -25,13 +25,13 @@ func (stubNode) Close() error { return nil }
 
 func TestBridgeStatusRoundTrip(t *testing.T) {
 	t.Parallel()
-	core, err := vela.New(vela.Options{Paths: velapaths.FromApplicationSupport(t.TempDir()), Node: stubNode{}})
+	readCore, err := core.New(core.Options{Paths: velapaths.FromApplicationSupport(t.TempDir()), Node: stubNode{}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = core.Close() })
+	t.Cleanup(func() { _ = readCore.Close() })
 
-	bridge := NewBridge(core, nil)
+	bridge := NewBridge(readCore, nil)
 	t.Cleanup(bridge.Close)
 
 	raw, err := bridge.RequestJSON("status.get", "")

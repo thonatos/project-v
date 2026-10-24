@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/protocol"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/protocol"
 )
 
 // runCore builds the helper and feeds it one JSON Lines session. HOME is

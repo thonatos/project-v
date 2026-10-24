@@ -5,14 +5,14 @@
 ```text
 macos/host (Rust)  --stdin/stdout-->  core/cmd/vela-core
                                         └── internal/app      探测、发布、共享、服务编辑
-                                              └── internal/vela   读侧 Core（状态、映射、认证、远端、诊断）
+                                              └── internal/core   读侧 Core（状态、映射、认证、远端、诊断）
 
 ios/host (Rust)  --C ABI-->  core/cmd/vela-mobile
                               └── internal/iosabi   C ABI 管道
-                                    └── internal/vela   同一份读侧 Core
+                                    └── internal/core   同一份读侧 Core
 ```
 
-`internal/vela` 只读、无发布副作用；`internal/app` 是 macOS 专属编排，iOS 构建不得链接它（`scripts/verify-ios-deps.sh` 强制）。两个入口共用同一套控制协议与读侧实现。
+`internal/core` 只读、无发布副作用；`internal/app` 是 macOS 专属编排，iOS 构建不得链接它（`scripts/verify-ios-deps.sh` 强制）。两个入口共用同一套控制协议与读侧实现。
 
 ## Bundle 结构
 

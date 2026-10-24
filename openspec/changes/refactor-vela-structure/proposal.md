@@ -12,7 +12,7 @@ Vela 的两个客户端（macOS 与 iOS）共享同一套控制协议和产品�
   - `ui/` → `macos/ui/`，`host/` → `macos/host/`，`icon/` → `macos/app/`
   - `ui-ios/` → `ios/ui/`，`ios/native/` → `ios/host/`，`ios/Vela*` → `ios/app/`
   - `ui-shared/` → `shared/ui/`，`protocol/` → `shared/protocol/`，新增 `shared/tokens/`
-- **Go 单一 Core**：把 `cmd/vela-core/main.go` 内联的读侧 handler 与 `internal/access` 的副本合并为 `internal/vela`（共享读侧）、`internal/app`（macOS 探测与发布编排）、`internal/iosabi`（C ABI）；`cmd/vela-core` 从 581 行收到薄入口；`core/mobile` 迁到 `core/cmd/vela-mobile`。平台的 Policy 差异（映射重试次数、映射地址）改为构造参数，两个平台保持现有行为。
+- **Go 单一 Core**：把 `cmd/vela-core/main.go` 内联的读侧 handler 与 `internal/access` 的副本合并为 `internal/core`（共享读侧）、`internal/app`（macOS 探测与发布编排）、`internal/iosabi`（C ABI）；`cmd/vela-core` 从 581 行收到薄入口；`core/mobile` 迁到 `core/cmd/vela-mobile`。平台的 Policy 差异（映射重试次数、映射地址）改为构造参数，两个平台保持现有行为。
 - **TS 共享层**：`createCoreClient(transport)` 取代两份 `client.ts`；`view-model` 按领域拆分为 `services`/`forwarding`/`devices`/`identity`/`diagnostics`/`logs`；共享模块转为 `.ts` 并删除手写 `.d.mts`（若 NSH 或 Node 无法直接消费 `.ts`，退化为按域拆分的 `.mjs` + `.d.mts`）。
 - **共享流程**：认证、远端管理、偏好、重命名的输入输出流程抽到 `shared/ui/flows`；状态容器、轮询节奏、`openMapping` 生命周期仍按平台实现。
 - **配置单源**：品牌色收敛到 `shared/tokens/base.json` 并由两端测试校验；删除只被测试读取的 `macos/ui/theme.ts`；macOS 的 `Info.plist` 从 `build-app.sh` 的 heredoc 提取为 `macos/app/Info.plist`。

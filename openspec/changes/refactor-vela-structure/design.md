@@ -68,7 +68,7 @@ core/
   cmd/vela-core/          macOS 入口：装配 app
   cmd/vela-mobile/        原 mobile/：C ABI 薄壳
   cmd/network-isolation/
-  internal/vela/          共享读侧：config/journal/checker/registry/manager/session/node
+  internal/core/          共享读侧：config/journal/checker/registry/manager/session/node
   internal/app/           macOS 编排：probeServices、dshLaunch、publications、sharing、服务编辑
   internal/iosabi/        原 access.Bridge：C ABI 管道 + iOS 选项
 ```
@@ -77,7 +77,7 @@ core/
 
 ### D3 读侧无副作用，平台用装饰器补齐
 
-`internal/vela` 的 `Status` 只返回快照，不探测、不发布。macOS 的"取状态顺带 reconcile"发生在 `internal/app`：
+`internal/core` 的 `Status` 只返回快照，不探测、不发布。macOS 的"取状态顺带 reconcile"发生在 `internal/app`：
 
 ```
 macOS  control.Server.status -> app.Status
@@ -202,7 +202,7 @@ macOS ui/core/store.forwarding.start                               |
 | S0 护栏 | 特征测试（Go 载荷与策略、TS 流程与校验）、跨平台结构测试、`verify` 聚合入口 | `pnpm -F vela verify` 通过，生产代码零改动 | 纯增量，revert 即可 |
 | S1 目录 | 平台优先重排、`tests/` 复用为结构测试、`verify-docs` 与脚本路径更新 | `verify` + `build:app` + `build:ios` 通过，`git diff` 仅路径 | 单提交 revert |
 | S2 TS 共享 | `createCoreClient`、view-model 分域、`.ts` spike 与迁移、删除 `.d.mts` | 两端 `nsh check` + node 测试 + `verify` | 按域独立 revert |
-| S3 Go 单核心 | `internal/vela`、`internal/app`、`internal/iosabi`、`cmd` 瘦身、结构化载荷 | `go test -race ./...` + `verify-ios-deps` + 载荷金测试 + `verify` | 删除旧实现单独提交，可只回退该提交恢复双实现 |
+| S3 Go 单核心 | `internal/core`、`internal/app`、`internal/iosabi`、`cmd` 瘦身、结构化载荷 | `go test -race ./...` + `verify-ios-deps` + 载荷金测试 + `verify` | 删除旧实现单独提交，可只回退该提交恢复双实现 |
 | S4 共享流程 | auth/remotes/preferences/rename 抽取，校验规则统一 | 流程单测 + `verify` | 按流程独立 revert |
 | S5 配置单源 | `shared/tokens/base.json`、删 `theme.ts`、提取 `macos/app/Info.plist` | token 校验 + `verify` + `build:app` 签名 | 独立 revert |
 | S6 Rust 收尾 | smoke 脚本移出生产路径、`supervisor` 全局状态收敛、颜色函数表驱动 | `cargo test` + `clippy -D warnings` + `verify` | 独立 revert |

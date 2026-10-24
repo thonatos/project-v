@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/thonatos/vela/core/internal/protocol"
-	"github.com/thonatos/vela/core/internal/vela"
+	"implements.io/vela/internal/core"
+	"implements.io/vela/internal/protocol"
 )
 
 // RequestTimeout bounds one control round trip so a wedged handler cannot
@@ -25,7 +25,7 @@ const RequestTimeout = 30 * time.Second
 // helper's stdin/stdout. Rust calls Request through the C ABI and receives the
 // same versioned JSON Lines the desktop host sees.
 type Bridge struct {
-	core      *vela.Core
+	core      *core.Core
 	requests  *io.PipeWriter
 	responses *bufio.Reader
 	cancel    context.CancelFunc
@@ -39,7 +39,7 @@ type Bridge struct {
 }
 
 // NewBridge starts the control loop. Close stops it.
-func NewBridge(core *vela.Core, logger *log.Logger) *Bridge {
+func NewBridge(core *core.Core, logger *log.Logger) *Bridge {
 	if logger == nil {
 		logger = log.New(io.Discard, "", 0)
 	}

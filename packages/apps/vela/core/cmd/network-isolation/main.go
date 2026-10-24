@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	velanetwork "github.com/thonatos/vela/core/internal/network"
+	velanetwork "implements.io/vela/internal/network"
 )
 
 type snapshot struct {

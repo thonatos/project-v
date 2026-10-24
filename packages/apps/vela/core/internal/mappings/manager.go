@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/thonatos/vela/core/internal/tunnel"
+	"implements.io/vela/internal/tunnel"
 )
 
 type Key struct{ Device, Service string }

@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/thonatos/vela/core/internal/adapters"
-	"github.com/thonatos/vela/core/internal/authorization"
+	"implements.io/vela/internal/adapters"
+	"implements.io/vela/internal/authorization"
 	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tailcfg"
 )

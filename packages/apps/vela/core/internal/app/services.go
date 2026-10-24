@@ -8,10 +8,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/thonatos/vela/core/internal/adapters"
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/dshauth"
-	"github.com/thonatos/vela/core/internal/services"
+	"implements.io/vela/internal/adapters"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/dshauth"
+	"implements.io/vela/internal/services"
 )
 
 // setSharing persists the sharing choices and applies them immediately, so a

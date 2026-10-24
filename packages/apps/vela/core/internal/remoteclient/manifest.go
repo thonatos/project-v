@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thonatos/vela/core/internal/manifest"
+	"implements.io/vela/internal/manifest"
 )
 
 var (

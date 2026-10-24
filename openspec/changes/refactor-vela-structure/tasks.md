@@ -17,7 +17,7 @@
 - [x] 2.3 将 `1.1` 的结构测试切到最终目录规则：`macos/**`、`ios/**` 可依赖 `shared/**`、`core/**`，反向禁止，平台之间禁止。验证：测试通过；临时在 `shared/ui` 中引用 `macos/ui` 后失败，随后删除。
 - [x] 2.4 新增 `README.md`（定位、四类目录职责、平台能力矩阵、构建与验证命令、文档索引）与 `docs/README.md`（按读者分类）；将 `sharing-and-dsh.md` 更名 `sharing.md`、`control-protocol.md` 更名 `protocol.md`、`app-boundary.md` 更名 `architecture.md`；`acceptance.md` 归档到 `docs/verification/`；同步更新 `verify-docs.sh` 中的文档路径。验证：`verify-docs.sh` 通过；照 README 中的命令执行一次构建。
 - [x] 2.5 修正 `macos/ui/LAYERS.md`（`view-model` 已迁出、路径已变），并新增 `ios/ui/LAYERS.md` 说明 iOS 的分层契约；更新 `docs/ios.md` 与 `docs/development.md` 中的路径与命令。验证：文档中的每条命令可执行；`verify` 通过。
-- [x] 2.6 包名与模块路径从 Vela 自身计算：npm 包名改为 `vela`，Go module 改为 `github.com/thonatos/vela/core`，更新全部 import、脚本与文档引用；不再出现 `project-v` 路径。验证：`go build -C core ./...` 与 `pnpm -F vela verify` 通过；`git grep 'project-v/vela\|@project-v/vela'` 无结果。
+- [x] 2.6 包名与模块路径从 Vela 自身计算：npm 包名改为 `vela`，Go module 改为 `implements.io/vela`，更新全部 import、脚本与文档引用；不再出现 `project-v` 路径。验证：`go build -C core ./...` 与 `pnpm -F vela verify` 通过；`git grep 'project-v/vela\|@project-v/vela'` 无结果。
 
 ## 3. S2 TS 共享层
 
@@ -29,7 +29,7 @@
 
 ## 4. S3 Go 单一 Core
 
-- [x] 4.1 新建 `internal/vela`：迁入读侧（状态、映射、认证、远端、设备、偏好、诊断、`control.Server` 装配），把重试次数、映射地址、manifest 端口改为 `Options`。验证：迁移后的包 `go test` 全绿；两端传入各自现值后行为与 `1.3` 的特征测试一致。
+- [x] 4.1 新建 `internal/core`：迁入读侧（状态、映射、认证、远端、设备、偏好、诊断、`control.Server` 装配），把重试次数、映射地址、manifest 端口改为 `Options`。验证：迁移后的包 `go test` 全绿；两端传入各自现值后行为与 `1.3` 的特征测试一致。
 - [x] 4.2 新建 `internal/app`：迁入 `probeServices`、`dshLaunch`、`publications`、`sharing` reconcile、`ServiceUpsert`/`ServiceRemove`，以装饰方式替换 `Status` 并追加共享/服务 handler。验证：`go test ./internal/app` 通过；`1.2` 的载荷金测试在新实现下通过。
 - [x] 4.3 新建 `internal/iosabi`：迁入 `Bridge` 与 iOS 专属选项；`cmd/vela-mobile` 成为 C ABI 薄壳。验证：`go build ./...`；`verify-ios-deps.sh` 确认 iOS 入口不链接 publication/sharing/services/authorization/inbound。
 - [x] 4.4 `cmd/vela-core` 瘦身为装配（参数解析、构造 `app`、`Run`），载荷从 `map[string]any` 改为包内结构体并保持 JSON 键不变。验证：`go test -race ./...`；`verify-protocol-docs.sh` 通过；`verify` 全绿。

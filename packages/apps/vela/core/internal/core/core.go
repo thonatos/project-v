@@ -1,9 +1,9 @@
-// Package vela implements the read-side Core shared by the macOS and iOS clients.
+// Package core implements the read-side Core shared by the macOS and iOS clients.
 //
 // It reuses the macOS Core's identity, manifest, mapping, tunnel and control
 // packages but never publishes or probes local services: iOS only dials peers
 // that were shared with it.
-package vela
+package core
 
 import (
 	"context"
@@ -21,18 +21,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/thonatos/vela/core/internal/adapters"
-	"github.com/thonatos/vela/core/internal/buildinfo"
-	velaconfig "github.com/thonatos/vela/core/internal/config"
-	"github.com/thonatos/vela/core/internal/control"
-	"github.com/thonatos/vela/core/internal/diagnostics"
-	"github.com/thonatos/vela/core/internal/manifest"
-	"github.com/thonatos/vela/core/internal/mappings"
-	velanetwork "github.com/thonatos/vela/core/internal/network"
-	velapaths "github.com/thonatos/vela/core/internal/paths"
-	"github.com/thonatos/vela/core/internal/protocol"
-	"github.com/thonatos/vela/core/internal/remoteclient"
-	"github.com/thonatos/vela/core/internal/remotes"
+	"implements.io/vela/internal/adapters"
+	"implements.io/vela/internal/buildinfo"
+	velaconfig "implements.io/vela/internal/config"
+	"implements.io/vela/internal/control"
+	"implements.io/vela/internal/diagnostics"
+	"implements.io/vela/internal/manifest"
+	"implements.io/vela/internal/mappings"
+	velanetwork "implements.io/vela/internal/network"
+	velapaths "implements.io/vela/internal/paths"
+	"implements.io/vela/internal/protocol"
+	"implements.io/vela/internal/remoteclient"
+	"implements.io/vela/internal/remotes"
 	"tailscale.com/client/local"
 	"tailscale.com/ipn"
 )
