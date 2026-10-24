@@ -64,16 +64,16 @@
 | -------------------- | ------------------------------------------------------------------------ |
 | macOS 构建           | `sh scripts/build-app.sh .tmp/release-build`，`codesign --verify` 通过   |
 | macOS 运行           | `build/app/Vela.app`（由验收构建原样拷贝，哈希一致）                     |
-| macOS `Vela` SHA-256 | `f8ae90db44c08c97f0ca11f21a75ad1471c5bea6db50acb973e49fa60dbfb923`       |
-| macOS `vela-core`    | `10863fc941d8c384062db86a69b17bf62470516a1e4b560777366724b295085f`       |
+| macOS `Vela` SHA-256 | `529d9b0657e6127faa171f36a362132db1619ba990a3cb799f07c9d9fbdc032a`       |
+| macOS `vela-core`    | `450d114175fdc6e28600c365cb2163d2502285654f97688838a15b663e5ebb63`       |
 | 应用版本             | 0.1.0 (1)，两端一致                                                      |
 | iOS 构建             | `DEVELOPMENT_TEAM=<team-id> sh scripts/build-ios.sh`，BUILD SUCCEEDED    |
-| iOS 描述文件         | `iOS Team Provisioning Profile`（bundle id 见工程配置），2027-10-22 到期 |
-| iOS 安装             | `xcrun devicectl device install app` 覆盖安装到 iPhone 17 Pro 成功       |
+| iOS 描述文件         | `iOS Team Provisioning Profile`（bundle id 见工程配置），2027-10-24 到期 |
+| iOS 安装             | 以新 bundle id 独立安装到 iPhone 17 Pro 成功（旧 App 保留）              |
 | iOS 启动             | `xcrun devicectl device process launch` 成功                             |
-| iOS `Vela` SHA-256   | `1bac96552c0ba23118fb5b03fb824505a47730d05c369fdcd51a7cabac3497ae`       |
+| iOS `Vela` SHA-256   | `996961a8c7d23d2636167b129674a9b8b5d76e49e25b289f1ae8eac71e03b911`       |
 
-mac mini 部署：正常退出旧版 → 旧包移至 `/Applications/Vela.app.previous` → `rsync -aE` 拷贝 `build/app/Vela.app` → `codesign --verify --deep --strict` 通过 → 启动。两台 Mac 的 `Vela` 与 `vela-core` SHA-256 与上表一致。
+mac mini 部署：正常退出旧版 → 替换 `/Applications/Vela.app` → `codesign --verify --deep --strict` 通过 → 启动。两台 Mac 的 `Vela` 与 `vela-core` SHA-256 与上表一致。
 
 ### 已确认（用户，2026-10-25）
 
@@ -98,5 +98,6 @@ mac mini 部署：正常退出旧版 → 旧包移至 `/Applications/Vela.app.pr
 - iOS 描述文件到期时间取自构建产物的 `embedded.mobileprovision`。
 - 历史已重写：本机路径替换为 `/Users/example`，专用内网地址替换为泛化地址；提交哈希随之变化。
 - iOS Rust 构建加入路径重映射，产物不再包含构建机路径。
+- Bundle ID 已迁移为 `io.implements.vela.macos` 与 `io.implements.vela.ios`；iOS 以新身份独立安装，需要重新登录并重新添加 Mac，旧 App 可手动删除。
 - 个人邮箱按用户决定保留现状。
 - 本次未 push 到远程。
