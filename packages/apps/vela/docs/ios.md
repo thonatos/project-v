@@ -16,7 +16,7 @@ Vela iOS 是只读访问方：它加入与 Mac 相同的 Tailnet，读取远端 
 rustup target add --toolchain 1.98.1 aarch64-apple-ios aarch64-apple-ios-sim
 ```
 
-真机签名使用 Xcode 自动签名。把 Team ID 放进 `DEVELOPMENT_TEAM`，bundle id 固定为 `io.implements.vela.ios`。
+真机签名使用 Xcode 自动签名。把 Team ID 放进 `DEVELOPMENT_TEAM`，bundle id 固定为工程中的 `PRODUCT_BUNDLE_IDENTIFIER`（见 `ios/app/Vela.xcodeproj`）。
 
 ## 构建
 
