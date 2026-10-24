@@ -2,3 +2,7 @@ build/
 target/
 core/vela-core
 .tmp/
+ios/build/
+ios/Vela.xcodeproj/xcuserdata/
+ios/Vela.xcodeproj/project.xcworkspace/xcuserdata/
+ui-ios/.nsh/

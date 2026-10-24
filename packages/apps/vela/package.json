@@ -20,6 +20,12 @@
     "test:ui-model": "node ui/tests/view-model.test.mjs",
     "test:ui-layout": "node ui/tests/desktop-layout.test.mjs",
     "test:docs": "sh scripts/verify-docs.sh",
-    "verify:release": "sh scripts/verify-release.sh"
+    "verify:release": "sh scripts/verify-release.sh",
+    "build:ios": "sh scripts/build-ios.sh",
+    "build:ios:core": "sh scripts/build-ios-core.sh build/ios",
+    "build:ios:ui": "nsh build ui-ios/App.tsx --release -o build/ui-ios",
+    "check:ios": "nsh check ui-ios/App.tsx && cargo check --target aarch64-apple-ios -p vela-ios-native",
+    "test:ios": "node ui-ios/tests/structure.test.mjs && node ui-ios/tests/theme.test.mjs && node ui-ios/tests/view-model.test.mjs && sh scripts/verify-ios-deps.sh",
+    "install:ios": "sh scripts/install-ios.sh"
   }
 }

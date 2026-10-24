@@ -21,13 +21,15 @@ cp "$ROOT/target/release/vela-host" "$CONTENTS/MacOS/Vela"
 cp "$OUT/ui/bundle.nshc" "$CONTENTS/Resources/nsh/bundle.nshc"
 test ! -d "$OUT/ui/assets" || cp -R "$OUT/ui/assets/." "$CONTENTS/Resources/nsh/assets/"
 
-swift "$ROOT/scripts/make-icon.swift" "$OUT/icon.png"
-mkdir -p "$OUT/icon.iconset"
-for spec in '16 16x16' '32 16x16@2x' '32 32x32' '64 32x32@2x' '128 128x128' '256 128x128@2x' '256 256x256' '512 256x256@2x' '512 512x512' '1024 512x512@2x'; do
-  set -- $spec
-  sips -z "$1" "$1" "$OUT/icon.png" --out "$OUT/icon.iconset/icon_$2.png" >/dev/null
-done
-iconutil -c icns "$OUT/icon.iconset" -o "$CONTENTS/Resources/AppIcon.icns"
+# Icon Composer icon: Assets.car carries the light, dark and tinted renditions
+# macOS 26+ picks from; AppIcon.icns is the fallback for older systems.
+xcrun actool "$ROOT/icon/AppIcon.icon" \
+  --compile "$CONTENTS/Resources" \
+  --platform macosx \
+  --minimum-deployment-target 14.0 \
+  --app-icon AppIcon \
+  --output-partial-info-plist "$OUT/icon-partial.plist" \
+  --output-format human-readable-text >/dev/null
 
 cat > "$CONTENTS/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -37,6 +39,7 @@ cat > "$CONTENTS/Info.plist" <<'PLIST'
   <key>CFBundleDisplayName</key><string>Vela</string>
   <key>CFBundleExecutable</key><string>Vela</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleIconName</key><string>AppIcon</string>
   <key>CFBundleIdentifier</key><string>io.implements.vela.macos</string>
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>Vela</string>
