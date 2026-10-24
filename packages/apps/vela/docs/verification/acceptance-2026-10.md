@@ -73,6 +73,8 @@
 | iOS 启动             | `xcrun devicectl device process launch` 成功                            |
 | iOS `Vela` SHA-256   | `50771bbbfe6c8e1193c3edb40b2b636510d68edb609463ba1ab8b8e1e409ef0b`      |
 
+mac mini 部署：正常退出旧版 → 旧包移至 `/Applications/Vela.app.previous` → `rsync -aE` 拷贝 `build/app/Vela.app` → `codesign --verify --deep --strict` 通过 → 启动。两台 Mac 的 `Vela` 与 `vela-core` SHA-256 与上表一致。
+
 ### 已确认（用户，2026-10-25）
 
 - macOS 账户页：顶部为头像与账户名身份头，账户只出现一次；顺序为私人连接（状态与 Tailnet）→ 这台 Mac 的身份 → 登录/注销。
