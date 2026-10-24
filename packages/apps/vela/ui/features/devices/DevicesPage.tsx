@@ -6,14 +6,14 @@ import { View } from "nsh";
 import { Menu } from "nsh/desktop";
 import { store } from "../../core/store";
 import { ForwardRow } from "../forwards/ForwardRow";
-import type { DeviceViewModel, ServiceViewModel } from "../../model";
+import type { DeviceViewModel, ServiceViewModel } from "../../../ui-shared/model";
 import { Alert, Badge, Button, Callout, CardSection, List, ListEmpty, ListRow, Page, PageHeader, spacing, Switch } from "../../ui";
 import {
   connectionLabel,
   deviceAddressLines,
   diagnosticActivityRows,
   serviceStateLabel,
-} from "../../view-model.mjs";
+} from "../../../ui-shared/view-model.mjs";
 
 const localName = () => store.status()?.deviceName ?? store.status()?.tailscale.name ?? "当前设备";
 const localSummary = () => `${store.services().length} 个本地服务`;
@@ -97,7 +97,7 @@ function LocalDetail() {
       <ListRow
         title="共享这台 Mac"
         description="仅已授权的 Vela 设备可以访问已共享的服务"
-        trailing={<Switch value={store.status()?.sharing.enabled ?? false} label="共享这台 Mac" onChange={store.sharing.setEnabled} />}
+        trailing={<Switch value={store.status()?.sharing?.enabled ?? false} label="共享这台 Mac" onChange={store.sharing.setEnabled} />}
       />
     </CardSection>
     <CardSection

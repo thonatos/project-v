@@ -523,7 +523,7 @@ impl NativeComponent for DesktopButton {
 define_class!(
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
-    #[ivars = ComponentContext]
+    #[ivars = SwitchTargetState]
     #[name = "VelaSwitchTarget"]
     struct SwitchTarget;
 
@@ -532,19 +532,32 @@ define_class!(
     impl SwitchTarget {
         /// `AppKit` sends the action only for a user toggle, never for
         /// `setState`, so the `value` prop cannot echo back as `change`.
+        ///
+        /// The switch is controlled: `AppKit` has already moved it, so it goes
+        /// back to the `value` prop and only the app's answer moves it again.
+        /// Otherwise a toggle that still needs confirmation would look done.
         #[unsafe(method(toggled:))]
         fn toggled(&self, sender: &NSSwitch) {
-            self.ivars()
-                .emit("change", change_payload(is_on(sender.state())));
+            let state = self.ivars();
+            let requested = is_on(sender.state());
+            sender.setState(state_for(state.value.get()));
+            state.context.emit("change", change_payload(requested));
         }
     }
 );
 
+/// State shared between a [`DesktopSwitch`] and its action target.
+struct SwitchTargetState {
+    context: ComponentContext,
+    /// The `value` prop: what the switch shows until the app changes it.
+    value: Cell<bool>,
+}
+
 /// `NSSwitch` wrapper: props `value`, `disabled`, `label`; event `change`
-/// with `{ "value": bool }` when the user toggles it.
+/// with `{ "value": bool }` when the user toggles it. It shows `value` only.
 pub struct DesktopSwitch {
     switch: Retained<NSSwitch>,
-    _target: Retained<SwitchTarget>,
+    target: Retained<SwitchTarget>,
 }
 
 impl DesktopSwitch {
@@ -553,11 +566,14 @@ impl DesktopSwitch {
 
     #[must_use]
     pub fn new(context: &ComponentContext, mtm: MainThreadMarker) -> Self {
-        let target = SwitchTarget::alloc(mtm).set_ivars(context.clone());
+        let target = SwitchTarget::alloc(mtm).set_ivars(SwitchTargetState {
+            context: context.clone(),
+            value: Cell::new(false),
+        });
         let target: Retained<SwitchTarget> = unsafe { msg_send![super(target), init] };
         let switch = NSSwitch::new(mtm);
         // SAFETY: `toggled:` is defined on `SwitchTarget` with the
-        // `(id sender)` signature AppKit uses for actions, and `_target` keeps
+        // `(id sender)` signature AppKit uses for actions, and `target` keeps
         // the target alive for as long as the switch can send to it.
         unsafe {
             switch.setTarget(Some(&target));
@@ -571,10 +587,7 @@ impl DesktopSwitch {
             f64::from(height),
         ));
         context.set_size(width, height);
-        Self {
-            switch,
-            _target: target,
-        }
+        Self { switch, target }
     }
 }
 
@@ -585,7 +598,11 @@ impl NativeComponent for DesktopSwitch {
 
     fn set_prop(&mut self, name: &str, value: Option<&serde_json::Value>) {
         match name {
-            "value" => self.switch.setState(state_for(bool_prop(value))),
+            "value" => {
+                let on = bool_prop(value);
+                self.target.ivars().value.set(on);
+                self.switch.setState(state_for(on));
+            }
             "disabled" => self.switch.setEnabled(!bool_prop(value)),
             "label" => {
                 let label = value

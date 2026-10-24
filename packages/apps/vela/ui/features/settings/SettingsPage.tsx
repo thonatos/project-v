@@ -2,7 +2,7 @@ import { View } from "nsh";
 import { Clipboard } from "nsh/clipboard";
 import { store } from "../../core/store";
 import { Button, Callout, CardHeader, CardSection, ListRow, Page, PageHeader, RadioGroup, Switch, spacing } from "../../ui";
-import { diagnosticSnapshot, diagnosticSummaryRows } from "../../view-model.mjs";
+import { diagnosticSnapshot, diagnosticSummaryRows } from "../../../ui-shared/view-model.mjs";
 
 const PROTOCOL_VERSION = "2";
 
@@ -14,13 +14,13 @@ const APPEARANCE_OPTIONS = [
 
 function copyDiagnostics() {
   const status = store.status();
-  Clipboard.setString(status ? diagnosticSnapshot(status, PROTOCOL_VERSION) : JSON.stringify({ version: PROTOCOL_VERSION, redacted: true }));
+  Clipboard.writeText(status ? diagnosticSnapshot(status, PROTOCOL_VERSION) : JSON.stringify({ version: PROTOCOL_VERSION, redacted: true }));
 }
 
 /** Preferences only; sign-in, identity and connection state live on the account page. */
 export function SettingsPage() {
   const preferences = () => store.preferences.current();
-  const sharingEnabled = () => store.status()?.sharing.enabled ?? false;
+  const sharingEnabled = () => store.status()?.sharing?.enabled ?? false;
   const diagnostics = () => diagnosticSummaryRows(store.status(), PROTOCOL_VERSION);
 
   return <Page testID="settings-view">

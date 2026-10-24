@@ -113,7 +113,7 @@ for (const file of features.filter((path) => path.endsWith("Page.tsx"))) {
   assert.doesNotMatch(read(file), /<Scroll /, `${file}: pages scroll through Page, not their own Scroll`);
 }
 assert.doesNotMatch(featureSource, /function DetailHeader|text-section/, "pages use PageHeader instead of their own header");
-assert.equal((featureSource.match(/<FormSheet/g) ?? []).length, 4, "all four dialogs share FormSheet");
+assert.equal((featureSource.match(/<FormSheet[\s>]/g) ?? []).length, 3, "all three dialogs share FormSheet");
 
 // --- Navigation and window ------------------------------------------------------
 assert.match(app, /Window\.setTitleBar\("default"\)/, "Vela must use the system title bar");
@@ -175,7 +175,8 @@ assert.match(featureSource, /connectionCommand\(/, "TCP forwards show a connecti
 assert.match(read("core/store.ts"), /if \(isWeb\) core\.openExternal\(url\)/, "only HTTP forwards are handed to the browser");
 assert.match(forwardRow, /"复制地址"/, "a web forward's address must be copyable");
 assert.match(forwardRow, /复制命令：\$\{command\(\)\}/, "a TCP forward copies its full command, and the tooltip says so");
-assert.match(featureSource, /DSH Web 认证/, "the DSH authentication URL is entered inside Vela");
+assert.doesNotMatch(featureSource, /DSH Web 认证/, "the device that forwards DSH never asks for its token");
+assert.match(featureSource, /DSH 输出日志/, "the DSH sign-in log is configured where DSH is shared");
 
 // --- Services by protocol ---------------------------------------------------------------
 const editor = join(features.filter((file) => file.startsWith("features/services/")));

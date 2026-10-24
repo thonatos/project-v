@@ -12,7 +12,7 @@ export function Field(props: { label: string; hint?: string; error?: string; chi
     <Label>{props.label}</Label>
     {props.children}
     <If when={props.error} else={props.hint ? <Callout>{props.hint}</Callout> : null}>
-      <Text accessibilityRole="alert" class={`${type.caption} ${text.danger}`}>{props.error}</Text>
+      <Text role="alert" class={`${type.caption} ${text.danger}`}>{props.error}</Text>
     </If>
   </View>;
 }
@@ -20,10 +20,10 @@ export function Field(props: { label: string; hint?: string; error?: string; chi
 export function TextInput(props: { value: string; placeholder?: string; disabled?: boolean; mono?: boolean; onChange: (value: string) => void; onSubmit?: () => void }) {
   return <Input
     value={props.value}
-    onChangeText={props.onChange}
-    onSubmitEditing={props.onSubmit}
+    onChange={props.onChange}
+    onSubmit={props.onSubmit}
     placeholder={props.placeholder}
-    editable={!props.disabled}
+    readonly={Boolean(props.disabled)}
     autoCapitalize="none"
     autoCorrect={false}
     class={`h-7 rounded-control px-2 ${type.body} ${props.mono ? "font-mono" : ""} ${edges.all} ${surfaces.surface} ${states.focus} ${states.disabled} ${states.placeholder}`}

@@ -14,7 +14,7 @@ dispatch2 = "=0.3.1"
 block2.workspace = true
 nsh-core.workspace = true
 nsh-platform-macos.workspace = true
-nsh-ui-mobile.workspace = true
+nsh-base.workspace = true
 objc2-app-kit = { workspace = true, features = ["NSSwitch"] }
 objc2-foundation.workspace = true
 objc2-web-kit.workspace = true

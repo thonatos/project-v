@@ -6,9 +6,9 @@
  */
 import { View } from "nsh";
 import { store, type Forward } from "../../core/store";
-import type { DeviceViewModel, ServiceViewModel } from "../../model";
+import type { DeviceViewModel, ServiceViewModel } from "../../../ui-shared/model";
 import { Badge, Endpoint, EndpointActions, ListRow, Switch, spacing } from "../../ui";
-import { connectionCommand, forwardEndpoint } from "../../view-model.mjs";
+import { connectionCommand, forwardEndpoint } from "../../../ui-shared/view-model.mjs";
 
 export function ForwardRow(props: {
   device: DeviceViewModel;

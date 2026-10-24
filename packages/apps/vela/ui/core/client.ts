@@ -4,24 +4,10 @@
  * at each call site.
  */
 import { CoreBridge } from "vela/native";
-import type { CoreRemote, CoreStatus, DiagnosticActivity, DiagnosticLogs, Preferences } from "../view-model.d.mts";
+import { CoreError, parseEnvelope } from "../../ui-shared/envelope";
+import type { CoreRemote, CoreStatus, DiagnosticActivity, DiagnosticLogs, Preferences } from "../../ui-shared/protocol";
 
-/** A failed Core exchange, with the prefix Core adds already stripped. */
-export class CoreError extends Error {
-  readonly reason: string;
-
-  constructor(message: string) {
-    super(message);
-    this.name = "CoreError";
-    // The host rejects with "<code>: <message>"; the message is what users read.
-    this.reason = message.replace(/^Error:\s*/, "").replace(/^[a-z_]+:\s*/, "");
-  }
-}
-
-interface Envelope<Payload> {
-  readonly type: string;
-  readonly payload?: Payload;
-}
+export { CoreError };
 
 /**
  * Sends one request and returns its payload, asserting the response type so a
@@ -34,16 +20,7 @@ async function send<Payload>(kind: string, expect: string, body: unknown = {}): 
   } catch (error) {
     throw new CoreError(String(error));
   }
-  let envelope: Envelope<Payload>;
-  try {
-    envelope = JSON.parse(raw) as Envelope<Payload>;
-  } catch {
-    throw new CoreError(`${kind} 返回了无法解析的响应`);
-  }
-  if (envelope.type !== expect || envelope.payload === undefined) {
-    throw new CoreError(`${kind} 返回了意外的响应`);
-  }
-  return envelope.payload;
+  return parseEnvelope<Payload>(kind, expect, raw);
 }
 
 export const core = {
@@ -53,7 +30,7 @@ export const core = {
   removeRemote: (name: string) => send<unknown>("remote.remove", "remotes", { name }),
   renameDevice: (name: string) => send<{ deviceName?: string }>("device.update", "status", { name }),
 
-  upsertService: (service: { id: string; name: string; url: string; adapter: string; protocol: "http" | "tcp"; preset: string; shared: boolean }) =>
+  upsertService: (service: { id: string; name: string; url: string; adapter: string; protocol: "http" | "tcp"; preset: string; shared: boolean; authLog?: string }) =>
     send<unknown>("service.upsert", "services", service),
   removeService: (id: string) => send<unknown>("service.remove", "services", { id }),
 

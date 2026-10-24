@@ -14,6 +14,6 @@ export { List, ListEmpty, ListRow, type ListRowProps } from "./list";
 export { LogList, type LogLine } from "./log-list";
 export { Page, PageHeader } from "./page";
 export { RadioGroup, type RadioOption } from "./radio-group";
-export { FormSheet } from "./sheet";
+export { FormSheet, FormSheetDialog } from "./sheet";
 export { Switch } from "./switch";
 export { edges, fills, levelText, spacing, states, statusText, surfaces, text, tones, type, type StatusKey, type Tone } from "./tokens";

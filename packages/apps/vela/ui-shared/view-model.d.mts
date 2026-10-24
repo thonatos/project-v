@@ -1,73 +1,23 @@
-import type { DeviceViewModel, ServiceProtocol, ServiceViewModel } from "./model";
+import type { DeviceViewModel, DSHAuthLink, ServiceProtocol, ServiceViewModel } from "./model";
+import type {
+  CoreRemote,
+  CoreStatus,
+  DiagnosticActivity,
+  DiagnosticLogs,
+} from "./protocol";
 
-export interface CoreRemoteService {
-  readonly id: string;
-  readonly name: string;
-  readonly protocol?: ServiceProtocol;
-  readonly preset?: string;
-  readonly port: number;
-  readonly path?: string;
-  readonly adapter?: string;
-  readonly available: boolean;
-}
-
-export interface CoreRemote {
-  readonly name: string;
-  readonly privateName: string;
-  readonly ips?: readonly string[];
-  readonly lastConnectedUtc?: string;
-  readonly connection?: DeviceViewModel["connection"];
-  readonly compatible?: boolean;
-  readonly issue?: DeviceViewModel["issue"];
-  readonly services?: readonly CoreRemoteService[];
-}
-
-export interface CoreLocalService {
-  readonly id: string;
-  readonly name: string;
-  readonly protocol?: ServiceProtocol;
-  readonly preset?: string;
-  readonly url: string;
-  readonly port: number;
-  readonly adapter?: string;
-  readonly state: ServiceViewModel["state"];
-  readonly shared: boolean;
-}
-
-export interface CoreStatus {
-  readonly network: DeviceViewModel["connection"];
-  readonly deviceName: string;
-  readonly preferences?: Preferences;
-  readonly tailscale: TailnetDevice;
-  readonly tailnetDevices: readonly TailnetDevice[];
-  readonly sharing: { readonly enabled: boolean; readonly opencode: boolean; readonly dsh: boolean };
-  readonly services: readonly CoreLocalService[];
-  readonly remotes: readonly CoreRemote[];
-}
-
-export interface Preferences {
-  readonly appearance: "system" | "light" | "dark";
-  readonly performanceHud: boolean;
-  readonly verboseLogs: boolean;
-}
-
-export interface DiagnosticEntry {
-  readonly atUtc: string;
-  readonly level: string;
-  readonly area: string;
-  readonly message: string;
-}
-
-export interface DiagnosticLogs {
-  readonly entries: readonly DiagnosticEntry[];
-}
-
-export interface DiagnosticActivity {
-  readonly mappings: readonly { readonly device: string; readonly privateName: string; readonly service: string; readonly url: string; readonly connections: number }[];
-  readonly published: Readonly<Record<string, boolean>>;
-}
-
-export interface TailnetDevice { readonly name: string; readonly dnsName?: string; readonly ips: readonly string[]; readonly user?: string; readonly tailnet?: string; readonly backend?: string; readonly online: boolean; readonly exitNode?: boolean; readonly keyExpired?: boolean }
+export type {
+  CoreLocalService,
+  CoreRemote,
+  CoreRemoteService,
+  CoreStatus,
+  DiagnosticActivity,
+  DiagnosticEntry,
+  DiagnosticLogs,
+  Preferences,
+  SigningInfo,
+  TailnetDevice,
+} from "./protocol";
 
 export type PresetGroup = "web" | "tcp";
 export type PresetValue = "opencode" | "dsh" | "comfyui" | "custom-http" | "ssh" | "redis" | "mysql" | "postgres" | "custom-tcp";
@@ -104,7 +54,8 @@ export function diagnosticSummaryRows(status: CoreStatus | null, protocolVersion
 export function nextDeviceID(selected: string, remoteIDs: readonly string[], direction: -1 | 1): string;
 export function remoteAddError(detail: string): string;
 export function serviceStateLabel(service: ServiceViewModel): string;
-export function dshMappingURL(mappingURL: string, authenticationURL: string): string;
+export const DSH_AUTH_LOG_PLACEHOLDER: string;
+export function dshAuthLogHint(authLog: string | undefined, authLink: DSHAuthLink | undefined): string;
 export function appearancePreference(status: CoreStatus | null): "system" | "light" | "dark";
 export function diagnosticActivityRows(activity: DiagnosticActivity | null): Row[];
 export function deviceAddressLines(ips: readonly string[] | undefined): string[];
@@ -120,3 +71,23 @@ export interface LogRowModel {
 }
 export function logRows(logs: DiagnosticLogs | null, level?: LogLevel | "all"): LogRowModel[];
 export function logLevelCounts(logs: DiagnosticLogs | null): Record<"all" | LogLevel, number>;
+
+export function signedIn(status: CoreStatus | null): boolean;
+export function userLabel(status: CoreStatus | null): string;
+export function userInitial(status: CoreStatus | null): string;
+export function isRecentService(
+  last: { readonly device: string; readonly service: string } | null,
+  device: DeviceViewModel,
+  service: ServiceViewModel,
+): boolean;
+export function serviceKindLabel(service: ServiceViewModel, recent?: boolean): string;
+export interface ServiceBadgeView {
+  readonly status: DeviceViewModel["connection"] | ServiceViewModel["state"] | "unavailable";
+  readonly label: string;
+  readonly disabled: boolean;
+}
+export function serviceBadge(device: DeviceViewModel, service: ServiceViewModel): ServiceBadgeView;
+export function groupServicesByDevice(
+  devices: readonly DeviceViewModel[],
+  last?: { readonly device: string; readonly service: string } | null,
+): { readonly device: DeviceViewModel; readonly services: ServiceViewModel[] }[];

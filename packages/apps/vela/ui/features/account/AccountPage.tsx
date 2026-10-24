@@ -1,7 +1,7 @@
 import { View } from "nsh";
 import { store } from "../../core/store";
 import { Alert, Badge, Button, Callout, CardSection, ListRow, Page, PageHeader, spacing } from "../../ui";
-import { connectionLabel, deviceAddressLines } from "../../view-model.mjs";
+import { connectionLabel, deviceAddressLines } from "../../../ui-shared/view-model.mjs";
 
 /** Identity only: sign-in, who this Mac is signed in as, and how it appears on the tailnet. */
 export function AccountPage() {

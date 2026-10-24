@@ -5,12 +5,11 @@
 import { cleanup, effect, signal } from "nsh";
 import { setColorScheme } from "nsh/device";
 import { Clipboard } from "nsh/clipboard";
-import { Alert } from "nsh/ui/mobile";
-import type { DeviceViewModel, ServiceProtocol, ServiceViewModel } from "../model";
+import { AlertDialog } from "nsh/base";
+import type { DeviceViewModel, ServiceProtocol, ServiceViewModel } from "../../ui-shared/model";
 import type { LinkPhase } from "../ui";
 import {
   appearancePreference,
-  dshMappingURL,
   localServices,
   nextDeviceID,
   presetFor,
@@ -26,7 +25,7 @@ import {
   type LogLevel,
   type Preferences,
   type PresetValue,
-} from "../view-model.mjs";
+} from "../../ui-shared/view-model.mjs";
 import { core, CoreError } from "./client";
 
 export type Pane = "devices" | "forwards" | "logs" | "account" | "settings";
@@ -41,6 +40,32 @@ export interface Forward {
 }
 
 const reason = (error: unknown) => (error instanceof CoreError ? error.reason : String(error));
+
+/**
+ * Keeps the previous object for every item whose content did not change.
+ * Rows read their item inside prop getters, so a new object for an unchanged
+ * service makes its row build its native controls again; every status poll
+ * would then recreate every switch on the page, not only the one that changed.
+ */
+function keepUnchanged<T extends { id: string }>(previous: readonly T[], next: T[]): T[] {
+  const byID = new Map(previous.map((item) => [item.id, item]));
+  return next.map((item) => {
+    const old = byID.get(item.id);
+    return old && JSON.stringify(old) === JSON.stringify(item) ? old : item;
+  });
+}
+
+/** Asks for confirmation with a destructive action; resolves true when chosen. */
+function confirmDestructive(title: string, description: string, confirmLabel: string): Promise<boolean> {
+  return AlertDialog.show({
+    title,
+    description,
+    actions: [
+      { label: "取消", role: "cancel", id: "cancel" },
+      { label: confirmLabel, role: "destructive", id: "confirm" },
+    ],
+  }).then((choice) => choice === "confirm");
+}
 
 function createStore() {
   // Navigation
@@ -75,10 +100,9 @@ function createStore() {
     target: signal(""),
     protocol: signal<ServiceProtocol>("http"),
     adapter: signal(""),
+    authLog: signal(""),
     error: signal(""),
   };
-  // DSH authentication before its first forward
-  const dsh = { target: signal<{ device: DeviceViewModel; service: string } | null>(null), url: signal(""), error: signal("") };
 
   // Logs page
   const logLevel = signal<LogLevel | "all">("all");
@@ -98,7 +122,7 @@ function createStore() {
     if (current.length === 0) return;
     devices.set(current.map((device) => ({ ...device, connection: "connecting" })));
     try {
-      devices.set(remoteDevices(await core.refreshRemotes()));
+      devices.set(keepUnchanged(devices(), remoteDevices(await core.refreshRemotes())));
     } catch (error) {
       devices.set(current.map((device) => ({ ...device, connection: "offline", issue: "offline" })));
       console.error("VELA_STATE remote-refresh-failed", reason(error));
@@ -118,8 +142,8 @@ function createStore() {
         if (next.network === "connected" || next.network === "needs-auth") {
           authPending.set(false);
         }
-        services.set(localServices(next));
-        devices.set(remoteDevices(next.remotes));
+        services.set(keepUnchanged(services(), localServices(next)));
+        devices.set(keepUnchanged(devices(), remoteDevices(next.remotes)));
         setColorScheme(appearancePreference(next));
         core.setPerformanceHud(next.preferences?.performanceHud ?? false);
         if (refreshRemoteDevices && next.network === "connected" && next.remotes.some((remote) => remote.connection !== "connecting")) void refreshRemotes();
@@ -218,8 +242,8 @@ function createStore() {
         .finally(() => rechecking.set(false));
     },
     logout() {
-      void Alert.alert("注销这台 Mac？", "将移除这台 Mac 上保存的身份，共享与转发会停止。", [{ text: "取消", style: "cancel" }, { text: "注销", style: "destructive" }]).then((choice) => {
-        if (choice === 1) core.logout().then(() => load()).catch((error) => console.error("VELA_STATE auth-logout-failed", reason(error)));
+      void confirmDestructive("注销这台 Mac？", "将移除这台 Mac 上保存的身份，共享与转发会停止。", "注销").then((confirmed) => {
+        if (confirmed) core.logout().then(() => load()).catch((error) => console.error("VELA_STATE auth-logout-failed", reason(error)));
       });
     },
     beginRename() {
@@ -243,28 +267,30 @@ function createStore() {
   const sharing = {
     setEnabled(enabled: boolean) {
       const current = status();
-      if (current) status.set({ ...current, sharing: { ...current.sharing, enabled } });
-      core.updateSharing({ enabled, opencode: current?.sharing.opencode ?? false, dsh: current?.sharing.dsh ?? false })
+      if (current) status.set({ ...current, sharing: { enabled, opencode: current.sharing?.opencode ?? false, dsh: current.sharing?.dsh ?? false } });
+      core.updateSharing({ enabled, opencode: current?.sharing?.opencode ?? false, dsh: current?.sharing?.dsh ?? false })
         .catch((error) => { console.error("VELA_STATE sharing-update-failed", reason(error)); void load(); });
     },
     setServiceShared(service: ServiceViewModel, shared: boolean) {
-      const commit = () => core.upsertService({
-        id: service.id,
-        name: service.name,
-        url: service.url ?? "",
-        adapter: service.adapter ?? "",
-        protocol: service.protocol,
-        preset: service.preset ?? "",
-        shared,
-      })
-        .then(() => load())
-        .catch((error) => { console.error("VELA_STATE service-update-failed", reason(error)); void load(); });
-      services.set(services().map((item) => (item.id === service.id ? { ...item, shared } : item)));
-      if (!shared) { void commit(); return; }
+      const commit = () => {
+        services.set(services().map((item) => (item.id === service.id ? { ...item, shared } : item)));
+        core.upsertService({
+          id: service.id,
+          name: service.name,
+          url: service.url ?? "",
+          adapter: service.adapter ?? "",
+          protocol: service.protocol,
+          preset: service.preset ?? "",
+          shared,
+        })
+          .then(() => load())
+          .catch((error) => { console.error("VELA_STATE service-update-failed", reason(error)); void load(); });
+      };
+      if (!shared) { commit(); return; }
+      // The switch keeps showing "off" until the user confirms.
       const warning = shareWarning(service);
-      void Alert.alert(warning.title, warning.message, [{ text: "取消", style: "cancel" }, { text: "确认共享", style: "destructive" }]).then((choice) => {
-        if (choice === 1) void commit();
-        else services.set(services().map((item) => (item.id === service.id ? { ...item, shared: false } : item)));
+      void confirmDestructive(warning.title, warning.message, "确认共享").then((confirmed) => {
+        if (confirmed) commit();
       });
     },
   };
@@ -278,6 +304,7 @@ function createStore() {
       editor.target.set(preset.protocol === "tcp" ? preset.url.replace(/^tcp:\/\//, "") : preset.url);
       editor.protocol.set(preset.protocol);
       editor.adapter.set(preset.adapter);
+      editor.authLog.set("");
       editor.error.set("");
     },
     begin(service?: ServiceViewModel) {
@@ -289,6 +316,7 @@ function createStore() {
         editor.target.set(service.protocol === "tcp" ? service.subtitle : service.url ?? "");
         editor.protocol.set(service.protocol);
         editor.adapter.set(service.adapter ?? "");
+        editor.authLog.set(service.authLog ?? "");
         editor.error.set("");
       } else {
         editor.editing.set("");
@@ -301,19 +329,21 @@ function createStore() {
       const problem = serviceFormError(protocol, editor.name(), editor.target());
       if (problem) { editor.error.set(problem); return; }
       const existing = services().find((service) => service.id === editor.id());
+      const adapter = protocol === "tcp" ? "" : editor.adapter();
       core.upsertService({
         id: editor.id(),
         name: editor.name().trim(),
         url: serviceTargetURL(protocol, editor.target()),
-        adapter: protocol === "tcp" ? "" : editor.adapter(),
+        adapter,
         protocol,
         preset: editor.preset().startsWith("custom-") ? "" : editor.preset(),
         shared: existing?.shared ?? false,
+        authLog: adapter === "dsh" ? editor.authLog().trim() : "",
       }).then(() => { editor.open.set(false); return load(); }).catch((error) => editor.error.set(reason(error)));
     },
     remove(service: ServiceViewModel) {
-      void Alert.alert(`删除 ${service.name}？`, "将停止该服务的共享入口，但不会停止本地服务进程。", [{ text: "取消", style: "cancel" }, { text: "删除", style: "destructive" }]).then((choice) => {
-        if (choice === 1) core.removeService(service.id).then(() => load()).catch((error) => console.error("VELA_STATE service-remove-failed", reason(error)));
+      void confirmDestructive(`删除 ${service.name}？`, "将停止该服务的共享入口，但不会停止本地服务进程。", "删除").then((confirmed) => {
+        if (confirmed) core.removeService(service.id).then(() => load()).catch((error) => console.error("VELA_STATE service-remove-failed", reason(error)));
       });
     },
   };
@@ -352,8 +382,8 @@ function createStore() {
       }).finally(() => addDevice.busy.set(false));
     },
     remove(device: DeviceViewModel) {
-      void Alert.alert(`移除 ${device.name}？`, "只会删除这台 Mac 上保存的设备，不会影响另一台 Mac 上的 Vela。", [{ text: "取消", style: "cancel" }, { text: "移除", style: "destructive" }]).then((choice) => {
-        if (choice !== 1) return;
+      void confirmDestructive(`移除 ${device.name}？`, "只会删除这台 Mac 上保存的设备，不会影响另一台 Mac 上的 Vela。", "移除").then((confirmed) => {
+        if (!confirmed) return;
         for (const item of forwards().filter((forward) => forward.device.id === device.id)) forwarding.stop(item);
         core.removeRemote(device.privateName).then(() => load()).catch((error) => console.error("VELA_STATE remote-remove-failed", reason(error)));
         if (selected() === device.id) navigate.devices();
@@ -366,42 +396,9 @@ function createStore() {
     request(device: DeviceViewModel, serviceID: string) {
       const existing = forwardFor(device, serviceID);
       if (existing?.phase === "forwarding" || existing?.phase === "connecting") return;
-      const service = device.services.find((item) => item.id === serviceID);
-      if (service?.adapter === "dsh") {
-        // The switch reads the forward list, so hold the row in "connecting"
-        // while the sheet asks for an optional URL; cancelling removes it.
-        const key = forwardKey(device, serviceID);
-        forwards.set([...forwards().filter((item) => forwardKey(item.device, item.service) !== key), { device, service: serviceID, phase: "connecting" }]);
-        dsh.target.set({ device, service: serviceID });
-        dsh.url.set("");
-        dsh.error.set("");
-        return;
-      }
       void forwarding.start(device, serviceID);
     },
-    cancelDSH() {
-      const target = dsh.target();
-      dsh.target.set(null);
-      if (!target) return;
-      const key = forwardKey(target.device, target.service);
-      forwards.set(forwards().filter((item) => forwardKey(item.device, item.service) !== key));
-    },
-    startDSH(withURL: boolean) {
-      const target = dsh.target();
-      if (!target) return;
-      const url = withURL ? dsh.url().trim() : "";
-      if (url) {
-        try {
-          dshMappingURL("http://dsh.localhost:1", url);
-        } catch {
-          dsh.error.set("请粘贴 dsh web 输出的 loopback HTTP 地址。");
-          return;
-        }
-      }
-      dsh.target.set(null);
-      void forwarding.start(target.device, target.service, url || undefined);
-    },
-    async start(device: DeviceViewModel, service: string, authenticationURL?: string) {
+    async start(device: DeviceViewModel, service: string) {
       const key = forwardKey(device, service);
       const attempt = { device, service, phase: "connecting" } as const;
       forwards.set([...forwards().filter((item) => forwardKey(item.device, item.service) !== key), attempt]);
@@ -415,9 +412,8 @@ function createStore() {
           core.closeMapping(device.privateName, service).catch(() => {});
           return;
         }
-        const definition = device.services.find((item) => item.id === service);
         const isWeb = payload.url.startsWith("http://");
-        const url = isWeb && definition?.adapter === "dsh" && authenticationURL ? dshMappingURL(payload.url, authenticationURL) : payload.url;
+        const url = payload.url;
         forwards.set(forwards().map((item) => (item === attempt ? { device, service, phase: "forwarding", url } : item)));
         if (isWeb) core.openExternal(url);
       } catch (error) {
@@ -429,7 +425,7 @@ function createStore() {
       if (forward.url?.startsWith("http://")) core.openExternal(forward.url);
     },
     copy(text: string) {
-      if (text) Clipboard.setString(text);
+      if (text) Clipboard.writeText(text);
     },
     stop(forward: Forward) {
       // A failed attempt holds no mapping; anything else may, including one
@@ -444,6 +440,7 @@ function createStore() {
       appearance: appearancePreference(status()),
       performanceHud: status()?.preferences?.performanceHud ?? false,
       verboseLogs: status()?.preferences?.verboseLogs ?? false,
+      gravatarAvatar: status()?.preferences?.gravatarAvatar ?? false,
     }),
     update(patch: Partial<Preferences>) {
       const next = { ...preferences.current(), ...patch };
@@ -458,7 +455,7 @@ function createStore() {
   return {
     // state
     pane, selected, status, network, services, devices, logs, activity, forwards, logLevel,
-    authPending, authError, rechecking, addDevice, rename, editor, dsh,
+    authPending, authError, rechecking, addDevice, rename, editor,
     // derived
     needsAuth, selectedDevice, forwardFor, tailnetCandidates,
     // flows

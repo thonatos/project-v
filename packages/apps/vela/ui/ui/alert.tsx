@@ -9,7 +9,7 @@ import { text, tones, type, type Tone } from "./tokens";
 
 export function Alert(props: { tone?: Tone; title?: string; description?: string; action?: JSX.Element; testID?: string }) {
   const tone = () => tones[props.tone ?? "info"];
-  return <View testID={props.testID} accessibilityRole="alert" class={`flex-row gap-3 rounded-panel border p-3 ${tone().surface} ${tone().border}`}>
+  return <View testID={props.testID} role="alert" class={`flex-row gap-3 rounded-panel border p-3 ${tone().surface} ${tone().border}`}>
     <Icon symbol={tone().symbol} class={tone().text} />
     <View class="min-w-0 flex-1 gap-1">
       <If when={props.title}><Text class={`${type.labelStrong} ${tone().text}`}>{props.title}</Text></If>

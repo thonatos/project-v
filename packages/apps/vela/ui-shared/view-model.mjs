@@ -15,8 +15,24 @@ export function targetLabel(protocol, url) {
   return String(url ?? "").replace(/^tcp:\/\//, "");
 }
 
+/**
+ * The loopback host and port a service dials, mirroring Core's duplicate
+ * rule: `localhost` folds into `127.0.0.1`, and a missing port is 80.
+ */
+export function targetKey(protocol, raw) {
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname === "localhost" ? "127.0.0.1" : parsed.hostname;
+    const port = parsed.port || (protocol === "tcp" ? "" : "80");
+    return port ? `${host}:${port}` : host;
+  } catch {
+    return "";
+  }
+}
+
 export function localServices(status) {
-  return status.services.map((service) => {
+  return (status.services ?? []).map((service) => {
     const protocol = protocolOf(service);
     return {
       id: service.id,
@@ -29,6 +45,8 @@ export function localServices(status) {
       url: service.url,
       port: service.port,
       adapter: service.adapter,
+      authLog: service.authLog,
+      authLink: service.authLink,
     };
   });
 }
@@ -79,12 +97,20 @@ export const SERVICE_PRESETS = [
 
 /** Options for one preset group, with a unique preset disabled once it exists. */
 export function presetOptions(group, services) {
-  return SERVICE_PRESETS.filter((preset) => preset.group === group).map((preset) => ({
-    value: preset.preset,
-    label: preset.label,
-    detail: targetLabel(preset.protocol, preset.url.replace(/:$/, ":…")),
-    disabled: preset.unique && services.some((service) => service.adapter === preset.adapter),
-  }));
+  return SERVICE_PRESETS.filter((preset) => preset.group === group).map((preset) => {
+    const key = targetKey(preset.protocol, preset.url);
+    const exists = services.some((service) =>
+      service.adapter === preset.adapter
+      || (preset.id && service.id === preset.id)
+      || (key !== "" && targetKey(protocolOf(service), service.url) === key),
+    );
+    return {
+      value: preset.preset,
+      label: preset.label,
+      detail: targetLabel(preset.protocol, preset.url.replace(/:$/, ":…")),
+      disabled: Boolean(preset.unique && exists),
+    };
+  });
 }
 
 export function presetFor(value) {
@@ -96,6 +122,9 @@ export function presetForService(service) {
   if (service?.preset && SERVICE_PRESETS.some((preset) => preset.preset === service.preset)) return service.preset;
   if (service?.adapter === "opencode") return "opencode";
   if (service?.adapter === "dsh") return "dsh";
+  const key = targetKey(protocolOf(service), service.url);
+  const byTarget = SERVICE_PRESETS.find((preset) => preset.unique && targetKey(preset.protocol, preset.url) === key);
+  if (byTarget) return byTarget.preset;
   return protocolOf(service) === "tcp" ? "custom-tcp" : "custom-http";
 }
 
@@ -178,7 +207,7 @@ export function diagnosticSnapshot(status, protocolVersion) {
     version: protocolVersion,
     network: status.network,
     sharing: status.sharing,
-    services: status.services.map(({ id, state, shared, protocol }) => ({ id, protocol: protocol ?? "http", state, shared })),
+    services: (status.services ?? []).map(({ id, state, shared, protocol }) => ({ id, protocol: protocol ?? "http", state, shared })),
     remotes: status.remotes.map(({ connection, compatible, issue }) => ({ connection, compatible, issue })),
     redacted: true,
   });
@@ -245,16 +274,22 @@ export function serviceStateLabel(service) {
   return "可用";
 }
 
-export function dshMappingURL(mappingURL, authenticationURL) {
-  const auth = new URL(authenticationURL);
-  if (auth.protocol !== "http:" || !LOOPBACK_HOSTS.includes(auth.hostname)) {
-    throw new Error("DSH authentication URL must be a loopback HTTP URL");
-  }
-  const mapping = new URL(mappingURL);
-  mapping.pathname = auth.pathname;
-  mapping.search = auth.search;
-  mapping.hash = auth.hash;
-  return mapping.toString();
+/** Where `dsh --profile web` launched by launchd usually writes its output. */
+export const DSH_AUTH_LOG_PLACEHOLDER = "~/.dsh/logs/web.stdout.log";
+
+const DSH_AUTH_LINK_LABELS = {
+  ready: "已获取登录链接，其他设备转发时会自动登录。",
+  missing: "日志里还没有 dsh web 的启动地址。确认 DSH 正在运行，且输出写入这个文件。",
+  unreadable: "无法读取这个文件。请检查路径和权限。",
+};
+
+/**
+ * The editor hint for DSH's sign-in log: what the field is for when empty,
+ * otherwise the state Core last read from it.
+ */
+export function dshAuthLogHint(authLog, authLink) {
+  if (!String(authLog ?? "").trim()) return "可选。填写 DSH 输出日志的路径，Vela 会读取其中的登录链接，其他设备转发时自动登录，无需知道 token。";
+  return DSH_AUTH_LINK_LABELS[authLink] ?? "保存后 Vela 会读取其中的登录链接。";
 }
 
 export function appearancePreference(status) {
@@ -327,4 +362,57 @@ export function logLevelCounts(logs) {
     counts[logLevel(entry.level)] += 1;
   }
   return counts;
+}
+
+/** Whether Core holds a usable identity: addresses exist and auth is not pending. */
+export function signedIn(status) {
+  return Boolean(status && status.network !== "needs-auth" && (status.tailscale?.ips?.length ?? 0) > 0);
+}
+
+/** The human name the account shows: Tailscale user, then device name. */
+export function userLabel(status) {
+  return status?.tailscale?.user || status?.tailscale?.name || status?.deviceName || "";
+}
+
+/** The avatar letter; `?` is the signed-out placeholder. */
+export function userInitial(status) {
+  if (!signedIn(status)) return "?";
+  const name = userLabel(status);
+  return name ? name.split("@")[0].slice(0, 1).toUpperCase() : "?";
+}
+
+export function isRecentService(last, device, service) {
+  return Boolean(last && last.device === device.privateName && last.service === service.id);
+}
+
+/** A service's kind, with the recent marker appended when it applies. */
+export function serviceKindLabel(service, recent = false) {
+  if (protocolOf(service) === "tcp") return "TCP 服务 · 没有 iOS 入口";
+  const kind = service.adapter === "dsh" ? "DSH Web" : "Web 服务";
+  return recent ? `${kind} · 最近访问` : kind;
+}
+
+/**
+ * One status vocabulary for service rows: protocol first, then the device's
+ * connection, then the service's own availability.
+ */
+export function serviceBadge(device, service) {
+  if (protocolOf(service) === "tcp") return { status: "unavailable", label: "iOS 不支持", disabled: true };
+  if (device.connection !== "connected") return { status: device.connection, label: connectionLabel(device.connection), disabled: false };
+  if (service.state === "available") return { status: "available", label: "可用", disabled: false };
+  if (service.state === "checking") return { status: "checking", label: "检查中", disabled: false };
+  return { status: "unavailable", label: "不可用", disabled: false };
+}
+
+/**
+ * Groups services under their devices: online devices first, then by name;
+ * inside a device the last visited service comes first, then by name.
+ */
+export function groupServicesByDevice(devices, last = null) {
+  return devices
+    .map((device) => ({
+      device,
+      services: [...device.services].sort((left, right) => Number(isRecentService(last, device, right)) - Number(isRecentService(last, device, left)) || left.name.localeCompare(right.name)),
+    }))
+    .sort((left, right) => Number(right.device.connection === "connected") - Number(left.device.connection === "connected") || left.device.name.localeCompare(right.device.name));
 }

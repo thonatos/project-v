@@ -8,7 +8,7 @@ import {
   diagnosticActivityRows,
   diagnosticSnapshot,
   diagnosticSummaryRows,
-  dshMappingURL,
+  dshAuthLogHint,
   forwardEndpoint,
   localServices,
   logLevelCounts,
@@ -23,9 +23,10 @@ import {
   serviceFormError,
   serviceStateLabel,
   serviceTargetURL,
+  targetKey,
   shareWarning,
   targetLabel,
-} from "../view-model.mjs";
+} from "../../ui-shared/view-model.mjs";
 
 const status = {
   network: "connected",
@@ -87,12 +88,16 @@ const status = {
 
   const services = localServices(status);
   const webOptions = presetOptions("web", services);
-  assert.equal(webOptions.find((option) => option.value === "opencode").disabled, false, "OpenCode is unique only by adapter, and this fixture has no adapter on it");
+  assert.equal(webOptions.find((option) => option.value === "opencode").disabled, true, "a service already pointing at OpenCode's loopback target must not be offered again");
   assert.equal(webOptions.find((option) => option.value === "dsh").disabled, true, "an already added DSH must not be offered again");
   assert.equal(presetOptions("tcp", services).every((option) => !option.disabled), true, "TCP presets can be added more than once");
   assert.equal(presetForService({ protocol: "tcp" }), "custom-tcp");
   assert.equal(presetForService({ adapter: "dsh", protocol: "http" }), "dsh");
+  assert.equal(presetForService({ protocol: "http", url: "http://127.0.0.1:49374/" }), "opencode", "a custom entry on OpenCode's target is recognised as OpenCode");
   assert.equal(presetForService({ preset: "ssh", name: "Renamed shell", protocol: "tcp" }), "ssh", "renaming a service must not lose its preset type");
+  assert.equal(targetKey("http", "http://localhost:3080/x"), targetKey("http", "http://127.0.0.1:3080/"), "localhost folds into 127.0.0.1");
+  assert.equal(targetKey("tcp", "tcp://127.0.0.1:6379"), "127.0.0.1:6379");
+  assert.equal(targetKey("http", "http://127.0.0.1/"), "127.0.0.1:80", "a missing HTTP port is 80");
   console.log("Vela protocol-grouped presets passed");
 }
 
@@ -179,11 +184,14 @@ const status = {
   console.log("Vela keyboard selection and remote errors passed");
 }
 
-// DSH authentication keeps only the path and query of a loopback URL.
+// DSH's sign-in log is configured on the sharing Mac; the hint reports what Core read.
 {
-  assert.equal(dshMappingURL("http://dsh-home.localhost:50000", "http://127.0.0.1:3080/auth?token=secret"), "http://dsh-home.localhost:50000/auth?token=secret");
-  assert.throws(() => dshMappingURL("http://dsh-home.localhost:50000", "https://example.com/auth?token=secret"));
-  console.log("Vela DSH authentication URL mapping passed");
+  assert.match(dshAuthLogHint("", undefined), /可选/);
+  assert.match(dshAuthLogHint("~/.dsh/logs/web.log", "ready"), /自动登录/);
+  assert.match(dshAuthLogHint("~/.dsh/logs/web.log", "missing"), /启动地址/);
+  assert.match(dshAuthLogHint("~/.dsh/logs/web.log", "unreadable"), /无法读取/);
+  assert.match(dshAuthLogHint("~/.dsh/logs/web.log", undefined), /保存后/);
+  console.log("Vela DSH sign-in log hints passed");
 }
 
 // Appearance and activity.

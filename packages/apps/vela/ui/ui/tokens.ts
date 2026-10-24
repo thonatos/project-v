@@ -16,6 +16,8 @@ export const surfaces = {
   selected: "bg-subtle dark:bg-dk-subtle",
   /** A recessed well for values the user reads or copies, like an address. */
   well: "bg-subtle border-line dark:bg-dk-subtle dark:border-dk-line",
+  /** The modal veil over the content area: 25% of the text color, so it dims in both appearances. */
+  veil: "bg-surface-foreground/25 dark:bg-dk-surface-foreground/25",
 } as const;
 
 export const text = {
@@ -116,6 +118,8 @@ export const levelText = {
  */
 export const spacing = {
   page: "p-4",
+  /** Left inset of the fixed 56pt navigation rail, for layers that belong to the content area. */
+  rail: "pl-14",
   pageGap: "gap-5",
   sectionGap: "gap-2",
   stack: "gap-3",

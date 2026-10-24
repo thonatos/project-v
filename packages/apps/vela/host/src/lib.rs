@@ -13,6 +13,7 @@ pub mod supervisor;
 use nsh_core::ui::prelude::*;
 
 /// Typed functions exposed to the NSH TSX surface.
+#[module]
 pub struct CoreBridge;
 
 #[module]

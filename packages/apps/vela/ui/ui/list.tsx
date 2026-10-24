@@ -31,8 +31,13 @@ export interface ListRowProps {
 }
 
 export function List(props: { children?: JSX.Element; empty?: JSX.Element; count?: number; testID?: string }) {
+  // The rows stay a sibling of their own instead of a branch of an `If`: a
+  // branch would read the children getter inside the effect that shows it,
+  // so every change to the list would build a new `Each` and remake every
+  // row, native switches included, rather than only the rows that changed.
   return <View testID={props.testID}>
-    <If when={props.count === undefined || props.count > 0} else={props.empty}>{props.children}</If>
+    {props.children}
+    <If when={props.count === 0}>{props.empty}</If>
   </View>;
 }
 
@@ -67,7 +72,7 @@ export function ListRow(props: ListRowProps) {
       testID={props.testID}
       onPress={props.disabled ? undefined : props.onPress}
       disabled={props.disabled}
-      accessibilityRole="button"
+      role="button"
       accessibilityLabel={props.accessibilityLabel ?? props.title}
       accessibilityState={{ selected: props.selected ?? false, disabled: props.disabled ?? false }}
       class={`${frame} ${states.hover} ${states.disabled}`}

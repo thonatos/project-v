@@ -1,20 +1,19 @@
 /** Add or edit one of this Mac's local services. */
 import { Scroll, View } from "nsh";
-import { Modal } from "nsh/ui/mobile";
 import { store } from "../../core/store";
-import { Button, Callout, Field, FormSheet, RadioGroup, spacing, TextField } from "../../ui";
-import { presetOptions } from "../../view-model.mjs";
+import { Button, Callout, Field, FormSheet, FormSheetDialog, RadioGroup, spacing, TextField } from "../../ui";
+import { DSH_AUTH_LOG_PLACEHOLDER, dshAuthLogHint, presetOptions } from "../../../ui-shared/view-model.mjs";
 
 export function ServiceEditorSheet() {
   const editing = () => store.editor.editing() !== "";
+  const editingService = () => store.services().find((service) => service.id === store.editor.editing());
   const tcp = () => store.editor.protocol() === "tcp";
   const close = () => store.editor.open.set(false);
-  return <Modal
-    visible={store.editor.open()}
-    dismissible
-    onRequestClose={close}
-    desktop={{ presentationStyle: "formSheet" }}
-    style={{ width: 420, height: 600 }}
+  return <FormSheetDialog
+    open={store.editor.open()}
+    width={392}
+    height={600}
+    onClose={close}
   >
     <FormSheet
       title={editing() ? "编辑服务" : "添加服务"}
@@ -23,7 +22,7 @@ export function ServiceEditorSheet() {
         <Button title={editing() ? "保存更改" : "添加服务"} onPress={store.serviceEditor.save} />
       </>}
     >
-      <Scroll showsIndicator={false} class="min-h-0 flex-1">
+      <Scroll scrollbar={false} class="min-h-0 flex-1">
         <View class={`w-full ${spacing.pageGap}`}>
           <If when={editing()} else={<>
             <Field label="Web 服务">
@@ -63,8 +62,19 @@ export function ServiceEditorSheet() {
               : "只接受 localhost、127.0.0.1 或 ::1 的 HTTP 地址。"}
             error={store.editor.error()}
           />
+          <If when={store.editor.adapter() === "dsh"}>
+            <TextField
+              label="DSH 输出日志（可选）"
+              mono
+              value={store.editor.authLog()}
+              onChange={(value) => store.editor.authLog.set(value)}
+              onSubmit={store.serviceEditor.save}
+              placeholder={DSH_AUTH_LOG_PLACEHOLDER}
+              hint={dshAuthLogHint(store.editor.authLog(), editingService()?.authLog === store.editor.authLog().trim() ? editingService()?.authLink : undefined)}
+            />
+          </If>
         </View>
       </Scroll>
     </FormSheet>
-  </Modal>;
+  </FormSheetDialog>;
 }

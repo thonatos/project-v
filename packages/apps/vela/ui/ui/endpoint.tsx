@@ -37,7 +37,7 @@ export function Endpoint(props: EndpointProps) {
           numberOfLines={1}
           selectable
           onPress={props.onOpen}
-          accessibilityRole={props.onOpen ? "link" : undefined}
+          role={props.onOpen ? "link" : undefined}
           class={`${type.mono} ${ink()}`}
         >{props.address}</Text>
       </If>

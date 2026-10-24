@@ -6,7 +6,7 @@ import { Scroll, Text, View, type JSX } from "nsh";
 import { spacing, surfaces, text, type } from "./tokens";
 
 export function Page(props: { testID: string; children?: JSX.Element }) {
-  return <Scroll showsIndicator={false} class={`flex-1 ${surfaces.canvas}`} contentContainerClass={`grow ${spacing.page}`}>
+  return <Scroll scrollbar={false} class={`flex-1 ${surfaces.canvas}`} contentClass={`grow ${spacing.page}`}>
     <View testID={props.testID} class={`w-full ${spacing.pageGap}`}>{props.children}</View>
   </Scroll>;
 }
@@ -18,7 +18,7 @@ export function Page(props: { testID: string; children?: JSX.Element }) {
 export function PageHeader(props: { title: string; description?: string; back?: { label: string; onPress: () => void }; actions?: JSX.Element }) {
   return <View class="gap-1">
     <If when={props.back}>
-      <View onPress={props.back?.onPress} accessibilityRole="button" accessibilityLabel={`返回${props.back?.label ?? ""}`} class="flex-row items-center gap-1 self-start active:opacity-60">
+      <View onPress={props.back?.onPress} role="button" accessibilityLabel={`返回${props.back?.label ?? ""}`} class="flex-row items-center gap-1 self-start active:opacity-60">
         <Text class={`${type.caption} ${text.muted}`}>‹ {props.back?.label}</Text>
       </View>
     </If>

@@ -16,7 +16,14 @@ export interface ServiceViewModel {
   url?: string;
   port?: number;
   adapter?: string;
+  /** DSH only: the output log the sharing Mac reads the sign-in link from. */
+  authLog?: string;
+  /** DSH only: whether that log currently yields a sign-in link. */
+  authLink?: DSHAuthLink;
 }
+
+/** `ready`: a link is published; `missing`: no launch line yet; `unreadable`: the log cannot be read. */
+export type DSHAuthLink = "ready" | "missing" | "unreadable";
 
 export interface DeviceViewModel {
   id: string;

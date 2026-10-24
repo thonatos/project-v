@@ -37,7 +37,7 @@ export function Button(props: ButtonProps) {
     iconOnly={props.iconOnly}
     onPress={() => props.onPress?.()}
     testID={props.testID}
-    accessibilityRole="button"
+    role="button"
     accessibilityLabel={props.accessibilityLabel ?? props.title}
     style={[{ height: props.iconOnly ? 28 : 22, width: props.iconOnly ? 28 : undefined }, props.style]}
   />;

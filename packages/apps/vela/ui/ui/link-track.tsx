@@ -20,7 +20,7 @@ const labels = { forwarding: "转发中", connecting: "正在连接", stopped: "
 export function LinkTrack(props: { phase: LinkPhase }) {
   const tone = () => rail[props.phase];
   const live = () => props.phase === "forwarding";
-  return <View accessibilityRole="image" accessibilityLabel={labels[props.phase]} class="h-4 w-5 justify-center">
+  return <View role="image" accessibilityLabel={labels[props.phase]} class="h-4 w-5 justify-center">
     <View class="flex-row items-center">
       <View class={`size-1.5 rounded-full ${tone()}`} />
       <View class={`h-0.5 flex-1 ${tone()}`} classList={{ "opacity-30": !live() }} />

@@ -261,10 +261,7 @@ fn register_components(view: &Rc<AppView>, mtm: MainThreadMarker) {
 pub fn run(options: &RunnerOptions<'_>) -> Result<(), String> {
     let mtm = MainThreadMarker::new().ok_or("Vela runner must start on the main thread")?;
     let app = NSApplication::sharedApplication(mtm);
-    set_ui_sets(vec![
-        nsh_ui_mobile::registry(),
-        crate::__nsh_native_module(),
-    ]);
+    set_ui_sets(vec![nsh_base::registry(), crate::__nsh_native_module()]);
     app.setActivationPolicy(NSApplicationActivationPolicy::Regular);
     let delegate = Delegate::new(mtm);
     app.setDelegate(Some(ProtocolObject::from_ref(&*delegate)));

@@ -22,13 +22,13 @@ export function RadioGroup<Value extends string>(props: {
   testID?: string;
 }) {
   return <Card testID={props.testID}>
-    <View accessibilityRole="radiogroup" accessibilityLabel={props.label}>
+    <View role="radiogroup" accessibilityLabel={props.label}>
       <Each of={props.options}>{(option) => {
         const checked = () => props.value === option().value;
         return <View
           onPress={() => { if (!option().disabled) props.onChange(option().value); }}
           disabled={option().disabled}
-          accessibilityRole="radio"
+          role="radio"
           accessibilityLabel={option().label}
           accessibilityState={{ checked: checked(), disabled: option().disabled ?? false }}
           class={`min-h-[32px] flex-row items-center gap-3 px-4 py-1.5 first:border-t-0 ${edges.top} ${states.hover} ${states.disabled}`}

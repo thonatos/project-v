@@ -1,7 +1,7 @@
 import { View } from "nsh";
 import { store } from "../../core/store";
 import { Button, Callout, Card, ListEmpty, LogList, Page, PageHeader, spacing } from "../../ui";
-import { logLevelCounts, logRows, type LogLevel } from "../../view-model.mjs";
+import { logLevelCounts, logRows, type LogLevel } from "../../../ui-shared/view-model.mjs";
 
 const filters: readonly { value: LogLevel | "all"; label: string }[] = [
   { value: "all", label: "全部" },

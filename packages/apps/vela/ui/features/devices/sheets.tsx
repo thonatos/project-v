@@ -1,21 +1,19 @@
 /** Sheets opened from the devices pane: add a remote device, rename this Mac. */
 import { View } from "nsh";
 import { List } from "nsh/list";
-import { Modal } from "nsh/ui/mobile";
 import { store } from "../../core/store";
-import type { TailnetDevice } from "../../view-model.mjs";
-import { Badge, Button, edges, FormSheet, Label, ListEmpty, ListRow, spacing, surfaces, TextField } from "../../ui";
+import type { TailnetDevice } from "../../../ui-shared/view-model.mjs";
+import { Badge, Button, edges, FormSheet, FormSheetDialog, Label, ListEmpty, ListRow, spacing, surfaces, TextField } from "../../ui";
 
 export function AddDeviceSheet() {
   const busy = () => store.addDevice.busy();
   const close = () => { if (!busy()) store.addDevice.open.set(false); };
   const canSubmit = () => !busy() && Boolean(store.addDevice.name().trim() || store.addDevice.selection());
-  return <Modal
-    visible={store.addDevice.open()}
-    dismissible
-    onRequestClose={close}
-    desktop={{ presentationStyle: "formSheet" }}
-    style={{ width: 420, height: 520 }}
+  return <FormSheetDialog
+    open={store.addDevice.open()}
+    width={392}
+    height={520}
+    onClose={close}
   >
     <FormSheet
       title="添加设备"
@@ -33,7 +31,7 @@ export function AddDeviceSheet() {
             each={store.tailnetCandidates()}
             style={{ flex: 1 }}
             keyExtractor={(device) => device.dnsName ?? device.name}
-            ListEmptyComponent={<ListEmpty title={store.addDevice.loading() ? "正在读取 Tailnet 设备…" : "未发现 Tailnet 设备"} />}
+            empty={<ListEmpty title={store.addDevice.loading() ? "正在读取 Tailnet 设备…" : "未发现 Tailnet 设备"} />}
           >{(device) => <TailnetRow device={device} />}</List>
         </View>
       </View>
@@ -48,7 +46,7 @@ export function AddDeviceSheet() {
         error={store.addDevice.error()}
       />
     </FormSheet>
-  </Modal>;
+  </FormSheetDialog>;
 }
 
 /** A recycled list cell: reads its device through the getter so reuse updates it. */
@@ -72,12 +70,11 @@ function TailnetRow(props: { device: () => TailnetDevice }) {
 }
 
 export function RenameDeviceSheet() {
-  return <Modal
-    visible={store.rename.open()}
-    dismissible
-    onRequestClose={() => store.rename.open.set(false)}
-    desktop={{ presentationStyle: "formSheet" }}
-    style={{ width: 420, height: 260 }}
+  return <FormSheetDialog
+    open={store.rename.open()}
+    width={392}
+    height={260}
+    onClose={() => store.rename.open.set(false)}
   >
     <FormSheet
       title="设备名称"
@@ -95,5 +92,5 @@ export function RenameDeviceSheet() {
         error={store.rename.error()}
       />
     </FormSheet>
-  </Modal>;
+  </FormSheetDialog>;
 }

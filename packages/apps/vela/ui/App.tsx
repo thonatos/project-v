@@ -10,7 +10,7 @@ import { store, type Pane } from "./core/store";
 import { AccountPage } from "./features/account/AccountPage";
 import { DevicesPage } from "./features/devices/DevicesPage";
 import { AddDeviceSheet, RenameDeviceSheet } from "./features/devices/sheets";
-import { DSHAuthSheet, ForwardsPage } from "./features/forwards/ForwardsPage";
+import { ForwardsPage } from "./features/forwards/ForwardsPage";
 import { LogsPage } from "./features/logs/LogsPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import { ServiceEditorSheet } from "./features/services/ServiceEditorSheet";
@@ -85,7 +85,6 @@ function App() {
     <AddDeviceSheet />
     <RenameDeviceSheet />
     <ServiceEditorSheet />
-    <DSHAuthSheet />
   </View>;
 }
 
