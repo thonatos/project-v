@@ -26,6 +26,10 @@ case "$DESTINATION" in
   *Simulator*) PLATFORM=iphonesimulator; ARCH_FLAG="ARCHS=arm64" ;;
 esac
 
+# Keep the build machine's paths out of panic messages in the Rust host, the
+# same way the macOS packaging does.
+export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$ROOT=/vela --remap-path-prefix=$HOME=/home/user"
+
 # shellcheck disable=SC2086
 xcodebuild \
   -project "$ROOT/ios/app/Vela.xcodeproj" \
