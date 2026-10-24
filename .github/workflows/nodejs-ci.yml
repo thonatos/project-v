@@ -27,7 +27,9 @@ jobs:
       - name: Run JavaScript and TypeScript tests
         run: pnpm test
       - name: Build all projects
-        run: pnpm -r build
+        # Vela is macOS/iOS-only and needs NSH/Xcode; its build is covered by
+        # the macOS verification gate, not this Ubuntu job.
+        run: pnpm -r --filter '!vela' build
         env:
           # i18n-studio prerender 在 build 期以 production 模式导入 auth.server.ts,
           # 顶层会校验 SESSION_SECRET 非空且非默认值。CI 构建产物不用于真实生产,
