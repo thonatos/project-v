@@ -282,7 +282,7 @@ const status = {
   assert.equal(nextDeviceID('office', ['home', 'office'], 1), 'this-mac', 'selection must wrap to this Mac');
   assert.equal(nextDeviceID('missing', ['home'], 1), 'this-mac');
   assert.equal(remoteAddError('remote Vela protocol is incompatible'), '两台 Mac 的 Vela 版本不兼容。');
-  assert.equal(remoteAddError('remote Mac rejected this device'), '另一台 Mac 拒绝了此设备。');
+  assert.equal(remoteAddError('remote Mac rejected this device'), '另一台设备拒绝了访问。');
   assert.equal(remoteAddError('invalid private Mac name'), '私人名称格式无效。');
   assert.equal(remoteAddError('remote Mac is offline'), '无法连接到这台 Mac。请确认它在线并运行 Vela。');
   console.log('Vela keyboard selection and remote errors passed');

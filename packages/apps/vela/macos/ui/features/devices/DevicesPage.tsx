@@ -6,13 +6,15 @@ import { View } from 'nsh';
 import { Menu } from 'nsh/desktop';
 import { store } from '../../core/store';
 import { ForwardRow } from '../forwards/ForwardRow';
-import type { DeviceViewModel, ServiceViewModel } from '../../../../shared/ui/model';
+import type { ConnectionState, DeviceViewModel, ServiceViewModel } from '../../../../shared/ui/model';
 import {
   Alert,
   Badge,
   Button,
   Callout,
   CardSection,
+  Dot,
+  IconTile,
   List,
   ListEmpty,
   ListRow,
@@ -27,6 +29,15 @@ import { serviceStateLabel } from '../../../../shared/ui/services';
 
 const localName = () => store.status()?.deviceName ?? store.status()?.tailscale.name ?? '当前设备';
 const localSummary = () => `${store.services().length} 个本地服务`;
+const localAddresses = () => deviceAddressLines(store.status()?.tailscale.ips);
+
+/** The connection mark, matching the iOS device rows. */
+const connectionTone = (connection: ConnectionState) =>
+  connection === 'connected'
+    ? 'success'
+    : connection === 'connecting' || connection === 'needs-auth'
+      ? 'warning'
+      : 'offline';
 
 export function DevicesPage() {
   return (
@@ -50,7 +61,7 @@ function NeedsAuthAlert() {
       <Alert
         tone="warning"
         title="尚未连接 Tailscale"
-        description="登录 Tailscale 后，其他 Vela 设备才能发现并访问这台 Mac。"
+        description="登录 Tailscale 后，其他设备才能发现并访问这台 Mac。"
         action={<Button title="前往账户" variant="outline" onPress={store.navigate.account} />}
       />
     </If>
@@ -58,7 +69,7 @@ function NeedsAuthAlert() {
 }
 
 function DeviceList() {
-  const localLines = () => [localSummary(), ...deviceAddressLines(store.status()?.tailscale.ips)];
+  const localLines = () => `${connectionLabel(store.network())} · ${store.services().length} 个服务`;
   return (
     <>
       <PageHeader title="设备" />
@@ -67,9 +78,9 @@ function DeviceList() {
         <ListRow
           testID="device-this-mac"
           title={localName()}
-          badge={<Badge status={store.network()}>{connectionLabel(store.network())}</Badge>}
+          leading={<IconTile symbol="desktopcomputer" />}
           description={localLines()}
-          mono
+          trailing={<Dot tone={connectionTone(store.network())} />}
           onPress={() => store.navigate.select('this-mac')}
         />
       </CardSection>
@@ -81,8 +92,8 @@ function DeviceList() {
           count={store.devices().length}
           empty={
             <ListEmpty
-              title="尚未添加其他设备"
-              description="添加同一 Tailnet 中运行 Vela 的另一台 Mac，即可使用它共享的服务。"
+              title="还没有添加其他设备"
+              description="添加同一 Tailnet 中运行 Vela 的另一台设备，即可使用它共享的服务。"
               action={<Button title="添加设备" onPress={store.remotes.beginAdd} />}
             />
           }
@@ -97,18 +108,14 @@ function DeviceList() {
 }
 
 function RemoteDeviceRow(props: { device: DeviceViewModel }) {
-  const addresses = () => deviceAddressLines(props.device.ips);
-  const lines = () => [
-    `${props.device.services.length} 个可用服务`,
-    ...(addresses().length > 0 ? addresses() : ['暂无地址']),
-  ];
+  const lines = () => `${connectionLabel(props.device.connection)} · ${props.device.services.length} 个服务`;
   return (
     <ListRow
       testID={`device-${props.device.id}`}
       title={props.device.name}
-      badge={<Badge status={props.device.connection}>{connectionLabel(props.device.connection)}</Badge>}
+      leading={<IconTile symbol="desktopcomputer" />}
       description={lines()}
-      mono
+      trailing={<Dot tone={connectionTone(props.device.connection)} />}
       onPress={() => store.navigate.select(props.device.id)}
     />
   );
@@ -123,6 +130,10 @@ function LocalDetail() {
         description={localSummary()}
       />
       <NeedsAuthAlert />
+      <CardSection title="设备信息">
+        <ListRow title="MagicDNS 名称" description={store.status()?.tailscale.dnsName ?? '暂无'} mono />
+        <ListRow title="地址" description={localAddresses().length > 0 ? localAddresses() : ['暂无地址']} mono />
+      </CardSection>
       <CardSection title="共享">
         <ListRow
           title="共享这台 Mac"
@@ -212,7 +223,7 @@ function RemoteDetail(props: { device: DeviceViewModel }) {
     connecting()
       ? '正在检查私人连接和可用服务。'
       : unauthorized()
-        ? '请在另一台 Mac 上确认当前设备有权访问。'
+        ? '请在另一台设备上确认当前设备有权访问。'
         : `上次连接：${props.device.lastConnected}。设备恢复后 Vela 会继续连接。`;
   return (
     <>

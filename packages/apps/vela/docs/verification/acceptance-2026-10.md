@@ -53,3 +53,45 @@
 - 验收通过后可删除 mini 上的 `/Applications/Vela.app.previous`。
 - 新的验收记录按 `acceptance-<YYYY-MM>.md` 命名，只记录事实与结论，不记录页面内容。
 - 验收时两端运行 `3d502a57…`。之后为本机产物去除构建路径并重建，本机哈希变为 `d7a231f1…`；功能与验收构建一致。
+
+## 2026-10-25 复验：跨端界面一致性
+
+本记录对应 change `fix-vela-verification-findings`。
+
+### 构建与安装
+
+| 项目                 | 结果                                                                    |
+| -------------------- | ----------------------------------------------------------------------- |
+| macOS 构建           | `sh scripts/build-app.sh .tmp/release-build`，`codesign --verify` 通过  |
+| macOS 运行           | `build/app/Vela.app`（由验收构建原样拷贝，哈希一致）                    |
+| macOS `Vela` SHA-256 | `f8ae90db44c08c97f0ca11f21a75ad1471c5bea6db50acb973e49fa60dbfb923`      |
+| macOS `vela-core`    | `10863fc941d8c384062db86a69b17bf62470516a1e4b560777366724b295085f`      |
+| 应用版本             | 0.1.0 (1)，两端一致                                                     |
+| iOS 构建             | `DEVELOPMENT_TEAM=<team-id> sh scripts/build-ios.sh`，BUILD SUCCEEDED   |
+| iOS 描述文件         | `iOS Team Provisioning Profile: io.implements.vela.ios`，2027-10-22 到期 |
+| iOS 安装             | `xcrun devicectl device install app` 覆盖安装到 iPhone 17 Pro 成功      |
+| iOS 启动             | `xcrun devicectl device process launch` 成功                            |
+| iOS `Vela` SHA-256   | `50771bbbfe6c8e1193c3edb40b2b636510d68edb609463ba1ab8b8e1e409ef0b`      |
+
+### 已确认（用户，2026-10-25）
+
+- macOS 账户页：顶部为头像与账户名身份头，账户只出现一次；顺序为私人连接（状态与 Tailnet）→ 这台 Mac 的身份 → 登录/注销。
+- macOS 设置：外观 → 共享 → 通用 → 隐私 → 诊断 → 关于；外观说明位于卡片外；关于显示版本 `0.1.0` 与控制协议 `v1`。
+- macOS 日志：级别使用分段控件并带计数，提供复制日志，空态区分「暂无日志」与「该级别没有记录」。
+- macOS 设备：行结构为图标 + 名称 +「状态 · N 个服务」+ 状态点，地址只在详情；词表为「其他设备 / 添加设备 / 还没有添加其他设备」。
+- iOS 冷启动：首屏立即可见并显示「连接中」，连接后设备与服务自动出现，无需手动刷新。
+- iOS 账户：身份头只出现一次；私人连接位于设备身份之前；开发签名按 2027 到期说明，不再写「7 天」。
+- iOS 设备、设置、日志：词表与控件与 macOS 对齐。
+
+### 自动化结果
+
+- `pnpm -F vela verify` 通过。
+- `pnpm check` 0 errors（124 条既有 NSH JSX 警告）。
+- `pnpm test` 352 passed。
+- `openspec validate fix-vela-verification-findings --strict` 通过。
+- 验收未使用截图或视觉基线。
+
+### 备注
+
+- iOS 描述文件到期时间取自构建产物的 `embedded.mobileprovision`。
+- 本次未 push 到远程。

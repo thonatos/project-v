@@ -9,6 +9,8 @@ export { CoreError } from '../../../shared/ui/envelope';
 
 export const core = {
   ...createCoreClient({ request: (kind: string, payload: string) => CoreBridge.request(kind, payload) }),
+  /** The Rust/Go control protocol version, the same one diagnostics copy. */
+  protocolVersion: () => CoreBridge.protocolVersion(),
   /** Hands a URL to the user's default browser. */
   openExternal: (url: string) => CoreBridge.openExternal(url),
   setPerformanceHud: (enabled: boolean) => CoreBridge.setPerformanceHud(enabled),

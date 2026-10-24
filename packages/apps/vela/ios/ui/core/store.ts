@@ -89,7 +89,7 @@ export function failureTitle(failure: StageFailure): string {
 export function failureDetail(failure: StageFailure): string {
   switch (failure) {
     case 'offline':
-      return '请确认 Mac 上的 Vela 正在运行且两台设备都在私人网络中。连接恢复后会自动重试。';
+      return '请确认 Mac 上的 Vela 正在运行且两台设备都在同一 Tailnet 中。连接恢复后会自动重试。';
     case 'auth':
       return '这台 iPhone 的身份可能已过期或被移除。请到设置中重新连接。';
     case 'unavailable':
@@ -520,7 +520,7 @@ function createStore() {
     confirmRemove: (target) =>
       AlertDialog.show({
         title: `移除 ${target.name}？`,
-        description: '只会删除这台 iPhone 上保存的设备，不影响 Mac 上的 Vela。',
+        description: '只会删除这台 iPhone 上保存的设备，不影响那台设备上的 Vela。',
         actions: [
           { label: '取消', role: 'cancel', id: 'cancel' },
           { label: '移除', role: 'destructive', id: 'confirm' },

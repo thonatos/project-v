@@ -49,6 +49,13 @@ type Node interface {
 	Close() error
 }
 
+// asyncNode is the optional lazy-start seam *network.Embedded implements.
+// Nodes without it keep the synchronous status behavior.
+type asyncNode interface {
+	StartAsync()
+	Running() bool
+}
+
 // ManifestChecker is the remote handshake seam; *remotes.ManifestChecker
 // implements it.
 type ManifestChecker interface {
@@ -79,7 +86,7 @@ type Options struct {
 	// per-service hostname macOS uses; "127.0.0.1" is the iOS policy.
 	Address string
 	// Avatar includes a Gravatar URL in Status when the preference is enabled.
-	// Only the iOS client renders it.
+	// Both clients render it.
 	Avatar bool
 	// RetryDelay is the base backoff between automatic retries.
 	RetryDelay time.Duration
@@ -262,24 +269,30 @@ func (core *Core) Close() error {
 }
 
 // Status is the read-side snapshot: identity, peers and remote manifests.
-// macOS adds probed services and sharing; iOS may add signing and an avatar.
+// macOS adds probed services and sharing; both clients may add signing and an
+// avatar.
 func (core *Core) Status(ctx context.Context) (any, error) {
 	config := core.store.Snapshot()
-	state, _ := core.authStatus(ctx)
+	// Probe readiness once so an async node is asked to start at most once per
+	// snapshot and a cold start never blocks on tsnet.
+	ready := core.nodeReady()
+	state, _ := core.authStatusReady(ctx, ready)
 	deviceName := config.DeviceName
 	if state.Hostname != "" {
 		deviceName = state.Hostname
 	}
 	var self any = map[string]any{"name": deviceName, "ips": []string{}, "backend": string(state.State)}
 	var peers any = []velanetwork.DeviceInfo{}
-	if client, err := core.node.LocalClient(); err == nil {
-		if status, err := client.Status(ctx); err == nil {
-			local, visible := velanetwork.Snapshot(status)
-			self, peers = local, visible
-			if local.Name != "" {
-				deviceName = local.Name
+	if ready {
+		if client, err := core.node.LocalClient(); err == nil {
+			if status, err := client.Status(ctx); err == nil {
+				local, visible := velanetwork.Snapshot(status)
+				self, peers = local, visible
+				if local.Name != "" {
+					deviceName = local.Name
+				}
+				core.logPeers(visible)
 			}
-			core.logPeers(visible)
 		}
 	}
 	payload := map[string]any{
@@ -288,20 +301,45 @@ func (core *Core) Status(ctx context.Context) (any, error) {
 		"preferences":    config.Preferences,
 		"tailscale":      self,
 		"tailnetDevices": peers,
-		"remotes":        core.remoteSnapshot(),
+		"remotes":        core.remoteSnapshotReady(ready),
 	}
 	if core.signing != "" {
 		payload["signing"] = map[string]string{"expiresAt": core.signing}
 	}
-	if core.avatar && config.Preferences.GravatarAvatar {
-		if local, ok := self.(velanetwork.DeviceInfo); ok {
-			if email := normalizedEmail(local.User); email != "" {
-				hash := sha256.Sum256([]byte(email))
-				payload["avatarUrl"] = fmt.Sprintf("https://gravatar.com/avatar/%x?s=128&d=404", hash)
-			}
-		}
+	if url := avatarURL(self, core.avatar && config.Preferences.GravatarAvatar); url != "" {
+		payload["avatarUrl"] = url
 	}
 	return payload, nil
+}
+
+// avatarURL derives the Gravatar link for the signed-in identity. enabled is
+// the option AND the preference; it returns "" when either is off or the
+// identity carries no usable email.
+func avatarURL(self any, enabled bool) string {
+	if !enabled {
+		return ""
+	}
+	local, ok := self.(velanetwork.DeviceInfo)
+	if !ok {
+		return ""
+	}
+	email := normalizedEmail(local.User)
+	if email == "" {
+		return ""
+	}
+	hash := sha256.Sum256([]byte(email))
+	return fmt.Sprintf("https://gravatar.com/avatar/%x?s=128&d=404", hash)
+}
+
+// nodeReady reports whether the local API can be read without waiting on a
+// cold network start. Async nodes are asked to start and report whether they
+// are up yet; synchronous nodes are always ready.
+func (core *Core) nodeReady() bool {
+	if node, ok := core.node.(asyncNode); ok {
+		node.StartAsync()
+		return node.Running()
+	}
+	return true
 }
 
 func normalizedEmail(value string) string {
@@ -415,8 +453,15 @@ type RemoteSnapshot struct {
 }
 
 func (core *Core) remoteSnapshot() []RemoteSnapshot {
+	return core.remoteSnapshotReady(core.nodeReady())
+}
+
+func (core *Core) remoteSnapshotReady(ready bool) []RemoteSnapshot {
 	configured := core.store.Snapshot().Remotes
-	addresses := core.remoteAddresses()
+	addresses := map[string][]string{}
+	if ready {
+		addresses = core.remoteAddressesReady(true)
+	}
 	items := make([]RemoteSnapshot, 0, len(configured))
 	for _, remote := range configured {
 		item := RemoteSnapshot{
@@ -446,7 +491,14 @@ func (core *Core) remoteSnapshot() []RemoteSnapshot {
 }
 
 func (core *Core) remoteAddresses() map[string][]string {
+	return core.remoteAddressesReady(core.nodeReady())
+}
+
+func (core *Core) remoteAddressesReady(ready bool) map[string][]string {
 	addresses := map[string][]string{}
+	if !ready {
+		return addresses
+	}
 	client, err := core.node.LocalClient()
 	if err != nil {
 		return addresses
@@ -489,6 +541,13 @@ func (core *Core) logPeers(peers []velanetwork.DeviceInfo) {
 }
 
 func (core *Core) authStatus(ctx context.Context) (velanetwork.AuthState, error) {
+	return core.authStatusReady(ctx, core.nodeReady())
+}
+
+func (core *Core) authStatusReady(ctx context.Context, ready bool) (velanetwork.AuthState, error) {
+	if !ready {
+		return velanetwork.AuthState{State: velanetwork.StateConnecting}, nil
+	}
 	client, err := core.node.LocalClient()
 	if err != nil {
 		return velanetwork.AuthState{State: velanetwork.StateOffline}, err

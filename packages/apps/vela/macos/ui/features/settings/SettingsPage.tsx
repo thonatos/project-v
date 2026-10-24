@@ -1,21 +1,8 @@
-import { View } from 'nsh';
 import { Clipboard } from 'nsh/clipboard';
 import { store } from '../../core/store';
-import {
-  Button,
-  Callout,
-  CardHeader,
-  CardSection,
-  ListRow,
-  Page,
-  PageHeader,
-  RadioGroup,
-  Switch,
-  spacing,
-} from '../../ui';
+import { Button, Callout, CardContent, CardSection, ListRow, Page, PageHeader, Segmented, Switch } from '../../ui';
 import { diagnosticSnapshot, diagnosticSummaryRows } from '../../../../shared/ui/diagnostics';
-
-const PROTOCOL_VERSION = '2';
+import { APP_VERSION } from '../../../../shared/ui/version';
 
 const APPEARANCE_OPTIONS = [
   { value: 'system', label: '跟随系统' },
@@ -25,10 +12,9 @@ const APPEARANCE_OPTIONS = [
 
 function copyDiagnostics() {
   const status = store.status();
+  const protocolVersion = store.protocolVersion();
   Clipboard.writeText(
-    status
-      ? diagnosticSnapshot(status, PROTOCOL_VERSION)
-      : JSON.stringify({ version: PROTOCOL_VERSION, redacted: true }),
+    status ? diagnosticSnapshot(status, protocolVersion) : JSON.stringify({ version: protocolVersion, redacted: true }),
   );
 }
 
@@ -36,22 +22,22 @@ function copyDiagnostics() {
 export function SettingsPage() {
   const preferences = () => store.preferences.current();
   const sharingEnabled = () => store.status()?.sharing?.enabled ?? false;
-  const diagnostics = () => diagnosticSummaryRows(store.status(), PROTOCOL_VERSION);
+  const diagnostics = () => diagnosticSummaryRows(store.status(), store.protocolVersion());
 
   return (
     <Page testID="settings-view">
       <PageHeader title="设置" />
 
-      <View class={spacing.sectionGap}>
-        <CardHeader title="外观" />
-        <RadioGroup
-          label="界面外观"
-          value={preferences().appearance}
-          options={APPEARANCE_OPTIONS}
-          onChange={(appearance) => store.preferences.update({ appearance })}
-        />
-        <Callout>选择立即生效，并在下次启动时恢复。</Callout>
-      </View>
+      <CardSection title="外观" footer={<Callout>选择立即生效，并在下次启动时恢复。</Callout>}>
+        <CardContent>
+          <Segmented
+            label="界面外观"
+            value={preferences().appearance}
+            options={APPEARANCE_OPTIONS}
+            onChange={(appearance) => store.preferences.update({ appearance })}
+          />
+        </CardContent>
+      </CardSection>
 
       <CardSection title="共享">
         <ListRow
@@ -71,18 +57,32 @@ export function SettingsPage() {
         <ListRow title="关闭窗口" description="Vela 继续在后台运行；退出应用才会停止连接。" />
       </CardSection>
 
-      <CardSection title="调试" footer={<Callout>仅用于排查问题，不改变共享或转发行为。</Callout>}>
+      <CardSection
+        title="隐私"
+        footer={
+          <Callout>
+            默认关闭。开启后会把账户邮箱的 SHA-256 哈希发送给 Gravatar 以加载头像；邮箱和页面内容不会发送。
+          </Callout>
+        }
+      >
         <ListRow
-          title="性能 HUD"
-          description="显示帧率与渲染开销"
+          title="使用 Gravatar 头像"
+          description="无头像、加载失败或账户不是邮箱时显示首字母"
           trailing={
             <Switch
-              value={preferences().performanceHud}
-              label="性能 HUD"
-              onChange={(performanceHud) => store.preferences.update({ performanceHud })}
+              value={preferences().gravatarAvatar}
+              label="使用 Gravatar 头像"
+              onChange={(gravatarAvatar) => store.preferences.update({ gravatarAvatar })}
             />
           }
         />
+      </CardSection>
+
+      <CardSection
+        title="诊断"
+        action={<Button testID="copy-diagnostics" title="复制诊断" variant="outline" onPress={copyDiagnostics} />}
+        footer={<Callout>不包含认证地址、凭据、Cookie 或业务内容。</Callout>}
+      >
         <ListRow
           title="详细日志"
           description="记录更多运行细节"
@@ -94,14 +94,26 @@ export function SettingsPage() {
             />
           }
         />
+        <ListRow
+          title="性能 HUD"
+          description="显示帧率与渲染开销"
+          trailing={
+            <Switch
+              value={preferences().performanceHud}
+              label="性能 HUD"
+              onChange={(performanceHud) => store.preferences.update({ performanceHud })}
+            />
+          }
+        />
+        <Each of={diagnostics()}>{(row) => <ListRow title={row().title} description={row().detail} />}</Each>
       </CardSection>
 
       <CardSection
-        title="诊断"
-        action={<Button testID="copy-diagnostics" title="复制诊断" variant="outline" onPress={copyDiagnostics} />}
-        footer={<Callout>不包含认证地址、凭据、Cookie 或业务内容。</Callout>}
+        title="关于"
+        footer={<Callout>只读边界：Vela 在前台访问已共享的服务，不改变系统网络或安全设置。</Callout>}
       >
-        <Each of={diagnostics()}>{(row) => <ListRow title={row().title} description={row().detail} />}</Each>
+        <ListRow title="版本" description={APP_VERSION} />
+        <ListRow title="控制协议" description={`v${store.protocolVersion()}`} />
       </CardSection>
     </Page>
   );

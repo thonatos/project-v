@@ -24,6 +24,7 @@ export const text = {
   primary: 'text-surface-foreground dark:text-dk-surface-foreground',
   muted: 'text-subtle-foreground dark:text-dk-subtle-foreground',
   accent: 'text-accent dark:text-dk-accent',
+  onAccent: 'text-accent-foreground dark:text-dk-accent-foreground',
   success: 'text-success dark:text-dk-success',
   warning: 'text-warning dark:text-dk-warning',
   danger: 'text-danger dark:text-dk-danger',

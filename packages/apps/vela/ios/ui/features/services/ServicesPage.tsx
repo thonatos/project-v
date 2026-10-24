@@ -147,7 +147,7 @@ export function ServicesPage() {
         <View class={inset.sectionTop}>
           <Notice
             tone="warning"
-            title="未连接私人网络"
+            title="尚未连接"
             detail="登录后才能看到 Mac 共享的服务。"
             action={{ label: '登录', onPress: () => store.navigation.select('me') }}
           />
@@ -156,16 +156,16 @@ export function ServicesPage() {
 
       <ResumeCard />
 
-      <If when={store.loading() && groups().length === 0}>
+      <If when={(store.loading() || store.network() === 'connecting') && groups().length === 0}>
         <EmptyState symbol="antenna.radiowaves.left.and.right" title="正在连接" detail="读取设备与共享服务…" />
       </If>
 
-      <If when={!store.loading() && groups().length === 0}>
+      <If when={!store.loading() && store.network() !== 'connecting' && groups().length === 0}>
         <EmptyState
           symbol="desktopcomputer"
-          title="还没有 Mac"
-          detail="添加同一私人网络中运行 Vela 的 Mac，它共享的服务会出现在这里。"
-          action={<PrimaryButton label="添加 Mac" onPress={store.navigation.add} />}
+          title="还没有添加其他设备"
+          detail="添加同一 Tailnet 中运行 Vela 的设备，它共享的服务会出现在这里。"
+          action={<PrimaryButton label="添加设备" onPress={store.navigation.add} />}
         />
       </If>
 

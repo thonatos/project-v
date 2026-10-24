@@ -112,7 +112,7 @@ export function BrowserPage(props: { onMenu: () => void }) {
         <EmptyState
           symbol="point.3.connected.trianglepath.dotted"
           title={`正在连接 ${current()?.service.name ?? ''}`}
-          detail={`通过私人网络连接 ${current()?.device.name ?? ''}…`}
+          detail={`通过 Tailnet 连接 ${current()?.device.name ?? ''}…`}
         />
       </If>
 

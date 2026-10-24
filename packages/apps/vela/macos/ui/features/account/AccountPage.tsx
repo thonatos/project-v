@@ -1,6 +1,19 @@
-import { View } from 'nsh';
+import { Text, View } from 'nsh';
 import { store } from '../../core/store';
-import { Alert, Badge, Button, Callout, CardSection, ListRow, Page, PageHeader, spacing } from '../../ui';
+import {
+  Alert,
+  Avatar,
+  Badge,
+  Button,
+  Callout,
+  CardSection,
+  ListRow,
+  Page,
+  PageHeader,
+  spacing,
+  text,
+  type,
+} from '../../ui';
 import { connectionLabel, deviceAddressLines } from '../../../../shared/ui/devices';
 
 /** Identity only: sign-in, who this Mac is signed in as, and how it appears on the tailnet. */
@@ -15,7 +28,14 @@ export function AccountPage() {
 
   return (
     <Page testID="account-view">
-      <PageHeader title="账户" description="登录状态与这台 Mac 在 tailnet 中的身份。" />
+      <PageHeader title="账户" description="登录状态与这台 Mac 在 Tailnet 中的身份。" />
+
+      <View class={`w-full flex-row items-center ${spacing.stack}`} testID="identity-header">
+        <Avatar initial={store.userInitial()} signedIn={store.signedIn()} imageUrl={store.status()?.avatarUrl} large />
+        <Text numberOfLines={1} class={`min-w-0 flex-1 ${type.pageTitle} ${text.primary}`}>
+          {store.signedIn() ? store.userName() : '未登录'}
+        </Text>
+      </View>
 
       <If when={store.needsAuth()}>
         <View class={spacing.sectionGap}>
@@ -46,19 +66,20 @@ export function AccountPage() {
         footer={<Callout>由 Tailscale 提供，不创建系统 VPN，也不更改代理、DNS 或路由。</Callout>}
       >
         <ListRow title="状态" badge={<Badge status={store.network()}>{connectionLabel(store.network())}</Badge>} />
-        <ListRow title="账户" description={tailscale()?.user ?? '未登录'} />
         <ListRow title="Tailnet" description={tailscale()?.tailnet ?? '未连接'} />
       </CardSection>
 
-      <CardSection title="这台 Mac 的身份" footer={<Callout>名称会同步到当前 Tailscale 节点。</Callout>}>
-        <ListRow
-          title="设备名称"
-          description={deviceName()}
-          trailing={<Button title="修改名称" variant="outline" onPress={() => store.account.beginRename()} />}
-        />
-        <ListRow title="MagicDNS" mono description={tailscale()?.dnsName || '暂无名称'} />
-        <ListRow title="地址" mono description={addresses()} />
-      </CardSection>
+      <If when={store.signedIn()}>
+        <CardSection title="这台 Mac 的身份" footer={<Callout>名称会同步到当前 Tailscale 节点。</Callout>}>
+          <ListRow
+            title="设备名称"
+            description={deviceName()}
+            trailing={<Button title="修改名称" variant="outline" onPress={() => store.account.beginRename()} />}
+          />
+          <ListRow title="MagicDNS" mono description={tailscale()?.dnsName || '暂无名称'} />
+          <ListRow title="地址" mono description={addresses()} />
+        </CardSection>
+      </If>
 
       <CardSection title="登录">
         <ListRow
@@ -73,11 +94,13 @@ export function AccountPage() {
             />
           }
         />
-        <ListRow
-          title="注销"
-          description="移除这台 Mac 上保存的身份，共享与转发会停止。"
-          trailing={<Button title="注销" variant="danger" onPress={() => store.account.logout()} />}
-        />
+        <If when={store.signedIn()}>
+          <ListRow
+            title="注销"
+            description="移除这台 Mac 上保存的身份，共享与转发会停止。"
+            trailing={<Button title="注销" variant="danger" onPress={() => store.account.logout()} />}
+          />
+        </If>
       </CardSection>
     </Page>
   );

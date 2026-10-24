@@ -46,17 +46,17 @@ export function DevicesPage() {
             disabled={store.refreshing()}
             onPress={store.remotes.refresh}
           />
-          <BarButton symbol="plus" label="添加 Mac" onPress={store.navigation.add} />
+          <BarButton symbol="plus" label="添加设备" onPress={store.navigation.add} />
         </>
       }
       refreshing={store.refreshing()}
       onRefresh={store.remotes.refresh}
       testID="devices-page"
     >
-      <Section label="这台 iPhone" footer={store.signedIn() ? '点按可修改它在私人网络中的名称。' : undefined}>
+      <Section label="这台 iPhone" footer={store.signedIn() ? '点按可修改它在 Tailnet 中的名称。' : undefined}>
         <Cell
           title={status()?.deviceName ?? 'iPhone'}
-          detail={store.signedIn() ? (deviceAddressLines(status()?.tailscale?.ips)[0] ?? '已连接') : '未登录私人网络'}
+          detail={store.signedIn() ? (deviceAddressLines(status()?.tailscale?.ips)[0] ?? '已连接') : '未登录'}
           leading={<IconTile name="iphone" />}
           trailing={
             <Chip
@@ -74,13 +74,13 @@ export function DevicesPage() {
         else={
           <EmptyState
             symbol="desktopcomputer"
-            title="还没有 Mac"
-            detail="从私人网络中选择运行 Vela 的 Mac。"
-            action={<PrimaryButton label="添加 Mac" onPress={store.navigation.add} />}
+            title="还没有添加其他设备"
+            detail="从 Tailnet 中选择运行 Vela 的设备。"
+            action={<PrimaryButton label="添加设备" onPress={store.navigation.add} />}
           />
         }
       >
-        <Section label="Mac" footer="移除只影响这台 iPhone，不会改变 Mac 上的 Vela。">
+        <Section label="其他设备" footer="移除只影响这台 iPhone，不会改变 Mac 上的 Vela。">
           <Each of={store.devices()} key={(device) => device.id}>
             {(device, index) => (
               <Cell
@@ -237,7 +237,7 @@ export function AddDeviceSheet() {
   return (
     <PageSheet
       open={store.isOpen('add')}
-      title="添加 Mac"
+      title="添加设备"
       onClose={() => store.navigation.dismiss('add')}
       cancel={{ label: '取消', onPress: () => store.navigation.dismiss('add') }}
       confirm={{ label: busy() ? '验证中' : '添加', onPress: store.remotes.submitAdd, disabled: !canSubmit() }}
@@ -247,14 +247,14 @@ export function AddDeviceSheet() {
         <View class={inset.sectionTop}>
           <Notice
             tone="warning"
-            title="未连接私人网络"
+            title="尚未连接"
             detail="登录后才能发现设备；也可以直接输入私人名称。"
             action={{ label: '登录', onPress: store.navigation.account }}
           />
         </View>
       </If>
 
-      <Section label="私人网络中的设备" footer="只有运行 Vela 并开启“共享这台 Mac”的设备能通过验证。">
+      <Section label="Tailnet 中的设备" footer="只有运行 Vela 并开启“共享这台 Mac”的设备能通过验证。">
         <If
           when={candidates().length > 0}
           else={<Cell title={store.addDevice.loading() ? '正在查找设备…' : '没有发现设备'} last />}

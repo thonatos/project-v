@@ -140,7 +140,7 @@ for (const page of [
 assert.ok(read('features/services/ServicesPage.tsx').includes('<Wordmark'), 'the home tab shows the Vela mark');
 assert.match(tokens, /brand: 28/, 'the service-page logo matches the 28pt page-title line height');
 const homeActions = read('features/services/ServicesPage.tsx').match(/actions=\{[^\n]*\n?/)?.[0] ?? '';
-assert.doesNotMatch(homeActions, /添加 Mac/, 'the home header has no add action');
+assert.doesNotMatch(homeActions, /添加设备/, 'the home header has no add action');
 assert.doesNotMatch(
   read('features/logs/LogsPage.tsx'),
   /diagnosticSummaryRows|diagnosticsActions\.copy\b/,
@@ -157,6 +157,40 @@ assert.match(
   read('ui/status.tsx'),
   /<Text[\s\S]*<If when=\{props\.imageUrl\}>/,
   'the avatar image keeps the initial underneath as its failure fallback',
+);
+
+// Account: identity once, connection once, signing derived from the profile.
+const me = read('features/account/MePage.tsx');
+assert.match(me, /<Avatar [^>]*large/, 'the account page leads with the avatar identity header');
+assert.doesNotMatch(me, /<Chip/, 'the identity header does not repeat the connection status');
+assert.doesNotMatch(me, /<Cell title="账户"/, 'the account appears only once, in the identity header');
+assert.match(
+  me,
+  /label="私人连接"[\s\S]{0,500}label="这台 iPhone"[\s\S]{0,500}label="开发签名"/,
+  'account sections run 私人连接 → 设备身份 → 开发签名',
+);
+assert.match(me, /signingNotice\(store\.signingExpiry\(\)\)/, 'the signing note is derived from the real expiry');
+assert.doesNotMatch(me, /7 天有效|免费签名/, 'the fixed seven-day claim is gone');
+
+const iosSettings = read('features/settings/SettingsPage.tsx');
+assert.match(iosSettings, /APP_VERSION/, '关于 uses the shared application version');
+assert.match(iosSettings, /跟随系统/, 'appearance uses the same label as macOS');
+assert.match(
+  iosSettings,
+  /title="版本"[\s\S]{0,200}APP_VERSION[\s\S]{0,400}title="控制协议"/,
+  '关于 shows the application version and the control protocol',
+);
+
+// Devices speak about Macs, and a starting node shows 正在连接 rather than an empty list.
+const iosDevices = read('features/devices/DeviceSheets.tsx');
+assert.match(iosDevices, /label="其他设备"/, 'saved devices are grouped as 其他设备');
+assert.match(iosDevices, /还没有添加其他设备/, 'the empty state says what is missing');
+assert.match(iosDevices, /label="添加设备"/, 'the add action names a device');
+assert.doesNotMatch(iosDevices, /私人网络|还没有 Mac|其他 Mac/, 'the old network and Mac-only vocabulary is gone');
+assert.match(
+  read('features/services/ServicesPage.tsx'),
+  /store\.loading\(\) \|\| store\.network\(\) === ['"]connecting['"]/,
+  'the first screen treats a starting node as connecting, not as an empty list',
 );
 // Sheets share the tab pages' frame: left 22pt title, actions on the right.
 assert.ok(

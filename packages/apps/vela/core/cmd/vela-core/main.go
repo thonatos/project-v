@@ -46,6 +46,7 @@ func main() {
 		Journal:       journal,
 		Logger:        logger,
 		RetryAttempts: &noRefresh,
+		Avatar:        true,
 	})
 	if err != nil {
 		logger.Printf("start core: %v", err)

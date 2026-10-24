@@ -24,7 +24,11 @@ shared/ui/              pure projections, protocol types and the shared client f
 - `CardSection title description? action? footer?` → wraps `Card` → contains a `List` of `ListRow`s, or `CardContent`.
 - `ListRow title description?(string|string[]) mono? badge? leading? trailing? onPress? selected? disabled?` — the ONLY data row. `onPress` = whole row navigates (chevron shown). Never put destructive actions in a row.
 - `List count? empty?` + `ListEmpty title description? action?`.
-- `Badge status children` — the one status signal (no dot next to it).
+- `Avatar initial signedIn large? imageUrl?` — the account mark; the initial is always underneath a Gravatar.
+- `IconTile symbol` — the leading mark of a device row.
+- `Dot tone(success|warning|danger|offline)` — a compact connection mark for a list row; the row's text still says the state.
+- `Badge status children` — status in words, for detail rows.
+- `Segmented value options onChange label` — one-of-N choice (appearance, log level); one selected state, each option a focus stop.
 - `Switch value onChange label` — persistent booleans. Row `description` says what it does, never "已开启/已关闭".
 - `Button title variant(primary|outline|secondary|danger|plain) disabled? symbol? iconOnly?` — one-shot actions.
 - `Alert tone(info|success|warning|danger) title? description? action?` — conditions needing attention.
@@ -35,7 +39,7 @@ shared/ui/              pure projections, protocol types and the shared client f
 ## Store (import { store } from "../../core/store")
 
 State signals: `pane selected status network services devices logs activity forwards logLevel authPending authError` and form groups `addDevice rename editor dsh` (each field is a signal).
-Derived: `needsAuth() selectedDevice() forwardFor(device, serviceId) tailnetCandidates()`.
+Derived: `needsAuth() protocolVersion() signedIn() userName() userInitial() selectedDevice() forwardFor(device, serviceId) tailnetCandidates()`.
 Flows: `navigate.{devices,forwards,logs,account,settings,select(id),back,moveSelection}`,
 `account.{signIn,check,reconnect,logout,beginRename,saveRename}`,
 `sharing.{setEnabled(bool),setServiceShared(service,bool)}`,
@@ -51,5 +55,6 @@ Flows: `navigate.{devices,forwards,logs,account,settings,select(id),back,moveSel
 `devices.ts`: `localServices remoteDevices nextDeviceID deviceAddressLines connectionLabel isRecentService serviceKindLabel serviceBadge groupServicesByDevice`.
 `diagnostics.ts`: `diagnosticSnapshot diagnosticSummaryRows diagnosticActivityRows appearancePreference remoteAddError`.
 `logs.ts`: `logRows logLevelCounts`.
+`version.ts`: `APP_VERSION` (the single application version; `version.test.mjs` checks both nsh.json manifests).
 
 Tests: `macos/ui/tests/` (this app) and `shared/ui/` (projections, after S2). Run everything with `pnpm -F vela verify`.

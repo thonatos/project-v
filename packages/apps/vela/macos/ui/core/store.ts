@@ -15,6 +15,11 @@ import { createAuthFlows } from '../../../shared/ui/flows/auth';
 import { createPreferencesFlow } from '../../../shared/ui/flows/preferences';
 import { createRemoteFlows } from '../../../shared/ui/flows/remotes';
 import { createRenameFlow } from '../../../shared/ui/flows/rename';
+import {
+  signedIn as identitySignedIn,
+  userInitial as identityInitial,
+  userLabel as identityLabel,
+} from '../../../shared/ui/identity';
 import type { LogLevel } from '../../../shared/ui/logs';
 import {
   presetFor,
@@ -116,6 +121,10 @@ function createStore() {
   let timer: number | undefined;
 
   const needsAuth = () => network() === 'needs-auth';
+  const protocolVersion = () => String(core.protocolVersion());
+  const signedIn = () => identitySignedIn(status());
+  const userName = () => identityLabel(status());
+  const userInitial = () => identityInitial(status());
   const selectedDevice = () => devices().find((device) => device.id === selected());
   const forwardKey = (device: DeviceViewModel, service: string) => `${device.id}/${service}`;
   const forwardFor = (device: DeviceViewModel, service: string) =>
@@ -283,7 +292,7 @@ function createStore() {
     confirmRemove: (device) =>
       confirmDestructive(
         `移除 ${device.name}？`,
-        '只会删除这台 Mac 上保存的设备，不会影响另一台 Mac 上的 Vela。',
+        '只会删除这台 Mac 上保存的设备，不会影响另一台设备上的 Vela。',
         '移除',
       ),
     afterConfirmed: (device) => {
@@ -301,6 +310,7 @@ function createStore() {
       setColorScheme(next.appearance);
       core.setPerformanceHud(next.performanceHud);
     },
+    onSaved: () => void load(),
     tag: 'VELA_STATE',
   });
 
@@ -528,6 +538,10 @@ function createStore() {
     editor,
     // derived
     needsAuth,
+    protocolVersion,
+    signedIn,
+    userName,
+    userInitial,
     selectedDevice,
     forwardFor,
     tailnetCandidates,

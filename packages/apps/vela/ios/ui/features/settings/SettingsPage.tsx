@@ -2,9 +2,10 @@
 import { View } from 'nsh';
 import { Cell, IconTile, Section, Segmented, TabPage, Toggle, inset, size } from '../../ui';
 import { store } from '../../core/store';
+import { APP_VERSION } from '../../../../shared/ui/version';
 
 const APPEARANCES = [
-  { value: 'system', label: '自动' },
+  { value: 'system', label: '跟随系统' },
   { value: 'light', label: '浅色' },
   { value: 'dark', label: '深色' },
 ] as const;
@@ -72,7 +73,7 @@ export function SettingsPage() {
         label="关于"
         footer="Vela 只在前台访问远端 Mac 已共享的服务：不共享这台 iPhone，不安装 VPN，不改变系统网络。"
       >
-        <Cell title="版本" value="0.1.0" leading={<IconTile name="app.badge" />} />
+        <Cell title="版本" value={APP_VERSION} leading={<IconTile name="app.badge" />} />
         <Cell
           title="控制协议"
           value={`v${store.protocolVersion()}`}

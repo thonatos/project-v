@@ -18,6 +18,7 @@
     "test:network-isolation": "sh scripts/verify-network-isolation.sh",
     "test:theme": "node macos/ui/tests/theme.test.mjs",
     "test:ui-model": "node shared/ui/projections.test.mjs",
+    "test:version": "node shared/ui/version.test.mjs",
     "test:flows": "node shared/ui/flows.test.mjs",
     "test:hostname": "node shared/ui/hostname.test.mjs",
     "test:ui-layout": "node macos/ui/tests/desktop-layout.test.mjs",
@@ -28,7 +29,7 @@
     "build:ios:core": "sh scripts/build-ios-core.sh build/ios",
     "build:ios:ui": "nsh build ios/ui/App.tsx --release -o build/ui-ios",
     "check:ios": "nsh check ios/ui/App.tsx && cargo check --target aarch64-apple-ios -p vela-ios-native",
-    "test:ios": "node ios/ui/tests/structure.test.mjs && node ios/ui/tests/theme.test.mjs && node shared/ui/ios-projections.test.mjs && sh scripts/verify-ios-deps.sh",
+    "test:ios": "node ios/ui/tests/structure.test.mjs && node ios/ui/tests/theme.test.mjs && node ios/ui/tests/signing.test.mjs && node shared/ui/ios-projections.test.mjs && sh scripts/verify-ios-deps.sh",
     "install:ios": "sh scripts/install-ios.sh"
   }
 }

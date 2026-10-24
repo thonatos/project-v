@@ -1,10 +1,9 @@
-/** 我的：登录身份、这台 iPhone 在私人网络中的样子，以及签名状态。 */
+/** 我的：登录身份、这台 iPhone 在 Tailnet 中的样子，以及签名状态。 */
 import { Input, Text, View } from 'nsh';
 import {
   Avatar,
   BarButton,
   Cell,
-  Chip,
   Notice,
   PageSheet,
   PrimaryButton,
@@ -16,6 +15,7 @@ import {
   size,
 } from '../../ui';
 import { store } from '../../core/store';
+import { signingNotice } from '../../core/signing';
 import { connectionLabel, deviceAddressLines } from '../../../../shared/ui/devices';
 
 function expiryLabel(): string {
@@ -26,9 +26,6 @@ function expiryLabel(): string {
     ? value
     : date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
 }
-
-const networkTone = () =>
-  store.network() === 'connected' ? 'success' : store.network() === 'offline' ? 'offline' : 'warning';
 
 export function MePage() {
   const status = () => store.status();
@@ -53,7 +50,6 @@ export function MePage() {
         <Text numberOfLines={1} class={`${font.title} ${ink.primary}`}>
           {store.signedIn() ? store.userName() : '未登录'}
         </Text>
-        <Chip tone={networkTone()} label={connectionLabel(store.network())} />
       </View>
 
       <If when={store.authError()}>
@@ -73,12 +69,17 @@ export function MePage() {
       </If>
       <If when={store.needsAuth() && !store.authPending()}>
         <View class={inset.sectionTop}>
-          <PrimaryButton label="登录私人网络" onPress={store.account.signIn} testID="sign-in" />
+          <PrimaryButton label="登录私人连接" onPress={store.account.signIn} testID="sign-in" />
           <Text class={`${inset.sectionFooter} ${font.detail} ${ink.secondary}`}>在应用内登录，不安装 VPN。</Text>
         </View>
       </If>
 
-      <If when={!store.needsAuth()}>
+      <Section label="私人连接" footer="在 Mac 上，同一账户登录的设备默认可以访问共享服务。">
+        <Cell title="状态" value={connectionLabel(store.network())} />
+        <Cell title="Tailnet" value={status()?.tailscale?.tailnet ?? '—'} last />
+      </Section>
+
+      <If when={store.signedIn()}>
         <Section label="这台 iPhone">
           <Cell
             title="设备名称"
@@ -88,11 +89,7 @@ export function MePage() {
           <Cell title="MagicDNS" detail={status()?.tailscale?.dnsName || '暂无'} mono />
           <Cell title="地址" detail={addresses().join('\n') || '暂无'} mono last />
         </Section>
-        <Section label="私人网络" footer="在 Mac 上，同一账户登录的设备默认可以访问共享服务。">
-          <Cell title="账户" value={status()?.tailscale?.user ?? '—'} />
-          <Cell title="Tailnet" value={status()?.tailscale?.tailnet ?? '—'} last />
-        </Section>
-        <Section label="开发签名" footer="免费签名 7 天有效，到期前覆盖安装即可。">
+        <Section label="开发签名" footer={signingNotice(store.signingExpiry())}>
           <Cell title="到期" value={expiryLabel()} last />
         </Section>
         <Section>
@@ -117,7 +114,7 @@ export function RenameSheet() {
       }}
       testID="rename-sheet"
     >
-      <Section footer="会同步为这台 iPhone 在私人网络中的名称（MagicDNS），只能用字母、数字和连字符。">
+      <Section footer="会同步为这台 iPhone 在 Tailnet 中的名称（MagicDNS），只能用字母、数字和连字符。">
         <View class={`w-full ${size.cell} justify-center ${inset.cell}`}>
           <Input
             value={store.rename.draft()}

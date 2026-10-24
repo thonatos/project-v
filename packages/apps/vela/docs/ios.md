@@ -1,6 +1,6 @@
 # Vela iOS
 
-Vela iOS 是只读访问方：它加入与 Mac 相同的私人网络，读取远端 Vela 的服务清单，并在应用内 WebView 中打开共享的 HTTP 服务。它不共享本机服务，不建立系统 VPN，也不提供 TCP 服务入口。
+Vela iOS 是只读访问方：它加入与 Mac 相同的 Tailnet，读取远端 Vela 的服务清单，并在应用内 WebView 中打开共享的 HTTP 服务。它不共享本机服务，不建立系统 VPN，也不提供 TCP 服务入口。
 
 ## 前置条件
 
@@ -58,22 +58,22 @@ DEVICE_UDID=<identifier> sh scripts/install-ios.sh
 
 覆盖安装（`devicectl device install app`）保留数据容器，因此：
 
-- tsnet 节点 ID 不变；设置页显示的名称与地址在重装前后一致；
+- tsnet 节点 ID 不变；「我的」页显示的名称与地址在重装前后一致；
 - 已登录的 OpenCode / DSH Cookie 仍在各自的 `WKWebsiteDataStore` 中。
 
 每周流程：
 
 1. `DEVELOPMENT_TEAM=… sh scripts/build-ios.sh`
 2. `DEVICE_UDID=… sh scripts/install-ios.sh`
-3. 打开 Vela，确认设置页的「签名到期」已顺延，服务可直接打开。
+3. 打开 Vela，确认「我的」→「开发签名」的到期时间已顺延，服务可直接打开。
 
 若 Xcode 提示没有可用描述文件，先在 Xcode 中打开 `ios/app/Vela.xcodeproj`，在 Signing & Capabilities 里选择同一个 Team，并让 Xcode 自动管理签名一次。
 
 ## 首次认证
 
-1. 打开 Vela → 设置 → 「连接私人网络」。
+1. 打开 Vela → 我的 → 「登录私人连接」。
 2. Vela 在应用内弹出 `ASWebAuthenticationSession`，显示 Tailscale 登录页；不会切到 Safari，因此登录轮询不会因进程挂起而中断。
-3. 看到 “Login successful” 后点左上角 ✕ 关闭系统认证面板，回到 Vela，再点「检查连接」。设置页显示在线与节点地址后即可添加 Mac。
+3. 看到 “Login successful” 后点左上角 ✕ 关闭系统认证面板，回到 Vela，再点「检查连接」。「我的」页显示私人连接状态与节点地址后即可添加设备。
 
 身份被移除或过期时，状态变为「需要连接」，再次认证即可；不需要修改 Mac 端配置，授权按同一 tailnet 用户放行。
 
@@ -146,7 +146,7 @@ Release 构建不暴露 Inspector。若「开发」菜单里看不到 Vela，确
 
 | 现象                         | 处理                                                                                           |
 | ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| 一直显示「需要连接」         | 设置 → 连接私人网络；确认登录完成后点检查                                                      |
+| 一直显示「需要连接」         | 我的 → 登录私人连接；确认登录完成后点检查                                                      |
 | 设备在线但没有服务           | Mac 上 Vela 未共享服务，或清单版本不兼容；升级两端 Vela 后刷新                                 |
 | 打开服务显示「远端设备离线」 | 确认 Mac 未休眠、Vela 在运行、两台设备在同一 tailnet；Vela 会自动重试一次，也可手动重试        |
 | 页面白屏 / 加载失败          | 点舞台上的「重新加载」；Debug 构建用 Safari Inspector 看控制台                                 |

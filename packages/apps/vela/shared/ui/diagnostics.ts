@@ -83,7 +83,7 @@ export function appearancePreference(status: CoreStatus | null): 'system' | 'lig
 
 export function remoteAddError(detail: string): string {
   if (detail.includes('incompatible')) return '两台 Mac 的 Vela 版本不兼容。';
-  if (detail.includes('authorized') || detail.includes('rejected')) return '另一台 Mac 拒绝了此设备。';
+  if (detail.includes('authorized') || detail.includes('rejected')) return '另一台设备拒绝了访问。';
   if (detail.includes('invalid')) return '私人名称格式无效。';
   return '无法连接到这台 Mac。请确认它在线并运行 Vela。';
 }

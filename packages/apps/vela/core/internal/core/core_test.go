@@ -15,6 +15,7 @@ import (
 
 	velaconfig "implements.io/vela/internal/config"
 	"implements.io/vela/internal/manifest"
+	velanetwork "implements.io/vela/internal/network"
 	velapaths "implements.io/vela/internal/paths"
 	"implements.io/vela/internal/remoteclient"
 	"implements.io/vela/internal/remotes"
@@ -37,6 +38,57 @@ func (fakeNode) LocalClient() (*local.Client, error) {
 }
 
 func (fakeNode) Close() error { return nil }
+
+// fakeAsyncNode models *network.Embedded's lazy start: status must never wait
+// on it, and its LocalClient is only reachable once Running reports true.
+type fakeAsyncNode struct {
+	mu         sync.Mutex
+	running    bool
+	startCalls int
+	localCalls int
+	local      func() (*local.Client, error)
+}
+
+func (*fakeAsyncNode) Dial(context.Context, string, string) (net.Conn, error) {
+	return nil, errors.New("no dialer")
+}
+
+func (node *fakeAsyncNode) LocalClient() (*local.Client, error) {
+	node.mu.Lock()
+	node.localCalls++
+	local := node.local
+	node.mu.Unlock()
+	if local == nil {
+		return nil, errors.New("no local API in tests")
+	}
+	return local()
+}
+
+func (*fakeAsyncNode) Close() error { return nil }
+
+func (node *fakeAsyncNode) StartAsync() {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+	node.startCalls++
+}
+
+func (node *fakeAsyncNode) Running() bool {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+	return node.running
+}
+
+func (node *fakeAsyncNode) setRunning(running bool) {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+	node.running = running
+}
+
+func (node *fakeAsyncNode) counts() (starts, local int) {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+	return node.startCalls, node.localCalls
+}
 
 type fakeChecker struct {
 	mu      sync.Mutex
@@ -120,6 +172,56 @@ func newTestCore(t *testing.T, node Node, checker ManifestChecker) *Core {
 	}
 	t.Cleanup(func() { _ = core.Close() })
 	return core
+}
+
+func TestStatusDoesNotBlockOnAsyncNodeStart(t *testing.T) {
+	t.Parallel()
+	paths := velapaths.FromApplicationSupport(t.TempDir())
+	writeRemotes(t, paths.Config, "studio.example.ts.net")
+	node := &fakeAsyncNode{local: func() (*local.Client, error) {
+		panic("Status must not read the local API before the node is running")
+	}}
+	core, err := New(Options{Paths: paths, Node: node, Checker: newFakeChecker(), RetryDelay: time.Millisecond})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = core.Close() })
+
+	started := time.Now()
+	payload, err := core.Status(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(started); elapsed > 200*time.Millisecond {
+		t.Fatalf("Status blocked for %s waiting on the async node", elapsed)
+	}
+	values, ok := payload.(map[string]any)
+	if !ok {
+		t.Fatalf("status payload = %T", payload)
+	}
+	if values["network"] != velanetwork.StateConnecting {
+		t.Fatalf("network = %v, want connecting", values["network"])
+	}
+	starts, local := node.counts()
+	if starts != 1 {
+		t.Fatalf("StartAsync called %d times, want exactly once", starts)
+	}
+	if local != 0 {
+		t.Fatalf("LocalClient called %d times before the node was running", local)
+	}
+
+	// Once the node is up the status settles; a LocalClient failure must only
+	// downgrade the network state, never panic or block.
+	node.local = nil
+	node.setRunning(true)
+	payload, err = core.Status(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	values = payload.(map[string]any)
+	if values["network"] != velanetwork.StateOffline {
+		t.Fatalf("network = %v, want offline", values["network"])
+	}
 }
 
 func TestStatusDistinguishesOnlineOfflineAndIncompatible(t *testing.T) {

@@ -121,6 +121,10 @@ for (const atom of [
   'log-list',
   'badge',
   'button',
+  'avatar',
+  'dot',
+  'icon-tile',
+  'segmented',
 ]) {
   assert.ok(atoms.includes(`ui/${atom}.tsx`), `the ${atom} atom must exist`);
 }
@@ -217,10 +221,19 @@ assert.match(runner, /SWITCH_COMPONENT/, 'the native switch must be registered')
 // --- Devices ---------------------------------------------------------------------
 const devices = join(features.filter((file) => file.startsWith('features/devices/')));
 assert.doesNotMatch(devices, /title="删除"/, 'a device list row must not carry a destructive action');
-assert.match(devices, /deviceAddressLines/, 'device rows must list their full addresses');
-assert.match(devices, /个可用服务/, 'device rows must show how many services are available');
+const remoteRow = devices.slice(devices.indexOf('function RemoteDeviceRow('), devices.indexOf('function LocalDetail('));
+assert.match(remoteRow, /<IconTile symbol="desktopcomputer" \/>/, 'a device row leads with the icon tile');
+assert.match(remoteRow, /connectionLabel\(props\.device\.connection\)[\s\S]{0,40}个服务/, 'a row says 状态 · N 个服务');
+assert.match(remoteRow, /<Dot tone=/, 'a row carries the status dot');
+assert.doesNotMatch(remoteRow, /deviceAddressLines|Badge/, 'the list row must not repeat addresses or a status badge');
+assert.match(devices, /deviceAddressLines/, 'the device detail pages keep the addresses');
+assert.match(devices, /还没有添加其他设备/, 'the empty state names the devices it would list');
 assert.match(devices, /title="删除设备"[\s\S]{0,80}variant="danger"/, 'deleting a device lives on its detail page');
-assert.doesNotMatch(featureSource, /<Dot |StatusMark/, 'a status is said once, by its badge');
+assert.doesNotMatch(
+  devices,
+  /其他 Mac（|添加 Mac|还没有添加其他 Mac/,
+  'the list does not switch to Mac-only vocabulary',
+);
 
 // --- Booleans are switches -----------------------------------------------------------
 assert.doesNotMatch(
@@ -316,6 +329,10 @@ assert.doesNotMatch(editor, /Menu\.popup/, 'presets must be visible radio option
 const logs = join(features.filter((file) => file.startsWith('features/logs/')));
 assert.match(logs, /<LogList/, 'the logs page renders a log, not a settings list');
 assert.match(logs, /logLevelCounts\(/, 'the logs page must filter by level');
+assert.match(logs, /<Segmented/, 'log levels use the same segmented control as appearance');
+assert.match(logs, /复制日志/, 'the logs page copies the visible lines');
+assert.match(logs, /暂无日志/, 'an empty journal says so');
+assert.match(logs, /该级别没有记录/, 'a filtered-out level is distinguished from an empty journal');
 assert.match(read('ui/log-list.tsx'), /w-\[58px\] \$\{type\.mono\}/, 'log time must be a fixed monospace column');
 assert.match(read('ui/tokens.ts'), /mono: ['"]font-mono/, 'the mono type token must use the monospace face');
 
@@ -324,6 +341,13 @@ const settings = read('features/settings/SettingsPage.tsx');
 const account = read('features/account/AccountPage.tsx');
 assert.doesNotMatch(settings, /注销|signIn|logout|私人连接/, 'settings holds preferences only');
 assert.match(account, /logout/, 'sign-out lives on the account page');
+assert.match(account, /<Avatar [^>]*large/, 'the account page leads with the avatar identity header');
+assert.doesNotMatch(account, /<ListRow[^>]*title="账户"/, 'the account name appears only once, in the identity header');
+assert.match(
+  account,
+  /title="私人连接"[\s\S]{0,900}title="这台 Mac 的身份"[\s\S]{0,900}title="登录"/,
+  'the account sections run 私人连接 → 设备身份 → 登录',
+);
 assert.match(
   account,
   /store\.needsAuth\(\)[\s\S]{0,700}title="重新登录"[\s\S]{0,100}store\.account\.signIn/,
@@ -336,6 +360,16 @@ assert.match(
 );
 assert.match(settings, /diagnosticSummaryRows/, 'diagnostics are shown by default');
 assert.match(settings, /testID="copy-diagnostics"/, 'diagnostics stay copyable');
+assert.match(settings, /title="关于"[\s\S]{0,500}APP_VERSION/, '关于 shows the shared application version');
+assert.match(settings, /store\.protocolVersion\(\)/, 'the protocol number comes from Core, not a constant');
+assert.doesNotMatch(settings, /PROTOCOL_VERSION|协议 v2/, 'the hardcoded protocol version is gone');
+assert.match(
+  settings,
+  /title="外观"[\s\S]*title="共享"[\s\S]*title="通用"[\s\S]*title="隐私"[\s\S]*title="诊断"[\s\S]*title="关于"/,
+  'settings sections run 外观 → 共享 → 通用 → 隐私 → 诊断 → 关于',
+);
+assert.match(settings, /<Segmented/, 'appearance uses the segmented control');
+assert.match(settings, /使用 Gravatar 头像/, 'Gravatar is a setting on both platforms');
 
 // --- Guidance uses Alert and Callout ----------------------------------------------------------
 assert.match(featureSource, /<Alert /, 'conditions needing attention use Alert');

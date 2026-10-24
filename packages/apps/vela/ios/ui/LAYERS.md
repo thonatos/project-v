@@ -24,6 +24,8 @@ shared/ui/              pure projections, protocol types and the shared client f
 
 - `Shell` keeps the browser mounted while hidden; returning to a service never reloads it.
 - The tabs are 服务 · 设备 · 日志 · 我的 · 设置. Devices, logs and settings are tabs, not modals.
+- The account page reads 身份头 → 私人连接 → 这台 iPhone → 开发签名 → 注销; the identity header shows the avatar and name only, and the status lives in 私人连接.
+- The devices tab lists 其他设备 with the same row anatomy as macOS: icon tile, name, `状态 · N 个服务`, status dot; addresses stay in the device sheet.
 - `stage` is one of `empty · connecting · ready · error`; `modals` is a stack (`rename`, `device`, `add`).
 - A TCP service has no iOS entry: it renders as unavailable, never as an error.
 - The page's `dataKey` is the device + service pair, so each WebView gets its own cookie store.
@@ -40,5 +42,8 @@ Flows: `navigation.* page.* remotes.* account.* preferences.* diagnosticsActions
 `identity.ts`: `signedIn userLabel userInitial`.
 `diagnostics.ts`: `diagnosticActivityRows`.
 `logs.ts`: `logRows logLevelCounts`.
+`version.ts`: `APP_VERSION` (the single application version; the 关于 section reads it).
+
+`ios/ui/core/signing.ts`: `signingNotice(expiresAt, now?)` derives the development-signing copy from the embedded profile's real expiry.
 
 Tests: `ios/ui/tests/` (this app) and `shared/ui/` (projections, after S2). Run everything with `pnpm -F vela verify`.

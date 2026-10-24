@@ -6,6 +6,8 @@
 import { Text } from 'nsh';
 
 const GLYPHS: Record<string, string> = {
+  desktopcomputer: '▣',
+  iphone: '▯',
   'info.circle': 'ⓘ',
   'checkmark.circle': '✓',
   'exclamationmark.triangle': '!',
