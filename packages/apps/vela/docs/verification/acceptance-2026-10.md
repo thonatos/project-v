@@ -23,14 +23,14 @@
 
 ## iOS 构建与安装
 
-| 项目     | 结果                                                                                                     |
-| -------- | -------------------------------------------------------------------------------------------------------- |
-| 签名团队 | `<team-id>`（Xcode 账户登录后可用）                                                                     |
-| 描述文件 | `iOS Team Provisioning Profile: io.implements.vela.ios`，2027-10-22 到期，已包含目标设备                  |
-| 签名校验 | `codesign --verify --deep --strict` 通过；`application-identifier` 为 `<team-id>.io.implements.vela.ios` |
-| 目标设备 | iPhone 17 Pro（已配对真机）                                                                              |
-| 安装     | `xcrun devicectl device install app` 成功，设备上显示 Vela 0.1.0 (1)                                     |
-| 启动     | `devicectl device process launch` 成功                                                                   |
+| 项目     | 结果                                                                                    |
+| -------- | --------------------------------------------------------------------------------------- |
+| 签名团队 | 组织团队（Xcode 已登录；团队 ID 不写入记录）                                            |
+| 描述文件 | `iOS Team Provisioning Profile: io.implements.vela.ios`，2027-10-22 到期，已包含目标设备 |
+| 签名校验 | `codesign --verify --deep --strict` 通过；`application-identifier` 与描述文件团队一致   |
+| 目标设备 | iPhone 17 Pro（已配对真机）                                                             |
+| 安装     | `xcrun devicectl device install app` 成功，设备上显示 Vela 0.1.0 (1)                    |
+| 启动     | `devicectl device process launch` 成功                                                  |
 
 构建命令：`DEVELOPMENT_TEAM=<team-id> sh scripts/build-ios.sh`。
 

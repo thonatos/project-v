@@ -87,8 +87,8 @@
 - [x] 10.3 实现用户可添加、编辑、删除和共享的 loopback HTTP 服务，拒绝非 loopback/非 HTTP 目标，并测试端口分配、探测、发布和持久化。
 - [x] 10.4 让远端 manifest、动态映射和 UI 支持任意已配置服务，并通过先添加设备后启用服务的刷新测试验证无需重新添加设备。
 - [x] 10.5 实现 DSH Web 认证 URL 的会话内提示、校验与映射 URL 转换，确保 token 不持久化并验证错误恢复。
-- [x] 10.6 使用紧凑 macOS 控件完成设备详情、tailnet 列表、服务管理和认证界面，先运行功能测试，再构建并安装到 `remote-mac`。
-- [x] 10.7 使用 NSH Tailwind 统一控制台视觉，提供设备、持久当前服务和设置图标导航；通过状态机测试验证切页不释放映射，并将 Tailscale 注册名修改与 DSH 可选认证流程部署到 `remote-mac`。
+- [x] 10.6 使用紧凑 macOS 控件完成设备详情、tailnet 列表、服务管理和认证界面，先运行功能测试，再构建并安装到 一台远程 Mac。
+- [x] 10.7 使用 NSH Tailwind 统一控制台视觉，提供设备、持久当前服务和设置图标导航；通过状态机测试验证切页不释放映射，并将 Tailscale 注册名修改与 DSH 可选认证流程部署到 一台远程 Mac。
 
 ## 11. PC 桌面界面全面重构
 
@@ -99,7 +99,7 @@
 - [x] 11.5 重建已打开服务列表和工作区：服务导航始终可达并先显示独立列表，点击条目才进入对应持久 WebView；保持多个映射与 WebView，关闭动作独立；移除顶部 tabs、二级 header、浏览器工具栏和重复在线状态。
 - [x] 11.6 重建桌面 Form Sheet：添加设备使用 640x520 Tailnet `List` + 手动输入并支持键盘选择/提交；添加服务使用 OpenCode、DSH、自定义 HTTP 预设选择；统一字段、错误、加载和按钮布局，不使用 mobile Card/Group/ListView/Button/Sheet/Stack。
 - [x] 11.7 完善 AppKit 桌面控件和可访问性：区分 primary/secondary/plain/danger，增加 popup/menu、tooltip、focus ring、非颜色状态、长文本截断和独立点击目标；通过键盘、焦点、空/加载/错误状态模型测试。
-- [x] 11.8 运行 Go race、Rust tests/clippy、NSH typecheck/release build、UI 状态测试和签名验证；在本机功能验收后备份并更新 `remote-mac:/Applications/Vela.app`，不使用截图或视觉基线作为验收。
+- [x] 11.8 运行 Go race、Rust tests/clippy、NSH typecheck/release build、UI 状态测试和签名验证；在本机功能验收后备份并更新 远程 Mac 的 `/Applications/Vela.app`，不使用截图或视觉基线作为验收。
 - [x] 11.9 按页面语义重建宽度规则：设备列表、详情与设置流式占满 PC 内容区，已打开服务列表使用居中 `760–840pt` 内容列，WebView 占满剩余空间，空状态作为页面直接 `flex-1` 子视图双向居中；将添加设备、设备改名、添加/编辑服务和 DSH 认证统一为固定 Header、伸缩 Body、底部 Footer 三段式 Form Sheet，并通过结构、类型、构建和签名测试后更新双机应用。
 
 ## 12. 外观、可观测性与调试
@@ -115,7 +115,7 @@
 - [x] 12.7 修复活动连接只匹配本机服务的缺陷：活动快照必须以当前实际映射为准，覆盖远端 manifest 提供的服务，并显示设备、服务、映射地址与引用计数；通过远端服务映射测试验证。
 - [x] 12.8 扩大日志覆盖范围：认证状态变化、远端刷新与兼容性失败、服务探测状态变化、共享发布与代理错误都必须写入脱敏日志；通过各失败路径测试验证。
 - [x] 12.9 修正设置页行为：外观与调试开关切换不得重建整页状态或丢失诊断数据，切回设置页必须保持当前选择；通过偏好与诊断状态测试验证。
-- [x] 12.6 运行 Go race、Rust tests/clippy、NSH typecheck/release build、UI 测试和签名验证，并在本机验收后更新 `remote-mac:/Applications/Vela.app`。
+- [x] 12.6 运行 Go race、Rust tests/clippy、NSH typecheck/release build、UI 测试和签名验证，并在本机验收后更新 远程 Mac 的 `/Applications/Vela.app`。
 - [x] 12.13 以系统浏览器取代内置 WebView：移除 `isolated_webview.rs` 与工作区挂载，转发改为长期开关并新增转发页面，映射地址交由默认浏览器打开并可复制；通过结构测试与运行验证。
 - [x] 12.14 为每个“设备 + 服务”派生 `<service>-<device>.localhost` 映射主机名，使共享的系统浏览器按 host 隔离 Cookie；放宽 DSH adapter 的 loopback authority 校验以接受该子域，并通过隔离、确定性与解析测试验证。
 - [x] 12.15 按工具定位重做视觉与窗口：窗口改为 `480×720` 竖向工具窗、转发行纵向堆叠、Form Sheet 不超过窗口宽度；配色改为暖白纸面 + 单一赭色强调，并引入 shadcn 式配对语义 token 与基础组件层，消除视图中的硬编码色值。
