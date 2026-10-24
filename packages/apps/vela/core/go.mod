@@ -1,4 +1,4 @@
-module github.com/thonatos/project-v/vela/core
+module github.com/thonatos/vela/core
 
 go 1.27.2
 

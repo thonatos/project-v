@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/thonatos/project-v/vela/core/internal/services"
+	"github.com/thonatos/vela/core/internal/services"
 )
 
 func TestEvaluateStateMatrix(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/thonatos/project-v/vela/core/internal/remoteclient"
+	"github.com/thonatos/vela/core/internal/remoteclient"
 )
 
 func manifestTestAddress(server *httptest.Server) (string, int) {

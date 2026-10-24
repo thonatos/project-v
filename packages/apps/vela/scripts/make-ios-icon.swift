@@ -1,5 +1,5 @@
 // Renders Vela's iOS app icon: the same sails and accent as the macOS icon
-// (`icon/AppIcon.icon`, whose `sails.svg` holds these scaled coordinates),
+// (`macos/app/AppIcon.icon`, whose `sails.svg` holds these scaled coordinates),
 // full bleed and opaque, because iOS applies its own corner mask and rejects
 // transparency. Output is exactly 1024 x 1024 px.
 //

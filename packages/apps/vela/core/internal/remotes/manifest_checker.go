@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/thonatos/project-v/vela/core/internal/manifest"
-	"github.com/thonatos/project-v/vela/core/internal/remoteclient"
+	"github.com/thonatos/vela/core/internal/manifest"
+	"github.com/thonatos/vela/core/internal/remoteclient"
 )
 
 // ManifestState is the most recent handshake result for one saved Mac.

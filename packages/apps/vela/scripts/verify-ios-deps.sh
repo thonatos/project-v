@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
 FORBIDDEN="publication sharing inbound authorization services"
-DEPS=$(go list -C core -deps ./mobile)
+DEPS=$(go list -C core -deps ./cmd/vela-mobile)
 
 for package in $FORBIDDEN; do
   if printf '%s\n' "$DEPS" | grep -Eq "/internal/${package}$"; then
@@ -15,12 +15,12 @@ for package in $FORBIDDEN; do
   fi
 done
 
-# The access core is the only place iOS obtains control services; keep the
+# The shared read-side core is the only place iOS obtains control services; keep the
 # check honest if it quietly starts importing a forbidden package.
-DEPS_ACCESS=$(go list -C core -deps ./internal/access)
+DEPS_ACCESS=$(go list -C core -deps ./internal/vela ./internal/iosabi)
 for package in $FORBIDDEN; do
   if printf '%s\n' "$DEPS_ACCESS" | grep -Eq "/internal/${package}$"; then
-    echo "iOS access core must not depend on internal/${package}" >&2
+    echo "iOS read-side core must not depend on internal/${package}" >&2
     exit 1
   fi
 done

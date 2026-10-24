@@ -28,7 +28,7 @@ esac
 
 # shellcheck disable=SC2086
 xcodebuild \
-  -project "$ROOT/ios/Vela.xcodeproj" \
+  -project "$ROOT/ios/app/Vela.xcodeproj" \
   -scheme Vela \
   -configuration "$CONFIGURATION" \
   -destination "$DESTINATION" \

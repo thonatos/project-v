@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/thonatos/project-v/vela/core/internal/manifest"
+	"github.com/thonatos/vela/core/internal/manifest"
 )
 
 func testClient(server *httptest.Server) (*http.Client, string, int) {

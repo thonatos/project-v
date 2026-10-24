@@ -5,8 +5,15 @@ ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 export TMPDIR="$ROOT/.tmp/runtime"
 mkdir -p "$TMPDIR"
 
+if [ -z "${NSH_SOURCE:-}" ] && [ -d "$HOME/.nsh/source" ]; then
+  # development.md asks developers to export NSH_SOURCE; fall back to the
+  # installer's documented checkout location so the scripts work out of the box.
+  NSH_SOURCE="$HOME/.nsh/source"
+  export NSH_SOURCE
+fi
+
 if [ -z "${NSH_SOURCE:-}" ]; then
-  echo "Vela's NSH Rust integration requires the global NSH_SOURCE environment variable" >&2
+  echo "Vela's NSH Rust integration requires NSH_SOURCE (or a checkout at ~/.nsh/source)" >&2
   exit 127
 fi
 

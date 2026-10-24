@@ -8,7 +8,7 @@ import (
 )
 
 func fixturePath(name string) string {
-	return filepath.Join("..", "..", "..", "protocol", "fixtures", name)
+	return filepath.Join("..", "..", "..", "shared", "protocol", "fixtures", name)
 }
 
 func TestValidFixturesRoundTrip(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/thonatos/project-v/vela/core/internal/protocol"
+	"github.com/thonatos/vela/core/internal/protocol"
 )
 
 // Server processes one request at a time and emits protocol records only to Out.

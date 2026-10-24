@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/thonatos/project-v/vela/core/internal/protocol"
+	"github.com/thonatos/vela/core/internal/protocol"
 )
 
 func TestControlLoopKeepsLogsOffStdout(t *testing.T) {

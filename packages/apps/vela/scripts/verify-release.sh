@@ -1,4 +1,6 @@
 #!/bin/sh
+# Release gate: the aggregate verification, then packaging and signing for
+# both clients. iOS packaging is unsigned unless DEVELOPMENT_TEAM is set.
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -12,21 +14,17 @@ run() {
   name=$1
   shift
   echo "==> $name"
-  "$@" >"$REPORTS/$name.log" 2>&1
+  if ! "$@" >"$REPORTS/$name.log" 2>&1; then
+    echo "verify-release: ${name} failed" >&2
+    tail -n 40 "$REPORTS/$name.log" >&2
+    exit 1
+  fi
 }
 
-run protocol-docs sh "$ROOT/scripts/verify-protocol-docs.sh"
-run documentation sh "$ROOT/scripts/verify-docs.sh"
-run theme node "$ROOT/ui/tests/theme.test.mjs"
-run ui-model node "$ROOT/ui/tests/view-model.test.mjs"
-run ui-layout node "$ROOT/ui/tests/desktop-layout.test.mjs"
-run nsh-check sh "$ROOT/scripts/nsh.sh" check "$ROOT/ui/App.tsx"
-run rust-format cargo fmt --manifest-path "$ROOT/Cargo.toml" --all --check
-run rust-test cargo test --manifest-path "$ROOT/Cargo.toml" --locked --workspace
-run rust-clippy cargo clippy --manifest-path "$ROOT/Cargo.toml" --locked --workspace --all-targets -- -D warnings
-run go-race go test -C "$ROOT/core" -race ./...
-run network-isolation sh "$ROOT/scripts/verify-network-isolation.sh"
+sh "$ROOT/scripts/verify.sh"
+
 run app-build sh "$ROOT/scripts/build-app.sh" "$BUILD"
 run app-signature codesign --verify --deep --strict --verbose=2 "$BUILD/Vela.app"
+run ios-build sh "$ROOT/scripts/build-ios.sh"
 
 echo "Vela release verification passed; reports: $REPORTS"

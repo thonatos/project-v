@@ -1,4 +1,8 @@
 #!/bin/sh
+# Verifies that the protocol document's examples are valid JSON and that the
+# real helper accepts the request examples. The document may be formatted at
+# any line width, so blocks are compacted with jq instead of being read line by
+# line.
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
@@ -9,16 +13,14 @@ trap 'rm -rf "$TMP"' EXIT INT TERM
 awk '
   /^```json$/ { json = 1; next }
   /^```$/ { json = 0; next }
-  json && /^\{/ { print }
-' "$ROOT/docs/control-protocol.md" > "$TMP/examples.jsonl"
+  json { print }
+' "$ROOT/docs/protocol.md" | jq -c . > "$TMP/examples.jsonl"
 
-while IFS= read -r line; do
-  printf '%s' "$line" | jq -e . >/dev/null
-done < "$TMP/examples.jsonl"
+test -s "$TMP/examples.jsonl" || { echo "protocol.md has no JSON examples" >&2; exit 1; }
 
-awk '!seen[$0]++ && /"type":"status.get"/' "$TMP/examples.jsonl" > "$TMP/input.jsonl"
-awk '!seen[$0]++ && /"type":"events.subscribe"/' "$TMP/examples.jsonl" >> "$TMP/input.jsonl"
-awk '!seen[$0]++ && /"type":"shutdown"/' "$TMP/examples.jsonl" >> "$TMP/input.jsonl"
+jq -c 'select(.type == "status.get")' "$TMP/examples.jsonl" | head -n 1 > "$TMP/input.jsonl"
+jq -c 'select(.type == "events.subscribe")' "$TMP/examples.jsonl" | head -n 1 >> "$TMP/input.jsonl"
+jq -c 'select(.type == "shutdown")' "$TMP/examples.jsonl" | head -n 1 >> "$TMP/input.jsonl"
 
 go build -C "$ROOT/core" -o "$TMP/vela-core" ./cmd/vela-core
 "$TMP/vela-core" < "$TMP/input.jsonl" > "$TMP/output.jsonl" 2> "$TMP/stderr.log"

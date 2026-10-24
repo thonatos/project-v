@@ -9,7 +9,7 @@ import (
 
 func TestRedactsSensitiveFixture(t *testing.T) {
 	t.Parallel()
-	contents, err := os.ReadFile(filepath.Join("..", "..", "..", "protocol", "fixtures", "sensitive-diagnostics.txt"))
+	contents, err := os.ReadFile(filepath.Join("..", "..", "..", "shared", "protocol", "fixtures", "sensitive-diagnostics.txt"))
 	if err != nil {
 		t.Fatal(err)
 	}

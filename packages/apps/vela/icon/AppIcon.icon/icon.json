@@ -1,5 +1,0 @@
-{
-  "fill" : { "solid" : "srgb:0.65882,0.28627,0.12157,1.00000" },
-  "groups" : [ { "layers" : [ { "image-name" : "sails.svg", "name" : "sails" } ] } ],
-  "supported-platforms" : { "squares" : "shared" }
-}

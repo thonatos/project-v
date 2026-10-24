@@ -2,7 +2,7 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
-SHARING="$ROOT/docs/sharing-and-dsh.md"
+SHARING="$ROOT/docs/sharing.md"
 GUIDE="$ROOT/docs/user-guide.md"
 
 fail() {
