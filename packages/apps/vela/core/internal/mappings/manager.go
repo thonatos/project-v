@@ -32,6 +32,12 @@ type RememberPort func(Key, int)
 // as the mapping URL scheme. Unknown or empty values map to "http".
 type ResolveProtocol func(Key) string
 
+// Address returns the host part of a mapping URL. The macOS app uses a
+// per-service `.localhost` name so a shared system browser scopes cookies per
+// service. iOS instead isolates by WKWebsiteDataStore and uses a bare
+// 127.0.0.1, which every service adapter already recognizes as loopback.
+type Address func(Key) string
+
 type Manager struct {
 	mu        sync.Mutex
 	mappings  map[Key]*Mapping
@@ -39,6 +45,7 @@ type Manager struct {
 	preferred PreferredPort
 	remember  RememberPort
 	protocol  ResolveProtocol
+	address   Address
 }
 
 func New(dial DialRemote) *Manager {
@@ -56,6 +63,21 @@ func (manager *Manager) WithStablePorts(preferred PreferredPort, remember Rememb
 func (manager *Manager) WithProtocols(resolve ResolveProtocol) *Manager {
 	manager.protocol = resolve
 	return manager
+}
+
+// WithAddress overrides the host used in mapping URLs (iOS uses 127.0.0.1).
+func (manager *Manager) WithAddress(address Address) *Manager {
+	manager.address = address
+	return manager
+}
+
+func (manager *Manager) host(key Key) string {
+	if manager.address != nil {
+		if value := manager.address(key); value != "" {
+			return value
+		}
+	}
+	return Hostname(key)
 }
 
 func (manager *Manager) scheme(key Key) string {
@@ -146,10 +168,13 @@ func (manager *Manager) Open(ctx context.Context, key Key) (string, error) {
 	}
 	dial := func(dialContext context.Context) (net.Conn, error) { return manager.dial(dialContext, key) }
 	proxies := []*tunnel.Proxy{tunnel.New(listener, dial), tunnel.New(listener6, dial)}
-	mapping := &Mapping{URL: fmt.Sprintf("%s://%s:%d", manager.scheme(key), Hostname(key), port), refs: 1, proxies: proxies}
+	mapping := &Mapping{URL: fmt.Sprintf("%s://%s:%d", manager.scheme(key), manager.host(key), port), refs: 1, proxies: proxies}
 	manager.mappings[key] = mapping
 	for _, proxy := range proxies {
-		go func() { _ = proxy.Serve(ctx) }()
+		// The mapping outlives the request that opened it. Its lifecycle is owned
+		// by Close/CloseAll (including iOS suspend), not by a short-lived control
+		// request or resume timeout context.
+		go func() { _ = proxy.Serve(context.Background()) }()
 	}
 	return mapping.URL, nil
 }

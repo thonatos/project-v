@@ -22,6 +22,28 @@ func TestBundleIdentifier(t *testing.T) {
 	if BundleID != "io.implements.vela.macos" {
 		t.Fatalf("BundleID = %q", BundleID)
 	}
+	if IOSBundleID != "io.implements.vela.ios" {
+		t.Fatalf("IOSBundleID = %q", IOSBundleID)
+	}
+}
+
+func TestIOSLayoutUsesApplicationSupportVela(t *testing.T) {
+	t.Parallel()
+	container := "/var/mobile/Containers/Data/Application/ABCDEF/Library/Application Support"
+	paths := FromApplicationSupport(container)
+	want := filepath.Join(container, "vela")
+	if paths.ApplicationSupport != want {
+		t.Fatalf("ApplicationSupport = %q, want %q", paths.ApplicationSupport, want)
+	}
+	if paths.Config != filepath.Join(want, "config.json") {
+		t.Fatalf("Config = %q", paths.Config)
+	}
+	if paths.NetworkState != filepath.Join(want, "network") {
+		t.Fatalf("NetworkState = %q", paths.NetworkState)
+	}
+	if !paths.OutsideBundle("/private/var/containers/Bundle/Application/ABCDEF/Vela.app") {
+		t.Fatal("iOS writable path escaped into the signed bundle")
+	}
 }
 
 func TestRejectsWritablePathInsideBundle(t *testing.T) {

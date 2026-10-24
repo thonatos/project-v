@@ -88,3 +88,45 @@ func TestAdaptListenerNormalizesDSHFirstRequest(t *testing.T) {
 		t.Fatalf("adapted request=%q", content)
 	}
 }
+
+func TestAdaptListenerNormalizesEveryKeptAliveRequest(t *testing.T) {
+	t.Parallel()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	adapted := AdaptListener{Listener: listener, Adapter: string(adapters.DSH)}
+	result := make(chan string, 1)
+	go func() {
+		connection, acceptErr := adapted.Accept()
+		if acceptErr != nil {
+			result <- acceptErr.Error()
+			return
+		}
+		defer connection.Close()
+		content, _ := io.ReadAll(connection)
+		result <- string(content)
+	}()
+	client, err := net.Dial("tcp", listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	host := "dsh-home.localhost:51612"
+	_, _ = io.WriteString(client, "POST /api/one HTTP/1.1\r\nHost: "+host+"\r\nContent-Length: 5\r\nCookie: dsh-auth-x=keep\r\n\r\nhello"+
+		"GET /api/two HTTP/1.1\r\nHost: "+host+"\r\nOrigin: http://"+host+"\r\n\r\n"+
+		"GET /ws HTTP/1.1\r\nHost: "+host+"\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n"+
+		"GET /raw-frame HTTP/1.1\r\nHost: "+host+"\r\n\r\n")
+	_ = client.(*net.TCPConn).CloseWrite()
+	content := <-result
+	_ = client.Close()
+	if strings.Count(content, "Host: 127.0.0.1:3080") != 3 {
+		t.Fatalf("every request before the upgrade must reach DSH with its loopback authority:\n%s", content)
+	}
+	if !strings.Contains(content, "hello") || !strings.Contains(content, "Cookie: dsh-auth-x=keep") || !strings.Contains(content, "Origin: http://127.0.0.1:3080") {
+		t.Fatalf("bodies, cookies and origins must survive:\n%s", content)
+	}
+	if !strings.Contains(content, "Host: "+host) {
+		t.Fatalf("bytes after an upgrade must pass through untouched:\n%s", content)
+	}
+}

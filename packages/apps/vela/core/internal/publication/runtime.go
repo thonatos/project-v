@@ -41,6 +41,18 @@ type Runtime struct {
 	definitions map[string]velaconfig.LocalService
 	control     *httpListener
 	services    *sharing.Reconciler
+	launchPath  LaunchPath
+}
+
+// LaunchPath returns the sign-in path a service currently publishes, or "" when
+// it has none. DSH uses it to hand its per-process launch token to authorized
+// devices; the result is read at manifest time and never stored.
+type LaunchPath func(velaconfig.LocalService) string
+
+// WithLaunchPath sets the hook that supplies a service's sign-in path.
+func (runtime *Runtime) WithLaunchPath(launchPath LaunchPath) *Runtime {
+	runtime.launchPath = launchPath
+	return runtime
 }
 
 // New creates a stopped publication runtime.
@@ -165,6 +177,11 @@ func (runtime *Runtime) ensureControl(ctx context.Context) error {
 					}
 					if parsed.RawQuery != "" {
 						path += "?" + parsed.RawQuery
+					}
+				}
+				if runtime.launchPath != nil {
+					if launch := runtime.launchPath(definition); launch != "" {
+						path = launch
 					}
 				}
 				items = append(items, manifest.Service{ID: id, Name: definition.Name, Protocol: protocol, Preset: definition.Preset, Port: definition.Port, Path: path, Available: runtime.health[id] == services.StateAvailable, Adapter: definition.Adapter})

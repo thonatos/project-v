@@ -167,6 +167,58 @@ func TestRuntimePublishesTCPServiceProtocolWithoutPath(t *testing.T) {
 	}
 }
 
+func TestRuntimePublishesCurrentLaunchPathPerManifestRequest(t *testing.T) {
+	t.Parallel()
+	node := &fakeNode{}
+	launch := "/?token=first"
+	var mu sync.Mutex
+	runtime := New(node, testAuthorizer).WithLaunchPath(func(service velaconfig.LocalService) string {
+		if service.ID != "dsh" {
+			return ""
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		return launch
+	})
+	health := map[string]services.State{"dsh": services.StateAvailable, "docs": services.StateAvailable}
+	definitions := []velaconfig.LocalService{
+		{ID: "dsh", Name: "DSH", Protocol: velaconfig.ProtocolHTTP, URL: "http://127.0.0.1:3080/", Port: 47846, Shared: true, Adapter: "dsh"},
+		{ID: "docs", Name: "Docs", Protocol: velaconfig.ProtocolHTTP, URL: "http://127.0.0.1:3000/guide", Port: 47848, Shared: true},
+	}
+	if err := runtime.Reconcile(context.Background(), true, true, definitions, health, "Home Mac"); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = runtime.Close() }()
+	node.mu.Lock()
+	control := node.listeners[0].Addr().String()
+	node.mu.Unlock()
+	fetch := func() map[string]manifest.Service {
+		response, err := http.Get("http://" + control + "/vela/v1/manifest")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+		var document manifest.Document
+		if err := json.NewDecoder(response.Body).Decode(&document); err != nil {
+			t.Fatal(err)
+		}
+		byID := map[string]manifest.Service{}
+		for _, service := range document.Services {
+			byID[service.ID] = service
+		}
+		return byID
+	}
+	if first := fetch(); first["dsh"].Path != "/?token=first" || first["docs"].Path != "/guide" {
+		t.Fatalf("first=%#v", first)
+	}
+	mu.Lock()
+	launch = "/?token=second"
+	mu.Unlock()
+	if second := fetch(); second["dsh"].Path != "/?token=second" {
+		t.Fatalf("a restarted DSH must be published without reconciling again, got %#v", second["dsh"])
+	}
+}
+
 func TestLocalAddressAcceptsLoopbackTCPTargets(t *testing.T) {
 	t.Parallel()
 	if address, err := localAddress("tcp://[::1]:22"); err != nil || address != "[::1]:22" {

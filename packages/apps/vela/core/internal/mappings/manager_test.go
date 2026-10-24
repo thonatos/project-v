@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestMappingIsStableReferenceCountedAndLoopbackOnly(t *testing.T) {
@@ -55,6 +56,36 @@ func TestMappingIsStableReferenceCountedAndLoopbackOnly(t *testing.T) {
 	}
 	if _, _, ok := manager.Snapshot(key); ok {
 		t.Fatal("mapping remained after final close")
+	}
+}
+
+func TestMappingOutlivesOpenRequestContext(t *testing.T) {
+	t.Parallel()
+	remote := echoServer(t)
+	manager := New(func(ctx context.Context, _ Key) (net.Conn, error) {
+		return (&net.Dialer{}).DialContext(ctx, "tcp", remote)
+	})
+	t.Cleanup(func() { _ = manager.CloseAll() })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	url, err := manager.Open(ctx, Key{Device: "home", Service: "opencode"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cancel()
+
+	port := strings.TrimPrefix(url, "http://opencode-home.localhost:")
+	connection, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", port), time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer connection.Close()
+	if _, err := connection.Write([]byte("v")); err != nil {
+		t.Fatal(err)
+	}
+	buffer := make([]byte, 1)
+	if _, err := io.ReadFull(connection, buffer); err != nil || buffer[0] != 'v' {
+		t.Fatalf("mapping died with request context: %v %q", err, buffer)
 	}
 }
 

@@ -45,6 +45,10 @@ type LocalService struct {
 	Port     int    `json:"port"`
 	Shared   bool   `json:"shared"`
 	Adapter  string `json:"adapter,omitempty"`
+	// AuthLog is the absolute path of DSH's output log. When set, the sharing
+	// Mac publishes DSH's current launch path so other devices sign in without
+	// knowing the token. Only DSH services use it.
+	AuthLog string `json:"authLog,omitempty"`
 }
 
 // RemoteMac is one user-saved Vela peer.
@@ -59,6 +63,7 @@ type Preferences struct {
 	Appearance     string `json:"appearance"`
 	PerformanceHUD bool   `json:"performanceHud"`
 	VerboseLogs    bool   `json:"verboseLogs"`
+	GravatarAvatar bool   `json:"gravatarAvatar"`
 }
 
 // MappingPort remembers the loopback port used for one remote service so the

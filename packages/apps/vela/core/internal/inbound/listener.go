@@ -3,9 +3,11 @@ package inbound
 
 import (
 	"bufio"
-	"bytes"
 	"context"
+	"io"
 	"net"
+	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/thonatos/project-v/vela/core/internal/adapters"
@@ -39,7 +41,7 @@ type AdaptListener struct {
 	Adapter string
 }
 
-// Accept wraps DSH connections so only their first request header is normalized.
+// Accept wraps DSH connections so every request header on them is normalized.
 func (listener AdaptListener) Accept() (net.Conn, error) {
 	connection, err := listener.Listener.Accept()
 	if err != nil {
@@ -51,38 +53,68 @@ func (listener AdaptListener) Accept() (net.Conn, error) {
 	return &adaptedConnection{Conn: connection, service: adapters.DSH}, nil
 }
 
+// adaptedConnection rewrites each HTTP/1.1 request a browser sends on one
+// kept-alive connection. Rewriting only the first request is not enough:
+// DSH binds its session cookie to the request authority, so a reused
+// connection would carry the mapping's own Host and be rejected. After a
+// protocol upgrade (WebSocket) the remaining bytes are passed through.
 type adaptedConnection struct {
 	net.Conn
 	service adapters.ServiceID
 	once    sync.Once
-	reader  *bufio.Reader
-	err     error
+	reader  *io.PipeReader
 }
 
 func (connection *adaptedConnection) Read(buffer []byte) (int, error) {
 	connection.once.Do(func() {
-		input := bufio.NewReader(connection.Conn)
-		header, err := adapters.RewriteHeaderBlock(connection.service, input)
-		if err != nil {
-			connection.err = err
-			return
-		}
-		connection.reader = bufio.NewReader(&joinedReader{first: bytes.NewReader(header), rest: input})
+		reader, writer := io.Pipe()
+		connection.reader = reader
+		go connection.rewrite(writer)
 	})
-	if connection.err != nil {
-		return 0, connection.err
-	}
 	return connection.reader.Read(buffer)
 }
 
-type joinedReader struct {
-	first *bytes.Reader
-	rest  *bufio.Reader
+// Close also stops the rewriting goroutine, which may be blocked writing.
+func (connection *adaptedConnection) Close() error {
+	if connection.reader != nil {
+		_ = connection.reader.Close()
+	}
+	return connection.Conn.Close()
 }
 
-func (reader *joinedReader) Read(buffer []byte) (int, error) {
-	if reader.first.Len() > 0 {
-		return reader.first.Read(buffer)
+func (connection *adaptedConnection) rewrite(output *io.PipeWriter) {
+	input := bufio.NewReader(connection.Conn)
+	for {
+		request, err := adapters.ReadRequest(connection.service, input)
+		if err != nil {
+			_ = output.CloseWithError(err)
+			return
+		}
+		err = request.Write(output)
+		_ = request.Body.Close()
+		if err != nil {
+			_ = output.CloseWithError(err)
+			return
+		}
+		if upgrades(request) {
+			_, err := input.WriteTo(output)
+			_ = output.CloseWithError(err)
+			return
+		}
 	}
-	return reader.rest.Read(buffer)
+}
+
+// upgrades reports whether the connection leaves HTTP/1.1 after this request.
+func upgrades(request *http.Request) bool {
+	if request.Method == http.MethodConnect {
+		return true
+	}
+	for _, value := range request.Header.Values("Connection") {
+		for _, token := range strings.Split(value, ",") {
+			if strings.EqualFold(strings.TrimSpace(token), "upgrade") {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -21,6 +21,7 @@ import (
 	velaconfig "github.com/thonatos/project-v/vela/core/internal/config"
 	"github.com/thonatos/project-v/vela/core/internal/control"
 	"github.com/thonatos/project-v/vela/core/internal/diagnostics"
+	"github.com/thonatos/project-v/vela/core/internal/dshauth"
 	"github.com/thonatos/project-v/vela/core/internal/manifest"
 	"github.com/thonatos/project-v/vela/core/internal/mappings"
 	velanetwork "github.com/thonatos/project-v/vela/core/internal/network"
@@ -104,6 +105,35 @@ func main() {
 			}
 		},
 	)
+	// dshLaunch reads DSH's current launch path from its output log at manifest
+	// time. Only the outcome is journaled, once per change, never the token.
+	var dshLaunchMu sync.Mutex
+	dshLaunchState := map[string]string{}
+	dshLaunch := func(service velaconfig.LocalService) (string, string) {
+		if service.Adapter != string(adapters.DSH) || service.AuthLog == "" {
+			return "", ""
+		}
+		path, err := dshauth.LaunchPath(service.AuthLog, service.URL)
+		state := "ready"
+		switch {
+		case errors.Is(err, dshauth.ErrNotFound):
+			state = "missing"
+		case err != nil:
+			state = "unreadable"
+		}
+		dshLaunchMu.Lock()
+		changed := dshLaunchState[service.ID] != state
+		dshLaunchState[service.ID] = state
+		dshLaunchMu.Unlock()
+		if changed {
+			if err != nil {
+				journal.Record("warn", "service", fmt.Sprintf("%s sign-in link unavailable: %v", service.ID, err))
+			} else {
+				journal.Record("info", "service", fmt.Sprintf("%s sign-in link is published", service.ID))
+			}
+		}
+		return path, state
+	}
 	prober := services.NewProber()
 	probeServices := func(ctx context.Context) ([]map[string]any, map[string]services.State) {
 		config := store.Snapshot()
@@ -112,7 +142,12 @@ func main() {
 		for _, service := range config.Services {
 			result := prober.Probe(ctx, services.Service{ID: service.ID, Name: service.Name, Protocol: service.Protocol, URL: service.URL, Timeout: 2 * time.Second})
 			health[service.ID] = result.State
-			items = append(items, map[string]any{"id": service.ID, "name": service.Name, "protocol": service.Protocol, "preset": service.Preset, "url": service.URL, "port": service.Port, "adapter": service.Adapter, "state": result.State, "shared": service.Shared})
+			item := map[string]any{"id": service.ID, "name": service.Name, "protocol": service.Protocol, "preset": service.Preset, "url": service.URL, "port": service.Port, "adapter": service.Adapter, "state": result.State, "shared": service.Shared}
+			if service.AuthLog != "" {
+				_, link := dshLaunch(service)
+				item["authLog"], item["authLink"] = service.AuthLog, link
+			}
+			items = append(items, item)
 		}
 		return items, health
 	}
@@ -133,6 +168,10 @@ func main() {
 			return authorization.Authorizer{}, errors.New("private network owner is unavailable")
 		}
 		return authorization.Authorizer{Resolver: client, Policy: authorization.Policy{OwnerLogin: owner.LoginName, AllowedDevices: map[string]bool{}}}, nil
+	})
+	publications.WithLaunchPath(func(service velaconfig.LocalService) string {
+		path, _ := dshLaunch(service)
+		return path
 	})
 	networkAndDevice := func(ctx context.Context) (velanetwork.AuthState, error) {
 		auth, err := authController()
@@ -237,9 +276,19 @@ func main() {
 	server := control.Server{
 		In: os.Stdin, Out: os.Stdout, Logger: logger,
 		OpenMapping: func(ctx context.Context, device, service string) (string, error) {
-			if _, ok := resolveRemotePort(device, service); !ok {
+			published, ok := resolveRemoteService(device, service)
+			if !ok {
 				journal.Record("error", "mapping", fmt.Sprintf("%s/%s is not currently published", device, service))
 				return "", errors.New("remote service is not currently published")
+			}
+			if published.Adapter == string(adapters.DSH) {
+				// DSH issues a new launch token whenever it restarts, so fetch the
+				// current one; a failed refresh keeps the cached manifest.
+				if _, err := remoteChecker.Check(ctx, device); err == nil {
+					if fresh, ok := resolveRemoteService(device, service); ok {
+						published = fresh
+					}
+				}
 			}
 			base, err := manager.Open(ctx, mappings.Key{Device: device, Service: service})
 			if err != nil {
@@ -247,7 +296,7 @@ func main() {
 				return "", err
 			}
 			journal.Record("info", "mapping", fmt.Sprintf("opened %s/%s", device, service))
-			if published, ok := resolveRemoteService(device, service); ok && published.Protocol != manifest.ProtocolTCP && published.Path != "" && published.Path != "/" {
+			if published.Protocol != manifest.ProtocolTCP && published.Path != "" && published.Path != "/" {
 				return strings.TrimSuffix(base, "/") + published.Path, nil
 			}
 			return base, nil
@@ -416,6 +465,8 @@ func main() {
 			var payload struct {
 				ID, Name, URL, Adapter, Protocol, Preset string
 				Shared                                   bool
+				// AuthLog is optional so callers that only toggle sharing keep it.
+				AuthLog *string
 			}
 			if err := json.Unmarshal(raw, &payload); err != nil {
 				return nil, err
@@ -430,6 +481,10 @@ func main() {
 				return nil, errors.New("service name is required")
 			}
 			if err := services.ValidateTarget(payload.Protocol, payload.URL); err != nil {
+				return nil, err
+			}
+			target, err := services.TargetKey(payload.Protocol, payload.URL)
+			if err != nil {
 				return nil, err
 			}
 			if payload.Adapter != "" && payload.Adapter != string(adapters.OpenCode) && payload.Adapter != string(adapters.DSH) {
@@ -447,11 +502,28 @@ func main() {
 			if (webPreset && payload.Protocol != velaconfig.ProtocolHTTP) || (tcpPreset && payload.Protocol != velaconfig.ProtocolTCP) {
 				return nil, errors.New("service preset does not match protocol")
 			}
+			authLog := ""
+			if payload.AuthLog != nil && strings.TrimSpace(*payload.AuthLog) != "" {
+				if payload.Adapter != string(adapters.DSH) {
+					return nil, errors.New("only DSH services can read a sign-in log")
+				}
+				expanded, err := dshauth.ExpandPath(*payload.AuthLog, home)
+				if err != nil {
+					return nil, err
+				}
+				authLog = expanded
+			}
 			if err := store.Update(func(config *velaconfig.Config) error {
 				index := slices.IndexFunc(config.Services, func(service velaconfig.LocalService) bool { return service.ID == payload.ID })
 				if index >= 0 {
 					config.Services[index].Name, config.Services[index].URL, config.Services[index].Shared = payload.Name, payload.URL, payload.Shared
 					config.Services[index].Adapter, config.Services[index].Protocol, config.Services[index].Preset = payload.Adapter, payload.Protocol, payload.Preset
+					if payload.AuthLog != nil {
+						config.Services[index].AuthLog = authLog
+					}
+					if config.Services[index].Adapter != string(adapters.DSH) {
+						config.Services[index].AuthLog = ""
+					}
 					return nil
 				}
 				id, port := velaconfig.NextServiceID(*config, payload.Name), velaconfig.NextServicePort(*config)
@@ -460,13 +532,19 @@ func main() {
 				} else if payload.Adapter == string(adapters.DSH) {
 					id, port = "dsh", velaconfig.DSHPort
 				}
+				if conflict := slices.IndexFunc(config.Services, func(service velaconfig.LocalService) bool {
+					key, err := services.TargetKey(service.Protocol, service.URL)
+					return err == nil && key == target
+				}); conflict >= 0 {
+					return fmt.Errorf("已经有服务指向 %s（%s），请直接编辑它", target, config.Services[conflict].Name)
+				}
 				if port == 0 {
 					return errors.New("no Vela service ports available")
 				}
 				if slices.ContainsFunc(config.Services, func(service velaconfig.LocalService) bool { return service.ID == id || service.Port == port }) {
 					return errors.New("service preset already exists")
 				}
-				config.Services = append(config.Services, velaconfig.LocalService{ID: id, Name: payload.Name, Protocol: payload.Protocol, Preset: payload.Preset, URL: payload.URL, Port: port, Shared: payload.Shared, Adapter: payload.Adapter})
+				config.Services = append(config.Services, velaconfig.LocalService{ID: id, Name: payload.Name, Protocol: payload.Protocol, Preset: payload.Preset, URL: payload.URL, Port: port, Shared: payload.Shared, Adapter: payload.Adapter, AuthLog: authLog})
 				return nil
 			}); err != nil {
 				return nil, err

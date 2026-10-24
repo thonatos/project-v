@@ -56,14 +56,25 @@ func RewriteRequest(service ServiceID, request *http.Request) error {
 	return nil
 }
 
-// RewriteHeaderBlock applies policy to the first HTTP request while preserving
-// Cookie and Upgrade headers byte-for-byte through net/http serialization.
-func RewriteHeaderBlock(service ServiceID, input *bufio.Reader) ([]byte, error) {
+// ReadRequest reads one request from input and applies the service's policy.
+// The body is left unread so the caller can stream it.
+func ReadRequest(service ServiceID, input *bufio.Reader) (*http.Request, error) {
 	request, err := http.ReadRequest(input)
 	if err != nil {
 		return nil, fmt.Errorf("read service request: %w", err)
 	}
 	if err := RewriteRequest(service, request); err != nil {
+		_ = request.Body.Close()
+		return nil, err
+	}
+	return request, nil
+}
+
+// RewriteHeaderBlock applies policy to the first HTTP request while preserving
+// Cookie and Upgrade headers byte-for-byte through net/http serialization.
+func RewriteHeaderBlock(service ServiceID, input *bufio.Reader) ([]byte, error) {
+	request, err := ReadRequest(service, input)
+	if err != nil {
 		return nil, err
 	}
 	var output strings.Builder
