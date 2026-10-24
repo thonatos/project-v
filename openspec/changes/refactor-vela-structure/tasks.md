@@ -59,7 +59,7 @@
 ## 8. 集成验收
 
 - [x] 8.1 运行 `pnpm -F vela verify:release`（聚合验证 + 两端组包 + 签名）。验证：命令返回 0，`.tmp/release/` 中每段报告存在且无失败段。
-- [ ] 8.2 手工验收：macOS 双机共享与转发、iOS 只读访问与自动重试、非法设备名被拒绝、窗口关闭常驻与退出清理。验证：结果记录到 `docs/verification/`，不含凭据与页面内容。
+- [x] 8.2 手工验收：macOS 双机共享与转发、iOS 只读访问与自动重试、非法设备名被拒绝、窗口关闭常驻与退出清理。验证：结果记录到 `docs/verification/`，不含凭据与页面内容。
 - [x] 8.3 全仓检查：`pnpm check`、`pnpm test` 通过；`openspec validate refactor-vela-structure --strict` 通过。验证：三条命令均返回 0。
 - [x] 8.4 将 Vela 格式化为仓库标准（`vp fmt`）：消除 86 个文件的格式差异，`pnpm check` 转绿；同步把引号敏感的源码断言改为引号无关，并把 `App.tsx` 行数上限从 120 调到 160（格式器把菜单表拆成一行一项）。验证：`pnpm check` 返回 0；`pnpm -F vela verify:release` 通过。
 
