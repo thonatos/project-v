@@ -33,10 +33,30 @@ DSH 会校验 Host、Origin 与可信 authority。访问端通过 Vela 的 `<服
 
 若 DSH 明确返回 trusted-host 拒绝，应按 DSH 当前版本的提示，将 Vela 显示的私人 authority 加入 trusted hosts；该设置属于 DSH，不由 Vela 静默修改。
 
-启动示例：
+### 登录链接
+
+DSH 每次启动都会生成新的 launch token，并在标准输出打印一次 `dsh web: http://127.0.0.1:3080/?token=…`。浏览器打开它后，DSH 下发自己签名的 Cookie（默认 30 天，DSH 重启后仍有效）。
+
+在共享端编辑 DSH 服务时填写「DSH 输出日志」，Vela 会：
+
+- 每次返回清单时读取该文件末尾 64 KiB 中最新一条端口匹配的启动行，只接受 loopback 根路径加单个 `token` 参数的形式；
+- 把 `/?token=…` 作为 DSH 的打开路径发给已通过 WhoIs 授权的设备，清单端口本身与服务端口一样受授权保护；
+- 不把 token 写入 `config.json`、日志或诊断，日志只记录“已获取 / 未找到 / 无法读取”的状态变化。
+
+访问端（macOS 与 iOS）打开 DSH 转发前会重新拉取清单，因此 DSH 重启后也拿到当前 token。
+
+这让所有已授权设备都能登录 DSH，DSH 的 token 不再是 Tailscale 授权之外的第二道关卡。只在共享给你自己的设备时启用。
+
+以 launchd 托管 DSH 时，日志路径就是 plist 里的 `StandardOutPath`：
 
 ```sh
-dsh web --port 3080 --no-open
+plutil -extract StandardOutPath raw ~/Library/LaunchAgents/<label>.plist
+```
+
+手动启动示例：
+
+```sh
+dsh --profile web --port 3080 --no-open > ~/.dsh/logs/web.stdout.log
 ```
 
 验证本机服务：

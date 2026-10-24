@@ -145,7 +145,11 @@ Host home-mac
 
 OpenCode 首次转发时使用它自己的配对页面，配对后的 Cookie 由浏览器按该地址保存。
 
-DSH 保留自己的 token/Cookie 与 Host/Origin 检查。开始转发 DSH 时 Vela 会询问认证 URL：可以选择「直接转发」，或运行 `dsh web` 后把它输出的 loopback URL 粘贴进来。Vela 只把其中的路径和查询应用到本次转发，不保存 URL 或 token。
+DSH 保留自己的 token/Cookie 与 Host/Origin 检查。DSH 的登录链接只在共享 DSH 的那台 Mac 上设置：编辑 DSH 服务时填写「DSH 输出日志」，即 `dsh --profile web` 的标准输出文件（例如 launchd 的 `StandardOutPath`）。Vela 每次被询问清单时读取其中最新一行 `dsh web: http://127.0.0.1:<端口>/?token=…`，把 `/?token=…` 作为该服务的打开路径发给已授权设备；DSH 重启换了 token 也会自动跟上。
+
+转发 DSH 的设备不需要知道 token，打开转发时会先拉取最新的打开路径，浏览器用它换得 DSH 自己的登录 Cookie。不填日志时，转发直接打开 DSH，需要该浏览器已有有效 Cookie。
+
+Vela 不把 token 写入 `config.json`、日志或诊断；但任何通过 Vela 授权的设备都能拿到它，等同于获得 DSH 的登录权限。只在共享给你自己的设备时填写。
 
 出现 authority 拒绝时，按提示配置 DSH 信任的地址，不要关闭 DSH 的认证或来源检查。详见 `sharing-and-dsh.md`。
 

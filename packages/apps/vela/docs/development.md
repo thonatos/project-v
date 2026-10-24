@@ -6,21 +6,28 @@ Vela 的构建工具和网络依赖必须使用以下精确版本，以避免 NS
 |---|---|
 | macOS | 14.0 或更高版本 |
 | Xcode Command Line Tools | 与当前 macOS SDK 配套的稳定版本 |
-| NSH CLI 与 runtime | `v0.1.1` |
+| NSH CLI 与 runtime | `v0.2.0` |
 | Rust | `1.98.1` |
 | Go | `1.27.2` |
 | `tailscale.com` / `tsnet` | `v1.104.1` |
-| NSH Rust crates | crates.io `=0.1.1`；NSH 生成 workspace 由 `NSH_SOURCE` patch 到 tag revision `21101386fb4e7fd8d1ded3b740c5756240181d0e` |
+| NSH Rust crates | crates.io `=0.2.0`（`nsh-core`、`nsh-platform-macos`、`nsh-base`）；NSH 生成 workspace 由 `NSH_SOURCE` patch 到 tag revision `669b62b11449b2ab787b7c82649a392cbff25b8f` |
 
 ## 安装 NSH
 
 NSH 不进入 npm 依赖。使用官方安装器安装与 `.nsh-version` 一致的版本：
 
 ```sh
-NSH_VERSION=v0.1.1 curl -fsSL https://nsh.dev/install.sh | sh
+NSH_VERSION=v0.2.0 curl -fsSL https://nsh.dev/install.sh | sh
 ```
 
 项目脚本优先使用 `PATH` 中的 `nsh`，否则使用 `~/.nsh/bin/nsh`。脚本不会自动下载或升级工具。
+
+带 Rust crate 的构建还需要 `NSH_SOURCE` 指向与 `.nsh-version` 同 tag 的 NSH 源码 checkout；发行安装器不包含源码，需要单独检出：
+
+```sh
+git clone --depth 1 --branch v0.2.0 https://github.com/longbridge/nsh ~/.nsh/source
+export NSH_SOURCE="$HOME/.nsh/source"
+```
 
 ## 验证依赖
 

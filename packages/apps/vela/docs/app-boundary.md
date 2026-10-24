@@ -25,7 +25,7 @@ Bundle ID 固定为 `io.implements.vela.macos`，最低运行环境为 macOS 14�
 ~/Library/Logs/Vela/
 ```
 
-- `config.json`：远程 Mac 与共享选择，不存储服务密码、Cookie 或长期 Tailscale auth key。
+- `config.json`：远程 Mac 与共享选择，以及可选的 DSH 输出日志路径；不存储服务密码、token、Cookie 或长期 Tailscale auth key。
 - `network/`：嵌入式 Tailscale node 身份和状态。
 - `web-data/`：每个设备与服务的 WebKit profile 元数据；实际 WebKit store 由系统管理。
 - `Logs/Vela/`：脱敏后的 Core 诊断日志。

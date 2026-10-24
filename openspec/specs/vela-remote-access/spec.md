@@ -126,9 +126,19 @@ Vela MUST（必须）在已保存设备的 manifest 发生变化后刷新服务�
 - **THEN** 服务必须出现在原设备下且可建立映射
 
 ### Requirement: DSH Web 认证恢复
-Vela MUST（必须）只对标记为 DSH adapter 的服务显示 Web 认证提示；认证 URL 必须是可选项，用户可以直接尝试原生页面，或粘贴 `dsh web` 输出的 loopback URL。Vela 只将路径和查询参数应用到当前本地映射，不得持久化 URL、token 或绕过 DSH 认证。非 DSH 服务不得显示该提示。
+Vela MUST（必须）由共享 DSH 的 Mac 提供登录链接，访问端不得要求用户输入 DSH URL 或 token。共享端可为 DSH adapter 服务配置 DSH 输出日志路径；Vela 必须在每次返回 manifest 时读取其中最新一条与服务端口匹配的 `dsh web` loopback 启动地址，只把 `/?token=…` 作为该服务的打开路径发布给已授权设备。token 不得写入配置、日志或诊断。访问端打开 DSH 映射前必须重新拉取 manifest，刷新失败时使用缓存。非 DSH 服务不得配置或发布登录链接。
 
-#### Scenario: 使用会话内 DSH 认证 URL
-- **GIVEN** 用户打开标记为 DSH adapter 的远端服务且原生页面需要认证
-- **WHEN** 用户粘贴 `dsh web` 输出的 loopback URL
-- **THEN** Vela 必须只把其路径和查询应用到当前映射，并且不得保存 URL 或 token
+#### Scenario: 访问端自动登录 DSH
+- **GIVEN** 共享端已为 DSH 配置输出日志，且日志中有当前进程的启动地址
+- **WHEN** 访问端开始转发该 DSH 服务
+- **THEN** 映射地址必须带上当前 `/?token=…`，访问端不得弹出认证输入
+
+#### Scenario: DSH 重启后 token 变化
+- **GIVEN** 访问端已缓存旧 manifest，而 DSH 重启后打印了新 token
+- **WHEN** 访问端再次打开 DSH 映射
+- **THEN** Vela 必须先刷新 manifest，并使用新 token
+
+#### Scenario: 未配置日志
+- **GIVEN** 共享端未配置 DSH 输出日志
+- **WHEN** 访问端转发 DSH
+- **THEN** Vela 必须直接打开 DSH 根路径，由 DSH 依据已有 Cookie 决定是否放行
