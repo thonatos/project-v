@@ -25,11 +25,11 @@ echo "building Go Core for iOS device (arm64)"
 # build would reuse the device objects (identical command line, different
 # clang target).
 IOS_SDK=iphoneos CGO_CFLAGS="-O2 -g -DVELA_IOS_DEVICE=1" \
-  go build -C "$ROOT/core" -buildmode=c-archive -o "$OUT/device/libvela-core.a" ./cmd/vela-mobile
+  go build -C "$ROOT/core" -trimpath -buildmode=c-archive -o "$OUT/device/libvela-core.a" ./cmd/vela-mobile
 
 echo "building Go Core for iOS simulator (arm64)"
 IOS_SDK=iphonesimulator CGO_CFLAGS="-O2 -g -DVELA_IOS_SIMULATOR=1" \
-  go build -C "$ROOT/core" -buildmode=c-archive -o "$OUT/simulator/libvela-core.a" ./cmd/vela-mobile
+  go build -C "$ROOT/core" -trimpath -buildmode=c-archive -o "$OUT/simulator/libvela-core.a" ./cmd/vela-mobile
 
 lipo -info "$OUT/device/libvela-core.a"
 lipo -info "$OUT/simulator/libvela-core.a"

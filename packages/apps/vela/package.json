@@ -7,7 +7,7 @@
     "build": "pnpm run build:ui && pnpm run build:host && pnpm run build:core",
     "build:ui": "sh scripts/nsh.sh build macos/ui/App.tsx --release -o build/ui",
     "build:host": "cargo build --manifest-path Cargo.toml --package vela-host",
-    "build:core": "mkdir -p build/core && go build -C core -o ../build/core/vela-core ./cmd/vela-core",
+    "build:core": "mkdir -p build/core && go build -C core -trimpath -o ../build/core/vela-core ./cmd/vela-core",
     "build:app": "sh scripts/build-app.sh",
     "check": "pnpm run check:ui && pnpm run check:host && pnpm run check:core",
     "check:ui": "sh scripts/nsh.sh check macos/ui/App.tsx",

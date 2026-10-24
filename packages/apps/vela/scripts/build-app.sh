@@ -14,6 +14,9 @@ rm -rf "$OUT"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Helpers" "$CONTENTS/Resources/nsh/assets"
 
 sh "$ROOT/scripts/nsh.sh" build "$ROOT/macos/ui/App.tsx" --release -o "$OUT/ui"
+# Remap the build machine's paths so panic locations and debug info in the
+# shipped binary do not reveal the developer's home directory.
+export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$ROOT=/vela --remap-path-prefix=$HOME=/home/user"
 cargo build --manifest-path "$ROOT/Cargo.toml" --locked --release --package vela-host
 go build -C "$ROOT/core" -trimpath -o "$CONTENTS/Helpers/vela-core" ./cmd/vela-core
 
