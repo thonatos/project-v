@@ -466,3 +466,39 @@
   --tw-prose-th-borders: var(--color-border);
   --tw-prose-td-borders: var(--color-border);
 }
+
+/* 去掉 typography 插件给行内代码加的 ` 装饰，站点自带 chip 样式 */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+/* 单元格内的长词允许折行，避免窄屏下撑破正文列 */
+.prose th,
+.prose td {
+  overflow-wrap: anywhere;
+}
+
+/* typography 插件默认把首列左内边距、末列右内边距清零，会让文字贴边；
+   这里恢复成与其他单元格一致的内边距 */
+.prose thead th:first-child,
+.prose tbody td:first-child {
+  padding-inline-start: 0.571429em;
+}
+
+.prose thead th:last-child,
+.prose tbody td:last-child {
+  padding-inline-end: 0.571429em;
+}
+
+/* Mermaid 图自适应正文宽度 */
+.prose pre.mermaid {
+  overflow-x: auto;
+}
+
+.prose pre.mermaid svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}

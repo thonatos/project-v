@@ -38,7 +38,8 @@ export default function DocPage({ loaderData }: Route.ComponentProps) {
       </header>
 
       <article className="prose max-w-none">
-        <div dangerouslySetInnerHTML={{ __html: loaderData.content }} />
+        {/* Mermaid 会在 hydration 后改写这段 DOM，忽略服务端与客户端的内联 HTML 差异 */}
+        <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: loaderData.content }} />
       </article>
     </DocLayout>
   );
