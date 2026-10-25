@@ -17,6 +17,18 @@ release.json
 - `release.json` 记录版本、commit、组件、平台、架构、系统要求和签名状态。
 - GitHub Artifact Attestation 证明 ZIP 由本仓库的 GitHub Actions 从对应 tag 构建。
 
+## 编写版本说明
+
+每个版本必须先添加独立的版本说明：
+
+```text
+releases/X.Y.Z.md
+```
+
+该文件只写本版本的产品摘要、更新内容、修复和已知限制，不写一级标题，也不重复“下载”“macOS 安装”“验证下载”等通用区块。发布流水线根据 tag 读取同版本文件，并自动追加标题、资产表格、安装步骤、签名状态、SHA-256、Artifact Attestation 和源代码链接。
+
+版本说明缺失、为空、包含 `TODO`/`TBD`/`FIXME` 或覆盖保留区块时，Release 组装必须失败。这样每个版本的变化由维护者明确撰写，平台和安全信息则保持统一。
+
 ## 验证下载
 
 把 ZIP 与 `SHA256SUMS` 下载到同一目录后运行：

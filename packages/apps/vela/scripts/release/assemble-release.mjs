@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   RELEASE_SCHEMA_VERSION,
   createReleaseManifest,
@@ -11,6 +11,8 @@ import {
 } from './release-manifest.mjs';
 
 const REPOSITORY_URL = 'https://github.com/thonatos/project-v';
+const DEFAULT_RELEASES_DIRECTORY = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../releases');
+const RESERVED_RELEASE_HEADINGS = new Set(['下载', 'macOS 安装', '验证下载']);
 
 function compareText(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -33,19 +35,34 @@ function artifactLabel(artifact) {
   return `${artifact.component} / ${artifact.platform} / ${artifact.architecture}`;
 }
 
-export function createReleaseNotes(manifest) {
+export function readVersionNotes(version, releasesDirectory = DEFAULT_RELEASES_DIRECTORY) {
+  const file = path.join(releasesDirectory, `${version}.md`);
+  let contents;
+  try {
+    contents = fs.readFileSync(file, 'utf8').trim();
+  } catch (error) {
+    if (error.code === 'ENOENT') fail(`缺少版本说明：${file}`);
+    throw error;
+  }
+  if (contents === '') fail(`版本说明不能为空：${file}`);
+  if (/^# /mu.test(contents)) fail(`版本说明不得包含一级标题，标题由发布模板生成：${file}`);
+  for (const match of contents.matchAll(/^##\s+(.+)$/gmu)) {
+    if (RESERVED_RELEASE_HEADINGS.has(match[1].trim())) {
+      fail(`版本说明不得覆盖保留区块“${match[1].trim()}”：${file}`);
+    }
+  }
+  if (/\b(?:TODO|TBD|FIXME)\b|<!--|-->/iu.test(contents)) {
+    fail(`版本说明包含占位内容：${file}`);
+  }
+  if (!/[\p{L}\p{N}]/u.test(contents)) fail(`版本说明缺少有效内容：${file}`);
+  return contents;
+}
+
+export function createReleaseNotes(manifest, versionNotes) {
   const lines = [
     `# Vela ${manifest.version}`,
     '',
-    'Vela 的首个公开版本。它让同一 Tailnet 中的设备安全访问 Mac 上运行的本地开发服务：Mac 负责服务共享与转发，其他 Mac 和 iPhone 可以发现设备并打开已授权的服务。',
-    '',
-    '## 主要功能',
-    '',
-    '- 共享 Mac 上的 HTTP 与 TCP loopback 服务，包括 OpenCode、DSH、SSH、Redis、MySQL、PostgreSQL 和自定义服务。',
-    '- 通过内嵌 tsnet 加入用户自己的 Tailnet，不安装系统 VPN 或 Network Extension，也不修改系统代理、DNS 和路由。',
-    '- 发现并管理其他 Vela 设备，为远端服务建立稳定的本地转发地址。',
-    '- 使用独立的 `.localhost` 主机名隔离不同设备和服务的 Cookie 与 localStorage。',
-    '- 提供连接状态、运行日志和脱敏诊断；认证 URL、密钥、Cookie 和页面内容不会写入诊断。',
+    versionNotes,
     '',
     '## 下载',
     '',
@@ -126,7 +143,11 @@ function assertOutputAvailable(outputDirectory) {
   if (fs.readdirSync(outputDirectory).length !== 0) fail(`输出目录必须不存在或为空：${outputDirectory}`);
 }
 
-export function assembleRelease({ builderDirectories, outputDirectory }) {
+export function assembleRelease({
+  builderDirectories,
+  outputDirectory,
+  releasesDirectory = DEFAULT_RELEASES_DIRECTORY,
+}) {
   if (!Array.isArray(builderDirectories) || builderDirectories.length === 0) {
     fail('至少需要一个平台 builder 输出目录');
   }
@@ -149,6 +170,7 @@ export function assembleRelease({ builderDirectories, outputDirectory }) {
       artifacts.push(artifact);
     }
   }
+  const versionNotes = readVersionNotes(identity.version, releasesDirectory);
 
   const resolvedOutput = path.resolve(outputDirectory);
   assertOutputAvailable(resolvedOutput);
@@ -171,7 +193,7 @@ export function assembleRelease({ builderDirectories, outputDirectory }) {
   const manifest = createReleaseManifest(descriptor, resolvedOutput);
   fs.writeFileSync(path.join(resolvedOutput, 'SHA256SUMS'), createSha256Sums(manifest.artifacts));
   fs.writeFileSync(path.join(resolvedOutput, 'release.json'), serializeReleaseManifest(manifest));
-  fs.writeFileSync(path.join(resolvedOutput, 'release-notes.md'), createReleaseNotes(manifest));
+  fs.writeFileSync(path.join(resolvedOutput, 'release-notes.md'), createReleaseNotes(manifest, versionNotes));
 
   const requiredFiles = [
     'SHA256SUMS',

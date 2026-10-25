@@ -22,6 +22,12 @@ function temporaryDirectory(name) {
   return directory;
 }
 
+function releaseNotesDirectory(version = '0.1.0', contents) {
+  const directory = temporaryDirectory('version-notes');
+  if (contents !== undefined) fs.writeFileSync(path.join(directory, `${version}.md`), contents);
+  return directory;
+}
+
 test.after(() => {
   for (const directory of temporaryRoots) fs.rmSync(directory, { recursive: true, force: true });
 });
@@ -71,14 +77,20 @@ test('统一入口生成稳定排序的校验和、清单与中文发布说明',
   const linux = prepareBuilder('linux-node');
   const firstOutput = path.join(temporaryDirectory('assemble-first'), 'release');
   const secondOutput = path.join(temporaryDirectory('assemble-second'), 'release');
+  const releasesDirectory = releaseNotesDirectory(
+    '0.1.0',
+    '此版本说明来自独立版本文件。\n\n## 更新内容\n\n- 增加可验证的发布资产。\n',
+  );
 
   const manifest = assembleRelease({
     builderDirectories: [linux.builder, macos.builder],
     outputDirectory: firstOutput,
+    releasesDirectory,
   });
   assembleRelease({
     builderDirectories: [macos.builder, linux.builder],
     outputDirectory: secondOutput,
+    releasesDirectory,
   });
 
   const runtimeFiles = manifest.artifacts.map(({ file }) => file).sort();
@@ -111,17 +123,42 @@ test('统一入口生成稳定排序的校验和、清单与中文发布说明',
   assert.match(notes, /未使用 Apple Developer ID 签名/u);
   assert.match(notes, /未经 Apple 公证/u);
   assert.doesNotMatch(notes, /已使用 Apple Developer ID|已经?公证/u);
-  assert.match(notes, /Vela 的首个公开版本/u);
-  assert.match(notes, /## 主要功能/u);
-  assert.match(notes, /HTTP 与 TCP loopback 服务/u);
+  assert.match(notes, /此版本说明来自独立版本文件/u);
+  assert.match(notes, /## 更新内容/u);
   assert.doesNotMatch(notes, /草稿预发布|人工确认/u);
+});
+
+test('统一入口拒绝缺失或无效的版本说明', () => {
+  const cases = [
+    ['缺失', undefined, /缺少版本说明/u],
+    ['空文件', '   \n', /版本说明不能为空/u],
+    ['一级标题', '# Vela 0.1.0\n', /不得包含一级标题/u],
+    ['保留区块', '说明\n\n## 下载\n', /不得覆盖保留区块/u],
+    ['占位内容', '## 更新内容\n\n- TODO\n', /包含占位内容/u],
+  ];
+  for (const [name, contents, expected] of cases) {
+    const macos = prepareBuilder('macos');
+    const output = path.join(temporaryDirectory(`notes-${name}-output`), 'release');
+    const releasesDirectory = releaseNotesDirectory('0.1.0', contents);
+    assert.throws(
+      () => assembleRelease({ builderDirectories: [macos.builder], outputDirectory: output, releasesDirectory }),
+      expected,
+      name,
+    );
+    assert.equal(fs.existsSync(output), false, `${name}不得留下半成品发布目录`);
+  }
 });
 
 test('统一入口拒绝重复文件名', () => {
   const macos = prepareBuilder('macos');
   const output = path.join(temporaryDirectory('duplicate-output'), 'release');
   assert.throws(
-    () => assembleRelease({ builderDirectories: [macos.builder, macos.builder], outputDirectory: output }),
+    () =>
+      assembleRelease({
+        builderDirectories: [macos.builder, macos.builder],
+        outputDirectory: output,
+        releasesDirectory: releaseNotesDirectory('0.1.0', '版本说明'),
+      }),
     /重复文件名/u,
   );
   assert.equal(fs.existsSync(output), false, '预检失败不得创建发布目录');
