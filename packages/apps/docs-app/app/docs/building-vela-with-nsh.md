@@ -20,6 +20,14 @@ Vela 让同一 Tailnet 里的设备访问你 Mac 上共享的本地服务：桌�
 - **Rust 宿主可直接扩展**：通过 native module 把 C ABI、WebKit 和原生控件接进 TSX。
 - **单一工具链**：`nsh build / check / run` 产出 `bundle.nshc`，塞进签名 App 即可。
 
+```text
+packages/apps/vela/
+  macos/   ui/（TSX）· host/（Rust + AppKit）· app/（打包输入）
+  ios/     ui/（TSX）· host/（Rust + UIKit）· app/（Xcode 工程）
+  shared/  protocol（协议 fixtures）· ui（纯投影）· tokens（品牌色）
+  core/    vela-core（macOS 进程）· vela-mobile（iOS c-archive）
+```
+
 ## 技术栈
 
 | 层 | 选型 |
@@ -94,7 +102,7 @@ sequenceDiagram
   H-->>U: 桌面交给浏览器，iOS 进 WebView
 ```
 
-Core 为每个「设备 + 服务」开一个 loopback 监听，引用计数归零才关闭；端口会记住上次的选择。iOS 进入后台时 `suspend` 关闭所有监听，回到前台 `resume` 重建映射，失败则重新加载页面。
+Core 为每个「设备 + 服务」开一个 loopback 监听，引用计数归零才关闭；端口会记住上次的选择。
 
 ## 关键实现
 
@@ -109,11 +117,22 @@ impl CoreBridge {
 }
 ```
 
+**NSH 缺的控件，用原生视图补。** 桌面端的按钮和开关是真正的 `NSButton` / `NSSwitch`：Rust 侧用 `view.register_component("vela.desktopButton", …)` 注册工厂，TSX 侧用 `nativeComponent` 声明 props 和事件。iOS 的 `WKWebView` 也走同一机制。缺控件时应注册原生组件，而不是用基础 `View` / `Text` 拼一个看起来像的控件。
+
+```tsx
+const NativeButton = nativeComponent<NativeProps, { press: null }>('vela.desktopButton', {
+  props: ['title', 'variant', 'disabled'],
+  events: ['press'],
+});
+```
+
 **共享层只放纯逻辑。** `shared/ui` 是协议类型、client 工厂和纯函数投影；`shared/protocol/fixtures` 同时约束 Rust 与 Go；`shared/tokens` 是品牌色唯一真源。两端共享计算，不共享组件。
 
 **NSH 的响应式约束。** 派生值必须写成 getter——框架重跑的是 binding，不是组件体。这是移植界面时最容易踩的坑。
 
 **数据边界。** 写操作只在 `Application Support/vela/`（`config.json`、`network/`、`web-data/`）；不装 TUN、不请求 root、不写系统代理或路由，Core 只连白名单内的 loopback 服务。
+
+**认证流程两端不同。** macOS 把 Tailscale 登录页交给系统浏览器；iOS 用 `ASWebAuthenticationSession` 在应用内完成，避免跳到 Safari 后进程被挂起、登录轮询中断。
 
 ## 构建与发布
 
@@ -145,9 +164,9 @@ WebView 的底边不能低于 `UIKeyboardLayoutGuide.topAnchor`：常态底部�
 
 同样不要手动还原 frame。键盘消失后约束系统会自动把 WebView 放回常态边界（底部 84pt）；只要键盘约束是 required、常态约束是 999，就会自然过渡。页面里也不要用 `visualViewport` 或 DOM transform 做位移补偿，否则关闭键盘后会残留空白或偏移。
 
-**服务列表里看不到 Mac 共享的服务？**
+**服务列表为空或页面打不开？**
 
-确认两台设备在同一个 Tailnet、Mac 上的 Vela 正在运行且已开启共享，并让两端版本一致（清单版本不兼容会被过滤）。TCP 服务在 iOS 上只显示为「不支持」，不会出现在可打开列表里。
+先确认两台设备在同一个 Tailnet、Mac 上的 Vela 在运行且已共享，并让两端版本一致（清单版本不兼容会被过滤）；TCP 服务在 iOS 上只显示为「不支持」。页面白屏时点「重新加载」，Debug 构建可连 Safari Web Inspector 查看 SSE / WebSocket 和 Cookie。
 
 **macOS 的 Cookie / localStorage 怎么保持稳定？**
 
@@ -156,10 +175,6 @@ WebView 的底边不能低于 `UIKeyboardLayoutGuide.topAnchor`：常态底部�
 **iOS 回到前台后怎么重建网络？**
 
 后台不提供访问是设计约束。进入后台时 `vela_core_suspend` 关闭所有 loopback 监听，但保留 tsnet 身份和映射的 key / 端口；回前台 `vela_core_resume` 按原顺序重开映射，优先复用记住的端口，origin 不变。WebView 的数据存储按「设备 + 服务」派生固定 UUID（`WKWebsiteDataStore.dataStoreForIdentifier`），因此 Cookie / localStorage 不会丢。个别端口被占用导致重开失败时，宿主会在回到 active 后重新加载当前页面。
-
-**页面白屏或加载失败？**
-
-先点舞台上的「重新加载」。Debug 构建可以连上 Safari Web Inspector 看控制台，重点检查 SSE / WebSocket 和 Cookie。
 
 ## 小结
 
