@@ -54,4 +54,8 @@ runs:
       run: |
         node scripts/release/check-toolchain.mjs
         test "$(uname -m)" = arm64
-        xcodebuild -version | grep -Eq '^Xcode 27([.]|$)'
+        xcode_version=$(xcodebuild -version)
+        case "$xcode_version" in
+          "Xcode 27"*) ;;
+          *) echo "Unexpected Xcode version: $xcode_version" >&2; exit 1 ;;
+        esac
