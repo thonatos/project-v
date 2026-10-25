@@ -149,9 +149,13 @@ WebView 的底边不能低于 `UIKeyboardLayoutGuide.topAnchor`：常态底部�
 
 确认两台设备在同一个 Tailnet、Mac 上的 Vela 正在运行且已开启共享，并让两端版本一致（清单版本不兼容会被过滤）。TCP 服务在 iOS 上只显示为「不支持」，不会出现在可打开列表里。
 
-**锁屏或切到后台后服务打不开？**
+**macOS 的 Cookie / localStorage 怎么保持稳定？**
 
-这是设计约束：iOS 进入后台会关闭所有 loopback 监听，只保留 tsnet 状态。回到前台会自动重建映射，失败时重新加载页面即可。
+转发地址不用裸 `127.0.0.1`，而是每个「服务 + 设备」一个 `<服务>-<设备>.localhost` 主机名。`.localhost` 按 RFC 6761 直接解析到 loopback，不用改 hosts，也仍然是 secure context；Cookie 只按 host 隔离、忽略端口，这样两台 Mac 上的同名服务不会互相覆盖登录态。端口会写进 `config.json` 的 `mappingPorts`，下次优先复用，origin 不变，系统浏览器里的 Cookie / localStorage 就能一直沿用。
+
+**iOS 回到前台后怎么重建网络？**
+
+后台不提供访问是设计约束。进入后台时 `vela_core_suspend` 关闭所有 loopback 监听，但保留 tsnet 身份和映射的 key / 端口；回前台 `vela_core_resume` 按原顺序重开映射，优先复用记住的端口，origin 不变。WebView 的数据存储按「设备 + 服务」派生固定 UUID（`WKWebsiteDataStore.dataStoreForIdentifier`），因此 Cookie / localStorage 不会丢。个别端口被占用导致重开失败时，宿主会在回到 active 后重新加载当前页面。
 
 **页面白屏或加载失败？**
 
