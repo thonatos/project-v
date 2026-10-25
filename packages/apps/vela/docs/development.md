@@ -65,4 +65,12 @@ pnpm run verify
 pnpm run verify:release
 ```
 
+只验证并打包 GitHub Release 使用的 macOS arm64 资产时运行：
+
+```sh
+pnpm run verify:macos-release
+```
+
+该入口固定 deployment target 为 macOS 14，检查 App 内每个 Mach-O 的架构、最低系统版本与 ad-hoc 签名，运行隔离生命周期 smoke，并在 ZIP 解压后复验完整性。下载验证、Gatekeeper 和 GitHub Release 说明见 `release.md`。
+
 日志和临时 App 仅写入本项目的 `.tmp/release/`、`.tmp/release-build/` 与 `.tmp/ios-derived/`，不会成为正式 fixture。iOS 未设置 `DEVELOPMENT_TEAM` 时按未签名构建。

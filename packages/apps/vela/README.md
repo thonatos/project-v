@@ -74,9 +74,9 @@ pnpm -F vela verify:release     # verify + 两端组包 + 签名
 
 从 `docs/README.md` 进入：
 
-| 读者     | 文档                                                                             |
-| -------- | -------------------------------------------------------------------------------- |
-| 使用者   | `docs/user-guide.md`、`docs/sharing.md`                                          |
-| 开发者   | `docs/development.md`、`docs/architecture.md`、`docs/protocol.md`、`docs/ios.md` |
-| 界面作者 | `macos/ui/LAYERS.md`、`ios/ui/LAYERS.md`                                         |
-| 验收     | `docs/verification/`                                                             |
+| 读者     | 文档                                                                                                |
+| -------- | --------------------------------------------------------------------------------------------------- |
+| 使用者   | `docs/user-guide.md`、`docs/sharing.md`                                                             |
+| 开发者   | `docs/development.md`、`docs/architecture.md`、`docs/protocol.md`、`docs/ios.md`、`docs/release.md` |
+| 界面作者 | `macos/ui/LAYERS.md`、`ios/ui/LAYERS.md`                                                            |
+| 验收     | `docs/verification/`                                                                                |

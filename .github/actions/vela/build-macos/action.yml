@@ -1,0 +1,76 @@
+name: Build Vela macOS Desktop
+description: Verify, assemble, check, smoke-test and package the macOS arm64 desktop app.
+
+inputs:
+  version:
+    description: Application version in X.Y.Z form.
+    required: true
+  app-output:
+    description: Absolute directory that receives the Vela.app build output.
+    required: true
+  package-output:
+    description: Absolute directory that receives the versioned ZIP.
+    required: true
+  platform-output:
+    description: Absolute directory that receives a release.json builder output. Empty skips it.
+    required: false
+    default: ''
+  tag:
+    description: Release tag; required when platform-output is set.
+    required: false
+    default: ''
+  commit:
+    description: Release commit; required when platform-output is set.
+    required: false
+    default: ''
+
+outputs:
+  asset:
+    description: Absolute path of the produced ZIP.
+    value: ${{ steps.package.outputs.asset }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run shared and macOS verification gates
+      shell: bash
+      working-directory: packages/apps/vela
+      run: |
+        sh scripts/verify-common.sh
+        sh scripts/verify-macos.sh
+
+    - name: Assemble macOS application
+      shell: bash
+      working-directory: packages/apps/vela
+      run: sh scripts/build-app.sh "${{ inputs.app-output }}"
+
+    - name: Check macOS application contract
+      shell: bash
+      working-directory: packages/apps/vela
+      run: sh scripts/release/macos-check-app.sh "${{ inputs.app-output }}/Vela.app" "${{ inputs.version }}"
+
+    - name: Run bounded lifecycle smoke test
+      shell: bash
+      timeout-minutes: 5
+      working-directory: packages/apps/vela
+      run: sh scripts/release/macos-smoke-app.sh "${{ inputs.app-output }}/Vela.app"
+
+    - name: Package and recheck macOS ZIP
+      id: package
+      shell: bash
+      working-directory: packages/apps/vela
+      run: |
+        asset=$(sh scripts/release/macos-package-app.sh "${{ inputs.app-output }}/Vela.app" "${{ inputs.version }}" "${{ inputs.package-output }}" | tail -n 1)
+        echo "asset=$asset" >> "$GITHUB_OUTPUT"
+
+    - name: Describe the macOS release builder output
+      if: inputs.platform-output != ''
+      shell: bash
+      working-directory: packages/apps/vela
+      run: |
+        node scripts/release/create-macos-builder.mjs \
+          --version "${{ inputs.version }}" \
+          --tag "${{ inputs.tag }}" \
+          --commit "${{ inputs.commit }}" \
+          --asset "${{ steps.package.outputs.asset }}" \
+          --output "${{ inputs.platform-output }}"

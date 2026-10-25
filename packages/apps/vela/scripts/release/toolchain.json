@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "node": "24",
+  "pnpm": "12.14.0",
+  "rust": "1.98.1",
+  "go": "1.27.2",
+  "nsh": {
+    "version": "0.2.0",
+    "archive": {
+      "platform": "macos",
+      "architecture": "arm64",
+      "format": "tar.gz",
+      "file": "nsh-macos-arm64.tar.gz",
+      "url": "https://github.com/longbridge/nsh/releases/download/v0.2.0/nsh-macos-arm64.tar.gz",
+      "sha256": "a189be8537422a147131c88d7fd39d73265a6aebfbb530287c36a393ff3953fc"
+    },
+    "source": {
+      "repository": "https://github.com/longbridge/nsh.git",
+      "peeledCommit": "669b62b11449b2ab787b7c82649a392cbff25b8f"
+    }
+  },
+  "xcode": "27",
+  "macos": "14.0",
+  "architecture": "arm64"
+}

@@ -24,13 +24,13 @@ packages/apps/vela/
 
 ## 技术选型
 
-| 层 | 选型 |
-| --- | --- |
-| 界面 | NSH 0.2.0 · TSX · Tailwind tokens |
-| 宿主 | Rust 1.98.1 · AppKit / UIKit / WKWebView |
+| 层   | 选型                                      |
+| ---- | ----------------------------------------- |
+| 界面 | NSH 0.2.0 · TSX · Tailwind tokens         |
+| 宿主 | Rust 1.98.1 · AppKit / UIKit / WKWebView  |
 | 核心 | Go 1.27.2 · `tailscale.com/tsnet` 1.104.1 |
-| 通信 | JSON Lines 控制协议 v1；iOS 走 C ABI |
-| 系统 | macOS 14+ · iOS 17+ |
+| 通信 | JSON Lines 控制协议 v1；iOS 走 C ABI      |
+| 系统 | macOS 14+ · iOS 17+                       |
 
 [nsh.dev](https://nsh.dev) 是 Rust first 的原生 UI 框架：每个平台使用系统自己的控件（macOS 用 AppKit，iOS 用 UIKit），TSX 负责快速写界面。Vela 选它有三个原因：
 

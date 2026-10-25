@@ -3,6 +3,11 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 OUT=${1:-"$ROOT/build/app"}
+MACOSX_DEPLOYMENT_TARGET=14.0
+export MACOSX_DEPLOYMENT_TARGET
+CGO_CFLAGS="${CGO_CFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+CGO_LDFLAGS="${CGO_LDFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+export CGO_CFLAGS CGO_LDFLAGS
 case "$OUT" in
   "$ROOT"/*) ;;
   *) echo "Vela build output must stay inside $ROOT" >&2; exit 2 ;;
@@ -40,4 +45,5 @@ chmod 755 "$CONTENTS/MacOS/Vela" "$CONTENTS/Helpers/vela-core"
 codesign --force --sign - "$CONTENTS/Helpers/vela-core"
 codesign --force --sign - "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
+sh "$ROOT/scripts/release/macos-check-app.sh" "$APP"
 echo "$APP"

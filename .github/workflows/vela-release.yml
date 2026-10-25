@@ -1,0 +1,227 @@
+name: Vela Release
+
+on:
+  push:
+    tags:
+      - 'vela-v*'
+
+permissions: {}
+
+concurrency:
+  group: vela-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release tag and versions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Configure isolated CI paths
+        run: echo "VELA_TOOLCHAIN_CACHE=$RUNNER_TOOL_CACHE/vela" >> "$GITHUB_ENV"
+
+      # Keep this syntax gate before every repository-provided validation command.
+      - name: Reject malformed release tags
+        shell: bash
+        run: |
+          if ! grep -Eq '^vela-v(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$' <<<"$GITHUB_REF_NAME"; then
+            echo "Invalid Vela release tag: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+
+      - name: Verify all version sources
+        working-directory: packages/apps/vela
+        run: node scripts/release/check-version.mjs --tag "$GITHUB_REF_NAME"
+
+      - name: Export validated version
+        id: version
+        shell: bash
+        run: echo "value=${GITHUB_REF_NAME#vela-v}" >> "$GITHUB_OUTPUT"
+
+  build-macos-desktop:
+    name: Build macOS Desktop arm64
+    needs: prepare
+    runs-on: xcode-27
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '14.0'
+      VELA_BUILD_DIR: ${{ github.workspace }}/packages/apps/vela/.tmp/release-build
+      VELA_PACKAGE_DIR: ${{ github.workspace }}/packages/apps/vela/.tmp/release-package
+      VELA_PLATFORM_DIR: ${{ github.workspace }}/packages/apps/vela/.tmp/release-platform
+      VELA_REPORT_DIR: ${{ github.workspace }}/packages/apps/vela/.tmp/release
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Configure isolated CI paths
+        run: echo "VELA_TOOLCHAIN_CACHE=$RUNNER_TOOL_CACHE/vela" >> "$GITHUB_ENV"
+
+      - name: Prepare pinned toolchain
+        uses: ./.github/actions/vela/setup-toolchain
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Recheck versions at the build boundary
+        working-directory: packages/apps/vela
+        run: node scripts/release/check-version.mjs --tag "$GITHUB_REF_NAME"
+
+      - name: Verify, build, smoke-test, package and describe macOS
+        uses: ./.github/actions/vela/build-macos
+        with:
+          version: ${{ needs.prepare.outputs.version }}
+          app-output: ${{ env.VELA_BUILD_DIR }}
+          package-output: ${{ env.VELA_PACKAGE_DIR }}
+          platform-output: ${{ env.VELA_PLATFORM_DIR }}
+          tag: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+
+      - name: Upload immutable macOS builder output
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vela-platform-macos-arm64
+          path: packages/apps/vela/.tmp/release-platform/**
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload redacted failure diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vela-release-redacted-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: packages/apps/vela/.tmp/release/**
+          if-no-files-found: ignore
+          retention-days: 3
+
+  # Future Linux support is a separate build-linux-node job feeding assemble,
+  # not an OS matrix branch in the macOS Desktop builder.
+  assemble:
+    name: Assemble standard release assets
+    needs: [prepare, build-macos-desktop]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out release assembler
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+
+      - name: Download platform builder outputs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: vela-platform-*
+          path: ${{ runner.temp }}/vela-platforms
+
+      - name: Validate and assemble release assets
+        working-directory: packages/apps/vela
+        run: >-
+          node scripts/release/assemble-release.mjs
+          --builder "$RUNNER_TEMP/vela-platforms/vela-platform-macos-arm64"
+          --output "$RUNNER_TEMP/vela-release"
+
+      - name: Upload immutable standard release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vela-release-assets
+          path: |
+            ${{ runner.temp }}/vela-release/Vela-*
+            ${{ runner.temp }}/vela-release/SHA256SUMS
+            ${{ runner.temp }}/vela-release/release.json
+            ${{ runner.temp }}/vela-release/release-notes.md
+          if-no-files-found: error
+          retention-days: 1
+
+  attest:
+    name: Attest macOS runtime asset
+    needs: assemble
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download standard release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: vela-release-assets
+          path: ${{ runner.temp }}/vela-release
+
+      - name: Generate GitHub Artifact Attestation for macOS ZIP
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: ${{ runner.temp }}/vela-release/Vela-*
+
+  publish:
+    name: Create or update Draft Prerelease
+    needs: [prepare, attest]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # Deliberately no checkout: this write-capable job consumes only assets.
+      - name: Download attested standard release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: vela-release-assets
+          path: ${{ runner.temp }}/vela-release
+
+      - name: Create or safely update Draft Prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_DIR: ${{ runner.temp }}/vela-release
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          release_state=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[] | [.id, .tag_name, .draft] | @tsv' \
+            | awk -F '\t' -v tag="$GITHUB_REF_NAME" '$2 == tag {print $1 "\t" $3; exit}')
+
+          if [[ -n "$release_state" ]]; then
+            is_draft=${release_state##*$'\t'}
+            if [[ "$is_draft" != true ]]; then
+              echo "Refusing to overwrite published release $GITHUB_REF_NAME" >&2
+              exit 1
+            fi
+            gh release edit "$GITHUB_REF_NAME" \
+              --draft --prerelease \
+              --title "Vela ${RELEASE_VERSION}" \
+              --notes-file "$RELEASE_DIR/release-notes.md"
+            gh release upload "$GITHUB_REF_NAME" \
+              "$RELEASE_DIR"/Vela-* \
+              "$RELEASE_DIR/SHA256SUMS" \
+              "$RELEASE_DIR/release.json" \
+              "$RELEASE_DIR/release-notes.md" \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "$RELEASE_DIR"/Vela-* \
+              "$RELEASE_DIR/SHA256SUMS" \
+              "$RELEASE_DIR/release.json" \
+              "$RELEASE_DIR/release-notes.md" \
+              --verify-tag \
+              --draft --prerelease \
+              --title "Vela ${RELEASE_VERSION}" \
+              --notes-file "$RELEASE_DIR/release-notes.md"
+          fi

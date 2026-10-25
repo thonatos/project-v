@@ -17,6 +17,7 @@
 | `architecture.md` | 进程模型、bundle 结构、可写数据、权限边界                    |
 | `protocol.md`     | 控制协议 envelope、消息集合、错误、退出、数据目录所有权      |
 | `ios.md`          | iOS 构建、安装、首次认证、后台恢复、浏览器布局规范、故障排查 |
+| `release.md`      | macOS GitHub Release、下载验证、Gatekeeper 与首次安装        |
 
 ## 界面契约
 

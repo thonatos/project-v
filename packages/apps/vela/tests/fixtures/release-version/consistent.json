@@ -1,0 +1,13 @@
+{
+  "tag": "vela-v0.1.0",
+  "sources": {
+    "package.json": "0.1.0",
+    "shared/ui/version.ts": "0.1.0",
+    "macos/ui/nsh.json": "0.1.0",
+    "ios/ui/nsh.json": "0.1.0",
+    "macos/app/Info.plist": "0.1.0",
+    "ios/app/Vela/Info.plist": "0.1.0",
+    "ios/app/Vela.xcodeproj/project.pbxproj MARKETING_VERSION[1]": "0.1.0",
+    "ios/app/Vela.xcodeproj/project.pbxproj MARKETING_VERSION[2]": "0.1.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "product": "vela",
+  "version": "0.1.0",
+  "tag": "vela-v0.1.0",
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "protocolVersion": 1,
+  "artifacts": [
+    {
+      "component": "desktop",
+      "platform": "macos",
+      "architecture": "arm64",
+      "format": "zip",
+      "capabilities": ["publish", "access", "manage"],
+      "file": "Vela-Desktop-0.1.0-macos-arm64.zip",
+      "signing": "adhoc",
+      "minimumSystemVersion": "14.0",
+      "notarized": false
+    }
+  ]
+}

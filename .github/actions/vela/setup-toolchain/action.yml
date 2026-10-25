@@ -1,0 +1,57 @@
+name: Vela pinned toolchain
+description: Provision Node.js, Go, pnpm, Rust and the verified NSH distribution.
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js 24
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      with:
+        node-version: '24'
+
+    - name: Set up Go 1.27.2
+      uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+      with:
+        go-version: '1.27.2'
+        cache: false
+
+    - name: Activate pnpm 12.14.0
+      id: pnpm-store
+      shell: bash
+      working-directory: packages/apps/vela
+      run: |
+        corepack enable
+        corepack install --global pnpm@12.14.0
+        echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Select Rust 1.98.1
+      shell: bash
+      working-directory: packages/apps/vela
+      run: |
+        rustup toolchain install 1.98.1 --profile minimal --component clippy,rustfmt
+        rustup default 1.98.1
+
+    - name: Restore content-addressed toolchain and dependency cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: |
+          ${{ env.VELA_TOOLCHAIN_CACHE }}
+          ${{ steps.pnpm-store.outputs.path }}
+          ~/.cargo/registry
+          ~/.cargo/git
+          ~/go/pkg/mod
+        key: vela-${{ runner.os }}-${{ runner.arch }}-nsh-a189be8537422a147131c88d7fd39d73265a6aebfbb530287c36a393ff3953fc-${{ hashFiles('pnpm-lock.yaml', 'packages/apps/vela/Cargo.lock', 'packages/apps/vela/core/go.sum') }}
+
+    # A cache hit is re-hashed before extraction or execution.
+    - name: Prepare and revalidate the pinned toolchain
+      shell: bash
+      working-directory: packages/apps/vela
+      run: sh scripts/release/prepare-ci-toolchain.sh "$VELA_TOOLCHAIN_CACHE"
+
+    - name: Verify declaration and runner architecture
+      shell: bash
+      working-directory: packages/apps/vela
+      run: |
+        node scripts/release/check-toolchain.mjs
+        test "$(uname -m)" = arm64
+        xcodebuild -version | grep -Eq '^Xcode 27([.]|$)'
