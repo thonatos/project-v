@@ -111,6 +111,10 @@ test('统一入口生成稳定排序的校验和、清单与中文发布说明',
   assert.match(notes, /未使用 Apple Developer ID 签名/u);
   assert.match(notes, /未经 Apple 公证/u);
   assert.doesNotMatch(notes, /已使用 Apple Developer ID|已经?公证/u);
+  assert.match(notes, /Vela 的首个公开版本/u);
+  assert.match(notes, /## 主要功能/u);
+  assert.match(notes, /HTTP 与 TCP loopback 服务/u);
+  assert.doesNotMatch(notes, /草稿预发布|人工确认/u);
 });
 
 test('统一入口拒绝重复文件名', () => {

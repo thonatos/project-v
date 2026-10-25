@@ -37,9 +37,17 @@ export function createReleaseNotes(manifest) {
   const lines = [
     `# Vela ${manifest.version}`,
     '',
-    '此版本由项目的 GitHub Actions 从对应标签构建。自动化只创建草稿预发布，公开前仍需维护者人工确认。',
+    'Vela 的首个公开版本。它让同一 Tailnet 中的设备安全访问 Mac 上运行的本地开发服务：Mac 负责服务共享与转发，其他 Mac 和 iPhone 可以发现设备并打开已授权的服务。',
     '',
-    '## 运行资产',
+    '## 主要功能',
+    '',
+    '- 共享 Mac 上的 HTTP 与 TCP loopback 服务，包括 OpenCode、DSH、SSH、Redis、MySQL、PostgreSQL 和自定义服务。',
+    '- 通过内嵌 tsnet 加入用户自己的 Tailnet，不安装系统 VPN 或 Network Extension，也不修改系统代理、DNS 和路由。',
+    '- 发现并管理其他 Vela 设备，为远端服务建立稳定的本地转发地址。',
+    '- 使用独立的 `.localhost` 主机名隔离不同设备和服务的 Cookie 与 localStorage。',
+    '- 提供连接状态、运行日志和脱敏诊断；认证 URL、密钥、Cookie 和页面内容不会写入诊断。',
+    '',
+    '## 下载',
     '',
     '| 资产 | 组件 / 平台 / 架构 | 能力 |',
     '| --- | --- | --- |',
@@ -55,18 +63,21 @@ export function createReleaseNotes(manifest) {
       compareText,
     );
     lines.push(
-      '## macOS 安装与信任状态',
+      '## macOS 安装',
       '',
-      `- 系统要求：macOS ${minimumVersions.join(' 或 ')} 或更高版本；请按资产架构选择兼容的 Mac。`,
-      '- macOS 资产仅使用 ad-hoc 签名，未使用 Apple Developer ID 签名，未经 Apple 公证。',
-      '- 将应用拖入“应用程序”目录并首次尝试打开。若 Gatekeeper 阻止启动，请打开“系统设置 → 隐私与安全”，找到该应用的提示并点击“仍要打开”，然后确认。',
-      '- SHA-256 与 GitHub Artifact Attestation 只验证文件内容和 GitHub Actions 构建来源，不代表 Apple 信任该应用。',
+      `1. 下载并解压适用于 macOS ${minimumVersions.join(' 或 ')} 或更高版本、Apple Silicon 的 ZIP。`,
+      '2. 将 `Vela.app` 拖入“应用程序”。',
+      '3. 首次打开若被 Gatekeeper 阻止，请前往“系统设置 → 隐私与安全”，在 Vela 的提示旁点击“仍要打开”，然后确认。',
+      '',
+      '> 当前 macOS 资产采用 ad-hoc 签名，未使用 Apple Developer ID 签名，未经 Apple 公证。因此首次运行需要手动确认。',
       '',
     );
   }
 
   lines.push(
     '## 验证下载',
+    '',
+    '本版本由 GitHub Actions 从对应 tag 构建。SHA-256 用于检查下载完整性，GitHub Artifact Attestation 用于验证构建来源。',
     '',
     '将运行资产与 `SHA256SUMS` 放在同一目录，然后执行：',
     '',
