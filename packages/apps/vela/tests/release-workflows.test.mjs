@@ -132,6 +132,7 @@ assert.match(builder, /platform-output:/);
 const assemble = job(release, 'assemble');
 assert.match(assemble, /permissions:\n      contents: read/);
 assert.match(assemble, /scripts\/release\/assemble-release\.mjs/);
+assert.match(assemble, /find .*vela-platforms.*-name release\.json/, 'assemble must discover every platform builder');
 for (const asset of ['Vela-*', 'SHA256SUMS', 'release.json', 'release-notes.md']) {
   assert.ok(assemble.includes(asset), `assemble must upload ${asset}`);
 }

@@ -134,10 +134,18 @@ jobs:
 
       - name: Validate and assemble release assets
         working-directory: packages/apps/vela
-        run: >-
-          node scripts/release/assemble-release.mjs
-          --builder "$RUNNER_TEMP/vela-platforms/vela-platform-macos-arm64"
-          --output "$RUNNER_TEMP/vela-release"
+        run: |
+          mapfile -t manifests < <(find "$RUNNER_TEMP/vela-platforms" -name release.json -type f -print | sort)
+          if [[ ${#manifests[@]} -eq 0 ]]; then
+            echo "No platform builder release.json was downloaded" >&2
+            find "$RUNNER_TEMP/vela-platforms" -maxdepth 3 -type f -print >&2
+            exit 1
+          fi
+          args=()
+          for manifest in "${manifests[@]}"; do
+            args+=(--builder "$(dirname "$manifest")")
+          done
+          node scripts/release/assemble-release.mjs "${args[@]}" --output "$RUNNER_TEMP/vela-release"
 
       - name: Upload immutable standard release assets
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
