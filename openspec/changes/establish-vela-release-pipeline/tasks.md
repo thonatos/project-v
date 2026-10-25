@@ -30,7 +30,7 @@
 
 - [x] 5.1 新增独立 `vela-ci.yml`，对 Vela 源码、工作区依赖锁和 workflow 变更触发 pull request/main 验证，配置只读权限与按 ref 取消旧运行；用 action lint 和事件/path 检查验证触发范围。
 - [x] 5.2 在明确的 macOS arm64/Xcode 27 runner 上准备固定工具链并依次运行共享门、macOS 门、App 检查与生命周期 smoke；从一次干净 workflow 运行确认全部完成。
-- [ ] 5.3 为工具链和构建依赖增加内容寻址缓存且在命中后重新验证摘要；通过连续两次 CI 运行确认缓存命中不跳过完整性校验。
+- [x] 5.3 为工具链和构建依赖增加内容寻址缓存且在命中后重新验证摘要；通过连续两次 CI 运行确认缓存命中不跳过完整性校验。
 - [x] 5.4 将失败时的脱敏报告和非发布 ZIP 上传为短期 CI artifact；验证 fork PR 不获得 OIDC、发布权限或 secrets。
 
 ## 6. GitHub Release 编排
