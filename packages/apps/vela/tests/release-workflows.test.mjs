@@ -97,6 +97,9 @@ assertOrdered(build, [
   'scripts/release/macos-package-app.sh',
   'scripts/release/create-macos-builder.mjs',
 ]);
+for (const action of [setup, build]) {
+  assert.doesNotMatch(action, /^\s+(?:runs-on|permissions|timeout-minutes):/m, 'composite actions must not use job-only keys');
+}
 
 assert.match(release, /^on:\n  push:\n    tags:\n      - 'vela-v\*'$/m);
 assert.doesNotMatch(release, /workflow_dispatch:/);

@@ -51,7 +51,6 @@ runs:
 
     - name: Run bounded lifecycle smoke test
       shell: bash
-      timeout-minutes: 5
       working-directory: packages/apps/vela
       run: sh scripts/release/macos-smoke-app.sh "${{ inputs.app-output }}/Vela.app"
 
