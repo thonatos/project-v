@@ -140,6 +140,12 @@ assert.match(publish, /permissions:\n      contents: write/);
 assert.doesNotMatch(publish, /(?:contents: read|id-token:|attestations:)/);
 assert.doesNotMatch(publish, /actions\/checkout@/);
 assert.doesNotMatch(publish, /packages\/apps\/vela|\bscripts\//, 'publish must not execute repository code');
+assert.match(publish, /GH_TOKEN: \$\{\{ github\.token \}\}/, 'GitHub token must be passed to gh as an opaque string');
+assert.doesNotMatch(
+  publish,
+  /GH_TOKEN.*(?:cut|slice|substr|substring|grep|sed|awk)|ghs_\[[^\]]+\]\{\d+\}/,
+  'GitHub installation tokens must not be inspected, truncated, or validated by length',
+);
 assert.match(publish, /Refusing to overwrite published release/);
 assert.match(publish, /gh release create[\s\S]*--draft --prerelease/);
 assert.match(publish, /gh release upload[\s\S]*--clobber/);
