@@ -135,6 +135,28 @@ macOS 一条 `pnpm -F vela build:app` 完成组装与签名。iOS 先构建 devi
 
 `pnpm -F vela verify` 是唯一入口：结构测试守依赖方向，协议 fixtures 守两端一致，Rust 做 format/test/clippy，Go 跑 race，iOS 额外校验依赖边界。发布前再跑 `verify:release`，追加两端组包与签名。
 
+## 常见问题
+
+**键盘弹出后页面被遮挡怎么办？**
+
+WebView 的底边不能低于 `UIKeyboardLayoutGuide.topAnchor`：常态底部约束用优先级 999，键盘约束设为 required。不要监听键盘通知手动改 frame，也不要写 `contentInset`、`obscuredContentInsets` 或 `contentOffset`。iOS 26 下这些补偿会让布局视口和视觉视口不同步，表现为整页上移或状态栏被盖住。
+
+**收起键盘后布局没有恢复？**
+
+同样不要手动还原 frame。键盘消失后约束系统会自动把 WebView 放回常态边界（底部 84pt）；只要键盘约束是 required、常态约束是 999，就会自然过渡。页面里也不要用 `visualViewport` 或 DOM transform 做位移补偿，否则关闭键盘后会残留空白或偏移。
+
+**服务列表里看不到 Mac 共享的服务？**
+
+确认两台设备在同一个 Tailnet、Mac 上的 Vela 正在运行且已开启共享，并让两端版本一致（清单版本不兼容会被过滤）。TCP 服务在 iOS 上只显示为「不支持」，不会出现在可打开列表里。
+
+**锁屏或切到后台后服务打不开？**
+
+这是设计约束：iOS 进入后台会关闭所有 loopback 监听，只保留 tsnet 状态。回到前台会自动重建映射，失败时重新加载页面即可。
+
+**页面白屏或加载失败？**
+
+先点舞台上的「重新加载」。Debug 构建可以连上 Safari Web Inspector 看控制台，重点检查 SSE / WebSocket 和 Cookie。
+
 ## 小结
 
 Vela 的分工很清晰：NSH + Rust 负责「像原生一样显示和交互」，Go Core 负责「网络与状态」，共享层负责「两端不漂移」。想继续深入，可以看 nsh.dev 的文档和 Vela 仓库里的 `docs/architecture.md`、`docs/protocol.md`、`docs/ios.md`。
