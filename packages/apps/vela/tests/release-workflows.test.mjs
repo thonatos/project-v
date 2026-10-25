@@ -131,7 +131,7 @@ for (const asset of ['Vela-*', 'SHA256SUMS', 'release.json', 'release-notes.md']
 
 const attest = job(release, 'attest');
 assert.match(attest, /permissions:\n      contents: read\n      id-token: write\n      attestations: write/);
-assert.match(attest, /actions\/attest-build-provenance@[0-9a-f]{40}/);
+assert.match(attest, /actions\/attest@[0-9a-f]{40}/);
 assert.match(attest, /subject-path: .*\/Vela-\*/);
 assert.doesNotMatch(attest, /actions\/checkout@/);
 

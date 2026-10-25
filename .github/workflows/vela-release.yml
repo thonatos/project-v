@@ -22,7 +22,7 @@ jobs:
       version: ${{ steps.version.outputs.value }}
     steps:
       - name: Check out source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Configure isolated CI paths
         run: echo "VELA_TOOLCHAIN_CACHE=$RUNNER_TOOL_CACHE/vela" >> "$GITHUB_ENV"
@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
 
@@ -65,7 +65,7 @@ jobs:
       VELA_REPORT_DIR: ${{ github.workspace }}/packages/apps/vela/.tmp/release
     steps:
       - name: Check out validated source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Configure isolated CI paths
         run: echo "VELA_TOOLCHAIN_CACHE=$RUNNER_TOOL_CACHE/vela" >> "$GITHUB_ENV"
@@ -81,6 +81,7 @@ jobs:
         run: node scripts/release/check-version.mjs --tag "$GITHUB_REF_NAME"
 
       - name: Verify, build, smoke-test, package and describe macOS
+        timeout-minutes: 20
         uses: ./.github/actions/vela/build-macos
         with:
           version: ${{ needs.prepare.outputs.version }}
@@ -91,7 +92,7 @@ jobs:
           commit: ${{ github.sha }}
 
       - name: Upload immutable macOS builder output
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: vela-platform-macos-arm64
           path: packages/apps/vela/.tmp/release-platform/**
@@ -100,7 +101,7 @@ jobs:
 
       - name: Upload redacted failure diagnostics
         if: ${{ failure() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: vela-release-redacted-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
           path: packages/apps/vela/.tmp/release/**
@@ -118,15 +119,15 @@ jobs:
       contents: read
     steps:
       - name: Check out release assembler
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
 
       - name: Download platform builder outputs
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           pattern: vela-platform-*
           path: ${{ runner.temp }}/vela-platforms
@@ -139,7 +140,7 @@ jobs:
           --output "$RUNNER_TEMP/vela-release"
 
       - name: Upload immutable standard release assets
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: vela-release-assets
           path: |
@@ -161,13 +162,13 @@ jobs:
       attestations: write
     steps:
       - name: Download standard release assets
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: vela-release-assets
           path: ${{ runner.temp }}/vela-release
 
       - name: Generate GitHub Artifact Attestation for macOS ZIP
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-path: ${{ runner.temp }}/vela-release/Vela-*
 
@@ -181,7 +182,7 @@ jobs:
     steps:
       # Deliberately no checkout: this write-capable job consumes only assets.
       - name: Download attested standard release assets
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: vela-release-assets
           path: ${{ runner.temp }}/vela-release
