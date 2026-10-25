@@ -199,6 +199,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_DIR: ${{ runner.temp }}/vela-release
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
         run: |

@@ -36,7 +36,7 @@
 ## 6. GitHub Release 编排
 
 - [x] 6.1 新增只响应 `vela-v*` tag 的 `vela-release.yml`，先执行版本门与只读构建，再把平台资产交给组装阶段；用不合法 tag 和版本漂移测试确认流程在构建前失败。
-- [ ] 6.2 为最终 macOS ZIP 生成 GitHub Artifact Attestation，job 只授予 `contents: read`、`id-token: write` 和 `attestations: write`；对测试 tag 产物运行 `gh attestation verify --repo thonatos/project-v` 验证来源。
+- [x] 6.2 为最终 macOS ZIP 生成 GitHub Artifact Attestation，job 只授予 `contents: read`、`id-token: write` 和 `attestations: write`；对测试 tag 产物运行 `gh attestation verify --repo thonatos/project-v` 验证来源。
 - [ ] 6.3 增加只具 `contents: write` 的 publish job，不 checkout 或执行项目脚本，只下载已组装资产并创建可重跑的 Draft Prerelease；用测试 tag 验证首次创建和重复运行均不覆盖已公开 Release。
 - [x] 6.4 固定所有新增 GitHub Actions 到完整 commit SHA，并用 action lint/策略检查阻止浮动 tag 与超额 job 权限。
 - [ ] 6.5 创建测试 `vela-vX.Y.Z` tag 完整演练构建、ZIP 解压、SHA-256、manifest、Attestation 和 Draft Release，记录验收结果后删除测试 draft/tag；确认没有自动公开 Release。

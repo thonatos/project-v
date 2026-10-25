@@ -149,6 +149,7 @@ assert.doesNotMatch(publish, /(?:contents: read|id-token:|attestations:)/);
 assert.doesNotMatch(publish, /actions\/checkout@/);
 assert.doesNotMatch(publish, /packages\/apps\/vela|\bscripts\//, 'publish must not execute repository code');
 assert.match(publish, /GH_TOKEN: \$\{\{ github\.token \}\}/, 'GitHub token must be passed to gh as an opaque string');
+assert.match(publish, /GH_REPO: \$\{\{ github\.repository \}\}/, 'gh must receive the repository without checkout');
 assert.doesNotMatch(
   publish,
   /GH_TOKEN.*(?:cut|slice|substr|substring|grep|sed|awk)|ghs_\[[^\]]+\]\{\d+\}/,
