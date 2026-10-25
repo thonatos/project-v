@@ -92,7 +92,7 @@ jobs:
           commit: ${{ github.sha }}
 
       - name: Upload immutable macOS builder output
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: vela-platform-macos-arm64
           path: packages/apps/vela/.tmp/release-platform/**
@@ -101,7 +101,7 @@ jobs:
 
       - name: Upload redacted failure diagnostics
         if: ${{ failure() }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: vela-release-redacted-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
           path: packages/apps/vela/.tmp/release/**
@@ -127,7 +127,7 @@ jobs:
           node-version: '24'
 
       - name: Download platform builder outputs
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           pattern: vela-platform-*
           path: ${{ runner.temp }}/vela-platforms
@@ -140,7 +140,7 @@ jobs:
           --output "$RUNNER_TEMP/vela-release"
 
       - name: Upload immutable standard release assets
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: vela-release-assets
           path: |
@@ -162,7 +162,7 @@ jobs:
       attestations: write
     steps:
       - name: Download standard release assets
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: vela-release-assets
           path: ${{ runner.temp }}/vela-release
@@ -182,7 +182,7 @@ jobs:
     steps:
       # Deliberately no checkout: this write-capable job consumes only assets.
       - name: Download attested standard release assets
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: vela-release-assets
           path: ${{ runner.temp }}/vela-release

@@ -69,6 +69,7 @@ common/temp/
 common/autoinstallers/*/.npmrc
 **/.rush/temp/
 *.lock
+!packages/apps/vela/Cargo.lock
 
 # Heft temporary files
 .cache
