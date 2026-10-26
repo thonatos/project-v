@@ -1,6 +1,6 @@
 {
   "name": "vela",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -27,6 +27,7 @@
     "verify:common": "sh scripts/verify-common.sh",
     "verify:macos": "sh scripts/verify-macos.sh",
     "verify:ios": "sh scripts/verify-ios.sh",
+    "verify:ios-acceptance": "sh scripts/verify-ios-acceptance.sh",
     "verify:macos-release": "sh scripts/verify-macos-release.sh",
     "verify:release": "sh scripts/verify-release.sh",
     "test:release": "node tests/release-toolchain.test.mjs && node tests/release-manifest-assemble.test.mjs && sh tests/release/macos-release.test.sh && node tests/release-workflows.test.mjs && node tests/verify-gates.test.mjs",
