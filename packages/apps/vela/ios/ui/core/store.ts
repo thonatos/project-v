@@ -103,7 +103,10 @@ export function failureDetail(failure: StageFailure): string {
 }
 
 function createStore() {
-  const read = <T>(source: () => T): (() => T) => () => source();
+  const read =
+    <T>(source: () => T): (() => T) =>
+    () =>
+      source();
   const status = signal<CoreStatus | null>(null);
   const devices = signal<DeviceViewModel[]>([]);
   const stage = signal<Stage>({ phase: 'empty' });
@@ -170,11 +173,13 @@ function createStore() {
   const tailnetCandidates = computed(() =>
     [...(status()?.tailnetDevices ?? [])].sort(
       (left, right) => Number(right.online) - Number(left.online) || left.name.localeCompare(right.name),
-    ));
+    ),
+  );
   const selectableTailnetNames = computed(() =>
     tailnetCandidates()
       .map((item) => item.dnsName ?? '')
-      .filter((name) => name && !devices().some((item) => item.privateName === name)));
+      .filter((name) => name && !devices().some((item) => item.privateName === name)),
+  );
   const signedIn = computed(() => identitySignedIn(status()));
   const userName = computed(() => identityLabel(status()));
   const userInitial = computed(() => identityInitial(status()));
@@ -190,7 +195,8 @@ function createStore() {
           Number(right.device.connection === 'connected') - Number(left.device.connection === 'connected') ||
           left.device.name.localeCompare(right.device.name) ||
           left.service.name.localeCompare(right.service.name),
-      ));
+      ),
+  );
   const currentService = computed(() => {
     const value = stage();
     return value.phase === 'empty' ? null : { device: value.device, service: value.service };
@@ -332,13 +338,22 @@ function createStore() {
     ) {
       // Going back to the list keeps the WebView mounted; returning to the
       // same service only reveals it again.
-      batch(() => { browsing.set(true); modals.set([]); });
+      batch(() => {
+        browsing.set(true);
+        modals.set([]);
+      });
       return;
     }
     if (targetService.protocol === 'tcp') return;
     if (needsAuth()) {
       batch(() => {
-        stage.set({ phase: 'error', device: targetDevice, service: targetService, failure: 'auth', message: failureDetail('auth') });
+        stage.set({
+          phase: 'error',
+          device: targetDevice,
+          service: targetService,
+          failure: 'auth',
+          message: failureDetail('auth'),
+        });
         browsing.set(true);
         modals.set([]);
       });
@@ -352,9 +367,15 @@ function createStore() {
     const token = ++attemptToken;
     batch(() => {
       stage.set({ phase: 'connecting', device: targetDevice, service: targetService });
-      pageDark.set(null); pageError.set(''); pageTitle.set(''); pageLoading.set(true);
-      toolbarCollapsed.set(false); canGoBack.set(false); canGoForward.set(false);
-      browsing.set(true); modals.set([]);
+      pageDark.set(null);
+      pageError.set('');
+      pageTitle.set('');
+      pageLoading.set(true);
+      toolbarCollapsed.set(false);
+      canGoBack.set(false);
+      canGoForward.set(false);
+      browsing.set(true);
+      modals.set([]);
     });
     try {
       const payload = await core.openMapping(targetDevice.privateName, targetService.id);
@@ -385,12 +406,18 @@ function createStore() {
   const navigation = {
     /** Back to the tabs; the page stays loaded underneath. */
     home() {
-      batch(() => { browsing.set(false); toolbarCollapsed.set(false); });
+      batch(() => {
+        browsing.set(false);
+        toolbarCollapsed.set(false);
+      });
     },
     /** Return to the page kept under the list. */
     resume() {
       if (stage().phase !== 'empty') {
-        batch(() => { browsing.set(true); toolbarCollapsed.set(false); });
+        batch(() => {
+          browsing.set(true);
+          toolbarCollapsed.set(false);
+        });
       }
     },
     push(modal: Modal) {
@@ -414,7 +441,10 @@ function createStore() {
     },
     /** The "me" tab holds the account; leave the browser to show it. */
     account: () => {
-      batch(() => { browsing.set(false); modals.set([]); });
+      batch(() => {
+        browsing.set(false);
+        modals.set([]);
+      });
       navigation.select('me');
     },
     devices: () => {
@@ -449,7 +479,10 @@ function createStore() {
       }
       clearRetry();
       attemptToken++;
-      batch(() => { stage.set({ phase: 'empty' }); browsing.set(false); });
+      batch(() => {
+        stage.set({ phase: 'empty' });
+        browsing.set(false);
+      });
     },
   };
 
@@ -599,7 +632,10 @@ function createStore() {
     saveRename: renameFlow.save,
     logout: auth.logout,
     changeRenameDraft(value: string) {
-      batch(() => { rename.draft.set(value); rename.error.set(''); });
+      batch(() => {
+        rename.draft.set(value);
+        rename.error.set('');
+      });
     },
   };
 
@@ -618,12 +654,14 @@ function createStore() {
     async refresh() {
       const attempt = diagnosticsOperation.begin();
       const [nextLogs, nextActivity] = await Promise.allSettled([core.logs(), core.activity()]);
-      if (attempt.current()) batch(() => {
-        if (nextLogs.status === 'fulfilled') diagnostics.set(nextLogs.value);
-        if (nextActivity.status === 'fulfilled') activity.set(nextActivity.value);
-      });
+      if (attempt.current())
+        batch(() => {
+          if (nextLogs.status === 'fulfilled') diagnostics.set(nextLogs.value);
+          if (nextActivity.status === 'fulfilled') activity.set(nextActivity.value);
+        });
       if (nextLogs.status === 'rejected') console.error('VELA_IOS_STATE diagnostics-failed', reason(nextLogs.reason));
-      if (nextActivity.status === 'rejected') console.error('VELA_IOS_STATE activity-failed', reason(nextActivity.reason));
+      if (nextActivity.status === 'rejected')
+        console.error('VELA_IOS_STATE activity-failed', reason(nextActivity.reason));
       attempt.end();
     },
     /** The redacted status snapshot (settings → 复制诊断信息). */
@@ -654,17 +692,40 @@ function createStore() {
   };
 
   return {
-    status: read(status), devices: read(devices), stage: read(stage), browsing: read(browsing), modals: read(modals),
-    deviceID: read(deviceID), authPending: read(authPending), authError: read(authError), rechecking: read(rechecking),
+    status: read(status),
+    devices: read(devices),
+    stage: read(stage),
+    browsing: read(browsing),
+    modals: read(modals),
+    deviceID: read(deviceID),
+    authPending: read(authPending),
+    authError: read(authError),
+    rechecking: read(rechecking),
     signingExpiry: read(signingExpiry),
-    addDevice: { name: read(addDevice.name), selection: read(addDevice.selection), busy: read(addDevice.busy), loading: read(addDevice.loading), error: read(addDevice.error) },
+    addDevice: {
+      name: read(addDevice.name),
+      selection: read(addDevice.selection),
+      busy: read(addDevice.busy),
+      loading: read(addDevice.loading),
+      error: read(addDevice.error),
+    },
     rename: { draft: read(rename.draft), busy: read(rename.busy), error: read(rename.error) },
-    diagnostics: read(diagnostics), pageLoading: read(pageLoading), pageError: read(pageError), pageTitle: read(pageTitle),
-    tab: read(tab), toolbarCollapsed: read(toolbarCollapsed), canGoBack: read(canGoBack), canGoForward: read(canGoForward), pageDark: read(pageDark),
+    diagnostics: read(diagnostics),
+    pageLoading: read(pageLoading),
+    pageError: read(pageError),
+    pageTitle: read(pageTitle),
+    tab: read(tab),
+    toolbarCollapsed: read(toolbarCollapsed),
+    canGoBack: read(canGoBack),
+    canGoForward: read(canGoForward),
+    pageDark: read(pageDark),
     network,
     protocolVersion,
     needsAuth,
-    loading: read(loading), refreshing: read(refreshing), copied: read(copied), copyError: read(copyError),
+    loading: read(loading),
+    refreshing: read(refreshing),
+    copied: read(copied),
+    copyError: read(copyError),
     signedIn,
     userName,
     userInitial,
@@ -676,7 +737,8 @@ function createStore() {
     selectableTailnetNames,
     lastVisited: read(lastVisited),
     isRecent,
-    logLevel: read(logLevel), activity: read(activity),
+    logLevel: read(logLevel),
+    activity: read(activity),
     top,
     isOpen,
     start,

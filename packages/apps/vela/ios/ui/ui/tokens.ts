@@ -30,16 +30,31 @@ export const surface = {
 } as const;
 
 export const ink = {
-  primary: 'text-canvas-foreground', secondary: 'text-secondary', tertiary: 'text-tertiary',
-  accent: 'text-accent', onAccent: 'text-accent-foreground', danger: 'text-danger',
-  success: 'text-success', warning: 'text-warning',
+  primary: 'text-canvas-foreground',
+  secondary: 'text-secondary',
+  tertiary: 'text-tertiary',
+  accent: 'text-accent',
+  onAccent: 'text-accent-foreground',
+  danger: 'text-danger',
+  success: 'text-success',
+  warning: 'text-warning',
 } as const;
 
 /** Semantic runtime theme roles accepted by native controls. */
-export type NativeColor = 'accent' | 'secondary' | 'tertiary' | 'primary' | 'danger' | 'success' | 'warning' | 'onAccent';
+export type NativeColor =
+  | 'accent'
+  | 'secondary'
+  | 'tertiary'
+  | 'primary'
+  | 'danger'
+  | 'success'
+  | 'warning'
+  | 'onAccent';
 
 export const line = {
-  hairline: 'border-separator', bottom: 'border-b border-separator', top: 'border-t border-separator',
+  hairline: 'border-separator',
+  bottom: 'border-b border-separator',
+  top: 'border-t border-separator',
 } as const;
 
 /**
@@ -174,7 +189,8 @@ export const tone = {
   warning: { dot: 'bg-warning', soft: 'bg-warning-soft', ink: ink.warning },
   danger: { dot: 'bg-danger', soft: 'bg-danger-soft', ink: ink.danger },
   offline: {
-    dot: 'bg-offline', soft: 'bg-offline-soft',
+    dot: 'bg-offline',
+    soft: 'bg-offline-soft',
     ink: ink.secondary,
   },
   accent: { dot: 'bg-accent', soft: 'bg-accent-soft', ink: ink.accent },
@@ -187,8 +203,10 @@ export type Tone = keyof typeof tone;
  * private name), so the same Mac reads the same everywhere.
  */
 export const hue = [
-  { tile: 'bg-hue1-soft', ink: 'text-hue1' }, { tile: 'bg-hue2-soft', ink: 'text-hue2' },
-  { tile: 'bg-hue3-soft', ink: 'text-hue3' }, { tile: 'bg-hue4-soft', ink: 'text-hue4' },
+  { tile: 'bg-hue1-soft', ink: 'text-hue1' },
+  { tile: 'bg-hue2-soft', ink: 'text-hue2' },
+  { tile: 'bg-hue3-soft', ink: 'text-hue3' },
+  { tile: 'bg-hue4-soft', ink: 'text-hue4' },
   { tile: 'bg-hue5-soft', ink: 'text-hue5' },
 ] as const;
 

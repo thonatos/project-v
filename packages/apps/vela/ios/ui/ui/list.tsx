@@ -94,7 +94,9 @@ export function Cell(props: CellProps) {
         onPress={props.onPress}
         disabled={props.disabled ?? false}
         role="button"
-        accessibilityLabel={props.accessibilityLabel ?? (props.detail ? `${props.title}，${props.detail}` : props.title)}
+        accessibilityLabel={
+          props.accessibilityLabel ?? (props.detail ? `${props.title}，${props.detail}` : props.title)
+        }
         class={`w-full ${props.tall ? size.serviceCell : size.cell} justify-center ${state.cellPress} ${state.disabled}`}
         testID={props.testID}
       >

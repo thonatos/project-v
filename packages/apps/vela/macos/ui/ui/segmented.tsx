@@ -20,10 +20,7 @@ export function Segmented<Value extends string>(props: {
   testID?: string;
 }) {
   return (
-    <Tabs
-      class={`flex-row gap-1 rounded-control border p-1 ${surfaces.well}`}
-      testID={props.testID}
-    >
+    <Tabs class={`flex-row gap-1 rounded-control border p-1 ${surfaces.well}`} testID={props.testID}>
       <Each of={props.options}>
         {(option) => {
           const selected = () => props.value === option().value;

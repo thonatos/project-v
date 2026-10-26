@@ -44,11 +44,19 @@ export function createRemoteFlows(options: RemoteOptions) {
   const transaction = options.transaction ?? directTransaction;
 
   function choose(name: string): void {
-    transaction(() => { addDevice.selection.set(name); addDevice.name.set(''); addDevice.error.set(''); });
+    transaction(() => {
+      addDevice.selection.set(name);
+      addDevice.name.set('');
+      addDevice.error.set('');
+    });
   }
 
   function setAddName(value: string): void {
-    transaction(() => { addDevice.name.set(value); addDevice.selection.set(''); addDevice.error.set(''); });
+    transaction(() => {
+      addDevice.name.set(value);
+      addDevice.selection.set('');
+      addDevice.error.set('');
+    });
   }
 
   function submit(): void {
@@ -58,7 +66,10 @@ export function createRemoteFlows(options: RemoteOptions) {
       addDevice.error.set(messages.chooseDevice);
       return;
     }
-    transaction(() => { addDevice.error.set(''); addDevice.busy.set(true); });
+    transaction(() => {
+      addDevice.error.set('');
+      addDevice.busy.set(true);
+    });
     core
       .addRemote(name)
       .then(() => {

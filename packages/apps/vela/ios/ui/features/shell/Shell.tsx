@@ -59,8 +59,20 @@ function browserMenu(): MenuItem[][] {
         },
       },
       { id: 'services', label: '服务列表', symbol: 'square.grid.2x2', onSelect: store.navigation.home },
-      { id: 'reload', label: '重新加载', symbol: 'arrow.clockwise', onSelect: store.page.reload, disabled: store.stage().phase !== 'ready' },
-      { id: 'close', label: '关闭服务', symbol: 'xmark.circle', onSelect: store.navigation.closeService, destructive: true },
+      {
+        id: 'reload',
+        label: '重新加载',
+        symbol: 'arrow.clockwise',
+        onSelect: store.page.reload,
+        disabled: store.stage().phase !== 'ready',
+      },
+      {
+        id: 'close',
+        label: '关闭服务',
+        symbol: 'xmark.circle',
+        onSelect: store.navigation.closeService,
+        destructive: true,
+      },
     ],
   ];
 }

@@ -12,15 +12,19 @@ function App() {
       <Text>theme {token('accent')}</Text>
       <Text>reduced motion {String(reduceMotion())}</Text>
       <Text>font scale {fontScale().toFixed(2)}</Text>
-      <Button accessibilityLabel="Open menu" onPress={() => open.set(true)}><Text>Open menu</Text></Button>
+      <Button accessibilityLabel="Open menu" onPress={() => open.set(true)}>
+        <Text>Open menu</Text>
+      </Button>
       <Text>result {result()}</Text>
       <BottomMenu
         open={open()}
         onClose={() => open.set(false)}
-        groups={[[
-          { id: 'inspect', label: 'Inspect device', onSelect: () => result.set('inspect') },
-          { id: 'disabled', label: 'Unavailable action', disabled: true, onSelect: () => result.set('invalid') },
-        ]]}
+        groups={[
+          [
+            { id: 'inspect', label: 'Inspect device', onSelect: () => result.set('inspect') },
+            { id: 'disabled', label: 'Unavailable action', disabled: true, onSelect: () => result.set('invalid') },
+          ],
+        ]}
       />
     </View>
   );

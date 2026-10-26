@@ -22,7 +22,9 @@ export function FormSheet(props: {
         </If>
       </View>
       <View class={`min-h-0 flex-1 p-4 ${spacing.pageGap}`}>{props.children}</View>
-      <View class={`${geometry.sheetFooter} flex-row items-center justify-end px-4 py-2 ${spacing.inline} ${edges.top}`}>
+      <View
+        class={`${geometry.sheetFooter} flex-row items-center justify-end px-4 py-2 ${spacing.inline} ${edges.top}`}
+      >
         {props.actions}
       </View>
     </View>
@@ -48,11 +50,12 @@ export function FormSheetDialog(props: {
 }) {
   // Measured for the fixed 480pt utility window. Keeping these named here
   // prevents feature call sites from inventing dialog geometry.
-  const geometry = () => ({
-    'add-device': { width: 392, height: 520 },
-    rename: { width: 392, height: 260 },
-    'service-editor': { width: 392, height: 600 },
-  })[props.size];
+  const geometry = () =>
+    ({
+      'add-device': { width: 392, height: 520 },
+      rename: { width: 392, height: 260 },
+      'service-editor': { width: 392, height: 600 },
+    })[props.size];
   return (
     <Dialog
       open={props.open}
@@ -65,10 +68,7 @@ export function FormSheetDialog(props: {
       <View class="absolute inset-y-0 right-0 left-14 backdrop-blur-lg opacity-80" />
       <View class={`absolute inset-y-0 right-0 left-14 ${surfaces.veil}`} />
       <View class={`w-full flex-1 items-center justify-center ${spacing.rail}`}>
-        <View
-          class={`overflow-hidden rounded-panel ${edges.all} ${surfaces.surface}`}
-          style={geometry()}
-        >
+        <View class={`overflow-hidden rounded-panel ${edges.all} ${surfaces.surface}`} style={geometry()}>
           {props.children}
         </View>
       </View>

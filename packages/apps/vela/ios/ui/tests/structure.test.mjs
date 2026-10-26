@@ -30,7 +30,11 @@ for (const file of atoms) {
 }
 for (const file of [...features, 'App.tsx']) {
   const source = read(file);
-  assert.doesNotMatch(source, /from ['"]vela\/native['"]|CoreBridge/, `${file}: only core/client.ts may access the native bridge`);
+  assert.doesNotMatch(
+    source,
+    /from ['"]vela\/native['"]|CoreBridge/,
+    `${file}: only core/client.ts may access the native bridge`,
+  );
   assert.doesNotMatch(source, /JSON\.parse/, `${file}: only the client/data boundary parses Core responses`);
 }
 

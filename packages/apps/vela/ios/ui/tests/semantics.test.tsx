@@ -11,7 +11,12 @@ test('Vela bottom menu selects and closes through nsh/base', async () => {
 });
 
 test('Vela bottom menu follows back dismissal and runtime appearance', async () => {
-  const app = await open('../SemanticsFixture.tsx', { platform: 'ios', colorScheme: 'light', reducedMotion: true, clock: {} });
+  const app = await open('../SemanticsFixture.tsx', {
+    platform: 'ios',
+    colorScheme: 'light',
+    reducedMotion: true,
+    clock: {},
+  });
   expect(app.texts()).toContain('reduced motion true');
   expect(app.texts().some((text) => /^font scale \d+\.\d{2}$/.test(text))).toBe(true);
   const light = app.texts().find((text) => text.startsWith('theme '));

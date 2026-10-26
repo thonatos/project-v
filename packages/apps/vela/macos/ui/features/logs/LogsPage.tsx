@@ -23,7 +23,12 @@ export function LogsPage() {
         title="运行日志"
         actions={
           <>
-            <Button title="复制日志" variant="outline" disabled={rows().length === 0} onPress={store.diagnosticsActions.copyLogs} />
+            <Button
+              title="复制日志"
+              variant="outline"
+              disabled={rows().length === 0}
+              onPress={store.diagnosticsActions.copyLogs}
+            />
             <Button title="刷新" variant="outline" onPress={store.refreshDiagnostics} />
           </>
         }

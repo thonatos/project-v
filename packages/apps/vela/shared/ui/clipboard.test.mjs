@@ -3,7 +3,12 @@ import { copyTextWith } from './clipboard-port.ts';
 
 {
   let value = '';
-  const port = { writeText: async (next) => { value = next; }, readText: async () => value };
+  const port = {
+    writeText: async (next) => {
+      value = next;
+    },
+    readText: async () => value,
+  };
   assert.equal(await copyTextWith(port, 'diagnostic'), true);
 }
 

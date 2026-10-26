@@ -28,7 +28,9 @@ export function SettingsPage() {
         />
       </View>
       <If when={store.copyError()}>
-        <View class={inset.sectionTop}><Notice tone="danger" title="复制失败" detail={store.copyError()} /></View>
+        <View class={inset.sectionTop}>
+          <Notice tone="danger" title="复制失败" detail={store.copyError()} />
+        </View>
       </If>
 
       <Section

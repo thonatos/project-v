@@ -41,10 +41,24 @@ const messages = {
   const pending = sig(false);
   const error = sig('old');
   const auth = createAuthFlows({
-    core: { startAuth: async () => ({ authUrl: 'https://login.example' }), reconnect: async () => ({}), logout: async () => {} },
-    openExternal: () => {}, pending, error, rechecking: sig(false), load: async () => {}, isConnected: () => true,
-    confirmLogout: async () => false, messages, tag: 'TEST',
-    transaction(run) { run(); snapshots.push([pending(), error()]); },
+    core: {
+      startAuth: async () => ({ authUrl: 'https://login.example' }),
+      reconnect: async () => ({}),
+      logout: async () => {},
+    },
+    openExternal: () => {},
+    pending,
+    error,
+    rechecking: sig(false),
+    load: async () => {},
+    isConnected: () => true,
+    confirmLogout: async () => false,
+    messages,
+    tag: 'TEST',
+    transaction(run) {
+      run();
+      snapshots.push([pending(), error()]);
+    },
   });
   auth.signIn();
   assert.deepEqual(snapshots, [[true, '']], 'sign-in publishes one coherent pending/error snapshot');
@@ -270,7 +284,13 @@ const messages = {
   const status = sig({
     network: 'offline',
     deviceName: 'name',
-    preferences: { appearance: 'system', performanceHud: false, verboseLogs: false, gravatarAvatar: false, tailscaleProxy: true },
+    preferences: {
+      appearance: 'system',
+      performanceHud: false,
+      verboseLogs: false,
+      gravatarAvatar: false,
+      tailscaleProxy: true,
+    },
     tailscale: { name: 'name', ips: [] },
     tailnetDevices: [],
     remotes: [],

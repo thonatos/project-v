@@ -12,7 +12,10 @@ function color(key, scheme = 'light') {
 }
 
 function luminance(value) {
-  const channels = value.slice(1).match(/../g).map((part) => Number.parseInt(part, 16) / 255)
+  const channels = value
+    .slice(1)
+    .match(/../g)
+    .map((part) => Number.parseInt(part, 16) / 255)
     .map((channel) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
   return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
 }
@@ -49,8 +52,10 @@ for (const scheme of ['light', 'dark']) {
   }
   assert.ok(ratio(color('accent-foreground', scheme), color('accent', scheme)) >= 4.5);
   for (const [tone, text, surface] of [
-    ['info', 'info-foreground', 'info-surface'], ['success', 'success-surface-foreground', 'success-surface'],
-    ['warning', 'warning-surface-foreground', 'warning-surface'], ['danger', 'danger-surface-foreground', 'danger-surface'],
+    ['info', 'info-foreground', 'info-surface'],
+    ['success', 'success-surface-foreground', 'success-surface'],
+    ['warning', 'warning-surface-foreground', 'warning-surface'],
+    ['danger', 'danger-surface-foreground', 'danger-surface'],
   ]) {
     const measured = ratio(color(text, scheme), color(surface, scheme));
     assert.ok(measured >= 4.5, `${scheme}.${tone} alert text is ${measured.toFixed(2)}:1`);

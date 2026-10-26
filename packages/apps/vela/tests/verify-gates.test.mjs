@@ -58,18 +58,32 @@ for (const gate of gates) {
 
 const release = read('verify-release.sh');
 const acceptance = read('verify-ios-acceptance.sh');
-for (const [name, source] of [...gates.map((gate) => [gate, read(gate)]), ['verify.sh', aggregate], ['verify-release.sh', release]]) {
+for (const [name, source] of [
+  ...gates.map((gate) => [gate, read(gate)]),
+  ['verify.sh', aggregate],
+  ['verify-release.sh', release],
+]) {
   assert.doesNotMatch(source, /--target ios|verify-ios-acceptance/, `${name} must not start iOS Simulator implicitly`);
 }
 assert.match(acceptance, /--target ios/, 'the explicit acceptance entry owns iOS Simulator target tests');
 assert.match(acceptance, /CI:-.*true/, 'the local Simulator entry must refuse CI');
-assert.doesNotMatch(acceptance, /openspec|completedTasks|archived/, 'Simulator tooling must not infer OpenSpec lifecycle state');
+assert.doesNotMatch(
+  acceptance,
+  /openspec|completedTasks|archived/,
+  'Simulator tooling must not infer OpenSpec lifecycle state',
+);
 
 for (const [name, source] of [
   ['vela-ci.yml', fs.readFileSync(path.join(repoRoot, '.github/workflows/vela-ci.yml'), 'utf8')],
   ['vela-release.yml', fs.readFileSync(path.join(repoRoot, '.github/workflows/vela-release.yml'), 'utf8')],
-  ['build-macos/action.yml', fs.readFileSync(path.join(repoRoot, '.github/actions/vela/build-macos/action.yml'), 'utf8')],
-  ['setup-toolchain/action.yml', fs.readFileSync(path.join(repoRoot, '.github/actions/vela/setup-toolchain/action.yml'), 'utf8')],
+  [
+    'build-macos/action.yml',
+    fs.readFileSync(path.join(repoRoot, '.github/actions/vela/build-macos/action.yml'), 'utf8'),
+  ],
+  [
+    'setup-toolchain/action.yml',
+    fs.readFileSync(path.join(repoRoot, '.github/actions/vela/setup-toolchain/action.yml'), 'utf8'),
+  ],
 ]) {
   assert.doesNotMatch(
     source,

@@ -7,9 +7,12 @@
  * names only compose semantic roles; they never copy concrete colors.
  */
 export const surfaces = {
-  canvas: 'bg-canvas text-canvas-foreground', surface: 'bg-surface text-surface-foreground',
-  sidebar: 'bg-sidebar text-sidebar-foreground', subtle: 'bg-subtle text-subtle-foreground',
-  accent: 'bg-accent text-accent-foreground', selected: 'bg-subtle',
+  canvas: 'bg-canvas text-canvas-foreground',
+  surface: 'bg-surface text-surface-foreground',
+  sidebar: 'bg-sidebar text-sidebar-foreground',
+  subtle: 'bg-subtle text-subtle-foreground',
+  accent: 'bg-accent text-accent-foreground',
+  selected: 'bg-subtle',
   /** A recessed well for values the user reads or copies, like an address. */
   well: 'bg-subtle border-line',
   /** The modal veil over the content area: 25% of the text color, so it dims in both appearances. */
@@ -17,18 +20,29 @@ export const surfaces = {
 } as const;
 
 export const text = {
-  primary: 'text-surface-foreground', muted: 'text-subtle-foreground', accent: 'text-accent',
-  onAccent: 'text-accent-foreground', success: 'text-success', warning: 'text-warning',
-  danger: 'text-danger', offline: 'text-offline', onSidebar: 'text-sidebar-foreground', onSidebarMuted: 'text-sidebar-subtle',
+  primary: 'text-surface-foreground',
+  muted: 'text-subtle-foreground',
+  accent: 'text-accent',
+  onAccent: 'text-accent-foreground',
+  success: 'text-success',
+  warning: 'text-warning',
+  danger: 'text-danger',
+  offline: 'text-offline',
+  onSidebar: 'text-sidebar-foreground',
+  onSidebarMuted: 'text-sidebar-subtle',
 } as const;
 
 export const edges = {
-  line: 'border-line', top: 'border-t border-line', bottom: 'border-b border-line',
-  all: 'border border-line', accent: 'border-accent',
+  line: 'border-line',
+  top: 'border-t border-line',
+  bottom: 'border-b border-line',
+  all: 'border border-line',
+  accent: 'border-accent',
 } as const;
 
 export const states = {
-  hover: 'active:bg-hover', focus: 'focus:border-focus',
+  hover: 'active:bg-hover',
+  focus: 'focus:border-focus',
   disabled: 'disabled:opacity-50',
   placeholder: 'placeholder:text-subtle-foreground',
 } as const;
@@ -50,7 +64,12 @@ export const statusText = {
 export type StatusKey = keyof typeof statusText;
 
 export const fills = {
-  success: 'bg-success', warning: 'bg-warning', danger: 'bg-danger', offline: 'bg-offline', accent: 'bg-accent', track: 'bg-track',
+  success: 'bg-success',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  offline: 'bg-offline',
+  accent: 'bg-accent',
+  track: 'bg-track',
 } as const;
 
 /**
@@ -59,19 +78,27 @@ export const fills = {
  */
 export const tones = {
   info: {
-    surface: 'bg-info-surface', text: 'text-info-foreground', border: 'border-info-foreground/20',
+    surface: 'bg-info-surface',
+    text: 'text-info-foreground',
+    border: 'border-info-foreground/20',
     symbol: 'info.circle',
   },
   success: {
-    surface: 'bg-success-surface', text: 'text-success-surface-foreground', border: 'border-success-surface-foreground/20',
+    surface: 'bg-success-surface',
+    text: 'text-success-surface-foreground',
+    border: 'border-success-surface-foreground/20',
     symbol: 'checkmark.circle',
   },
   warning: {
-    surface: 'bg-warning-surface', text: 'text-warning-surface-foreground', border: 'border-warning-surface-foreground/20',
+    surface: 'bg-warning-surface',
+    text: 'text-warning-surface-foreground',
+    border: 'border-warning-surface-foreground/20',
     symbol: 'exclamationmark.triangle',
   },
   danger: {
-    surface: 'bg-danger-surface', text: 'text-danger-surface-foreground', border: 'border-danger-surface-foreground/20',
+    surface: 'bg-danger-surface',
+    text: 'text-danger-surface-foreground',
+    border: 'border-danger-surface-foreground/20',
     symbol: 'xmark.octagon',
   },
 } as const;
@@ -112,6 +139,10 @@ export const type = {
 
 /** Measured column widths and component floors for the fixed utility window. */
 export const geometry = {
-  row: 'min-h-[32px]', compactControl: 'min-h-[24px]', pageHeader: 'min-h-[28px]', sheetFooter: 'min-h-[40px]',
-  logTime: 'w-[58px]', logLevel: 'w-[42px]',
+  row: 'min-h-[32px]',
+  compactControl: 'min-h-[24px]',
+  pageHeader: 'min-h-[28px]',
+  sheetFooter: 'min-h-[40px]',
+  logTime: 'w-[58px]',
+  logLevel: 'w-[42px]',
 } as const;

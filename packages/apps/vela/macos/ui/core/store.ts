@@ -72,7 +72,10 @@ function confirmDestructive(title: string, description: string, confirmLabel: st
 }
 
 function createStore() {
-  const read = <T>(source: () => T): (() => T) => () => source();
+  const read =
+    <T>(source: () => T): (() => T) =>
+    () =>
+      source();
   // Navigation
   const pane = signal<Pane>('devices');
   const selected = signal('');
@@ -142,11 +145,13 @@ function createStore() {
   const tailnetCandidates = computed(() =>
     [...(status()?.tailnetDevices ?? [])].sort(
       (left, right) => Number(right.online) - Number(left.online) || left.name.localeCompare(right.name),
-    ));
+    ),
+  );
   const selectableTailnetNames = computed(() =>
     tailnetCandidates()
       .map((device) => device.dnsName ?? '')
-      .filter((name) => name && !devices().some((device) => device.privateName === name)));
+      .filter((name) => name && !devices().some((device) => device.privateName === name)),
+  );
 
   async function refreshRemotes() {
     const current = devices();
@@ -436,21 +441,21 @@ function createStore() {
     },
     begin(service?: ServiceViewModel) {
       batch(() => {
-      if (service) {
-        editor.editing.set(service.id);
-        editor.preset.set(presetForService(service));
-        editor.id.set(service.id);
-        editor.name.set(service.name);
-        editor.target.set(service.protocol === 'tcp' ? service.subtitle : (service.url ?? ''));
-        editor.protocol.set(service.protocol);
-        editor.adapter.set(service.adapter ?? '');
-        editor.authLog.set(service.authLog ?? '');
-        editor.error.set('');
-      } else {
-        editor.editing.set('');
-        serviceEditor.applyPreset('custom-http');
-      }
-      editor.open.set(true);
+        if (service) {
+          editor.editing.set(service.id);
+          editor.preset.set(presetForService(service));
+          editor.id.set(service.id);
+          editor.name.set(service.name);
+          editor.target.set(service.protocol === 'tcp' ? service.subtitle : (service.url ?? ''));
+          editor.protocol.set(service.protocol);
+          editor.adapter.set(service.adapter ?? '');
+          editor.authLog.set(service.authLog ?? '');
+          editor.error.set('');
+        } else {
+          editor.editing.set('');
+          serviceEditor.applyPreset('custom-http');
+        }
+        editor.open.set(true);
       });
     },
     save() {
@@ -595,7 +600,9 @@ function createStore() {
       void copyResult(snapshot ? diagnosticSnapshot(snapshot, version) : JSON.stringify({ version, redacted: true }));
     },
     copyLogs() {
-      const text = logRows(logs(), logLevel()).map((row) => `${row.time} ${row.levelLabel} ${row.area} ${row.message}`).join('\n');
+      const text = logRows(logs(), logLevel())
+        .map((row) => `${row.time} ${row.levelLabel} ${row.area} ${row.message}`)
+        .join('\n');
       if (text) void copyResult(text);
     },
   };
@@ -603,20 +610,40 @@ function createStore() {
 
   return {
     // state
-    pane: read(pane), selected: read(selected), status: read(status), network: read(network),
-    services: read(services), devices: read(devices), logs: read(logs), activity: read(activity),
-    forwards: read(forwards), logLevel: read(logLevel), authPending: read(authPending),
-    authError: read(authError), rechecking: read(rechecking),
+    pane: read(pane),
+    selected: read(selected),
+    status: read(status),
+    network: read(network),
+    services: read(services),
+    devices: read(devices),
+    logs: read(logs),
+    activity: read(activity),
+    forwards: read(forwards),
+    logLevel: read(logLevel),
+    authPending: read(authPending),
+    authError: read(authError),
+    rechecking: read(rechecking),
     copyError: read(copyError),
     addDevice: {
-      open: read(addDevice.open), name: read(addDevice.name), selection: read(addDevice.selection),
-      busy: read(addDevice.busy), loading: read(addDevice.loading), error: read(addDevice.error),
+      open: read(addDevice.open),
+      name: read(addDevice.name),
+      selection: read(addDevice.selection),
+      busy: read(addDevice.busy),
+      loading: read(addDevice.loading),
+      error: read(addDevice.error),
     },
     rename: { open: read(rename.open), draft: read(rename.draft), error: read(rename.error) },
     editor: {
-      open: read(editor.open), editing: read(editor.editing), preset: read(editor.preset), id: read(editor.id),
-      name: read(editor.name), target: read(editor.target), protocol: read(editor.protocol),
-      adapter: read(editor.adapter), authLog: read(editor.authLog), error: read(editor.error),
+      open: read(editor.open),
+      editing: read(editor.editing),
+      preset: read(editor.preset),
+      id: read(editor.id),
+      name: read(editor.name),
+      target: read(editor.target),
+      protocol: read(editor.protocol),
+      adapter: read(editor.adapter),
+      authLog: read(editor.authLog),
+      error: read(editor.error),
     },
     // derived
     needsAuth,

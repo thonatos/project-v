@@ -26,8 +26,18 @@ interface NativeProps {
 
 const NativeButton = nativeComponent<NativeProps, { press: null }>('vela.desktopButton', {
   props: [
-    'title', 'variant', 'disabled', 'symbol', 'iconOnly', 'accent', 'accentForeground',
-    'danger', 'secondary', 'muted', 'disabledBezel', 'disabledInk',
+    'title',
+    'variant',
+    'disabled',
+    'symbol',
+    'iconOnly',
+    'accent',
+    'accentForeground',
+    'danger',
+    'secondary',
+    'muted',
+    'disabledBezel',
+    'disabledInk',
   ],
   events: ['press'],
 });

@@ -1,6 +1,18 @@
 import { View } from 'nsh';
 import { store } from '../../core/store';
-import { Alert, Button, Callout, CardHeader, CardSection, ListRow, Page, PageHeader, Segmented, spacing, Switch } from '../../ui';
+import {
+  Alert,
+  Button,
+  Callout,
+  CardHeader,
+  CardSection,
+  ListRow,
+  Page,
+  PageHeader,
+  Segmented,
+  spacing,
+  Switch,
+} from '../../ui';
 import { diagnosticSummaryRows } from '../../../../shared/ui/diagnostics';
 import { APP_VERSION } from '../../../../shared/ui/version';
 
@@ -61,12 +73,15 @@ export function SettingsPage() {
 
       <CardSection
         title="隐私与诊断"
-        action={<Button testID="copy-diagnostics" title="复制诊断" variant="outline" onPress={store.diagnosticsActions.copy} />}
-        footer={
-          <Callout>
-            Gravatar 仅接收邮箱的 SHA-256 哈希。诊断不包含认证地址、凭据、Cookie 或业务内容。
-          </Callout>
+        action={
+          <Button
+            testID="copy-diagnostics"
+            title="复制诊断"
+            variant="outline"
+            onPress={store.diagnosticsActions.copy}
+          />
         }
+        footer={<Callout>Gravatar 仅接收邮箱的 SHA-256 哈希。诊断不包含认证地址、凭据、Cookie 或业务内容。</Callout>}
       >
         <ListRow
           title="使用 Gravatar 头像"

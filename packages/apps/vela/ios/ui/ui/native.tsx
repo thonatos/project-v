@@ -26,14 +26,22 @@ const NativeSegmented = nativeComponent<{ items: string[]; selected: number }, {
 /** A runtime theme role for native controls; `token` follows appearance and host overrides. */
 export function resolve(color: NativeColor): string {
   switch (color) {
-    case 'primary': return token('foreground');
-    case 'onAccent': return token('accent-foreground');
-    case 'accent': return token('accent');
-    case 'secondary': return token('secondary');
-    case 'tertiary': return token('tertiary');
-    case 'danger': return token('danger');
-    case 'success': return token('success');
-    case 'warning': return token('warning');
+    case 'primary':
+      return token('foreground');
+    case 'onAccent':
+      return token('accent-foreground');
+    case 'accent':
+      return token('accent');
+    case 'secondary':
+      return token('secondary');
+    case 'tertiary':
+      return token('tertiary');
+    case 'danger':
+      return token('danger');
+    case 'success':
+      return token('success');
+    case 'warning':
+      return token('warning');
   }
 }
 

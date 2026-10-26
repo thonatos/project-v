@@ -44,7 +44,10 @@ export function createAuthFlows(options: AuthOptions) {
   const transaction = options.transaction ?? directTransaction;
 
   function signIn(): void {
-    transaction(() => { error.set(''); pending.set(true); });
+    transaction(() => {
+      error.set('');
+      pending.set(true);
+    });
     core
       .startAuth()
       .then((payload) => {
@@ -52,7 +55,10 @@ export function createAuthFlows(options: AuthOptions) {
         options.openExternal(payload.authUrl);
       })
       .catch((cause) => {
-        transaction(() => { pending.set(false); error.set(messages.startFailed); });
+        transaction(() => {
+          pending.set(false);
+          error.set(messages.startFailed);
+        });
         console.error(`${tag} auth-start-failed`, reason(cause));
       });
   }
@@ -63,7 +69,10 @@ export function createAuthFlows(options: AuthOptions) {
       if (!isConnected()) {
         error.set(messages.notConnected);
       } else {
-        transaction(() => { pending.set(false); error.set(''); });
+        transaction(() => {
+          pending.set(false);
+          error.set('');
+        });
       }
     });
   }
@@ -74,7 +83,10 @@ export function createAuthFlows(options: AuthOptions) {
    */
   function reconnect(overrides: ReconnectOptions = {}): void {
     if (rechecking()) return;
-    transaction(() => { rechecking.set(true); error.set(''); });
+    transaction(() => {
+      rechecking.set(true);
+      error.set('');
+    });
     core
       .reconnect()
       .then((result) => {

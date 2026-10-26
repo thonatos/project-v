@@ -83,8 +83,18 @@ export function BottomMenu(props: {
           </View>
           <If when={props.header}>{props.header}</If>
           <View class={`w-full ${inset.screen} ${inset.menuBody}`}>
-            <Each of={props.groups.filter((group) => group.length > 0)} key={(group) => group.map((item) => item.id).join(':')}>
-              {(group, index) => <><If when={index() > 0}><MenuSeparator class={line.top} /></If><MenuGroup items={group()} onClose={props.onClose} /></>}
+            <Each
+              of={props.groups.filter((group) => group.length > 0)}
+              key={(group) => group.map((item) => item.id).join(':')}
+            >
+              {(group, index) => (
+                <>
+                  <If when={index() > 0}>
+                    <MenuSeparator class={line.top} />
+                  </If>
+                  <MenuGroup items={group()} onClose={props.onClose} />
+                </>
+              )}
             </Each>
             <Button
               onPress={props.onClose}

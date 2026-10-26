@@ -34,7 +34,12 @@ test('computed caches repeated reads and owned timers clean up', async () => {
 });
 
 test('runtime theme follows appearance and layout survives a wider viewport', async () => {
-  const app = await open('../SemanticsFixture.tsx', { colorScheme: 'light', reducedMotion: true, width: 480, height: 960 });
+  const app = await open('../SemanticsFixture.tsx', {
+    colorScheme: 'light',
+    reducedMotion: true,
+    width: 480,
+    height: 960,
+  });
   expect(app.texts()).toContain('reduced motion true');
   expect(app.texts().some((text) => /^font scale \d+\.\d{2}$/.test(text))).toBe(true);
   const light = app.texts().find((text) => text.startsWith('theme '));

@@ -35,7 +35,11 @@ export function createRenameFlow(options: RenameOptions) {
   const transaction = options.transaction ?? directTransaction;
 
   function begin(): void {
-    transaction(() => { draft.set(options.initial()); error.set(''); options.open(); });
+    transaction(() => {
+      draft.set(options.initial());
+      error.set('');
+      options.open();
+    });
   }
 
   function save(): void {
