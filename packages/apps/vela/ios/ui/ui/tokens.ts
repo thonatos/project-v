@@ -11,53 +11,35 @@
 /** Surfaces, each with its own legible foreground. */
 export const surface = {
   /** The window and grouped backgrounds. */
-  canvas: 'bg-canvas dark:bg-dk-canvas',
+  canvas: 'bg-canvas',
   /** Chrome bars (top bar, bottom toolbar). */
-  bar: 'bg-surface dark:bg-dk-surface',
+  bar: 'bg-surface',
   /** Inset-grouped cells. */
-  cell: 'bg-cell dark:bg-dk-cell',
+  cell: 'bg-cell',
   /** Modal sheets. */
-  sheet: 'bg-sheet dark:bg-dk-sheet',
+  sheet: 'bg-sheet',
   /** A recessed fill: search-like fields, avatar placeholders, segmented wells. */
-  fill: 'bg-fill dark:bg-dk-fill',
-  accent: 'bg-accent dark:bg-dk-accent',
-  accentSoft: 'bg-accent-soft dark:bg-dk-accent-soft',
+  fill: 'bg-fill',
+  accent: 'bg-accent',
+  accentSoft: 'bg-accent-soft',
   /** Floating chrome: the tab bar and the browser toolbar. */
-  float: 'bg-float dark:bg-dk-float',
+  float: 'bg-float',
   /** The dimmed backdrop behind a bottom menu. */
-  scrim: 'bg-scrim dark:bg-dk-scrim',
-  grabber: 'bg-grabber dark:bg-dk-grabber',
+  scrim: 'bg-scrim',
+  grabber: 'bg-grabber',
 } as const;
 
 export const ink = {
-  primary: 'text-canvas-foreground dark:text-dk-canvas-foreground',
-  secondary: 'text-secondary dark:text-dk-secondary',
-  tertiary: 'text-tertiary dark:text-dk-tertiary',
-  accent: 'text-accent dark:text-dk-accent',
-  onAccent: 'text-accent-foreground dark:text-dk-accent-foreground',
-  danger: 'text-danger dark:text-dk-danger',
-  success: 'text-success dark:text-dk-success',
-  warning: 'text-warning dark:text-dk-warning',
+  primary: 'text-canvas-foreground', secondary: 'text-secondary', tertiary: 'text-tertiary',
+  accent: 'text-accent', onAccent: 'text-accent-foreground', danger: 'text-danger',
+  success: 'text-success', warning: 'text-warning',
 } as const;
 
-/** Raw hex values for native controls (SF Symbols, UISwitch) that take a color, not a class. */
-export const nativeColor = {
-  accent: { light: '#A8491F', dark: '#E08A5E' },
-  secondary: { light: '#6B6761', dark: '#A8A29A' },
-  tertiary: { light: '#8E8A83', dark: '#7E7970' },
-  primary: { light: '#1F1E1C', dark: '#F2F0EC' },
-  danger: { light: '#A63A2E', dark: '#E8796B' },
-  success: { light: '#4F6B3F', dark: '#8FB97A' },
-  warning: { light: '#7F5B1C', dark: '#D9A857' },
-  onAccent: { light: '#FFFFFF', dark: '#1B1A18' },
-} as const;
-
-export type NativeColor = keyof typeof nativeColor;
+/** Semantic runtime theme roles accepted by native controls. */
+export type NativeColor = 'accent' | 'secondary' | 'tertiary' | 'primary' | 'danger' | 'success' | 'warning' | 'onAccent';
 
 export const line = {
-  hairline: 'border-separator dark:border-dk-separator',
-  bottom: 'border-b border-separator dark:border-dk-separator',
-  top: 'border-t border-separator dark:border-dk-separator',
+  hairline: 'border-separator', bottom: 'border-b border-separator', top: 'border-t border-separator',
 } as const;
 
 /**
@@ -188,15 +170,14 @@ export const radius = {
 
 /** Status vocabulary: one tone per meaning, shared by dots, chips and banners. */
 export const tone = {
-  success: { dot: 'bg-success dark:bg-dk-success', soft: 'bg-success-soft dark:bg-dk-success-soft', ink: ink.success },
-  warning: { dot: 'bg-warning dark:bg-dk-warning', soft: 'bg-warning-soft dark:bg-dk-warning-soft', ink: ink.warning },
-  danger: { dot: 'bg-danger dark:bg-dk-danger', soft: 'bg-danger-soft dark:bg-dk-danger-soft', ink: ink.danger },
+  success: { dot: 'bg-success', soft: 'bg-success-soft', ink: ink.success },
+  warning: { dot: 'bg-warning', soft: 'bg-warning-soft', ink: ink.warning },
+  danger: { dot: 'bg-danger', soft: 'bg-danger-soft', ink: ink.danger },
   offline: {
-    dot: 'bg-offline dark:bg-dk-offline',
-    soft: 'bg-offline-soft dark:bg-dk-offline-soft',
+    dot: 'bg-offline', soft: 'bg-offline-soft',
     ink: ink.secondary,
   },
-  accent: { dot: 'bg-accent dark:bg-dk-accent', soft: 'bg-accent-soft dark:bg-dk-accent-soft', ink: ink.accent },
+  accent: { dot: 'bg-accent', soft: 'bg-accent-soft', ink: ink.accent },
 } as const;
 
 export type Tone = keyof typeof tone;
@@ -206,16 +187,14 @@ export type Tone = keyof typeof tone;
  * private name), so the same Mac reads the same everywhere.
  */
 export const hue = [
-  { tile: 'bg-hue1-soft dark:bg-dk-hue1-soft', ink: 'text-hue1 dark:text-dk-hue1' },
-  { tile: 'bg-hue2-soft dark:bg-dk-hue2-soft', ink: 'text-hue2 dark:text-dk-hue2' },
-  { tile: 'bg-hue3-soft dark:bg-dk-hue3-soft', ink: 'text-hue3 dark:text-dk-hue3' },
-  { tile: 'bg-hue4-soft dark:bg-dk-hue4-soft', ink: 'text-hue4 dark:text-dk-hue4' },
-  { tile: 'bg-hue5-soft dark:bg-dk-hue5-soft', ink: 'text-hue5 dark:text-dk-hue5' },
+  { tile: 'bg-hue1-soft', ink: 'text-hue1' }, { tile: 'bg-hue2-soft', ink: 'text-hue2' },
+  { tile: 'bg-hue3-soft', ink: 'text-hue3' }, { tile: 'bg-hue4-soft', ink: 'text-hue4' },
+  { tile: 'bg-hue5-soft', ink: 'text-hue5' },
 ] as const;
 
 /** Elevation for floating chrome. */
 export const elevation = {
-  float: 'shadow-lg border border-separator dark:border-dk-separator',
+  float: 'shadow-lg border border-separator',
 } as const;
 
 /**
@@ -248,6 +227,6 @@ export const motion = {
 
 export const state = {
   press: 'active:opacity-60',
-  cellPress: 'active:bg-fill dark:active:bg-dk-fill',
+  cellPress: 'active:bg-fill',
   disabled: 'disabled:opacity-40',
 } as const;

@@ -88,6 +88,7 @@ export function DevicesPage() {
                 detail={`${connectionLabel(device().connection)} · ${device().services.length} 个服务`}
                 leading={<IconTile name="desktopcomputer" />}
                 trailing={<Dot tone={deviceTone(device())} />}
+                accessibilityLabel={`${device().name}，${connectionLabel(device().connection)}，${device().services.length} 个服务`}
                 onPress={() => store.navigation.device(device().id)}
                 last={index() === store.devices().length - 1}
               />

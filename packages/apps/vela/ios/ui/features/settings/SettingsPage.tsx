@@ -1,6 +1,6 @@
 /** Settings: appearance, logging and the app's boundaries. */
-import { View } from 'nsh';
-import { Cell, IconTile, Section, Segmented, TabPage, Toggle, inset, size } from '../../ui';
+import { Text, View } from 'nsh';
+import { Cell, IconTile, Notice, Section, Segmented, TabPage, Toggle, font, ink, inset } from '../../ui';
 import { store } from '../../core/store';
 import { APP_VERSION } from '../../../../shared/ui/version';
 
@@ -19,15 +19,17 @@ export function SettingsPage() {
     );
   return (
     <TabPage title="设置" testID="settings-page">
-      <Section label="外观">
-        <View class={`w-full ${size.cell} justify-center ${inset.cell}`}>
-          <Segmented
-            items={APPEARANCES.map((item) => item.label)}
-            selected={selected()}
-            onChange={(index) => store.preferences.update({ appearance: APPEARANCES[index]?.value ?? 'system' })}
-          />
-        </View>
-      </Section>
+      <View class={`w-full ${inset.sectionTop}`}>
+        <Text class={`${inset.sectionLabel} ${font.sectionLabel} ${ink.secondary}`}>外观</Text>
+        <Segmented
+          items={APPEARANCES.map((item) => item.label)}
+          selected={selected()}
+          onChange={(index) => store.preferences.update({ appearance: APPEARANCES[index]?.value ?? 'system' })}
+        />
+      </View>
+      <If when={store.copyError()}>
+        <View class={inset.sectionTop}><Notice tone="danger" title="复制失败" detail={store.copyError()} /></View>
+      </If>
 
       <Section
         label="隐私"

@@ -16,7 +16,8 @@ shared/ui/              pure projections, protocol types and the shared client f
 
 - Atoms (`ios/ui/ui/*`) MUST NOT import `core/`, `features/`, `vela/native` or shared projections.
 - Features MUST NOT import `vela/native` / `CoreBridge` or call `JSON.parse`; only `core/client.ts` sends requests.
-- Colors, spacing and type sizes come from `ios/ui/ui/tokens.ts`. Features never write hex values, raw spacing utilities, raw text sizes or `dark:` variants.
+- Colors come from `nsh.json.theme` runtime tokens; spacing/type roles and audited native geometry are named in `ios/ui/ui/tokens.ts`. Features never write raw values or `dark:` mirrors.
+- Features MUST NOT write store signals. They read accessors and call `navigation/page/remotes/account/preferences/diagnosticsActions/logsView` commands.
 - Values derived from props or signals MUST be getters — NSH re-runs bindings, not component bodies.
 - Touching desktop density is not allowed here: macOS atoms (`macos/ui/ui`) are not imported. The two platforms never import each other (`tests/structure.test.mjs`).
 
@@ -32,7 +33,7 @@ shared/ui/              pure projections, protocol types and the shared client f
 
 ## Store (import { store } from "../../core/store")
 
-State: `status devices stage browsing tab modals deviceID authPending authError rechecking signingExpiry addDevice rename diagnostics pageLoading pageError pageTitle toolbarCollapsed canGoBack canGoForward pageDark logLevel activity`.
+Read-only state: `status devices stage browsing tab modals deviceID authPending authError rechecking signingExpiry addDevice rename diagnostics pageLoading pageError pageTitle toolbarCollapsed canGoBack canGoForward pageDark logLevel activity`.
 Derived: `network protocolVersion needsAuth loading refreshing copied signedIn userName userInitial device rows deviceGroups currentService tailnetCandidates selectableTailnetNames lastVisited isRecent top isOpen connectionLabel`.
 Flows: `navigation.* page.* remotes.* account.* preferences.* diagnosticsActions.*`.
 
@@ -46,4 +47,4 @@ Flows: `navigation.* page.* remotes.* account.* preferences.* diagnosticsActions
 
 `ios/ui/core/signing.ts`: `signingNotice(expiresAt, now?)` derives the development-signing copy from the embedded profile's real expiry.
 
-Tests: `ios/ui/tests/` (this app) and `shared/ui/` (projections, after S2). Run everything with `pnpm -F vela verify`.
+`nsh.json` declares Clipboard plus the exact HTTPS GET used for the private Gravatar cache. The custom WebView, status bar and Core bridge are trusted host components; Rust restricts WebView sources to Core's exact loopback HTTP hosts. Tests include static guards and `nsh test ios/ui/tests/semantics.test.tsx`; run everything with `pnpm -F vela verify`.

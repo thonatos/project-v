@@ -537,7 +537,7 @@ fn signing_expiry() -> Option<String> {
     deprecated,
     reason = "UIApplication.openURL is the simplest http(s) hand-off; iOS 17 still supports it"
 )]
-fn open_url(url: &str) {
+pub(crate) fn open_url(url: &str) {
     let url = url.to_owned();
     // UIKit is main-thread only; CoreBridge calls may run on the engine thread.
     dispatch2::DispatchQueue::main().exec_async(move || {

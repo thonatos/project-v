@@ -38,6 +38,7 @@ export interface CellProps {
   role?: 'action' | 'destructive';
   mono?: boolean;
   disabled?: boolean;
+  accessibilityLabel?: string;
   /** No separator under it (the last cell of a section). */
   last?: boolean;
   tall?: boolean;
@@ -93,7 +94,7 @@ export function Cell(props: CellProps) {
         onPress={props.onPress}
         disabled={props.disabled ?? false}
         role="button"
-        accessibilityLabel={props.detail ? `${props.title}，${props.detail}` : props.title}
+        accessibilityLabel={props.accessibilityLabel ?? (props.detail ? `${props.title}，${props.detail}` : props.title)}
         class={`w-full ${props.tall ? size.serviceCell : size.cell} justify-center ${state.cellPress} ${state.disabled}`}
         testID={props.testID}
       >

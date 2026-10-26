@@ -46,7 +46,7 @@ export function MePage() {
       testID="me-page"
     >
       <View class={`w-full items-center ${inset.stack} ${inset.sectionTop}`}>
-        <Avatar initial={store.userInitial()} signedIn={store.signedIn()} imageUrl={status()?.avatarUrl} large />
+        <Avatar initial={store.userInitial()} signedIn={store.signedIn()} imageUrl={store.avatar.source()} large />
         <Text numberOfLines={1} class={`${font.title} ${ink.primary}`}>
           {store.signedIn() ? store.userName() : '未登录'}
         </Text>
@@ -118,10 +118,7 @@ export function RenameSheet() {
         <View class={`w-full ${size.cell} justify-center ${inset.cell}`}>
           <Input
             value={store.rename.draft()}
-            onChange={(value) => {
-              store.rename.draft.set(value);
-              store.rename.error.set('');
-            }}
+            onChange={store.account.changeRenameDraft}
             onSubmit={store.account.saveRename}
             placeholder={store.userName() ? `${store.userName().split('@')[0]}-iphone` : 'my-iphone'}
             autoCapitalize="none"

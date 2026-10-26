@@ -3,9 +3,8 @@
  * device registration, authentication and diagnostics. Only `client.ts` knows
  * the Core transport.
  */
-import { cleanup, signal } from 'nsh';
+import { batch, cleanup, computed, signal } from 'nsh';
 import { AlertDialog } from 'nsh/base';
-import { Clipboard } from 'nsh/clipboard';
 import { Storage } from 'nsh/storage';
 import type { DeviceViewModel, ServiceViewModel } from '../../../shared/ui/model';
 import { connectionLabel, groupServicesByDevice, isRecentService, remoteDevices } from '../../../shared/ui/devices';
@@ -21,6 +20,8 @@ import {
 } from '../../../shared/ui/identity';
 import { logRows } from '../../../shared/ui/logs';
 import type { CoreStatus, DiagnosticActivity, DiagnosticLogs, Preferences } from '../../../shared/ui/protocol';
+import { createLatestOperation, createTimeoutOwner } from '../../../shared/ui/operations';
+import { copyText } from '../../../shared/ui/clipboard';
 import { core, CoreError } from './client';
 
 export type StageFailure = 'offline' | 'auth' | 'unavailable' | 'unsupported' | 'unknown';
@@ -102,6 +103,7 @@ export function failureDetail(failure: StageFailure): string {
 }
 
 function createStore() {
+  const read = <T>(source: () => T): (() => T) => () => source();
   const status = signal<CoreStatus | null>(null);
   const devices = signal<DeviceViewModel[]>([]);
   const stage = signal<Stage>({ phase: 'empty' });
@@ -120,6 +122,7 @@ function createStore() {
   const pageLoading = signal(false);
   const pageError = signal('');
   const pageTitle = signal('');
+  const reloadRequest = signal(0);
 
   const authPending = signal(false);
   const authError = signal('');
@@ -136,12 +139,14 @@ function createStore() {
   const rename = { draft: signal(''), busy: signal(false), error: signal('') };
   const diagnostics = signal<DiagnosticLogs | null>(null);
   const activity = signal<DiagnosticActivity | null>(null);
+  const avatarSource = signal<string | undefined>();
   const logLevel = signal<'all' | 'error' | 'warn' | 'info'>('all');
   const lastVisited = signal<{ device: string; service: string } | null>(null);
   const loading = signal(true);
   const refreshing = signal(false);
   /** What was just copied, shown briefly as feedback. */
   const copied = signal<'' | 'diagnostics' | 'logs'>('');
+  const copyError = signal('');
   let copyTimer: number | undefined;
 
   let started = false;
@@ -149,28 +154,34 @@ function createStore() {
   let retryTimer: number | undefined;
   let attemptToken = 0;
   let lastRefresh = 0;
+  let pendingLoad: Promise<void> | null = null;
+  let stopped = false;
+  const timeouts = createTimeoutOwner();
+  const statusOperation = createLatestOperation();
+  const remoteOperation = createLatestOperation((active) => refreshing.set(active));
+  const diagnosticsOperation = createLatestOperation();
 
   const top = () => modals().at(-1) ?? null;
   const isOpen = (modal: Modal) => modals().includes(modal);
   const network = () => status()?.network ?? 'offline';
   const protocolVersion = () => String(core.protocolVersion());
   const needsAuth = () => network() === 'needs-auth';
-  const device = () => devices().find((item) => item.id === deviceID());
-  const tailnetCandidates = () =>
+  const device = computed(() => devices().find((item) => item.id === deviceID()));
+  const tailnetCandidates = computed(() =>
     [...(status()?.tailnetDevices ?? [])].sort(
       (left, right) => Number(right.online) - Number(left.online) || left.name.localeCompare(right.name),
-    );
-  const selectableTailnetNames = () =>
+    ));
+  const selectableTailnetNames = computed(() =>
     tailnetCandidates()
       .map((item) => item.dnsName ?? '')
-      .filter((name) => name && !devices().some((item) => item.privateName === name));
-  const signedIn = () => identitySignedIn(status());
-  const userName = () => identityLabel(status());
-  const userInitial = () => identityInitial(status());
+      .filter((name) => name && !devices().some((item) => item.privateName === name)));
+  const signedIn = computed(() => identitySignedIn(status()));
+  const userName = computed(() => identityLabel(status()));
+  const userInitial = computed(() => identityInitial(status()));
   const isRecent = (row: { device: DeviceViewModel; service: ServiceViewModel }) =>
     isRecentService(lastVisited(), row.device, row.service);
-  const deviceGroups = () => groupServicesByDevice(devices(), lastVisited());
-  const rows = (): ServiceRow[] =>
+  const deviceGroups = computed(() => groupServicesByDevice(devices(), lastVisited()));
+  const rows = computed((): ServiceRow[] =>
     devices()
       .flatMap((item) => item.services.map((service) => ({ device: item, service })))
       .sort(
@@ -179,40 +190,54 @@ function createStore() {
           Number(right.device.connection === 'connected') - Number(left.device.connection === 'connected') ||
           left.device.name.localeCompare(right.device.name) ||
           left.service.name.localeCompare(right.service.name),
-      );
-  const currentService = () => {
+      ));
+  const currentService = computed(() => {
     const value = stage();
     return value.phase === 'empty' ? null : { device: value.device, service: value.service };
-  };
+  });
 
-  async function load(refreshDevices = false): Promise<void> {
-    try {
-      const next = await core.status();
-      status.set(next);
-      devices.set(remoteDevices(next.remotes));
-      if (next.signing?.expiresAt) signingExpiry.set(next.signing.expiresAt);
-      if (next.network === 'connected' || next.network === 'needs-auth') authPending.set(false);
-      reconcileStage();
-      if (refreshDevices) await refreshRemotes();
-      else if (next.network === 'connected' && Date.now() - lastRefresh > 30_000) await refreshRemotes();
-    } catch (error) {
-      status.set(null);
-      console.error('VELA_IOS_STATE status-load-failed', reason(error));
-    } finally {
-      loading.set(false);
-    }
+  function load(refreshDevices = false): Promise<void> {
+    if (pendingLoad) return pendingLoad;
+    const attempt = statusOperation.begin();
+    pendingLoad = (async () => {
+      try {
+        const next = await core.status();
+        if (!attempt.current()) return;
+        batch(() => {
+          status.set(next);
+          devices.set(remoteDevices(next.remotes));
+          if (next.signing?.expiresAt) signingExpiry.set(next.signing.expiresAt);
+          if (next.network === 'connected' || next.network === 'needs-auth') authPending.set(false);
+          avatarSource.set(next.preferences?.gravatarAvatar ? next.avatarUrl : undefined);
+          loading.set(false);
+        });
+        reconcileStage();
+        if (refreshDevices) await refreshRemotes();
+        else if (next.network === 'connected' && Date.now() - lastRefresh > 30_000) await refreshRemotes();
+      } catch (error) {
+        if (attempt.current()) loading.set(false);
+        console.error('VELA_IOS_STATE status-load-failed', reason(error));
+      } finally {
+        attempt.end();
+        pendingLoad = null;
+      }
+    })();
+    return pendingLoad;
   }
 
   async function refreshRemotes(): Promise<void> {
     lastRefresh = Date.now();
-    refreshing.set(true);
+    const attempt = remoteOperation.begin();
     try {
-      devices.set(remoteDevices(await core.refreshRemotes()));
-      reconcileStage();
+      const next = remoteDevices(await core.refreshRemotes());
+      if (attempt.current()) {
+        devices.set(next);
+        reconcileStage();
+      }
     } catch (error) {
       console.error('VELA_IOS_STATE remote-refresh-failed', reason(error));
     } finally {
-      refreshing.set(false);
+      attempt.end();
     }
   }
 
@@ -248,16 +273,18 @@ function createStore() {
   }
 
   function schedule(): void {
-    clearTimeout(timer);
+    timeouts.cancel(timer);
+    if (stopped) return;
     const delay = needsAuth() ? 4_000 : network() === 'connected' ? 6_000 : 2_000;
-    timer = setTimeout(() => {
+    timer = timeouts.schedule(() => {
       void load().finally(schedule);
-    }, delay);
+    }, delay) as number;
   }
 
   function start(): void {
     if (started) return;
     started = true;
+    stopped = false;
     try {
       core.start();
     } catch (error) {
@@ -273,15 +300,22 @@ function createStore() {
       }
     });
     void load().finally(schedule);
-    cleanup(() => {
-      clearTimeout(timer);
-      clearTimeout(retryTimer);
-      clearTimeout(copyTimer);
-    });
+    cleanup(stop);
+  }
+
+  function stop(): void {
+    if (stopped) return;
+    stopped = true;
+    started = false;
+    attemptToken += 1;
+    timeouts.stop();
+    statusOperation.stop();
+    remoteOperation.stop();
+    diagnosticsOperation.stop();
   }
 
   function clearRetry(): void {
-    clearTimeout(retryTimer);
+    timeouts.cancel(retryTimer);
     retryTimer = undefined;
   }
 
@@ -298,21 +332,16 @@ function createStore() {
     ) {
       // Going back to the list keeps the WebView mounted; returning to the
       // same service only reveals it again.
-      browsing.set(true);
-      modals.set([]);
+      batch(() => { browsing.set(true); modals.set([]); });
       return;
     }
     if (targetService.protocol === 'tcp') return;
     if (needsAuth()) {
-      stage.set({
-        phase: 'error',
-        device: targetDevice,
-        service: targetService,
-        failure: 'auth',
-        message: failureDetail('auth'),
+      batch(() => {
+        stage.set({ phase: 'error', device: targetDevice, service: targetService, failure: 'auth', message: failureDetail('auth') });
+        browsing.set(true);
+        modals.set([]);
       });
-      browsing.set(true);
-      modals.set([]);
       return;
     }
     const current = currentService();
@@ -321,16 +350,12 @@ function createStore() {
     }
     clearRetry();
     const token = ++attemptToken;
-    stage.set({ phase: 'connecting', device: targetDevice, service: targetService });
-    pageDark.set(null);
-    pageError.set('');
-    pageTitle.set('');
-    pageLoading.set(true);
-    toolbarCollapsed.set(false);
-    canGoBack.set(false);
-    canGoForward.set(false);
-    browsing.set(true);
-    modals.set([]);
+    batch(() => {
+      stage.set({ phase: 'connecting', device: targetDevice, service: targetService });
+      pageDark.set(null); pageError.set(''); pageTitle.set(''); pageLoading.set(true);
+      toolbarCollapsed.set(false); canGoBack.set(false); canGoForward.set(false);
+      browsing.set(true); modals.set([]);
+    });
     try {
       const payload = await core.openMapping(targetDevice.privateName, targetService.id);
       if (token !== attemptToken) return;
@@ -348,7 +373,7 @@ function createStore() {
       stage.set({ phase: 'error', device: targetDevice, service: targetService, failure, message });
       if (!automatic && failure !== 'auth' && failure !== 'unsupported') {
         // One bounded automatic retry; the alert also offers a manual retry.
-        retryTimer = setTimeout(() => {
+        retryTimer = timeouts.schedule(() => {
           const latest = currentService();
           if (latest) void openService(latest.device, latest.service, true);
         }, 2_000);
@@ -360,14 +385,12 @@ function createStore() {
   const navigation = {
     /** Back to the tabs; the page stays loaded underneath. */
     home() {
-      browsing.set(false);
-      toolbarCollapsed.set(false);
+      batch(() => { browsing.set(false); toolbarCollapsed.set(false); });
     },
     /** Return to the page kept under the list. */
     resume() {
       if (stage().phase !== 'empty') {
-        browsing.set(true);
-        toolbarCollapsed.set(false);
+        batch(() => { browsing.set(true); toolbarCollapsed.set(false); });
       }
     },
     push(modal: Modal) {
@@ -391,8 +414,7 @@ function createStore() {
     },
     /** The "me" tab holds the account; leave the browser to show it. */
     account: () => {
-      browsing.set(false);
-      modals.set([]);
+      batch(() => { browsing.set(false); modals.set([]); });
       navigation.select('me');
     },
     devices: () => {
@@ -427,12 +449,13 @@ function createStore() {
       }
       clearRetry();
       attemptToken++;
-      stage.set({ phase: 'empty' });
-      browsing.set(false);
+      batch(() => { stage.set({ phase: 'empty' }); browsing.set(false); });
     },
   };
 
   const page = {
+    reloadRequest: read(reloadRequest),
+    reload: () => reloadRequest.update((value) => value + 1),
     started: () => {
       pageLoading.set(true);
       pageError.set('');
@@ -447,11 +470,13 @@ function createStore() {
       pageError.set(message);
     },
     navigated(state: { loading: boolean; title?: string; canGoBack?: boolean; canGoForward?: boolean }) {
-      pageLoading.set(state.loading);
-      if (state.title) pageTitle.set(state.title);
-      canGoBack.set(Boolean(state.canGoBack));
-      canGoForward.set(Boolean(state.canGoForward));
-      if (state.loading) toolbarCollapsed.set(false);
+      batch(() => {
+        pageLoading.set(state.loading);
+        if (state.title) pageTitle.set(state.title);
+        canGoBack.set(Boolean(state.canGoBack));
+        canGoForward.set(Boolean(state.canGoForward));
+        if (state.loading) toolbarCollapsed.set(false);
+      });
     },
     themed(dark: boolean) {
       pageDark.set(dark);
@@ -466,6 +491,7 @@ function createStore() {
   // Shared flows: identity, rename, saved devices and preferences. Platform
   // wording and the steps after each action stay here.
   const auth = createAuthFlows({
+    transaction: batch,
     core,
     openExternal: core.openExternal,
     pending: authPending,
@@ -493,6 +519,7 @@ function createStore() {
   });
 
   const renameFlow = createRenameFlow({
+    transaction: batch,
     core,
     status,
     draft: rename.draft,
@@ -513,6 +540,7 @@ function createStore() {
   });
 
   const remoteFlows = createRemoteFlows({
+    transaction: batch,
     core,
     addDevice,
     load: () => refreshRemotes(),
@@ -540,7 +568,9 @@ function createStore() {
     status,
     // App.tsx applies the appearance from the preferences signal; updating the
     // snapshot below is what triggers it.
-    apply: () => {},
+    apply: (next) => {
+      if (!next.gravatarAvatar) avatarSource.set(undefined);
+    },
     onSaved: () => void load(),
     tag: 'VELA_IOS_STATE',
   });
@@ -568,6 +598,9 @@ function createStore() {
     beginRename: renameFlow.begin,
     saveRename: renameFlow.save,
     logout: auth.logout,
+    changeRenameDraft(value: string) {
+      batch(() => { rename.draft.set(value); rename.error.set(''); });
+    },
   };
 
   const preferences = {
@@ -577,68 +610,61 @@ function createStore() {
 
   function flash(what: 'diagnostics' | 'logs') {
     copied.set(what);
-    clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => copied.set(''), 1_600);
+    timeouts.cancel(copyTimer);
+    copyTimer = timeouts.schedule(() => copied.set(''), 1_600) as number;
   }
 
   const diagnosticsActions = {
-    refresh() {
-      core
-        .logs()
-        .then((value) => diagnostics.set(value))
-        .catch((error) => console.error('VELA_IOS_STATE diagnostics-failed', reason(error)));
-      core
-        .activity()
-        .then((value) => activity.set(value))
-        .catch((error) => console.error('VELA_IOS_STATE activity-failed', reason(error)));
+    async refresh() {
+      const attempt = diagnosticsOperation.begin();
+      const [nextLogs, nextActivity] = await Promise.allSettled([core.logs(), core.activity()]);
+      if (attempt.current()) batch(() => {
+        if (nextLogs.status === 'fulfilled') diagnostics.set(nextLogs.value);
+        if (nextActivity.status === 'fulfilled') activity.set(nextActivity.value);
+      });
+      if (nextLogs.status === 'rejected') console.error('VELA_IOS_STATE diagnostics-failed', reason(nextLogs.reason));
+      if (nextActivity.status === 'rejected') console.error('VELA_IOS_STATE activity-failed', reason(nextActivity.reason));
+      attempt.end();
     },
     /** The redacted status snapshot (settings → 复制诊断信息). */
     copy() {
       const snapshot = status();
       const version = protocolVersion();
-      Clipboard.writeText(
-        snapshot ? diagnosticSnapshot(snapshot, version) : JSON.stringify({ version, redacted: true }),
-      );
-      flash('diagnostics');
+      const text = snapshot ? diagnosticSnapshot(snapshot, version) : JSON.stringify({ version, redacted: true });
+      void copyText(text).then((copied) => {
+        copyError.set(copied ? '' : '无法写入剪贴板，请检查应用权限。');
+        if (copied) flash('diagnostics');
+      });
     },
     /** The journal lines the logs tab shows, at its current level. */
     copyLogs() {
       const lines = logRows(diagnostics(), logLevel()).map(
         (row) => `${row.time} ${row.levelLabel} ${row.area} ${row.message}`,
       );
-      Clipboard.writeText(lines.join('\n'));
-      flash('logs');
+      void copyText(lines.join('\n')).then((copied) => {
+        copyError.set(copied ? '' : '无法写入剪贴板，请检查应用权限。');
+        if (copied) flash('logs');
+      });
     },
   };
 
+  const logsView = { selectLevel: (level: 'all' | 'error' | 'warn' | 'info') => logLevel.set(level) };
+  const avatar = {
+    source: read(avatarSource),
+  };
+
   return {
-    status,
-    devices,
-    stage,
-    browsing,
-    modals,
-    deviceID,
-    authPending,
-    authError,
-    rechecking,
-    signingExpiry,
-    addDevice,
-    rename,
-    diagnostics,
-    pageLoading,
-    pageError,
-    pageTitle,
-    tab,
-    toolbarCollapsed,
-    canGoBack,
-    canGoForward,
-    pageDark,
+    status: read(status), devices: read(devices), stage: read(stage), browsing: read(browsing), modals: read(modals),
+    deviceID: read(deviceID), authPending: read(authPending), authError: read(authError), rechecking: read(rechecking),
+    signingExpiry: read(signingExpiry),
+    addDevice: { name: read(addDevice.name), selection: read(addDevice.selection), busy: read(addDevice.busy), loading: read(addDevice.loading), error: read(addDevice.error) },
+    rename: { draft: read(rename.draft), busy: read(rename.busy), error: read(rename.error) },
+    diagnostics: read(diagnostics), pageLoading: read(pageLoading), pageError: read(pageError), pageTitle: read(pageTitle),
+    tab: read(tab), toolbarCollapsed: read(toolbarCollapsed), canGoBack: read(canGoBack), canGoForward: read(canGoForward), pageDark: read(pageDark),
     network,
     protocolVersion,
     needsAuth,
-    loading,
-    refreshing,
-    copied,
+    loading: read(loading), refreshing: read(refreshing), copied: read(copied), copyError: read(copyError),
     signedIn,
     userName,
     userInitial,
@@ -648,13 +674,13 @@ function createStore() {
     currentService,
     tailnetCandidates,
     selectableTailnetNames,
-    lastVisited,
+    lastVisited: read(lastVisited),
     isRecent,
-    logLevel,
-    activity,
+    logLevel: read(logLevel), activity: read(activity),
     top,
     isOpen,
     start,
+    stop,
     load,
     refreshRemotes,
     navigation,
@@ -663,6 +689,8 @@ function createStore() {
     account,
     preferences,
     diagnosticsActions,
+    logsView,
+    avatar,
     connectionLabel,
   };
 }

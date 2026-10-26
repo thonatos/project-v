@@ -28,6 +28,8 @@ use objc2_web_kit::{
     WKWebsiteDataStore,
 };
 
+use crate::url_policy::{NavigationPolicy, loopback_http, navigation_policy};
+
 /// The message channel the scroll observer posts to.
 const SCROLL_CHANNEL: &str = "velaScroll";
 
@@ -148,20 +150,14 @@ define_class!(
                 .and_then(|url| url.absoluteString())
                 .map(|url| url.to_string())
                 .unwrap_or_default();
-            // Only loopback and ordinary web pages: Vela is not a jump box and
-            // must not follow custom schemes out of the app.
-            let allowed = url.is_empty()
-                || url.starts_with("http://127.0.0.1")
-                || url.starts_with("https://")
-                || url.starts_with("about:");
-            if !allowed {
-                self.emit(
-                    "error",
-                    serde_json::json!({"message": "该页面尝试离开 Vela", "url": url}),
-                );
+            let policy = navigation_policy(&url);
+            if policy == NavigationPolicy::OpenExternal {
+                crate::ios::open_url(&url);
+            } else if policy == NavigationPolicy::Block {
+                self.emit("error", serde_json::json!({"message": "该页面尝试访问未授权地址", "url": url}));
             }
             handler.call((
-                if allowed {
+                if policy == NavigationPolicy::Allow {
                     WKNavigationActionPolicy::Allow
                 } else {
                     WKNavigationActionPolicy::Cancel
@@ -474,6 +470,13 @@ impl WebViewComponent {
         let Some(source) = self.source.clone() else {
             return;
         };
+        if !loopback_http(&source) {
+            self.context.emit(
+                "error",
+                serde_json::json!({"message": "服务地址必须是 Core 创建的 loopback HTTP 映射", "url": source}),
+            );
+            return;
+        }
         if !self.ensure_web_view() {
             return;
         }
@@ -554,6 +557,7 @@ impl NativeComponent for WebViewComponent {
             }
             "home" => {
                 if let Some(source) = self.source.clone()
+                    && loopback_http(&source)
                     && let Some(url) = NSURL::URLWithString(&NSString::from_str(&source))
                 {
                     let request = NSURLRequest::requestWithURL(&url);

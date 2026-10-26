@@ -10,10 +10,14 @@
     reason = "UIKit and WebKit are Objective-C APIs; scene and navigation delegates require FFI"
 )]
 
+mod url_policy;
+
 #[cfg(target_os = "ios")]
 mod controls;
 #[cfg(target_os = "ios")]
 mod ios;
+#[cfg(all(target_os = "ios", target_abi = "sim"))]
+mod simulator_core;
 #[cfg(target_os = "ios")]
 mod webview;
 #[cfg(target_os = "ios")]

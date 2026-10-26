@@ -1,7 +1,7 @@
 /** Native iOS controls: SF Symbols, UISwitch and UISegmentedControl. */
-import { colorScheme } from 'nsh/device';
+import { token } from 'nsh';
 import { nativeComponent } from 'nsh/native';
-import { nativeColor, symbol, type NativeColor } from './tokens';
+import { symbol, type NativeColor } from './tokens';
 
 const NativeSymbol = nativeComponent<{ name: string; size: number; weight: string; tint: string }>('vela/symbol', {
   props: ['name', 'size', 'weight', 'tint'],
@@ -23,9 +23,18 @@ const NativeSegmented = nativeComponent<{ items: string[]; selected: number }, {
   },
 );
 
-/** The hex of a role in the current appearance. */
+/** A runtime theme role for native controls; `token` follows appearance and host overrides. */
 export function resolve(color: NativeColor): string {
-  return colorScheme() === 'dark' ? nativeColor[color].dark : nativeColor[color].light;
+  switch (color) {
+    case 'primary': return token('foreground');
+    case 'onAccent': return token('accent-foreground');
+    case 'accent': return token('accent');
+    case 'secondary': return token('secondary');
+    case 'tertiary': return token('tertiary');
+    case 'danger': return token('danger');
+    case 'success': return token('success');
+    case 'warning': return token('warning');
+  }
 }
 
 /** An SF Symbol. Purely decorative unless `label` is set. */
@@ -67,6 +76,7 @@ export function Toggle(props: {
       tint={resolve('accent')}
       role="switch"
       accessibilityLabel={props.label}
+      accessibilityState={{ checked: props.value, disabled: props.disabled ?? false }}
       onChange={(event) => props.onChange(event.value)}
     />
   );

@@ -6,7 +6,7 @@
  *   expanded   [‹] [›] [ 🔒 opencode · vela-macmini ] [⋯] [▦]
  *   collapsed              ( 🔒 opencode )
  */
-import { Scroll, View, effect, type YNode } from 'nsh';
+import { Scroll, View, cleanup, effect, type YNode } from 'nsh';
 import { SafeAreaView, safeAreaInsets } from 'nsh/base';
 import {
   BrowserToolbar,
@@ -25,15 +25,13 @@ import { failureDetail, failureTitle, store } from '../../core/store';
 import { connectionLabel } from '../../../../shared/ui/devices';
 import { ServiceWebView, type NavigationState } from './WebView';
 
-let webview: YNode | undefined;
-
-/** Reloads the visible page (the menu and the error state call it). */
-export function reloadPage() {
-  store.page.started();
-  webview?.command('reload');
-}
-
 export function BrowserPage(props: { onMenu: () => void }) {
+  let webview: YNode | undefined;
+  let seenReload = store.page.reloadRequest();
+  const reloadPage = () => {
+    store.page.started();
+    webview?.command('reload');
+  };
   const top = safeAreaInsets();
   const stage = () => store.stage();
   const current = () => store.currentService();
@@ -57,8 +55,19 @@ export function BrowserPage(props: { onMenu: () => void }) {
   // private network is back.
   effect(() => {
     if (store.network() === 'connected' && stage().phase === 'ready' && store.pageError()) {
-      setTimeout(reloadPage, 400);
+      const timer = setTimeout(reloadPage, 400);
+      cleanup(() => clearTimeout(timer));
     }
+  });
+  effect(() => {
+    const request = store.page.reloadRequest();
+    if (request !== seenReload) {
+      seenReload = request;
+      reloadPage();
+    }
+  });
+  cleanup(() => {
+    webview = undefined;
   });
 
   // Like Safari, the page runs under the status bar; its top color decides

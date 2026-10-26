@@ -1,6 +1,6 @@
 /** The Logs tab: the recent redacted journal, filtered by level. */
 import { Text, View } from 'nsh';
-import { BarButton, Cell, Section, Segmented, TabPage, font, ink, inset, line } from '../../ui';
+import { BarButton, Cell, Notice, Section, Segmented, TabPage, font, ink, inset, line } from '../../ui';
 import { store } from '../../core/store';
 import { logLevelCounts, logRows } from '../../../../shared/ui/logs';
 
@@ -32,7 +32,7 @@ export function LogsPage() {
         <Segmented
           items={LEVELS.map((level) => `${LABELS[level]} ${counts()[level]}`)}
           selected={selected()}
-          onChange={(index) => store.logLevel.set(LEVELS[index] ?? 'all')}
+          onChange={(index) => store.logsView.selectLevel(LEVELS[index] ?? 'all')}
         />
       </View>
 
@@ -63,6 +63,9 @@ export function LogsPage() {
       <Text class={`${inset.sectionFooter} ${font.detail} ${ink.secondary}`}>
         只保留最近的事件，不包含 Cookie、token 或页面内容。
       </Text>
+      <If when={store.copyError()}>
+        <View class={inset.sectionTop}><Notice tone="danger" title="复制失败" detail={store.copyError()} /></View>
+      </If>
     </TabPage>
   );
 }

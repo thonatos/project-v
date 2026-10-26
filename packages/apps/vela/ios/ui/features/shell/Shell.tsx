@@ -13,12 +13,10 @@ import { BottomMenu, FloatingTabBar, Monogram, font, ink, inset, surface, type M
 import { store, type Tab } from '../../core/store';
 import { DevicesPage } from '../devices/DeviceSheets';
 import { LogsPage } from '../logs/LogsPage';
-import { BrowserPage, reloadPage } from '../services/BrowserPage';
+import { BrowserPage } from '../services/BrowserPage';
 import { ServicesPage } from '../services/ServicesPage';
 import { SettingsPage } from '../settings/SettingsPage';
 import { MePage } from '../account/MePage';
-
-const menuOpen = signal(false);
 
 const TABS: readonly TabItem<Tab>[] = [
   { id: 'devices', label: '设备', symbol: 'macbook', activeSymbol: 'macbook' },
@@ -52,6 +50,7 @@ function browserMenu(): MenuItem[][] {
   return [
     [
       {
+        id: 'device',
         label: '设备信息',
         symbol: 'macbook',
         onSelect: () => {
@@ -59,14 +58,15 @@ function browserMenu(): MenuItem[][] {
           if (value) store.navigation.device(value.id);
         },
       },
-      { label: '服务列表', symbol: 'square.grid.2x2', onSelect: store.navigation.home },
-      { label: '重新加载', symbol: 'arrow.clockwise', onSelect: reloadPage, disabled: store.stage().phase !== 'ready' },
-      { label: '关闭服务', symbol: 'xmark.circle', onSelect: store.navigation.closeService, destructive: true },
+      { id: 'services', label: '服务列表', symbol: 'square.grid.2x2', onSelect: store.navigation.home },
+      { id: 'reload', label: '重新加载', symbol: 'arrow.clockwise', onSelect: store.page.reload, disabled: store.stage().phase !== 'ready' },
+      { id: 'close', label: '关闭服务', symbol: 'xmark.circle', onSelect: store.navigation.closeService, destructive: true },
     ],
   ];
 }
 
 export function Shell() {
+  const menuOpen = signal(false);
   const browsing = () => store.browsing() && store.stage().phase !== 'empty';
   return (
     <View class={`flex-1 ${surface.canvas}`}>
