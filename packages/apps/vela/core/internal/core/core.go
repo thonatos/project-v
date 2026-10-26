@@ -8,6 +8,7 @@ package core
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,6 +41,8 @@ import (
 // DefaultRetryAttempts is how many manifest refreshes one mapping open makes
 // before reporting the remote as unavailable.
 const DefaultRetryAttempts = 3
+
+const maxAvatarBytes = 512 * 1024
 
 // Node is the network seam the Core dials through. *network.Embedded
 // implements it; tests provide a fake.
@@ -99,23 +102,27 @@ type Options struct {
 // Core owns identity, peers, manifests, loopback mappings and read-side
 // handlers. Publication and service sharing are composed on top by macOS.
 type Core struct {
-	paths    velapaths.Writable
-	store    *velaconfig.Store
-	node     Node
-	journal  *diagnostics.Journal
-	checker  ManifestChecker
-	registry remotes.Registry
-	manager  *mappings.Manager
-	session  *mappings.Session
-	logger   *log.Logger
-	now      func() time.Time
-	attempts int
-	delay    time.Duration
-	signing  string
-	avatar   bool
+	paths      velapaths.Writable
+	store      *velaconfig.Store
+	node       Node
+	journal    *diagnostics.Journal
+	checker    ManifestChecker
+	registry   remotes.Registry
+	manager    *mappings.Manager
+	session    *mappings.Session
+	logger     *log.Logger
+	now        func() time.Time
+	attempts   int
+	delay      time.Duration
+	signing    string
+	avatar     bool
+	avatarHTTP httpDoer
 
 	peerMu        sync.Mutex
 	peerSignature string
+	avatarMu      sync.Mutex
+	avatarURLKey  string
+	avatarSource  string
 }
 
 // New loads configuration from Paths and constructs the access Core.
@@ -200,19 +207,20 @@ func New(options Options) (*Core, error) {
 	}
 
 	core := &Core{
-		paths:    options.Paths,
-		store:    store,
-		node:     options.Node,
-		journal:  journal,
-		checker:  checker,
-		registry: remotes.Registry{Store: store, Checker: checker, Now: now},
-		manager:  manager,
-		session:  mappings.NewSession(manager),
-		logger:   logger,
-		now:      now,
-		attempts: attempts,
-		delay:    delay,
-		avatar:   options.Avatar,
+		paths:      options.Paths,
+		store:      store,
+		node:       options.Node,
+		journal:    journal,
+		checker:    checker,
+		registry:   remotes.Registry{Store: store, Checker: checker, Now: now},
+		manager:    manager,
+		session:    mappings.NewSession(manager),
+		logger:     logger,
+		now:        now,
+		attempts:   attempts,
+		delay:      delay,
+		avatar:     options.Avatar,
+		avatarHTTP: &http.Client{Timeout: 4 * time.Second},
 	}
 	if options.Address != "" {
 		// iOS isolates cookies with a WKWebsiteDataStore per device+service, so
@@ -306,10 +314,61 @@ func (core *Core) Status(ctx context.Context) (any, error) {
 	if core.signing != "" {
 		payload["signing"] = map[string]string{"expiresAt": core.signing}
 	}
-	if url := avatarURL(self, core.avatar && config.Preferences.GravatarAvatar); url != "" {
-		payload["avatarUrl"] = url
+	url := avatarURL(self, core.avatar && config.Preferences.GravatarAvatar)
+	if source := core.loadAvatar(ctx, url); source != "" {
+		payload["avatarUrl"] = source
 	}
 	return payload, nil
+}
+
+func (core *Core) loadAvatar(ctx context.Context, url string) string {
+	core.avatarMu.Lock()
+	defer core.avatarMu.Unlock()
+	if url == "" {
+		core.avatarURLKey, core.avatarSource = "", ""
+		return ""
+	}
+	if core.avatarURLKey == url && core.avatarSource != "" {
+		return core.avatarSource
+	}
+	source, err := downloadAvatar(ctx, core.avatarHTTP, url)
+	if err != nil {
+		core.logger.Printf("load avatar: %v", err)
+		return ""
+	}
+	core.avatarURLKey, core.avatarSource = url, source
+	return source
+}
+
+type httpDoer interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+func downloadAvatar(ctx context.Context, client httpDoer, url string) (string, error) {
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected HTTP status %d", response.StatusCode)
+	}
+	contentType := strings.ToLower(strings.TrimSpace(strings.Split(response.Header.Get("Content-Type"), ";")[0]))
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" && contentType != "image/webp" {
+		return "", fmt.Errorf("unsupported content type %q", contentType)
+	}
+	data, err := io.ReadAll(io.LimitReader(response.Body, maxAvatarBytes+1))
+	if err != nil {
+		return "", err
+	}
+	if len(data) > maxAvatarBytes {
+		return "", errors.New("avatar exceeds size limit")
+	}
+	return "data:" + contentType + ";base64," + base64.StdEncoding.EncodeToString(data), nil
 }
 
 // avatarURL derives the Gravatar link for the signed-in identity. enabled is
@@ -657,7 +716,7 @@ func (core *Core) Server() control.Server {
 			if err := core.store.Update(func(config *velaconfig.Config) error { config.Preferences = selection; return nil }); err != nil {
 				return nil, err
 			}
-			core.journal.Record("info", "preferences", fmt.Sprintf("appearance=%s hud=%t verbose=%t gravatar=%t", selection.Appearance, selection.PerformanceHUD, selection.VerboseLogs, selection.GravatarAvatar))
+			core.journal.Record("info", "preferences", fmt.Sprintf("appearance=%s hud=%t verbose=%t gravatar=%t tailscale-proxy=%t", selection.Appearance, selection.PerformanceHUD, selection.VerboseLogs, selection.GravatarAvatar, selection.TailscaleProxy))
 			return core.store.Snapshot().Preferences, nil
 		},
 		DiagnosticLogs: func() (any, error) {

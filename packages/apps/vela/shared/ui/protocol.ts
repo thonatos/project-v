@@ -79,7 +79,7 @@ export interface CoreStatus {
   readonly remotes: readonly CoreRemote[];
   /** iOS only. */
   readonly signing?: SigningInfo;
-  /** iOS only; present when the user explicitly enables Gravatar. */
+  /** Present when Gravatar is enabled and Core has an email identity. */
   readonly avatarUrl?: string;
 }
 
@@ -88,6 +88,7 @@ export interface Preferences {
   readonly performanceHud: boolean;
   readonly verboseLogs: boolean;
   readonly gravatarAvatar: boolean;
+  readonly tailscaleProxy: boolean;
 }
 
 export interface DiagnosticEntry {

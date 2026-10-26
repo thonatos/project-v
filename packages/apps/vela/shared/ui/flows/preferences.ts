@@ -5,11 +5,11 @@
 import type { CoreClient } from '../client.ts';
 import type { CoreStatus, Preferences } from '../protocol.ts';
 import { appearancePreference } from '../diagnostics.ts';
-import type { Signal } from './types.ts';
+import type { WritableValue } from './types.ts';
 
 export interface PreferencesOptions {
   readonly core: Pick<CoreClient, 'updatePreferences'>;
-  readonly status: Signal<CoreStatus | null>;
+  readonly status: WritableValue<CoreStatus | null>;
   /** Applies the values the platform can render immediately. */
   readonly apply: (next: Preferences) => void;
   readonly onSaved?: () => void;
@@ -26,6 +26,7 @@ export function createPreferencesFlow(options: PreferencesOptions) {
       performanceHud: status()?.preferences?.performanceHud ?? false,
       verboseLogs: status()?.preferences?.verboseLogs ?? false,
       gravatarAvatar: status()?.preferences?.gravatarAvatar ?? false,
+      tailscaleProxy: status()?.preferences?.tailscaleProxy ?? true,
     };
   }
 

@@ -20,6 +20,9 @@ func TestDefaultStartsWithoutPresetServices(t *testing.T) {
 	if config.Preferences.Appearance != "system" {
 		t.Fatalf("new configurations must follow the system appearance: %#v", config.Preferences)
 	}
+	if !config.Preferences.TailscaleProxy {
+		t.Fatalf("new configurations must preserve the inherited Tailscale proxy behavior: %#v", config.Preferences)
+	}
 }
 
 func TestAppearanceFallsBackToSystem(t *testing.T) {
@@ -153,11 +156,11 @@ func TestVersionOneMigratesDeviceNameAndServices(t *testing.T) {
 		t.Fatal(err)
 	}
 	snapshot := store.Snapshot()
-	if snapshot.Version != 2 || snapshot.DeviceName == "" || len(snapshot.Services) != 2 || !snapshot.Services[0].Shared || snapshot.Services[1].Shared {
+	if snapshot.Version != 3 || snapshot.DeviceName == "" || len(snapshot.Services) != 2 || !snapshot.Services[0].Shared || snapshot.Services[1].Shared || !snapshot.Preferences.TailscaleProxy {
 		t.Fatalf("migrated=%#v", snapshot)
 	}
 	contents, err := os.ReadFile(path)
-	if err != nil || !strings.Contains(string(contents), `"version": 2`) || !strings.Contains(string(contents), `"deviceName"`) {
+	if err != nil || !strings.Contains(string(contents), `"version": 3`) || !strings.Contains(string(contents), `"deviceName"`) {
 		t.Fatalf("persisted migration=%s err=%v", contents, err)
 	}
 }
@@ -172,6 +175,21 @@ func TestFirstOpenPersistsHostnameDefaults(t *testing.T) {
 	contents, err := os.ReadFile(path)
 	if err != nil || store.Snapshot().DeviceName == "" || !strings.Contains(string(contents), `"services"`) {
 		t.Fatalf("snapshot=%#v contents=%s err=%v", store.Snapshot(), contents, err)
+	}
+}
+
+func TestVersionTwoEnablesTailscaleProxyDuringMigration(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "config.json")
+	if err := os.WriteFile(path, []byte(`{"version":2,"deviceName":"Mini","preferences":{"appearance":"system"},"services":[],"remotes":[]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot := store.Snapshot(); snapshot.Version != 3 || !snapshot.Preferences.TailscaleProxy {
+		t.Fatalf("migrated=%#v", snapshot)
 	}
 }
 

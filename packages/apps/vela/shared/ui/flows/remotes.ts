@@ -7,15 +7,15 @@ import { CoreError } from '../envelope.ts';
 import type { CoreClient } from '../client.ts';
 import type { DeviceViewModel } from '../model.ts';
 import { remoteAddError } from '../diagnostics.ts';
-import type { Signal } from './types.ts';
+import { directTransaction, type Transaction, type WritableValue } from './types.ts';
 
 const reason = (error: unknown) => (error instanceof CoreError ? error.reason : String(error));
 
 export interface AddDeviceSignals {
-  readonly name: Signal<string>;
-  readonly selection: Signal<string>;
-  readonly busy: Signal<boolean>;
-  readonly error: Signal<string>;
+  readonly name: WritableValue<string>;
+  readonly selection: WritableValue<string>;
+  readonly busy: WritableValue<boolean>;
+  readonly error: WritableValue<string>;
 }
 
 export interface RemoteMessages {
@@ -25,6 +25,7 @@ export interface RemoteMessages {
 export interface RemoteOptions {
   readonly core: Pick<CoreClient, 'addRemote' | 'removeRemote'>;
   readonly addDevice: AddDeviceSignals;
+  readonly transaction?: Transaction;
   /** Refreshes the saved devices after a change. */
   readonly load: () => Promise<unknown>;
   /** Platform step after a successful add: close the sheet, dismiss the modal. */
@@ -40,17 +41,14 @@ export interface RemoteOptions {
 
 export function createRemoteFlows(options: RemoteOptions) {
   const { core, addDevice, load, afterAdd, confirmRemove, afterConfirmed, messages, tag } = options;
+  const transaction = options.transaction ?? directTransaction;
 
   function choose(name: string): void {
-    addDevice.selection.set(name);
-    addDevice.name.set('');
-    addDevice.error.set('');
+    transaction(() => { addDevice.selection.set(name); addDevice.name.set(''); addDevice.error.set(''); });
   }
 
   function setAddName(value: string): void {
-    addDevice.name.set(value);
-    addDevice.selection.set('');
-    addDevice.error.set('');
+    transaction(() => { addDevice.name.set(value); addDevice.selection.set(''); addDevice.error.set(''); });
   }
 
   function submit(): void {
@@ -60,8 +58,7 @@ export function createRemoteFlows(options: RemoteOptions) {
       addDevice.error.set(messages.chooseDevice);
       return;
     }
-    addDevice.error.set('');
-    addDevice.busy.set(true);
+    transaction(() => { addDevice.error.set(''); addDevice.busy.set(true); });
     core
       .addRemote(name)
       .then(() => {

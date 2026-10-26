@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-const currentVersion = 2
+const currentVersion = 3
 
 const (
 	OpenCodePort = 47845
@@ -64,6 +64,7 @@ type Preferences struct {
 	PerformanceHUD bool   `json:"performanceHud"`
 	VerboseLogs    bool   `json:"verboseLogs"`
 	GravatarAvatar bool   `json:"gravatarAvatar"`
+	TailscaleProxy bool   `json:"tailscaleProxy"`
 }
 
 // MappingPort remembers the loopback port used for one remote service so the
@@ -97,7 +98,7 @@ func Default() Config {
 	if name == "" {
 		name = "Mac"
 	}
-	return Config{Version: currentVersion, DeviceName: name, Preferences: Preferences{Appearance: "system"}, Services: []LocalService{}, Remotes: []RemoteMac{}, MappingPorts: []MappingPort{}}
+	return Config{Version: currentVersion, DeviceName: name, Preferences: Preferences{Appearance: "system", TailscaleProxy: true}, Services: []LocalService{}, Remotes: []RemoteMac{}, MappingPorts: []MappingPort{}}
 }
 
 func defaultServices(openCode, dsh bool) []LocalService {
@@ -132,7 +133,7 @@ func Open(path string) (*Store, error) {
 	var header struct {
 		Version int `json:"version"`
 	}
-	if err := json.Unmarshal(contents, &header); err != nil || (header.Version != 1 && header.Version != currentVersion) {
+	if err := json.Unmarshal(contents, &header); err != nil || (header.Version != 1 && header.Version != 2 && header.Version != currentVersion) {
 		backup := path + ".corrupt-" + time.Now().UTC().Format("20060102T150405.000000000Z")
 		if writeErr := os.WriteFile(backup, contents, 0o600); writeErr != nil {
 			return nil, fmt.Errorf("preserve corrupt Vela config: %w", writeErr)
@@ -144,9 +145,12 @@ func Open(path string) (*Store, error) {
 		return nil, fmt.Errorf("decode Vela config: %w", err)
 	}
 	if header.Version == 1 {
-		value.Version = currentVersion
 		value.DeviceName = store.value.DeviceName
 		value.Services = defaultServices(value.Sharing.OpenCode, value.Sharing.DSH)
+	}
+	if header.Version < 3 {
+		value.Version = currentVersion
+		value.Preferences.TailscaleProxy = true
 	}
 	if value.DeviceName == "" {
 		value.DeviceName = store.value.DeviceName

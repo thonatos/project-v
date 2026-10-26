@@ -6,7 +6,7 @@ import { CoreError } from '../envelope.ts';
 import type { CoreClient } from '../client.ts';
 import type { CoreStatus } from '../protocol.ts';
 import { isValidHostname } from '../hostname.ts';
-import type { Signal } from './types.ts';
+import { directTransaction, type Transaction, type WritableValue } from './types.ts';
 
 const reason = (error: unknown) => (error instanceof CoreError ? error.reason : String(error));
 
@@ -17,10 +17,11 @@ export interface RenameMessages {
 
 export interface RenameOptions {
   readonly core: Pick<CoreClient, 'renameDevice'>;
-  readonly status: Signal<CoreStatus | null>;
-  readonly draft: Signal<string>;
-  readonly error: Signal<string>;
-  readonly busy?: Signal<boolean>;
+  readonly status: WritableValue<CoreStatus | null>;
+  readonly draft: WritableValue<string>;
+  readonly error: WritableValue<string>;
+  readonly busy?: WritableValue<boolean>;
+  readonly transaction?: Transaction;
   /** The starting value: the current name, or empty when it is a placeholder. */
   readonly initial: () => string;
   readonly open: () => void;
@@ -31,11 +32,10 @@ export interface RenameOptions {
 
 export function createRenameFlow(options: RenameOptions) {
   const { core, status, draft, error, busy, messages } = options;
+  const transaction = options.transaction ?? directTransaction;
 
   function begin(): void {
-    draft.set(options.initial());
-    error.set('');
-    options.open();
+    transaction(() => { draft.set(options.initial()); error.set(''); options.open(); });
   }
 
   function save(): void {

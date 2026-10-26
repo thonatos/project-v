@@ -5,7 +5,7 @@
  */
 import { CoreError } from '../envelope.ts';
 import type { CoreClient } from '../client.ts';
-import type { Signal } from './types.ts';
+import { directTransaction, type Transaction, type WritableValue } from './types.ts';
 
 const reason = (error: unknown) => (error instanceof CoreError ? error.reason : String(error));
 
@@ -20,9 +20,10 @@ export interface AuthOptions {
   readonly core: Pick<CoreClient, 'startAuth' | 'reconnect' | 'logout'>;
   /** Hands the Tailscale login URL to the platform. */
   readonly openExternal: (url: string) => void;
-  readonly pending: Signal<boolean>;
-  readonly error: Signal<string>;
-  readonly rechecking: Signal<boolean>;
+  readonly pending: WritableValue<boolean>;
+  readonly error: WritableValue<string>;
+  readonly rechecking: WritableValue<boolean>;
+  readonly transaction?: Transaction;
   /** Reloads the Core snapshot; `true` also refreshes remote manifests. */
   readonly load: (refresh?: boolean) => Promise<unknown>;
   readonly isConnected: () => boolean;
@@ -40,10 +41,10 @@ export interface ReconnectOptions {
 
 export function createAuthFlows(options: AuthOptions) {
   const { core, pending, error, rechecking, load, isConnected, confirmLogout, messages, tag } = options;
+  const transaction = options.transaction ?? directTransaction;
 
   function signIn(): void {
-    error.set('');
-    pending.set(true);
+    transaction(() => { error.set(''); pending.set(true); });
     core
       .startAuth()
       .then((payload) => {
@@ -51,8 +52,7 @@ export function createAuthFlows(options: AuthOptions) {
         options.openExternal(payload.authUrl);
       })
       .catch((cause) => {
-        pending.set(false);
-        error.set(messages.startFailed);
+        transaction(() => { pending.set(false); error.set(messages.startFailed); });
         console.error(`${tag} auth-start-failed`, reason(cause));
       });
   }
@@ -63,8 +63,7 @@ export function createAuthFlows(options: AuthOptions) {
       if (!isConnected()) {
         error.set(messages.notConnected);
       } else {
-        pending.set(false);
-        error.set('');
+        transaction(() => { pending.set(false); error.set(''); });
       }
     });
   }
@@ -75,8 +74,7 @@ export function createAuthFlows(options: AuthOptions) {
    */
   function reconnect(overrides: ReconnectOptions = {}): void {
     if (rechecking()) return;
-    rechecking.set(true);
-    error.set('');
+    transaction(() => { rechecking.set(true); error.set(''); });
     core
       .reconnect()
       .then((result) => {

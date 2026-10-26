@@ -34,6 +34,22 @@ const messages = {
   recheckFailed: 'recheck failed',
 };
 
+// Shared flows publish related fields through one transaction supplied by the
+// owning NSH store rather than exposing writable values to pages.
+{
+  const snapshots = [];
+  const pending = sig(false);
+  const error = sig('old');
+  const auth = createAuthFlows({
+    core: { startAuth: async () => ({ authUrl: 'https://login.example' }), reconnect: async () => ({}), logout: async () => {} },
+    openExternal: () => {}, pending, error, rechecking: sig(false), load: async () => {}, isConnected: () => true,
+    confirmLogout: async () => false, messages, tag: 'TEST',
+    transaction(run) { run(); snapshots.push([pending(), error()]); },
+  });
+  auth.signIn();
+  assert.deepEqual(snapshots, [[true, '']], 'sign-in publishes one coherent pending/error snapshot');
+}
+
 // Identity: sign in, settle the pending attempt, re-check, sign out.
 {
   const restore = quiet();
@@ -254,7 +270,7 @@ const messages = {
   const status = sig({
     network: 'offline',
     deviceName: 'name',
-    preferences: { appearance: 'system', performanceHud: false, verboseLogs: false, gravatarAvatar: false },
+    preferences: { appearance: 'system', performanceHud: false, verboseLogs: false, gravatarAvatar: false, tailscaleProxy: true },
     tailscale: { name: 'name', ips: [] },
     tailnetDevices: [],
     remotes: [],

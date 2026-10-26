@@ -1,11 +1,20 @@
 package core
 
 import (
+	"context"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
 	velanetwork "implements.io/vela/internal/network"
 )
+
+type avatarRoundTrip func(*http.Request) (*http.Response, error)
+
+func (roundTrip avatarRoundTrip) Do(request *http.Request) (*http.Response, error) {
+	return roundTrip(request)
+}
 
 func TestNormalizedEmail(t *testing.T) {
 	t.Parallel()
@@ -19,6 +28,27 @@ func TestNormalizedEmail(t *testing.T) {
 		if got := normalizedEmail(input); got != want {
 			t.Errorf("normalizedEmail(%q) = %q, want %q", input, got, want)
 		}
+	}
+}
+
+func TestDownloadAvatarReturnsImageDataURL(t *testing.T) {
+	t.Parallel()
+	client := avatarRoundTrip(func(request *http.Request) (*http.Response, error) {
+		if request.Method != http.MethodGet {
+			t.Fatalf("method = %s, want GET", request.Method)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"image/jpeg"}},
+			Body:       io.NopCloser(strings.NewReader("image")),
+		}, nil
+	})
+	source, err := downloadAvatar(context.Background(), client, "https://gravatar.com/avatar/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if source != "data:image/jpeg;base64,aW1hZ2U=" {
+		t.Fatalf("source = %q", source)
 	}
 }
 
