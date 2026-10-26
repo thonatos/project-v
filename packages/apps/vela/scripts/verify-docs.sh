@@ -4,6 +4,8 @@ set -eu
 ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 SHARING="$ROOT/docs/sharing.md"
 GUIDE="$ROOT/docs/user-guide.md"
+DEVELOPMENT="$ROOT/docs/development.md"
+NSH_SCRIPT="$ROOT/scripts/nsh.sh"
 
 fail() {
   echo "verify-docs: $1" >&2
@@ -41,5 +43,7 @@ require '本机其他进程' "$GUIDE" "the guide must state who else can reach a
 
 require '不修改系统 VPN' "$SHARING" "sharing-and-dsh.md must state Vela does not change system networking"
 require '不会删除或修改 OpenCode、DSH' "$GUIDE" "the guide must state uninstall leaves other tools untouched"
+require 'v0.2.0' "$DEVELOPMENT" "development.md must name the pinned NSH version"
+require 'v0.2.0' "$NSH_SCRIPT" "scripts/nsh.sh must report the pinned NSH version"
 
 echo "Vela user and sharing documentation passed"

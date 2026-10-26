@@ -25,5 +25,5 @@ if [ -x "$HOME/.nsh/bin/nsh" ]; then
   exec "$HOME/.nsh/bin/nsh" "$@"
 fi
 
-echo "Vela requires the globally installed NSH v0.1.1 toolchain" >&2
+echo "Vela requires the globally installed NSH v0.2.0 toolchain" >&2
 exit 127

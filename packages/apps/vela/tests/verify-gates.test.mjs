@@ -1,14 +1,19 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
 const read = (name) => fs.readFileSync(new URL(`scripts/${name}`, root), 'utf8');
+const repoRoot = path.resolve(fileURLToPath(root), '../../..');
 
 const expected = new Set([
   'documentation',
+  'capabilities',
   'go-race',
   'ios-deps',
   'ios-nsh-check',
+  'ios-overlay-headless',
   'ios-projections',
   'ios-rust-check',
   'ios-signing',
@@ -16,6 +21,8 @@ const expected = new Set([
   'ios-theme',
   'macos-layout',
   'macos-nsh-check',
+  'macos-shell-smoke',
+  'macos-semantics',
   'macos-release-contract',
   'macos-theme',
   'network-isolation',
@@ -27,6 +34,8 @@ const expected = new Set([
   'rust-format',
   'rust-test',
   'shared-flows',
+  'shared-clipboard',
+  'shared-operations',
   'shared-hostname',
   'shared-projections',
   'shared-version',
@@ -47,4 +56,26 @@ for (const gate of gates) {
   assert.match(aggregate, new RegExp(`scripts/${gate.replace('.', '\\.')}`), `verify.sh must compose ${gate}`);
 }
 
-console.log(`Vela verification gates cover ${actual.size} checks exactly once`);
+const release = read('verify-release.sh');
+const acceptance = read('verify-ios-acceptance.sh');
+for (const [name, source] of [...gates.map((gate) => [gate, read(gate)]), ['verify.sh', aggregate], ['verify-release.sh', release]]) {
+  assert.doesNotMatch(source, /--target ios|verify-ios-acceptance/, `${name} must not start iOS Simulator implicitly`);
+}
+assert.match(acceptance, /--target ios/, 'the explicit acceptance entry owns iOS Simulator target tests');
+assert.match(acceptance, /CI:-.*true/, 'the local Simulator entry must refuse CI');
+assert.doesNotMatch(acceptance, /openspec|completedTasks|archived/, 'Simulator tooling must not infer OpenSpec lifecycle state');
+
+for (const [name, source] of [
+  ['vela-ci.yml', fs.readFileSync(path.join(repoRoot, '.github/workflows/vela-ci.yml'), 'utf8')],
+  ['vela-release.yml', fs.readFileSync(path.join(repoRoot, '.github/workflows/vela-release.yml'), 'utf8')],
+  ['build-macos/action.yml', fs.readFileSync(path.join(repoRoot, '.github/actions/vela/build-macos/action.yml'), 'utf8')],
+  ['setup-toolchain/action.yml', fs.readFileSync(path.join(repoRoot, '.github/actions/vela/setup-toolchain/action.yml'), 'utf8')],
+]) {
+  assert.doesNotMatch(
+    source,
+    /--target ios|simctl\s+boot|platform=iOS Simulator|verify(?::|-)ios-acceptance/,
+    `${name} must remain GitHub Actions-compatible without an iOS Simulator`,
+  );
+}
+
+console.log(`Vela default verification gates cover ${actual.size} checks without starting iOS Simulator`);

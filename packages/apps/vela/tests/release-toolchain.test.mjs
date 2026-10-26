@@ -9,6 +9,7 @@ const VERSION_CHECK = path.join(ROOT, 'scripts/release/check-version.mjs');
 const TOOLCHAIN_CHECK = path.join(ROOT, 'scripts/release/check-toolchain.mjs');
 const PREPARE = path.join(ROOT, 'scripts/release/prepare-ci-toolchain.sh');
 const FIXTURES = path.join(ROOT, 'tests/fixtures/release-version');
+const CURRENT_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
 function run(command, args, options = {}) {
   return spawnSync(command, args, { cwd: ROOT, encoding: 'utf8', ...options });
@@ -18,7 +19,7 @@ const consistent = run(process.execPath, [VERSION_CHECK, '--fixture', path.join(
 assert.equal(consistent.status, 0, consistent.stderr);
 assert.match(consistent.stdout, /0\.1\.0/);
 
-const actual = run(process.execPath, [VERSION_CHECK, '--tag', 'vela-v0.1.0']);
+const actual = run(process.execPath, [VERSION_CHECK, '--tag', `vela-v${CURRENT_VERSION}`]);
 assert.equal(actual.status, 0, actual.stderr);
 assert.match(actual.stdout, /8 个来源/);
 
