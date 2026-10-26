@@ -35,17 +35,20 @@ pub struct Config {
     pub max_restarts: usize,
     pub base_backoff: Duration,
     pub request_timeout: Duration,
+    pub disable_tailscale_proxy: bool,
 }
 
 impl Config {
     #[must_use]
     pub fn bundled(program: String) -> Self {
+        let disable_tailscale_proxy = !saved_tailscale_proxy();
         Self {
             program,
             args: Vec::new(),
             max_restarts: 3,
             base_backoff: Duration::from_millis(100),
             request_timeout: Duration::from_secs(5),
+            disable_tailscale_proxy,
         }
     }
 }
@@ -101,6 +104,12 @@ impl Supervisor {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        if self.config.disable_tailscale_proxy {
+            command.env(
+                "TS_DISABLE_FEATURE",
+                disabled_features(std::env::var("TS_DISABLE_FEATURE").ok().as_deref()),
+            );
+        }
         let mut child = command.spawn().map_err(|error| {
             *self.state.lock().unwrap() = State::Stopped;
             format!("start vela-core: {error}")
@@ -308,6 +317,40 @@ impl Supervisor {
     }
 }
 
+fn saved_tailscale_proxy() -> bool {
+    let Some(home) = std::env::var_os("HOME") else {
+        return true;
+    };
+    let path = std::path::PathBuf::from(home).join("Library/Application Support/Vela/config.json");
+    std::fs::read_to_string(path)
+        .ok()
+        .is_none_or(|contents| tailscale_proxy_from_config(&contents))
+}
+
+fn tailscale_proxy_from_config(contents: &str) -> bool {
+    serde_json::from_str::<Value>(contents)
+        .ok()
+        .and_then(|value| {
+            value
+                .pointer("/preferences/tailscaleProxy")
+                .and_then(Value::as_bool)
+        })
+        .unwrap_or(true)
+}
+
+fn disabled_features(existing: Option<&str>) -> String {
+    let mut features: Vec<&str> = existing
+        .unwrap_or("")
+        .split(',')
+        .map(str::trim)
+        .filter(|item| !item.is_empty())
+        .collect();
+    if !features.contains(&"useproxy") {
+        features.push("useproxy");
+    }
+    features.join(",")
+}
+
 fn protocol_error(error: &ProtocolError) -> String {
     error.to_string()
 }
@@ -426,7 +469,51 @@ mod tests {
             max_restarts,
             base_backoff: Duration::from_millis(10),
             request_timeout: Duration::from_secs(1),
+            disable_tailscale_proxy: false,
         })
+    }
+
+    #[test]
+    fn tailscale_proxy_setting_only_adds_the_useproxy_feature() {
+        assert!(super::tailscale_proxy_from_config("{}"));
+        assert!(super::tailscale_proxy_from_config(
+            r#"{"preferences":{"tailscaleProxy":true}}"#
+        ));
+        assert!(!super::tailscale_proxy_from_config(
+            r#"{"preferences":{"tailscaleProxy":false}}"#
+        ));
+        assert_eq!(super::disabled_features(None), "useproxy");
+        assert_eq!(
+            super::disabled_features(Some("ssh, taildrop")),
+            "ssh,taildrop,useproxy"
+        );
+        assert_eq!(super::disabled_features(Some("useproxy")), "useproxy");
+    }
+
+    #[test]
+    fn disabled_proxy_reaches_the_child_environment() {
+        let supervisor = Supervisor::new(Config {
+            program: "/bin/sh".into(),
+            args: vec![
+                "-c".into(),
+                r#"read line
+printf '%s\n' '{"version":1,"id":"rust-1","type":"status","payload":{"disabled":"'"$TS_DISABLE_FEATURE"'"}}'"#.into(),
+            ],
+            max_restarts: 0,
+            base_backoff: Duration::ZERO,
+            request_timeout: Duration::from_secs(1),
+            disable_tailscale_proxy: true,
+        });
+        supervisor.start().unwrap();
+        let response = supervisor.request("status.get", json!({})).unwrap();
+        assert!(
+            response.payload["disabled"]
+                .as_str()
+                .unwrap()
+                .split(',')
+                .any(|item| item == "useproxy")
+        );
+        supervisor.shutdown(Duration::from_secs(1));
     }
 
     #[test]
@@ -517,6 +604,7 @@ done
             max_restarts: 0,
             base_backoff: Duration::ZERO,
             request_timeout: Duration::from_secs(3),
+            disable_tailscale_proxy: false,
         });
         supervisor.start().unwrap();
         let rejected = supervisor

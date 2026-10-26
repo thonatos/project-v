@@ -8,15 +8,15 @@ export function ServiceEditorSheet() {
   const editing = () => store.editor.editing() !== '';
   const editingService = () => store.services().find((service) => service.id === store.editor.editing());
   const tcp = () => store.editor.protocol() === 'tcp';
-  const close = () => store.editor.open.set(false);
+  const close = store.serviceEditor.close;
   return (
-    <FormSheetDialog open={store.editor.open()} width={392} height={600} onClose={close}>
+    <FormSheetDialog open={store.editor.open()} size="service-editor" onClose={close}>
       <FormSheet
         title={editing() ? '编辑服务' : '添加服务'}
         actions={
           <>
             <Button title="取消" variant="plain" onPress={close} />
-            <Button title={editing() ? '保存更改' : '添加服务'} onPress={store.serviceEditor.save} />
+            <Button title={editing() ? '保存更改' : '添加服务'} variant="primary" onPress={store.serviceEditor.save} />
           </>
         }
       >
@@ -52,14 +52,14 @@ export function ServiceEditorSheet() {
             <TextField
               label="名称"
               value={store.editor.name()}
-              onChange={(value) => store.editor.name.set(value)}
+              onChange={store.serviceEditor.changeName}
               onSubmit={store.serviceEditor.save}
             />
             <TextField
               label={tcp() ? 'Loopback 地址与端口' : 'Loopback HTTP 地址'}
               mono
               value={store.editor.target()}
-              onChange={(value) => store.editor.target.set(value)}
+              onChange={store.serviceEditor.changeTarget}
               onSubmit={store.serviceEditor.save}
               placeholder={tcp() ? '例如 127.0.0.1:6379' : '例如 http://127.0.0.1:3000/'}
               hint={
@@ -74,7 +74,7 @@ export function ServiceEditorSheet() {
                 label="DSH 输出日志（可选）"
                 mono
                 value={store.editor.authLog()}
-                onChange={(value) => store.editor.authLog.set(value)}
+                onChange={store.serviceEditor.changeAuthLog}
                 onSubmit={store.serviceEditor.save}
                 placeholder={DSH_AUTH_LOG_PLACEHOLDER}
                 hint={dshAuthLogHint(

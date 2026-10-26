@@ -4,8 +4,9 @@
  * than hidden behind a menu. Rows share `ListRow`'s frame inside a `Card`.
  */
 import { Text, View } from 'nsh';
+import { Radio, RadioGroup as BaseRadioGroup } from 'nsh/base';
 import { Card } from './card';
-import { edges, fills, states, text, type } from './tokens';
+import { edges, fills, geometry, states, text, type } from './tokens';
 
 export interface RadioOption<Value extends string> {
   readonly value: Value;
@@ -23,20 +24,17 @@ export function RadioGroup<Value extends string>(props: {
 }) {
   return (
     <Card testID={props.testID}>
-      <View role="radiogroup" accessibilityLabel={props.label}>
+      <BaseRadioGroup>
         <Each of={props.options}>
           {(option) => {
             const checked = () => props.value === option().value;
             return (
-              <View
-                onPress={() => {
-                  if (!option().disabled) props.onChange(option().value);
-                }}
+              <Radio
+                onChange={() => props.onChange(option().value)}
+                checked={checked()}
                 disabled={option().disabled}
-                role="radio"
                 accessibilityLabel={option().label}
-                accessibilityState={{ checked: checked(), disabled: option().disabled ?? false }}
-                class={`min-h-[32px] flex-row items-center gap-3 px-4 py-1.5 first:border-t-0 ${edges.top} ${states.hover} ${states.disabled}`}
+                class={`${geometry.row} flex-row items-center gap-3 px-4 py-1.5 first:border-t-0 ${edges.top} ${states.hover} ${states.disabled}`}
               >
                 <View
                   class={`size-3.5 items-center justify-center rounded-full border`}
@@ -58,11 +56,11 @@ export function RadioGroup<Value extends string>(props: {
                     {option().detail}
                   </Text>
                 </If>
-              </View>
+              </Radio>
             );
           }}
         </Each>
-      </View>
+      </BaseRadioGroup>
     </Card>
   );
 }

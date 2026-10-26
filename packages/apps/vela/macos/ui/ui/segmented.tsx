@@ -4,7 +4,8 @@
  * the form, and each one is a focus stop with a single selected state.
  */
 import { Text, View } from 'nsh';
-import { fills, surfaces, text, type } from './tokens';
+import { Tab, Tabs } from 'nsh/base';
+import { fills, geometry, surfaces, text, type } from './tokens';
 
 export interface SegmentedOption<Value extends string> {
   readonly value: Value;
@@ -19,9 +20,7 @@ export function Segmented<Value extends string>(props: {
   testID?: string;
 }) {
   return (
-    <View
-      role="tablist"
-      accessibilityLabel={props.label}
+    <Tabs
       class={`flex-row gap-1 rounded-control border p-1 ${surfaces.well}`}
       testID={props.testID}
     >
@@ -29,20 +28,19 @@ export function Segmented<Value extends string>(props: {
         {(option) => {
           const selected = () => props.value === option().value;
           return (
-            <View
+            <Tab
               onPress={() => props.onChange(option().value)}
-              role="tab"
+              selected={selected()}
               accessibilityLabel={option().label}
-              accessibilityState={{ selected: selected() }}
-              class={`min-h-[24px] flex-1 items-center justify-center rounded-control px-2 active:opacity-75 ${selected() ? fills.accent : ''}`}
+              class={`${geometry.compactControl} flex-1 items-center justify-center rounded-control px-2 active:opacity-75 ${selected() ? fills.accent : ''}`}
             >
               <Text class={`${type.label} font-medium ${selected() ? text.onAccent : text.muted}`}>
                 {option().label}
               </Text>
-            </View>
+            </Tab>
           );
         }}
       </Each>
-    </View>
+    </Tabs>
   );
 }

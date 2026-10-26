@@ -2,14 +2,13 @@
  * Application state and the flows that change it. Features read signals and
  * call actions here; only this module and `client.ts` know Core exists.
  */
-import { cleanup, effect, signal } from 'nsh';
+import { batch, cleanup, computed, effect, signal } from 'nsh';
 import { setColorScheme } from 'nsh/device';
-import { Clipboard } from 'nsh/clipboard';
 import { AlertDialog } from 'nsh/base';
 import type { DeviceViewModel, ServiceProtocol, ServiceViewModel } from '../../../shared/ui/model';
 import type { LinkPhase } from '../ui';
 import { localServices, nextDeviceID, remoteDevices } from '../../../shared/ui/devices';
-import { appearancePreference } from '../../../shared/ui/diagnostics';
+import { appearancePreference, diagnosticSnapshot } from '../../../shared/ui/diagnostics';
 import { shareWarning } from '../../../shared/ui/forwarding';
 import { createAuthFlows } from '../../../shared/ui/flows/auth';
 import { createPreferencesFlow } from '../../../shared/ui/flows/preferences';
@@ -20,7 +19,7 @@ import {
   userInitial as identityInitial,
   userLabel as identityLabel,
 } from '../../../shared/ui/identity';
-import type { LogLevel } from '../../../shared/ui/logs';
+import { logRows, type LogLevel } from '../../../shared/ui/logs';
 import {
   presetFor,
   presetForService,
@@ -29,6 +28,8 @@ import {
   type PresetValue,
 } from '../../../shared/ui/services';
 import type { CoreStatus, DiagnosticActivity, DiagnosticLogs, Preferences } from '../../../shared/ui/protocol';
+import { createLatestOperation, createTimeoutOwner } from '../../../shared/ui/operations';
+import { copyText } from '../../../shared/ui/clipboard';
 import { core, CoreError } from './client';
 
 export type Pane = 'devices' | 'forwards' | 'logs' | 'account' | 'settings';
@@ -71,6 +72,7 @@ function confirmDestructive(title: string, description: string, confirmLabel: st
 }
 
 function createStore() {
+  const read = <T>(source: () => T): (() => T) => () => source();
   // Navigation
   const pane = signal<Pane>('devices');
   const selected = signal('');
@@ -83,6 +85,7 @@ function createStore() {
   const logs = signal<DiagnosticLogs | null>(null);
   const activity = signal<DiagnosticActivity | null>(null);
   const forwards = signal<Forward[]>([]);
+  const avatarSource = signal<string | undefined>();
 
   // Sign-in
   const authPending = signal(false);
@@ -116,37 +119,49 @@ function createStore() {
 
   // Logs page
   const logLevel = signal<LogLevel | 'all'>('all');
+  const copyError = signal('');
 
   let pending: Promise<CoreStatus | null> | null = null;
   let timer: number | undefined;
+  let diagnosticsInterval: number | undefined;
+  let started = false;
+  let stopped = false;
+  const timeouts = createTimeoutOwner();
+  const remoteOperation = createLatestOperation();
+  const diagnosticsOperation = createLatestOperation();
 
   const needsAuth = () => network() === 'needs-auth';
   const protocolVersion = () => String(core.protocolVersion());
-  const signedIn = () => identitySignedIn(status());
-  const userName = () => identityLabel(status());
-  const userInitial = () => identityInitial(status());
-  const selectedDevice = () => devices().find((device) => device.id === selected());
+  const signedIn = computed(() => identitySignedIn(status()));
+  const userName = computed(() => identityLabel(status()));
+  const userInitial = computed(() => identityInitial(status()));
+  const selectedDevice = computed(() => devices().find((device) => device.id === selected()));
   const forwardKey = (device: DeviceViewModel, service: string) => `${device.id}/${service}`;
   const forwardFor = (device: DeviceViewModel, service: string) =>
     forwards().find((item) => forwardKey(item.device, item.service) === forwardKey(device, service));
-  const tailnetCandidates = () =>
+  const tailnetCandidates = computed(() =>
     [...(status()?.tailnetDevices ?? [])].sort(
       (left, right) => Number(right.online) - Number(left.online) || left.name.localeCompare(right.name),
-    );
-  const selectableTailnetNames = () =>
+    ));
+  const selectableTailnetNames = computed(() =>
     tailnetCandidates()
       .map((device) => device.dnsName ?? '')
-      .filter((name) => name && !devices().some((device) => device.privateName === name));
+      .filter((name) => name && !devices().some((device) => device.privateName === name)));
 
   async function refreshRemotes() {
     const current = devices();
     if (current.length === 0) return;
+    const attempt = remoteOperation.begin();
     devices.set(current.map((device) => ({ ...device, connection: 'connecting' })));
     try {
-      devices.set(keepUnchanged(devices(), remoteDevices(await core.refreshRemotes())));
+      const next = remoteDevices(await core.refreshRemotes());
+      if (attempt.current()) devices.set(keepUnchanged(devices(), next));
     } catch (error) {
-      devices.set(current.map((device) => ({ ...device, connection: 'offline', issue: 'offline' })));
+      if (attempt.current())
+        devices.set(current.map((device) => ({ ...device, connection: 'offline', issue: 'offline' })));
       console.error('VELA_STATE remote-refresh-failed', reason(error));
+    } finally {
+      attempt.end();
     }
   }
 
@@ -155,16 +170,14 @@ function createStore() {
     pending = (async () => {
       try {
         const next = await core.status();
-        status.set(next);
-        network.set(next.network);
-        // A completed login or a revoked identity ends the previous browser
-        // login attempt. In particular, a re-check that discovers removal
-        // must reveal the sign-in action instead of leaving "re-check" stuck.
-        if (next.network === 'connected' || next.network === 'needs-auth') {
-          authPending.set(false);
-        }
-        services.set(keepUnchanged(services(), localServices(next)));
-        devices.set(keepUnchanged(devices(), remoteDevices(next.remotes)));
+        batch(() => {
+          status.set(next);
+          network.set(next.network);
+          if (next.network === 'connected' || next.network === 'needs-auth') authPending.set(false);
+          services.set(keepUnchanged(services(), localServices(next)));
+          devices.set(keepUnchanged(devices(), remoteDevices(next.remotes)));
+          avatarSource.set(next.preferences?.gravatarAvatar ? next.avatarUrl : undefined);
+        });
         setColorScheme(appearancePreference(next));
         core.setPerformanceHud(next.preferences?.performanceHud ?? false);
         if (
@@ -186,40 +199,61 @@ function createStore() {
   }
 
   async function poll() {
+    if (stopped) return;
     const before = network();
     const next = await load(false);
     if (next?.network === 'connected' && before !== 'connected') void refreshRemotes();
     const delay = next?.network === 'connected' ? 10_000 : next?.network === 'needs-auth' ? 5_000 : 1_000;
-    timer = setTimeout(() => void poll(), delay);
+    timer = timeouts.schedule(() => void poll(), delay) as number;
   }
 
-  function refreshDiagnostics() {
-    core
-      .activity()
-      .then((value) => activity.set(value))
-      .catch((error) => console.error('VELA_STATE diagnostics-activity-failed', reason(error)));
-    core
-      .logs()
-      .then((value) => logs.set(value))
-      .catch((error) => console.error('VELA_STATE diagnostics-logs-failed', reason(error)));
+  async function refreshDiagnostics() {
+    const attempt = diagnosticsOperation.begin();
+    const [nextActivity, nextLogs] = await Promise.allSettled([core.activity(), core.logs()]);
+    if (attempt.current()) {
+      batch(() => {
+        if (nextActivity.status === 'fulfilled') activity.set(nextActivity.value);
+        if (nextLogs.status === 'fulfilled') logs.set(nextLogs.value);
+      });
+    }
+    if (nextActivity.status === 'rejected')
+      console.error('VELA_STATE diagnostics-activity-failed', reason(nextActivity.reason));
+    if (nextLogs.status === 'rejected') console.error('VELA_STATE diagnostics-logs-failed', reason(nextLogs.reason));
+    attempt.end();
   }
 
   /** Starts polling, plus diagnostics while a page that shows them is open. */
   function start() {
+    if (started) return;
+    started = true;
+    stopped = false;
     void poll();
-    cleanup(() => clearTimeout(timer));
+    cleanup(stop);
     effect(() => {
       if (pane() !== 'logs' && !(pane() === 'devices' && selected() && selected() !== 'this-mac')) return;
       refreshDiagnostics();
-      const interval = setInterval(refreshDiagnostics, 5_000);
-      cleanup(() => clearInterval(interval));
+      diagnosticsInterval = setInterval(refreshDiagnostics, 5_000);
+      cleanup(() => clearInterval(diagnosticsInterval));
     });
+  }
+
+  function stop() {
+    if (stopped) return;
+    stopped = true;
+    started = false;
+    timeouts.stop();
+    remoteOperation.stop();
+    diagnosticsOperation.stop();
+    clearTimeout(timer);
+    clearInterval(diagnosticsInterval);
   }
 
   const navigate = {
     devices: () => {
-      selected.set('');
-      pane.set('devices');
+      batch(() => {
+        selected.set('');
+        pane.set('devices');
+      });
     },
     forwards: () => pane.set('forwards'),
     logs: () => {
@@ -229,8 +263,10 @@ function createStore() {
     account: () => pane.set('account'),
     settings: () => pane.set('settings'),
     select(id: string) {
-      selected.set(id);
-      pane.set('devices');
+      batch(() => {
+        selected.set(id);
+        pane.set('devices');
+      });
       if (id !== 'this-mac') void refreshRemotes();
     },
     back() {
@@ -251,6 +287,7 @@ function createStore() {
   // Shared flows: identity, rename, saved devices and preferences. Platform
   // wording and the steps after each action stay here.
   const auth = createAuthFlows({
+    transaction: batch,
     core,
     openExternal: core.openExternal,
     pending: authPending,
@@ -270,6 +307,7 @@ function createStore() {
   });
 
   const renameFlow = createRenameFlow({
+    transaction: batch,
     core,
     status,
     draft: rename.draft,
@@ -277,7 +315,7 @@ function createStore() {
     initial: () => status()?.deviceName ?? '',
     open: () => rename.open.set(true),
     close: () => rename.open.set(false),
-    afterSave: () => setTimeout(() => void load(), 1_000),
+    afterSave: () => timeouts.schedule(() => void load(), 1_000),
     messages: {
       empty: '请输入设备名称。',
       invalid: '只能使用字母、数字和连字符，且以字母或数字开头，最多 63 个字符。',
@@ -285,6 +323,7 @@ function createStore() {
   });
 
   const remoteFlows = createRemoteFlows({
+    transaction: batch,
     core,
     addDevice,
     load: () => load(),
@@ -309,6 +348,7 @@ function createStore() {
     apply: (next) => {
       setColorScheme(next.appearance);
       core.setPerformanceHud(next.performanceHud);
+      if (!next.gravatarAvatar) avatarSource.set(undefined);
     },
     onSaved: () => void load(),
     tag: 'VELA_STATE',
@@ -321,6 +361,13 @@ function createStore() {
     logout: auth.logout,
     beginRename: renameFlow.begin,
     saveRename: renameFlow.save,
+    closeRename: () => rename.open.set(false),
+    changeRenameDraft(value: string) {
+      batch(() => {
+        rename.draft.set(value);
+        rename.error.set('');
+      });
+    },
   };
 
   const sharing = {
@@ -370,18 +417,25 @@ function createStore() {
   };
 
   const serviceEditor = {
+    close: () => editor.open.set(false),
+    changeName: (value: string) => editor.name.set(value),
+    changeTarget: (value: string) => editor.target.set(value),
+    changeAuthLog: (value: string) => editor.authLog.set(value),
     applyPreset(value: PresetValue) {
       const preset = presetFor(value);
-      editor.preset.set(preset.preset);
-      editor.id.set(preset.id);
-      editor.name.set(preset.name);
-      editor.target.set(preset.protocol === 'tcp' ? preset.url.replace(/^tcp:\/\//, '') : preset.url);
-      editor.protocol.set(preset.protocol);
-      editor.adapter.set(preset.adapter);
-      editor.authLog.set('');
-      editor.error.set('');
+      batch(() => {
+        editor.preset.set(preset.preset);
+        editor.id.set(preset.id);
+        editor.name.set(preset.name);
+        editor.target.set(preset.protocol === 'tcp' ? preset.url.replace(/^tcp:\/\//, '') : preset.url);
+        editor.protocol.set(preset.protocol);
+        editor.adapter.set(preset.adapter);
+        editor.authLog.set('');
+        editor.error.set('');
+      });
     },
     begin(service?: ServiceViewModel) {
+      batch(() => {
       if (service) {
         editor.editing.set(service.id);
         editor.preset.set(presetForService(service));
@@ -397,6 +451,7 @@ function createStore() {
         serviceEditor.applyPreset('custom-http');
       }
       editor.open.set(true);
+      });
     },
     save() {
       const protocol = editor.protocol();
@@ -440,12 +495,16 @@ function createStore() {
   };
 
   const remotes = {
+    closeAdd: () => addDevice.open.set(false),
+    setAddName: remoteFlows.setAddName,
     beginAdd() {
-      addDevice.error.set('');
-      addDevice.selection.set('');
-      addDevice.name.set('');
-      addDevice.loading.set(true);
-      addDevice.open.set(true);
+      batch(() => {
+        addDevice.error.set('');
+        addDevice.selection.set('');
+        addDevice.name.set('');
+        addDevice.loading.set(true);
+        addDevice.open.set(true);
+      });
       void load(false).finally(() => addDevice.loading.set(false));
     },
     choose: remoteFlows.choose,
@@ -499,7 +558,9 @@ function createStore() {
       if (forward.url?.startsWith('http://')) core.openExternal(forward.url);
     },
     copy(text: string) {
-      if (text) Clipboard.writeText(text);
+      void copyText(text).then((copied) => {
+        if (!copied) console.error('VELA_STATE clipboard-write-refused');
+      });
     },
     stop(forward: Forward) {
       // A failed attempt holds no mapping; anything else may, including one
@@ -518,24 +579,45 @@ function createStore() {
     update: preferencesFlow.update,
   };
 
+  const avatar = {
+    source: read(avatarSource),
+  };
+
+  async function copyResult(text: string) {
+    const copied = await copyText(text);
+    copyError.set(copied ? '' : '无法写入剪贴板，请检查应用权限。');
+  }
+
+  const diagnosticsActions = {
+    copy() {
+      const snapshot = status();
+      const version = protocolVersion();
+      void copyResult(snapshot ? diagnosticSnapshot(snapshot, version) : JSON.stringify({ version, redacted: true }));
+    },
+    copyLogs() {
+      const text = logRows(logs(), logLevel()).map((row) => `${row.time} ${row.levelLabel} ${row.area} ${row.message}`).join('\n');
+      if (text) void copyResult(text);
+    },
+  };
+  const logsView = { selectLevel: (level: LogLevel | 'all') => logLevel.set(level) };
+
   return {
     // state
-    pane,
-    selected,
-    status,
-    network,
-    services,
-    devices,
-    logs,
-    activity,
-    forwards,
-    logLevel,
-    authPending,
-    authError,
-    rechecking,
-    addDevice,
-    rename,
-    editor,
+    pane: read(pane), selected: read(selected), status: read(status), network: read(network),
+    services: read(services), devices: read(devices), logs: read(logs), activity: read(activity),
+    forwards: read(forwards), logLevel: read(logLevel), authPending: read(authPending),
+    authError: read(authError), rechecking: read(rechecking),
+    copyError: read(copyError),
+    addDevice: {
+      open: read(addDevice.open), name: read(addDevice.name), selection: read(addDevice.selection),
+      busy: read(addDevice.busy), loading: read(addDevice.loading), error: read(addDevice.error),
+    },
+    rename: { open: read(rename.open), draft: read(rename.draft), error: read(rename.error) },
+    editor: {
+      open: read(editor.open), editing: read(editor.editing), preset: read(editor.preset), id: read(editor.id),
+      name: read(editor.name), target: read(editor.target), protocol: read(editor.protocol),
+      adapter: read(editor.adapter), authLog: read(editor.authLog), error: read(editor.error),
+    },
     // derived
     needsAuth,
     protocolVersion,
@@ -547,6 +629,7 @@ function createStore() {
     tailnetCandidates,
     // flows
     start,
+    stop,
     load,
     refreshDiagnostics,
     navigate,
@@ -556,6 +639,9 @@ function createStore() {
     remotes,
     forwarding,
     preferences,
+    avatar,
+    diagnosticsActions,
+    logsView,
   };
 }
 

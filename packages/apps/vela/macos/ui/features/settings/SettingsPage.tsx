@@ -1,7 +1,7 @@
-import { Clipboard } from 'nsh/clipboard';
+import { View } from 'nsh';
 import { store } from '../../core/store';
-import { Button, Callout, CardContent, CardSection, ListRow, Page, PageHeader, Segmented, Switch } from '../../ui';
-import { diagnosticSnapshot, diagnosticSummaryRows } from '../../../../shared/ui/diagnostics';
+import { Alert, Button, Callout, CardHeader, CardSection, ListRow, Page, PageHeader, Segmented, spacing, Switch } from '../../ui';
+import { diagnosticSummaryRows } from '../../../../shared/ui/diagnostics';
 import { APP_VERSION } from '../../../../shared/ui/version';
 
 const APPEARANCE_OPTIONS = [
@@ -9,14 +9,6 @@ const APPEARANCE_OPTIONS = [
   { value: 'light', label: '浅色' },
   { value: 'dark', label: '深色' },
 ] as const;
-
-function copyDiagnostics() {
-  const status = store.status();
-  const protocolVersion = store.protocolVersion();
-  Clipboard.writeText(
-    status ? diagnosticSnapshot(status, protocolVersion) : JSON.stringify({ version: protocolVersion, redacted: true }),
-  );
-}
 
 /** Preferences only; sign-in, identity and connection state live on the account page. */
 export function SettingsPage() {
@@ -28,18 +20,21 @@ export function SettingsPage() {
     <Page testID="settings-view">
       <PageHeader title="设置" />
 
-      <CardSection title="外观" footer={<Callout>选择立即生效，并在下次启动时恢复。</Callout>}>
-        <CardContent>
-          <Segmented
-            label="界面外观"
-            value={preferences().appearance}
-            options={APPEARANCE_OPTIONS}
-            onChange={(appearance) => store.preferences.update({ appearance })}
-          />
-        </CardContent>
-      </CardSection>
+      <View class={spacing.sectionGap}>
+        <CardHeader title="外观" />
+        <Segmented
+          label="界面外观"
+          value={preferences().appearance}
+          options={APPEARANCE_OPTIONS}
+          onChange={(appearance) => store.preferences.update({ appearance })}
+        />
+        <Callout>选择立即生效，并在下次启动时恢复。</Callout>
+      </View>
 
-      <CardSection title="共享">
+      <CardSection
+        title="连接与共享"
+        footer={<Callout>共享仅对已授权的 Vela 设备开放。代理设置重启 Vela 后生效，且只影响 Tailscale。</Callout>}
+      >
         <ListRow
           title="共享这台 Mac"
           description="仅已授权的 Vela 设备可以访问已共享的服务；各服务的共享在设备页单独设置。"
@@ -51,17 +46,25 @@ export function SettingsPage() {
             />
           }
         />
-      </CardSection>
-
-      <CardSection title="通用">
-        <ListRow title="关闭窗口" description="Vela 继续在后台运行；退出应用才会停止连接。" />
+        <ListRow
+          title="Tailscale 使用代理"
+          description="使用启动 Vela 时继承的 HTTP/HTTPS 代理"
+          trailing={
+            <Switch
+              value={preferences().tailscaleProxy}
+              label="Tailscale 使用代理"
+              onChange={(tailscaleProxy) => store.preferences.update({ tailscaleProxy })}
+            />
+          }
+        />
       </CardSection>
 
       <CardSection
-        title="隐私"
+        title="隐私与诊断"
+        action={<Button testID="copy-diagnostics" title="复制诊断" variant="outline" onPress={store.diagnosticsActions.copy} />}
         footer={
           <Callout>
-            默认关闭。开启后会把账户邮箱的 SHA-256 哈希发送给 Gravatar 以加载头像；邮箱和页面内容不会发送。
+            Gravatar 仅接收邮箱的 SHA-256 哈希。诊断不包含认证地址、凭据、Cookie 或业务内容。
           </Callout>
         }
       >
@@ -76,13 +79,6 @@ export function SettingsPage() {
             />
           }
         />
-      </CardSection>
-
-      <CardSection
-        title="诊断"
-        action={<Button testID="copy-diagnostics" title="复制诊断" variant="outline" onPress={copyDiagnostics} />}
-        footer={<Callout>不包含认证地址、凭据、Cookie 或业务内容。</Callout>}
-      >
         <ListRow
           title="详细日志"
           description="记录更多运行细节"
@@ -107,6 +103,9 @@ export function SettingsPage() {
         />
         <Each of={diagnostics()}>{(row) => <ListRow title={row().title} description={row().detail} />}</Each>
       </CardSection>
+      <If when={store.copyError()}>
+        <Alert tone="danger" title="复制失败" description={store.copyError()} />
+      </If>
 
       <CardSection
         title="关于"

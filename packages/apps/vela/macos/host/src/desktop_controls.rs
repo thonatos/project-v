@@ -66,6 +66,13 @@ pub struct DesktopButton {
     variant: String,
     icon_only: bool,
     enabled: bool,
+    accent: Retained<NSColor>,
+    accent_foreground: Retained<NSColor>,
+    danger: Retained<NSColor>,
+    secondary: Retained<NSColor>,
+    muted: Retained<NSColor>,
+    disabled_bezel: Retained<NSColor>,
+    disabled_ink: Retained<NSColor>,
 }
 
 /// How a button responds to input, decided without touching `AppKit`.
@@ -121,19 +128,6 @@ enum Ink {
     Secondary,
     Muted,
     Disabled,
-}
-
-impl Ink {
-    fn color(self) -> Retained<NSColor> {
-        match self {
-            Self::Accent => accent_color(),
-            Self::AccentForeground => accent_foreground_color(),
-            Self::Danger => danger_color(),
-            Self::Secondary => secondary_color(),
-            Self::Muted => muted_color(),
-            Self::Disabled => disabled_ink_color(),
-        }
-    }
 }
 
 /// How a button looks for a given variant and enabled state, decided without
@@ -214,6 +208,13 @@ impl DesktopButton {
             variant: "primary".into(),
             icon_only: false,
             enabled: true,
+            accent: accent_color(),
+            accent_foreground: accent_foreground_color(),
+            danger: danger_color(),
+            secondary: secondary_color(),
+            muted: muted_color(),
+            disabled_bezel: disabled_bezel_color(),
+            disabled_ink: disabled_ink_color(),
         }
     }
 
@@ -269,11 +270,18 @@ impl DesktopButton {
         self.button.setBezelStyle(NSBezelStyle::Push);
         let bezel = match style.bezel {
             Bezel::System => None,
-            Bezel::Accent => Some(accent_color()),
-            Bezel::Disabled => Some(disabled_bezel_color()),
+            Bezel::Accent => Some(self.accent.clone()),
+            Bezel::Disabled => Some(self.disabled_bezel.clone()),
         };
         self.button.setBezelColor(bezel.as_deref());
-        let ink = style.ink.color();
+        let ink = match style.ink {
+            Ink::Accent => self.accent.clone(),
+            Ink::AccentForeground => self.accent_foreground.clone(),
+            Ink::Danger => self.danger.clone(),
+            Ink::Secondary => self.secondary.clone(),
+            Ink::Muted => self.muted.clone(),
+            Ink::Disabled => self.disabled_ink.clone(),
+        };
         self.button.setContentTintColor(Some(&ink));
         self.apply_title_color(&ink);
     }
@@ -462,6 +470,23 @@ fn bool_prop(value: Option<&serde_json::Value>) -> bool {
     value.and_then(serde_json::Value::as_bool).unwrap_or(false)
 }
 
+/// Parses the `#RRGGBB` / `#RRGGBBAA` value NSH's reactive `token()` emits.
+fn color_prop(value: Option<&serde_json::Value>) -> Option<Retained<NSColor>> {
+    let raw = value?.as_str()?.trim().trim_start_matches('#');
+    if raw.len() != 6 && raw.len() != 8 {
+        return None;
+    }
+    let channel = |at: usize| u8::from_str_radix(raw.get(at..at + 2)?, 16).ok();
+    let (red, green, blue) = (channel(0)?, channel(2)?, channel(4)?);
+    let alpha = if raw.len() == 8 { channel(6)? } else { 255 };
+    Some(NSColor::colorWithSRGBRed_green_blue_alpha(
+        f64::from(red) / 255.0,
+        f64::from(green) / 255.0,
+        f64::from(blue) / 255.0,
+        f64::from(alpha) / 255.0,
+    ))
+}
+
 /// The button's cell as the `NSButtonCell` that owns its highlight mask.
 fn button_cell(button: &NSButton) -> Option<Retained<NSButtonCell>> {
     button.cell()?.downcast::<NSButtonCell>().ok()
@@ -519,6 +544,13 @@ impl NativeComponent for DesktopButton {
                     image.setTemplate(true);
                 }
                 self.button.setImage(image.as_deref());
+                self.button.setImagePosition(if symbol.is_empty() {
+                    NSCellImagePosition::NoImage
+                } else {
+                    NSCellImagePosition::ImageLeading
+                });
+                self.button.setImageHugsTitle(true);
+                self.button.sizeToFit();
             }
             "iconOnly" if bool_prop(value) => {
                 self.icon_only = true;
@@ -532,6 +564,23 @@ impl NativeComponent for DesktopButton {
                 // ink, so the palette depends on this prop too.
                 self.apply_variant();
                 self.target.ivars().context.set_size(28.0, 28.0);
+            }
+            "accent" | "accentForeground" | "danger" | "secondary" | "muted" | "disabledBezel"
+            | "disabledInk" => {
+                let Some(color) = color_prop(value) else {
+                    return;
+                };
+                match name {
+                    "accent" => self.accent = color,
+                    "accentForeground" => self.accent_foreground = color,
+                    "danger" => self.danger = color,
+                    "secondary" => self.secondary = color,
+                    "muted" => self.muted = color,
+                    "disabledBezel" => self.disabled_bezel = color,
+                    "disabledInk" => self.disabled_ink = color,
+                    _ => unreachable!(),
+                }
+                self.apply_variant();
             }
             _ => {}
         }
@@ -551,14 +600,14 @@ define_class!(
         /// `AppKit` sends the action only for a user toggle, never for
         /// `setState`, so the `value` prop cannot echo back as `change`.
         ///
-        /// The switch is controlled: `AppKit` has already moved it, so it goes
-        /// back to the `value` prop and only the app's answer moves it again.
-        /// Otherwise a toggle that still needs confirmation would look done.
+        /// AppKit has already moved the switch. Keep that immediate feedback and
+        /// remember it so another click before the app's async reply toggles in
+        /// the other direction; the next `value` prop remains authoritative.
         #[unsafe(method(toggled:))]
         fn toggled(&self, sender: &NSSwitch) {
             let state = self.ivars();
             let requested = is_on(sender.state());
-            sender.setState(state_for(state.value.get()));
+            state.value.set(requested);
             state.context.emit("change", change_payload(requested));
         }
     }

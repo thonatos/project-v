@@ -81,12 +81,13 @@ function DeviceList() {
           leading={<IconTile symbol="desktopcomputer" />}
           description={localLines()}
           trailing={<Dot tone={connectionTone(store.network())} />}
+          accessibilityLabel={`${localName()}，${localLines()}`}
           onPress={() => store.navigate.select('this-mac')}
         />
       </CardSection>
       <CardSection
         title={`其他设备（${store.devices().length}）`}
-        action={<Button title="添加设备" symbol="plus" variant="outline" onPress={store.remotes.beginAdd} />}
+        action={<Button title="添加设备" variant="outline" onPress={store.remotes.beginAdd} />}
       >
         <List
           count={store.devices().length}
@@ -116,6 +117,7 @@ function RemoteDeviceRow(props: { device: DeviceViewModel }) {
       leading={<IconTile symbol="desktopcomputer" />}
       description={lines()}
       trailing={<Dot tone={connectionTone(props.device.connection)} />}
+      accessibilityLabel={`${props.device.name}，${lines()}`}
       onPress={() => store.navigate.select(props.device.id)}
     />
   );
@@ -149,7 +151,7 @@ function LocalDetail() {
       </CardSection>
       <CardSection
         title="本地服务"
-        action={<Button title="添加服务" symbol="plus" variant="outline" onPress={() => store.serviceEditor.begin()} />}
+        action={<Button title="添加服务" variant="outline" onPress={() => store.serviceEditor.begin()} />}
         footer={
           <View class={`flex-row items-center ${spacing.inline}`}>
             <View class="min-w-0 flex-1">

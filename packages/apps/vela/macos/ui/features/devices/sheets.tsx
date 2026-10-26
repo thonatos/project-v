@@ -20,19 +20,19 @@ import {
 export function AddDeviceSheet() {
   const busy = () => store.addDevice.busy();
   const close = () => {
-    if (!busy()) store.addDevice.open.set(false);
+    if (!busy()) store.remotes.closeAdd();
   };
   const canSubmit = () => !busy() && Boolean(store.addDevice.name().trim() || store.addDevice.selection());
   return (
-    <FormSheetDialog open={store.addDevice.open()} width={392} height={520} onClose={close}>
+    <FormSheetDialog open={store.addDevice.open()} size="add-device" onClose={close}>
       <FormSheet
         title="添加设备"
-        description="从当前 Tailnet 选择设备，或手动输入私人名称。Vela 会在保存前验证对方。"
         actions={
           <>
             <Button title="取消" variant="plain" disabled={busy()} onPress={close} />
             <Button
               title={busy() ? '正在验证…' : '验证并添加'}
+              variant="primary"
               disabled={!canSubmit()}
               onPress={store.remotes.submit}
             />
@@ -57,10 +57,7 @@ export function AddDeviceSheet() {
           label="或输入私人名称"
           mono
           value={store.addDevice.name()}
-          onChange={(value) => {
-            store.addDevice.name.set(value);
-            store.addDevice.selection.set('');
-          }}
+          onChange={store.remotes.setAddName}
           onSubmit={store.remotes.submit}
           placeholder="例如 home-mac.example.ts.net"
           disabled={busy()}
@@ -97,21 +94,21 @@ function TailnetRow(props: { device: () => TailnetDevice }) {
 
 export function RenameDeviceSheet() {
   return (
-    <FormSheetDialog open={store.rename.open()} width={392} height={260} onClose={() => store.rename.open.set(false)}>
+    <FormSheetDialog open={store.rename.open()} size="rename" onClose={store.account.closeRename}>
       <FormSheet
         title="设备名称"
         description="名称会同步到当前 Tailscale 节点。"
         actions={
           <>
-            <Button title="取消" variant="plain" onPress={() => store.rename.open.set(false)} />
-            <Button title="保存" onPress={store.account.saveRename} />
+            <Button title="取消" variant="plain" onPress={store.account.closeRename} />
+            <Button title="保存" variant="primary" onPress={store.account.saveRename} />
           </>
         }
       >
         <TextField
           label="Tailscale 注册名称"
           value={store.rename.draft()}
-          onChange={(value) => store.rename.draft.set(value)}
+          onChange={store.account.changeRenameDraft}
           onSubmit={store.account.saveRename}
           error={store.rename.error()}
         />

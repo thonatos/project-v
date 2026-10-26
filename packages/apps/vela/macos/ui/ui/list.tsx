@@ -4,7 +4,8 @@
  * trailing layout and truncation, so no page or feature lays out a row itself.
  */
 import { Text, View, type JSX } from 'nsh';
-import { edges, spacing, states, surfaces, text, type } from './tokens';
+import { Button } from 'nsh/base';
+import { edges, geometry, spacing, states, surfaces, text, type } from './tokens';
 
 export interface ListRowProps {
   title: string;
@@ -80,12 +81,12 @@ export function ListRow(props: ListRowProps) {
   );
   // Sized to content: a 16pt title line plus 6pt padding. The 32pt floor only
   // exists so a trailing small switch (24pt) never touches the separators.
-  const frame = `min-h-[32px] flex-row items-center gap-3 px-4 py-1.5 first:border-t-0 ${edges.top}`;
+  const frame = `${geometry.row} flex-row items-center gap-3 px-4 py-1.5 first:border-t-0 ${edges.top}`;
   // A footer row stacks: the title line keeps its trailing control, and the
   // footer gets the full width beneath it.
   const stacked = () => (
     <View testID={props.testID} class={`gap-1.5 px-4 py-1.5 first:border-t-0 ${edges.top}`}>
-      <View class="min-h-[24px] flex-row items-center gap-3">{body()}</View>
+      <View class={`${geometry.compactControl} flex-row items-center gap-3`}>{body()}</View>
       {props.footer}
     </View>
   );
@@ -103,18 +104,17 @@ export function ListRow(props: ListRowProps) {
   );
   return (
     <If when={props.onPress} else={plain()}>
-      <View
+      <Button
         testID={props.testID}
         onPress={props.disabled ? undefined : props.onPress}
         disabled={props.disabled}
-        role="button"
+        selected={props.selected ?? false}
         accessibilityLabel={props.accessibilityLabel ?? props.title}
-        accessibilityState={{ selected: props.selected ?? false, disabled: props.disabled ?? false }}
         class={`${frame} ${states.hover} ${states.disabled}`}
         classList={{ [surfaces.selected]: props.selected ?? false }}
       >
         {body()}
-      </View>
+      </Button>
     </If>
   );
 }

@@ -4,7 +4,7 @@
  */
 import { Text, View, type JSX } from 'nsh';
 import { Dialog } from 'nsh/base';
-import { edges, spacing, surfaces, text, type } from './tokens';
+import { edges, geometry, spacing, surfaces, text, type } from './tokens';
 
 export function FormSheet(props: {
   title: string;
@@ -15,14 +15,14 @@ export function FormSheet(props: {
 }) {
   return (
     <View testID={props.testID} class={`h-full w-full ${surfaces.surface}`}>
-      <View class={`gap-1 p-4 ${edges.bottom}`}>
+      <View class={`gap-0.5 px-4 py-2.5 ${edges.bottom}`}>
         <Text class={`${type.pageTitle} ${text.primary}`}>{props.title}</Text>
         <If when={props.description}>
           <Text class={`${type.caption} ${text.muted}`}>{props.description}</Text>
         </If>
       </View>
       <View class={`min-h-0 flex-1 p-4 ${spacing.pageGap}`}>{props.children}</View>
-      <View class={`min-h-[56px] flex-row items-center justify-end p-4 ${spacing.inline} ${edges.top}`}>
+      <View class={`${geometry.sheetFooter} flex-row items-center justify-end px-4 py-2 ${spacing.inline} ${edges.top}`}>
         {props.actions}
       </View>
     </View>
@@ -42,11 +42,17 @@ export function FormSheet(props: {
  */
 export function FormSheetDialog(props: {
   open: boolean;
-  width: number;
-  height: number;
+  size: 'add-device' | 'rename' | 'service-editor';
   onClose: () => void;
   children: JSX.Element;
 }) {
+  // Measured for the fixed 480pt utility window. Keeping these named here
+  // prevents feature call sites from inventing dialog geometry.
+  const geometry = () => ({
+    'add-device': { width: 392, height: 520 },
+    rename: { width: 392, height: 260 },
+    'service-editor': { width: 392, height: 600 },
+  })[props.size];
   return (
     <Dialog
       open={props.open}
@@ -61,7 +67,7 @@ export function FormSheetDialog(props: {
       <View class={`w-full flex-1 items-center justify-center ${spacing.rail}`}>
         <View
           class={`overflow-hidden rounded-panel ${edges.all} ${surfaces.surface}`}
-          style={{ width: props.width, height: props.height }}
+          style={geometry()}
         >
           {props.children}
         </View>

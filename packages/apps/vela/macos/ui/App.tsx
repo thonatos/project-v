@@ -30,6 +30,7 @@ function RailButton(props: { item: (typeof RAIL)[number] }) {
       title={props.item.title}
       symbol={props.item.symbol}
       iconOnly
+      selected={store.pane() === props.item.pane}
       variant={store.pane() === props.item.pane ? 'outline' : 'plain'}
       onPress={props.item.go}
     />

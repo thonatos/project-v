@@ -61,7 +61,12 @@ impl CoreBridge {
         use nsh_platform_macos::objc2_app_kit::NSWorkspace;
         use nsh_platform_macos::objc2_foundation::{NSString, NSURL};
 
-        if !(url.starts_with("https://") || url.starts_with("http://")) {
+        let checked = url::Url::parse(&url).map_err(|_| "invalid external URL")?;
+        if !matches!(checked.scheme(), "http" | "https")
+            || !checked.username().is_empty()
+            || checked.password().is_some()
+            || checked.host().is_none()
+        {
             return Err("external URL must use http or https".into());
         }
         let value = NSString::from_str(&url);
@@ -98,10 +103,25 @@ pub const PRODUCT_NAME: &str = "Vela";
 
 #[cfg(test)]
 mod tests {
-    use super::PRODUCT_NAME;
+    use super::{CoreBridge, PRODUCT_NAME};
 
     #[test]
     fn product_name_is_stable() {
         assert_eq!(PRODUCT_NAME, "Vela");
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn external_urls_reject_unsafe_schemes_and_userinfo() {
+        for invalid in [
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+            "https://good.test@evil.test/",
+        ] {
+            assert!(
+                CoreBridge::open_external(invalid.to_owned()).is_err(),
+                "{invalid}"
+            );
+        }
     }
 }

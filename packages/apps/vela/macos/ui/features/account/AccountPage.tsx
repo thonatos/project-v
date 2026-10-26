@@ -31,7 +31,7 @@ export function AccountPage() {
       <PageHeader title="账户" description="登录状态与这台 Mac 在 Tailnet 中的身份。" />
 
       <View class={`w-full flex-row items-center ${spacing.stack}`} testID="identity-header">
-        <Avatar initial={store.userInitial()} signedIn={store.signedIn()} imageUrl={store.status()?.avatarUrl} large />
+        <Avatar initial={store.userInitial()} signedIn={store.signedIn()} imageUrl={store.avatar.source()} large />
         <Text numberOfLines={1} class={`min-w-0 flex-1 ${type.pageTitle} ${text.primary}`}>
           {store.signedIn() ? store.userName() : '未登录'}
         </Text>

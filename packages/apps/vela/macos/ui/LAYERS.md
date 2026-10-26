@@ -6,7 +6,7 @@ Read this before writing a feature. It is the rule set the structure tests enfor
 
 ```text
 macos/ui/App.tsx        shell: navigation rail, pane routing, menu, keymap, modal mounting
-macos/ui/features/*     product views: compose atoms, read/write `store`
+macos/ui/features/*     product views: compose atoms, read store accessors, call store commands
 macos/ui/ui/*           atoms: no product vocabulary, no Core, no store
 macos/ui/core/          client.ts (Core RPC) + store.ts (state + flows). No JSX.
 shared/ui/              pure projections, protocol types and the shared client factory
@@ -14,7 +14,9 @@ shared/ui/              pure projections, protocol types and the shared client f
 
 - Atoms (`macos/ui/ui/*`) MUST NOT import `../core`, `../features`, `shared/ui` or `../../../../shared/ui`.
 - Features MUST NOT import `vela/native` / `CoreBridge`, call `JSON.parse`, or write hex colors, `dark:` variants, `p-*`/`px-*`/`py-*`/`m-*`/`gap-*` padding/spacing literals, or `min-h-[…]` row heights. Spacing comes from `spacing.*`, text from `type.*` + `text.*`, color from tokens via atoms.
-- Values derived from props or signals MUST be getters (`const x = () => …`) — NSH re-runs bindings, not component bodies.
+- Values derived from props or signals MUST be getters; shared or non-trivial derivations belong in `computed` inside the store.
+- Features MUST NOT call `.set()` on store state. Store signals are private; public accessors are read-only and commands own every mutation.
+- Colors resolve through `nsh.json.theme` runtime tokens. `ui/tokens.ts` only composes semantic classes and named, audited geometry.
 - `App.tsx` MUST NOT call `CoreBridge`.
 - Platform code must never import `ios/**`; shared code must never import `macos/**` (`tests/structure.test.mjs`).
 
@@ -38,9 +40,9 @@ shared/ui/              pure projections, protocol types and the shared client f
 
 ## Store (import { store } from "../../core/store")
 
-State signals: `pane selected status network services devices logs activity forwards logLevel authPending authError` and form groups `addDevice rename editor dsh` (each field is a signal).
+Read-only state accessors: `pane selected status network services devices logs activity forwards logLevel authPending authError` and form groups `addDevice rename editor`.
 Derived: `needsAuth() protocolVersion() signedIn() userName() userInitial() selectedDevice() forwardFor(device, serviceId) tailnetCandidates()`.
-Flows: `navigate.{devices,forwards,logs,account,settings,select(id),back,moveSelection}`,
+Commands: `navigate.{devices,forwards,logs,account,settings,select(id),back,moveSelection}`,
 `account.{signIn,check,reconnect,logout,beginRename,saveRename}`,
 `sharing.{setEnabled(bool),setServiceShared(service,bool)}`,
 `serviceEditor.{begin(service?),applyPreset(value),save,remove(service)}`,
@@ -57,4 +59,4 @@ Flows: `navigate.{devices,forwards,logs,account,settings,select(id),back,moveSel
 `logs.ts`: `logRows logLevelCounts`.
 `version.ts`: `APP_VERSION` (the single application version; `version.test.mjs` checks both nsh.json manifests).
 
-Tests: `macos/ui/tests/` (this app) and `shared/ui/` (projections, after S2). Run everything with `pnpm -F vela verify`.
+`nsh.json` declares Clipboard plus the exact HTTPS GET used for the private Gravatar cache. `vela/native` remains trusted host code: URL parsing and Core mapping checks stay in Rust. Tests include static structure/theme guards and `nsh test macos/ui/tests/semantics.test.tsx`; run everything with `pnpm -F vela verify`.
