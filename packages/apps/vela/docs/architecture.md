@@ -57,6 +57,15 @@ ios/app/Assets.xcassets       iOS 图标资源
 
 Rust 与 Go 都提供路径契约单元测试，确保这些目录不位于 `.app` 内。
 
+## UI 状态、主题与能力边界
+
+- 两端 `core/store.ts` 独占可写 signals；页面只读取 accessor 并调用语义命令。关联字段用 `batch` 发布，复用或非平凡派生值使用 `computed`。
+- status、远端与诊断刷新使用 revision/latest-wins，轮询、重试和反馈计时器由根 owner 统一停止。
+- `nsh.json.theme` 是 TSX 与原生控件共同的运行时主题；原生颜色通过 `token()` 获取，支持 light、dark 与宿主 override。
+- 两端 TSX 只声明 Clipboard；Core 通过宿主网络下载头像并返回 data URL，由 store 的只读 signal 持有并交给 NSH `Image` 加载，关闭偏好或注销后清空。`vela/native` 和自定义 WebView 是可信宿主代码，不受 TSX capability 自动约束，因此 Rust 单独校验外部 URL，并把 iOS WebView source 限制到 Core 创建的 `localhost`、`127.0.0.1` 或 `[::1]` HTTP 映射；服务发起的 HTTPS OAuth/SSO 顶层导航交给系统认证/浏览器会话，远端 HTTP 与其他 scheme 被拒绝。
+- macOS 的 `tailscaleProxy` 偏好只控制独立 `vela-core` 中的 Tailscale `useproxy` feature。关闭后，host 在下次启动 helper 时设置 `TS_DISABLE_FEATURE=useproxy`；它不清除 `HTTP_PROXY`/`HTTPS_PROXY`，因此头像等非 Tailscale HTTP 请求不受影响。该设置需要重启 Vela 生效。
+- 24/28/32/52/56pt 控件尺度、iOS status bar/WebView inset、日志固定列与三个固定工具窗 sheet 尺寸是集中命名且有测试覆盖的平台几何例外；feature 不得新增字面布局值。
+
 ## 进程权限
 
 `Vela` 和 `vela-core` 均以当前登录用户运行，不请求 root，不安装 LaunchDaemon、Network Extension 或 TUN，不写系统代理、DNS、路由或 OpenCode/DSH 配置。Core 只能连接预定义 loopback 服务，并由 Rust 父进程通过管道管理生命周期。

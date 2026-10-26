@@ -57,7 +57,7 @@ go list -C core -deps ./cmd/vela-mobile   # 检查 iOS 的依赖边界
 pnpm run verify
 ```
 
-它依次验证结构契约、协议文档、用户文档、两端 UI 投影与 typecheck、iOS 依赖边界、Rust format/test/clippy、Go race 与系统网络隔离。
+它依次验证结构契约、协议与用户文档、状态/异步 headless tests、capabilities、两端 NSH runtime 语义测试与 typecheck、iOS 依赖边界、Rust format/test/clippy、Go race 与系统网络隔离。
 
 发布前再跑一次发布门，它在该入口之上追加两端组包与签名：
 
