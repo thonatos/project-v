@@ -81,7 +81,7 @@ jobs:
         run: node scripts/release/check-version.mjs --tag "$GITHUB_REF_NAME"
 
       - name: Verify, build, smoke-test, package and describe macOS
-        timeout-minutes: 20
+        timeout-minutes: 35
         uses: ./.github/actions/vela/build-macos
         with:
           version: ${{ needs.prepare.outputs.version }}

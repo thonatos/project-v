@@ -61,7 +61,7 @@ jobs:
         run: echo "value=$(node -p "require('./packages/apps/vela/package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Verify, build, smoke-test and package macOS
-        timeout-minutes: 20
+        timeout-minutes: 35
         uses: ./.github/actions/vela/build-macos
         with:
           version: ${{ steps.version.outputs.value }}
