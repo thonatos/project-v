@@ -1,31 +1,39 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
 context: |
-  语言：中文（简体）
-  所有产出物必须用简体中文撰写。
+  语言：简体中文（所有产出物）。
+  仓库：pnpm workspace（packages/**）+ 独立 Go module（go/）+ macOS/iOS 打包应用（vela）。
+  长期知识：docs/ 是事实来源；包级约束在最近的 AGENTS.md。
+  交付评估：proposal 给结论，tasks 落动作，archive 前现场核对。
 
 rules:
   proposal:
-    - Include rollback plan
+    - '必须包含 ## Delivery Impact 五行：长期文档 / 入口文档 / 版本 / 发布 / 验收'
+    - 每一项给出“需要 + 文件/动作”或“不需要 + 理由”，不得省略
+    - 版本项按受影响包逐项给出：包 / MAJOR、MINOR、PATCH 或 NONE / 需要更新的版本来源文件 / 依据；不得合并成一个全局结论
+    - 显式列出受影响包与路径
   specs:
-    - Use Given/When/Then format for scenarios
+    - 场景使用 Given/When/Then；只描述可观察行为
   design:
-    - Include sequence diagrams for complex flows
+    - 复杂流程给时序图；写明失败路径与回滚
+  tasks:
+    - 先读受影响包 AGENTS.md 的「验证入口 / CI 映射」与 docs/4-ci-cd.md
+    - 每个任务写出可执行验证（命令、workflow/job 或可观察结果），禁止“运行测试”“确认无回归”
+    - 每个任务组自带测试与文档；跨组集成、CI、发布、验收只放最后一组
+    - 交付组必须对 Delivery Impact 中列出的每个受影响包分别做版本评估：按 docs/5-release.md 的 5.2 判定 MAJOR / MINOR / PATCH / NONE，列出该包需要更新的版本来源文件；NONE 也要写理由，不得用一个包的结论代表另一个包
+    - 版本评估独立于发布评估：不 tag、不部署不代表版本号不变，反之亦然
+    - 最后一组按 docs/4-ci-cd.md 与 docs/5-release.md 裁剪，显式覆盖专项命令、路径过滤或新增 gate、版本动作、验收证据
+    - 矩阵中没有对应门禁时，新增或写“缺口 + 原因”
+    - '归档后的动作放 ## Workflow follow-up'
+
+operations:
+  apply:
+    guidance:
+      - 若实现改变脚本名、workflow、部署路径、跨包契约或交付产物，回到 Delivery Impact 重新评估并更新 tasks
+      - 若实现范围扩大到触及新的包或改变交付产物，对该包补做版本评估并更新 tasks
+      - 勾选任务前确认它引用的命令刚刚真实执行过
+  archive:
+    guidance:
+      - 复核 Delivery Impact 每条结论仍成立，包括每个受影响包的版本判定
+      - 对本次改过的文档逐条核对：路径存在、脚本名存在、包地图与实际目录一致
+      - 无关漂移只报告，不擅自扩大范围
