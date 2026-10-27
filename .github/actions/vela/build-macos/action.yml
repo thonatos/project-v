@@ -23,6 +23,10 @@ inputs:
     description: Release commit; required when platform-output is set.
     required: false
     default: ''
+  verify:
+    description: Run shared and macOS verification gates before assembling the app.
+    required: false
+    default: 'true'
 
 outputs:
   asset:
@@ -33,6 +37,7 @@ runs:
   using: composite
   steps:
     - name: Run shared and macOS verification gates
+      if: inputs.verify == 'true'
       shell: bash
       working-directory: packages/apps/vela
       run: |

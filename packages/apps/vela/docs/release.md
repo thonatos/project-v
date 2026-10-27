@@ -39,7 +39,7 @@ https://raw.githubusercontent.com/thonatos/project-v/vela-updates/vela/macos/app
 
 ### 发布稳定 feed
 
-1. `vela-vX.Y.Z` tag workflow 完成构建、ZIP 往返校验、Artifact Attestation，并创建 Draft Prerelease；此阶段不读取更新私钥，也不改变稳定 feed。
+1. `vela-vX.Y.Z` tag workflow 先确认 tag commit 位于 `main` 且同一 SHA 的 Vela CI 已成功，再完成 Release 构建、ZIP 往返校验、Artifact Attestation，并创建 Draft Prerelease；它不重复执行完整 common/macOS 验证。此阶段不读取更新私钥，也不改变稳定 feed。
 2. 维护者检查资产和版本说明后手动公开 Release。
 3. `release.published` workflow 在受保护的 `vela-stable-updates` environment 中校验公开状态、tag、标准清单、ZIP 摘要、bundle 版本/build 和构建证明。
 4. workflow 通过标准输入把 `VELA_UPDATE_PRIVATE_KEY` 交给固定版本的 Sparkle `sign_update`，生成最新稳定 appcast，并以 compare-and-swap 原子推进 `vela-updates` 分支。

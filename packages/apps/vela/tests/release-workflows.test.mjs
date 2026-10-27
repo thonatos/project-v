@@ -104,6 +104,8 @@ assertOrdered(build, [
   'scripts/release/macos-package-app.sh',
   'scripts/release/create-macos-builder.mjs',
 ]);
+assert.match(build, /verify:\n\s+description: Run shared and macOS verification gates/);
+assert.match(build, /name: Run shared and macOS verification gates\n\s+if: inputs\.verify == 'true'/);
 for (const action of [setup, build]) {
   assert.doesNotMatch(
     action,
@@ -124,17 +126,24 @@ assert.match(job(release, 'publish'), /needs: \[prepare, attest\]/);
 assert.match(release, /Future Linux support is a separate build-linux-node job/);
 
 const prepare = job(release, 'prepare');
-assertOrdered(prepare, ['Reject malformed release tags', 'scripts/release/check-version.mjs']);
+assertOrdered(prepare, [
+  'Reject malformed release tags',
+  'Require successful Vela CI on main',
+  'scripts/release/check-version.mjs',
+]);
 assert.match(prepare, /\^vela-v\(0\|\[1-9\]\[0-9\]\*\)/);
-assert.match(prepare, /permissions:\n      contents: read/);
+assert.match(prepare, /permissions:\n      checks: read\n      contents: read/);
+assert.match(prepare, /compare\/\$GITHUB_SHA\.\.\.main/);
+assert.match(prepare, /Vela macOS arm64 verification.*conclusion == "success"/s);
 
 const builder = job(release, 'build-macos-desktop');
 assert.match(builder, /runs-on: xcode-27/);
-assert.match(builder, /timeout-minutes: 70/);
-assert.match(builder, /name: Verify, build, smoke-test, package and describe macOS\n\s+timeout-minutes: 55/);
+assert.match(builder, /timeout-minutes: 45/);
+assert.match(builder, /name: Verify, build, smoke-test, package and describe macOS\n\s+timeout-minutes: 30/);
 assert.match(builder, /permissions:\n      contents: read/);
 assert.match(builder, /uses: \.\/\.github\/actions\/vela\/setup-toolchain/);
 assert.match(builder, /uses: \.\/\.github\/actions\/vela\/build-macos/);
+assert.match(builder, /verify: 'false'/);
 assert.match(builder, /scripts\/release\/check-version\.mjs --tag/);
 assert.match(builder, /platform-output:/);
 

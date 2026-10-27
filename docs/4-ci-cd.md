@@ -10,7 +10,7 @@
 | `docker-artusx-api-go.yml` | push `main` | `go/**` | `docker`：构建并推送 `go/cmd/artusx-api` 镜像 |
 | `gitleaks.yml` | push / PR `main` | 无 | `scan`：密钥扫描 |
 | `vela-ci.yml` | push / PR `main` | `packages/apps/vela/**`、根 `package.json`、`pnpm-lock.yaml`、`pnpm-workspace.yaml`、Vela 相关 workflow 与 action | `verify-macos`：macOS arm64 验证 |
-| `vela-release.yml` | tag `vela-v*` | — | 校验 tag 与版本、构建 macOS 应用、生成资产、Draft Prerelease |
+| `vela-release.yml` | tag `vela-v*` | — | 校验 tag、版本、main 包含关系与同 SHA 的 Vela CI 成功结果；再构建 macOS Release、生成资产和 Draft Prerelease |
 | `vela-update-feed.yml` | `release: published` | — | 在受保护 environment 中校验公开稳定 Release、attestation 与 EdDSA 签名，并原子推进稳定 feed |
 
 `nodejs-ci` 的 `pnpm check` 覆盖 `packages/**` 的格式、lint 与类型检查；`pnpm test` 只运行根 `vite.config.ts` 声明的三个项目（`i18n-studio`、`gpm`、`dsh-telegram`）。
@@ -30,7 +30,7 @@
 
 Vela 的 iOS 构建、签名、Simulator 与真机验收不在 CI 中执行，见 `packages/apps/vela/AGENTS.md`。
 
-`vela-release` 的 tag 构建不读取更新私钥，只创建 Draft Prerelease 和带 attestation 的不可变资产。`vela-update-feed` 仅在人工公开 Release 后运行；生产私钥只进入 `vela-stable-updates` environment 的 feed job，job 不 checkout 仓库源码，只消费已证明的发布资产和固定摘要的 Sparkle 工具。
+`vela-release` 不重复执行已经由同 SHA 的 `vela-ci` 证明通过的 common/macOS 验证；prepare job 必须确认 tag commit 位于 `main` 且最新 `Vela macOS arm64 verification` check 成功，builder 随后只执行固定工具链准备、Release 构建、产物检查、正式 host smoke 与 ZIP 往返。tag 构建不读取更新私钥，只创建 Draft Prerelease 和带 attestation 的不可变资产。`vela-update-feed` 仅在人工公开 Release 后运行；生产私钥只进入 `vela-stable-updates` environment 的 feed job，job 不 checkout 仓库源码，只消费已证明的发布资产和固定摘要的 Sparkle 工具。
 
 ## 4.3 覆盖缺口
 
