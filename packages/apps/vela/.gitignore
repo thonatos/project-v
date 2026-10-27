@@ -1,9 +1,0 @@
-build/
-target/
-core/vela-core
-.tmp/
-ios/build/
-ios/app/Vela.xcodeproj/xcuserdata/
-ios/app/Vela.xcodeproj/project.xcworkspace/xcuserdata/
-ios/ui/.nsh/
-tests/.tmp/

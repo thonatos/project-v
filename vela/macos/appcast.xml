@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Vela macOS 稳定更新</title>
+    <item>
+      <title>Vela 0.3.0</title>
+      <pubDate>Tue, 27 Oct 2026 20:08:27 GMT</pubDate>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://github.com/thonatos/project-v/releases/download/vela-v0.3.0/release-notes.md</sparkle:releaseNotesLink>
+      <enclosure url="https://github.com/thonatos/project-v/releases/download/vela-v0.3.0/Vela-Desktop-0.3.0-macos-arm64.zip" length="29313678" type="application/octet-stream" sparkle:edSignature="8Fo9FyHsu++6FMFrcquassCbbGAnKm26ia60XDEkLGu41X4LuvW2CgxOOgfsS0i+8dRhlht4uSToU/QneveSDw==" />
+    </item>
+  </channel>
+</rss>
