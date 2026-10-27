@@ -1,0 +1,104 @@
+name: Vela Stable Update Feed
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+concurrency:
+  group: vela-stable-update-feed
+  cancel-in-progress: false
+
+jobs:
+  publish-stable-feed:
+    name: Publish verified stable appcast
+    if: ${{ !github.event.release.draft && !github.event.release.prerelease && startsWith(github.event.release.tag_name, 'vela-v') }}
+    runs-on: xcode-27
+    timeout-minutes: 15
+    environment: vela-stable-updates
+    permissions:
+      contents: write
+      attestations: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      PUBLISHED_AT: ${{ github.event.release.published_at }}
+    steps:
+      - name: Reject non-stable or malformed releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          test '${{ github.event.release.draft }}' = false
+          test '${{ github.event.release.prerelease }}' = false
+          grep -Eq '^vela-v(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$' <<<"$RELEASE_TAG"
+
+      - name: Download immutable release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/vela-release"
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/vela-release" \
+            --pattern 'Vela-Desktop-*-macos-arm64.zip' \
+            --pattern 'Vela-Update-Tools-1-macos-arm64.tar.gz' \
+            --pattern 'release.json' \
+            --pattern 'release-notes.md'
+
+      - name: Verify GitHub build attestations
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh attestation verify "$RUNNER_TEMP"/vela-release/Vela-Desktop-*-macos-arm64.zip --repo "$GITHUB_REPOSITORY"
+          gh attestation verify "$RUNNER_TEMP/vela-release/Vela-Update-Tools-1-macos-arm64.tar.gz" --repo "$GITHUB_REPOSITORY"
+
+      - name: Resolve validated release identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit=$(node -e 'const fs=require("fs"); const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); if(m.tag!==process.env.RELEASE_TAG || !/^[0-9a-f]{40}$/.test(m.commit)) process.exit(1); process.stdout.write(m.commit)' "$RUNNER_TEMP/vela-release/release.json")
+          echo "BASE_COMMIT=$commit" >> "$GITHUB_ENV"
+          echo "RELEASE_DOWNLOAD_URL=https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG" >> "$GITHUB_ENV"
+
+      - name: Prepare verified Sparkle signer and feed tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/vela-update-tools"
+          sparkle="$RUNNER_TEMP/sparkle"
+          mkdir -p "$tools" "$sparkle"
+          tar -xzf "$RUNNER_TEMP/vela-release/Vela-Update-Tools-1-macos-arm64.tar.gz" -C "$tools"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 3 \
+            --output "$RUNNER_TEMP/Sparkle-2.10.1.tar.xz" \
+            https://github.com/sparkle-project/Sparkle/releases/download/2.10.1/Sparkle-2.10.1.tar.xz
+          echo '1a856d2a9edb8e628de88121d7be04cf0e2167f8641650b78fca00b14244cf27  '"$RUNNER_TEMP/Sparkle-2.10.1.tar.xz" | shasum -a 256 -c -
+          tar -xJf "$RUNNER_TEMP/Sparkle-2.10.1.tar.xz" -C "$sparkle"
+          test -x "$sparkle/bin/sign_update"
+
+      - name: Generate signed stable appcast
+        shell: bash
+        env:
+          VELA_UPDATE_PRIVATE_KEY: ${{ secrets.VELA_UPDATE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/vela-update-tools/scripts/release"
+          feed="$RUNNER_TEMP/vela/macos/appcast.xml"
+          mkdir -p "$(dirname "$feed")"
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error \
+            --output "$feed" \
+            https://raw.githubusercontent.com/thonatos/project-v/vela-updates/vela/macos/appcast.xml || rm -f "$feed"
+          node "$tools/update-feed.mjs" \
+            --release-dir "$RUNNER_TEMP/vela-release" \
+            --output "$feed" \
+            --tag "$RELEASE_TAG" \
+            --release-url "$RELEASE_DOWNLOAD_URL" \
+            --published-at "$PUBLISHED_AT" \
+            --sign-tool "$RUNNER_TEMP/sparkle/bin/sign_update"
+
+      - name: Atomically publish stable appcast
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/vela-update-tools/scripts/release"
+          feed="$RUNNER_TEMP/vela/macos/appcast.xml"
+          node "$tools/publish-update-feed.mjs" --feed "$feed" --base-commit "$BASE_COMMIT"

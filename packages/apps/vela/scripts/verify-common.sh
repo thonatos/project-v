@@ -17,6 +17,8 @@ run capabilities node "$ROOT/tests/capabilities.test.mjs"
 run shared-hostname node "$ROOT/shared/ui/hostname.test.mjs"
 run release-toolchain node "$ROOT/tests/release-toolchain.test.mjs"
 run release-manifest node "$ROOT/tests/release-manifest-assemble.test.mjs"
+run update-feed node "$ROOT/tests/update-feed.test.mjs"
+run update-feed-publish node "$ROOT/tests/update-feed-publish.test.mjs"
 run release-workflows node "$ROOT/tests/release-workflows.test.mjs"
 run verify-gates node "$ROOT/tests/verify-gates.test.mjs"
 run go-race go test -C "$ROOT/core" -race ./...

@@ -1,5 +1,5 @@
 name: Vela pinned toolchain
-description: Provision Node.js, Go, pnpm, Rust and the verified NSH distribution.
+description: Provision Node.js, Go, pnpm, Rust and verified NSH and Sparkle distributions.
 
 runs:
   using: composite
@@ -40,7 +40,7 @@ runs:
           ~/.cargo/registry
           ~/.cargo/git
           ~/go/pkg/mod
-        key: vela-${{ runner.os }}-${{ runner.arch }}-nsh-a189be8537422a147131c88d7fd39d73265a6aebfbb530287c36a393ff3953fc-${{ hashFiles('pnpm-lock.yaml', 'packages/apps/vela/Cargo.lock', 'packages/apps/vela/core/go.sum') }}
+        key: vela-${{ runner.os }}-${{ runner.arch }}-nsh-a189be8537422a147131c88d7fd39d73265a6aebfbb530287c36a393ff3953fc-sparkle-1a856d2a9edb8e628de88121d7be04cf0e2167f8641650b78fca00b14244cf27-${{ hashFiles('pnpm-lock.yaml', 'packages/apps/vela/Cargo.lock', 'packages/apps/vela/core/go.sum') }}
 
     # A cache hit is re-hashed before extraction or execution.
     - name: Prepare and revalidate the pinned toolchain

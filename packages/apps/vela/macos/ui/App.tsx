@@ -6,6 +6,7 @@
 import { effect, mount, View } from 'nsh';
 import { Menu, Window } from 'nsh/desktop';
 import { keymap } from 'nsh/keymap';
+import { core } from './core/client';
 import { store, type Pane } from './core/store';
 import { AccountPage } from './features/account/AccountPage';
 import { DevicesPage } from './features/devices/DevicesPage';
@@ -47,6 +48,7 @@ function App() {
         label: 'Vela',
         submenu: [
           { role: 'about' },
+          { label: '检查更新…', onSelect: core.checkForUpdates },
           { label: '设置…', shortcut: 'mod+,', onSelect: store.navigate.settings },
           { type: 'separator' },
           { role: 'hide' },

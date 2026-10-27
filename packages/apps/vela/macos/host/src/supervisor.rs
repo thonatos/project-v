@@ -274,6 +274,13 @@ impl Supervisor {
         if let Some(child) = self.child.lock().unwrap().as_mut() {
             let _ = child.kill();
         }
+        let kill_deadline = Instant::now() + Duration::from_secs(1);
+        while Instant::now() < kill_deadline {
+            if self.state() == State::Terminated {
+                return;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
     }
 
     /// # Panics

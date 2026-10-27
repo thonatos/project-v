@@ -4,6 +4,7 @@
 //! production launch never reaches them. Keeping them here leaves the runner
 //! focused on the window and lifecycle.
 use nsh_platform_macos::objc2::MainThreadMarker;
+use nsh_platform_macos::objc2::msg_send;
 use nsh_platform_macos::objc2_app_kit::{NSApplication, NSWindow};
 use nsh_platform_macos::objc2_foundation::{NSPoint, NSString};
 use std::rc::Rc;
@@ -16,6 +17,49 @@ use super::RUNNING;
 pub(super) fn schedule_if_requested() {
     schedule_lifecycle_smoke();
     schedule_ui_smoke();
+    schedule_update_menu_smoke();
+}
+
+fn schedule_update_menu_smoke() {
+    if std::env::var_os("VELA_UPDATE_SMOKE").is_none() {
+        return;
+    }
+    std::thread::spawn(|| {
+        std::thread::sleep(Duration::from_millis(750));
+        dispatch2::DispatchQueue::main().exec_async(|| {
+            let Some(mtm) = MainThreadMarker::new() else {
+                return;
+            };
+            let app = NSApplication::sharedApplication(mtm);
+            let title = NSString::from_str("检查更新…");
+            let item = app
+                .mainMenu()
+                .and_then(|menu| menu.itemAtIndex(0))
+                .and_then(|item| item.submenu())
+                .and_then(|menu| menu.itemWithTitle(&title));
+            if let Some(item) = item {
+                if let (Some(target), Some(action)) = (item.target(), item.action()) {
+                    let _: bool =
+                        unsafe { msg_send![&*app, sendAction: action, to: &*target, from: &*item] };
+                    eprintln!("VELA_UPDATE_SMOKE menu=selected");
+                    std::thread::spawn(|| {
+                        std::thread::sleep(Duration::from_millis(250));
+                        dispatch2::DispatchQueue::main().exec_async(|| {
+                            if let Some(mtm) = MainThreadMarker::new() {
+                                NSApplication::sharedApplication(mtm).terminate(None);
+                            }
+                        });
+                    });
+                } else {
+                    eprintln!("VELA_UPDATE_SMOKE menu=unavailable");
+                    app.terminate(None);
+                }
+            } else {
+                eprintln!("VELA_UPDATE_SMOKE menu=missing");
+                app.terminate(None);
+            }
+        });
+    });
 }
 
 /// Executes a deterministic close/reopen/quit smoke sequence when requested by

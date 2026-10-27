@@ -25,6 +25,9 @@ BUNDLE_ID=$(plist_value CFBundleIdentifier)
 VERSION=$(plist_value CFBundleShortVersionString)
 EXECUTABLE=$(plist_value CFBundleExecutable)
 DECLARED_MIN_OS=$(plist_value LSMinimumSystemVersion)
+BUILD=$(plist_value CFBundleVersion)
+FEED_URL=$(plist_value SUFeedURL)
+PUBLIC_KEY=$(plist_value SUPublicEDKey)
 
 test "$BUNDLE_ID" = "$EXPECTED_BUNDLE_ID" || fail "CFBundleIdentifier is $BUNDLE_ID, expected $EXPECTED_BUNDLE_ID"
 printf '%s\n' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "CFBundleShortVersionString is not X.Y.Z: $VERSION"
@@ -32,11 +35,32 @@ if test -n "$EXPECTED_VERSION"; then
   test "$VERSION" = "$EXPECTED_VERSION" || fail "CFBundleShortVersionString is $VERSION, expected $EXPECTED_VERSION"
 fi
 test "$DECLARED_MIN_OS" = "$MAX_MIN_OS" || fail "LSMinimumSystemVersion is $DECLARED_MIN_OS, expected $MAX_MIN_OS"
+printf '%s\n' "$BUILD" | grep -Eq '^[1-9][0-9]*$' || fail "CFBundleVersion must be a positive integer: $BUILD"
+test "$FEED_URL" = "https://raw.githubusercontent.com/thonatos/project-v/vela-updates/vela/macos/appcast.xml" || fail "SUFeedURL is not the stable Vela feed"
+printf '%s' "$PUBLIC_KEY" | base64 --decode >/dev/null 2>&1 || fail "SUPublicEDKey is not base64"
+test "$(printf '%s' "$PUBLIC_KEY" | base64 --decode | wc -c | tr -d ' ')" = 32 || fail "SUPublicEDKey must decode to 32 bytes"
 
 MAIN="$APP/Contents/MacOS/$EXECUTABLE"
 CORE="$APP/Contents/Helpers/vela-core"
 test -x "$MAIN" || fail "main executable is missing or not executable: Contents/MacOS/$EXECUTABLE"
 test -x "$CORE" || fail "Core helper is missing or not executable: Contents/Helpers/vela-core"
+
+SPARKLE="$APP/Contents/Frameworks/Sparkle.framework"
+SPARKLE_VERSION="$SPARKLE/Versions/B"
+test -d "$SPARKLE_VERSION" || fail "missing Contents/Frameworks/Sparkle.framework/Versions/B"
+test -L "$SPARKLE/Versions/Current" || fail "Sparkle Versions/Current symlink is missing"
+test "$(readlink "$SPARKLE/Versions/Current")" = B || fail "Sparkle Versions/Current must point to B"
+for RELATIVE in \
+  Sparkle \
+  Autoupdate \
+  Updater.app/Contents/MacOS/Updater \
+  XPCServices/Downloader.xpc/Contents/MacOS/Downloader \
+  XPCServices/Installer.xpc/Contents/MacOS/Installer
+do
+  test -x "$SPARKLE_VERSION/$RELATIVE" || fail "Sparkle executable is missing: Contents/Frameworks/Sparkle.framework/Versions/B/$RELATIVE"
+done
+otool -l "$MAIN" | awk '$1 == "cmd" && $2 == "LC_RPATH" { wanted=1; next } wanted && $1 == "path" { print $2; wanted=0 }' | \
+  grep -qx '@executable_path/../Frameworks' || fail "main executable is missing the Sparkle Frameworks rpath"
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/vela-macos-check.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT HUP INT TERM
@@ -85,5 +109,6 @@ APP_SIGNATURE=$(codesign -d --verbose=4 "$APP" 2>&1) || fail "App signature is m
 printf '%s\n' "$APP_SIGNATURE" | grep -q '^Signature=adhoc$' || fail "App signature is not ad-hoc"
 printf '%s\n' "$APP_SIGNATURE" | grep -q '^TeamIdentifier=not set$' || fail "App TeamIdentifier must not be set"
 codesign --verify --deep --strict "$APP" >/dev/null 2>&1 || fail "App code signature verification failed"
+codesign --verify --deep --strict "$SPARKLE" >/dev/null 2>&1 || fail "Sparkle framework signature verification failed"
 
 echo "macos-check-app: Vela.app $VERSION is a valid macOS arm64 ad-hoc bundle"

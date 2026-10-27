@@ -58,6 +58,12 @@ impl CoreBridge {
         false
     }
 
+    /// iOS never exposes the macOS application updater.
+    #[must_use]
+    pub fn check_for_updates() -> bool {
+        false
+    }
+
     /// The open page's status bar (iOS only).
     #[must_use]
     pub fn set_page_status_bar(_style: String) -> bool {

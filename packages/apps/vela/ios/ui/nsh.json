@@ -1,8 +1,8 @@
 {
   "name": "Vela",
   "id": "io.implements.vela.ios",
-  "version": "0.2.0",
-  "build": 2,
+  "version": "0.3.0",
+  "build": 3,
   "capabilities": {
     "clipboard": true
   },

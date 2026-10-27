@@ -92,6 +92,10 @@ for ACTION in close reopen quit; do
     exit 1
   }
 done
+grep -q '^VELA_LIFECYCLE terminated core=None$' "$RAW_LOG" || {
+  preserve_diagnostics
+  fail "formal quit left the Core helper observable"
+}
 
 CORE_IDENTITIES=$(sed -n 's/^.*VELA_SMOKE core=Some((\([0-9][0-9]*, [0-9][0-9]*\))).*$/\1/p' "$RAW_LOG")
 test "$(printf '%s\n' "$CORE_IDENTITIES" | sed '/^$/d' | wc -l | tr -d ' ')" -eq 2 || {
@@ -106,5 +110,31 @@ test "$(printf '%s\n' "$CORE_IDENTITIES" | sed '/^$/d' | sort -u | wc -l | tr -d
   cat "$DIAGNOSTICS" >&2
   exit 1
 }
+
+UPDATE_LOG="$WORK/update.log"
+HOME="$HOME_DIR" TMPDIR="$TEMP_DIR" VELA_UPDATE_SMOKE=1 "$PROGRAM" >"$UPDATE_LOG" 2>&1 &
+PID=$!
+ELAPSED=0
+while kill -0 "$PID" 2>/dev/null; do
+  if test "$ELAPSED" -ge "$TIMEOUT_SECONDS"; then
+    cp "$UPDATE_LOG" "$RAW_LOG"
+    preserve_diagnostics
+    fail "update menu smoke timed out"
+  fi
+  sleep 1
+  ELAPSED=$((ELAPSED + 1))
+done
+wait "$PID" || fail "update menu smoke failed"
+PID=
+if test "$(grep -c '^VELA_UPDATE_SMOKE check=1$' "$UPDATE_LOG")" -ne 1; then
+  cp "$UPDATE_LOG" "$RAW_LOG"
+  preserve_diagnostics
+  fail "update menu did not invoke exactly one native check"
+fi
+if ! grep -q '^VELA_UPDATE_SMOKE menu=selected$' "$UPDATE_LOG"; then
+  cp "$UPDATE_LOG" "$RAW_LOG"
+  preserve_diagnostics
+  fail "update menu item was not selected through AppKit"
+fi
 
 echo "macos-smoke-app: Core start, close/reopen and graceful quit passed"

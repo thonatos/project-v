@@ -40,6 +40,8 @@ const expected = new Set([
   'shared-projections',
   'shared-version',
   'structure',
+  'update-feed',
+  'update-feed-publish',
   'verify-gates',
 ]);
 

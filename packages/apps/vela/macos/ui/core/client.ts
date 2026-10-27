@@ -14,4 +14,5 @@ export const core = {
   /** Hands a URL to the user's default browser. */
   openExternal: (url: string) => CoreBridge.openExternal(url),
   setPerformanceHud: (enabled: boolean) => CoreBridge.setPerformanceHud(enabled),
+  checkForUpdates: () => CoreBridge.checkForUpdates(),
 };

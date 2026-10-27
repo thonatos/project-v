@@ -147,6 +147,14 @@ jobs:
           done
           node scripts/release/assemble-release.mjs "${args[@]}" --output "$RUNNER_TEMP/vela-release"
 
+      - name: Package immutable update feed tooling
+        working-directory: packages/apps/vela
+        run: |
+          tar -czf "$RUNNER_TEMP/vela-release/Vela-Update-Tools-1-macos-arm64.tar.gz" \
+            scripts/release/release-manifest.mjs \
+            scripts/release/update-feed.mjs \
+            scripts/release/publish-update-feed.mjs
+
       - name: Upload immutable standard release assets
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
@@ -160,7 +168,7 @@ jobs:
           retention-days: 1
 
   attest:
-    name: Attest macOS runtime asset
+    name: Attest macOS release assets
     needs: assemble
     runs-on: ubuntu-24.04
     timeout-minutes: 10

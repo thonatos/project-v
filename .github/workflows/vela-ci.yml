@@ -10,6 +10,7 @@ on:
       - 'pnpm-workspace.yaml'
       - '.github/workflows/vela-ci.yml'
       - '.github/workflows/vela-release.yml'
+      - '.github/workflows/vela-update-feed.yml'
       - '.github/actions/vela/**'
   pull_request:
     branches: ['main']
@@ -20,6 +21,7 @@ on:
       - 'pnpm-workspace.yaml'
       - '.github/workflows/vela-ci.yml'
       - '.github/workflows/vela-release.yml'
+      - '.github/workflows/vela-update-feed.yml'
       - '.github/actions/vela/**'
 
 permissions:

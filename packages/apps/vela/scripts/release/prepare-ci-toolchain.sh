@@ -29,6 +29,10 @@ ARCHITECTURE=$(json_value architecture)
 ARCHIVE_FILE=$(json_value nsh.archive.file)
 ARCHIVE_URL=$(json_value nsh.archive.url)
 ARCHIVE_SHA256=$(json_value nsh.archive.sha256)
+SPARKLE_VERSION=$(json_value sparkle.version)
+SPARKLE_ARCHIVE_FILE=$(json_value sparkle.archive.file)
+SPARKLE_ARCHIVE_URL=$(json_value sparkle.archive.url)
+SPARKLE_ARCHIVE_SHA256=$(json_value sparkle.archive.sha256)
 SOURCE_REPOSITORY=$(json_value nsh.source.repository)
 SOURCE_COMMIT=$(json_value nsh.source.peeledCommit)
 
@@ -36,8 +40,10 @@ DOWNLOAD_DIR="$INSTALL_ROOT/downloads"
 DIST_DIR="$INSTALL_ROOT/nsh"
 SOURCE_DIR="$INSTALL_ROOT/nsh-source"
 ARCHIVE="$DOWNLOAD_DIR/$ARCHIVE_FILE"
+SPARKLE_ARCHIVE="$DOWNLOAD_DIR/$SPARKLE_ARCHIVE_FILE"
+SPARKLE_DIR="$INSTALL_ROOT/sparkle"
 mkdir -p "$DOWNLOAD_DIR"
-rm -rf "$DIST_DIR" "$SOURCE_DIR"
+rm -rf "$DIST_DIR" "$SOURCE_DIR" "$SPARKLE_DIR"
 
 if [ -n "${NSH_ARCHIVE_FILE:-}" ]; then
   cp "$NSH_ARCHIVE_FILE" "$ARCHIVE"
@@ -48,13 +54,23 @@ else
   curl --proto '=https' --tlsv1.2 --fail --location --retry 3 --output "$ARCHIVE" "$ARCHIVE_URL"
 fi
 
-ACTUAL_SHA256=$(shasum -a 256 "$ARCHIVE" | awk '{print $1}')
-if [ "$ACTUAL_SHA256" != "$ARCHIVE_SHA256" ]; then
-  echo "NSH 归档 SHA-256 摘要不匹配: $ARCHIVE" >&2
-  echo "期望: $ARCHIVE_SHA256" >&2
-  echo "实际: $ACTUAL_SHA256" >&2
-  exit 1
+node "$ROOT/scripts/release/archive-contract.mjs" digest "$ARCHIVE" "$ARCHIVE_SHA256" NSH
+
+if [ -n "${SPARKLE_ARCHIVE_FILE_OVERRIDE:-}" ]; then
+  cp "$SPARKLE_ARCHIVE_FILE_OVERRIDE" "$SPARKLE_ARCHIVE"
+elif [ -f "$SPARKLE_ARCHIVE" ] && [ "$(shasum -a 256 "$SPARKLE_ARCHIVE" | awk '{print $1}')" = "$SPARKLE_ARCHIVE_SHA256" ]; then
+  echo "Using cached, verified $SPARKLE_ARCHIVE_FILE"
+else
+  rm -f "$SPARKLE_ARCHIVE"
+  curl --proto '=https' --tlsv1.2 --fail --location --retry 3 --output "$SPARKLE_ARCHIVE" "$SPARKLE_ARCHIVE_URL"
 fi
+
+node "$ROOT/scripts/release/archive-contract.mjs" digest "$SPARKLE_ARCHIVE" "$SPARKLE_ARCHIVE_SHA256" Sparkle
+
+mkdir -p "$SPARKLE_DIR"
+tar -xJf "$SPARKLE_ARCHIVE" -C "$SPARKLE_DIR"
+SPARKLE_REQUIRED_PATHS=$(node -e 'const d=require(process.argv[1]); process.stdout.write(JSON.stringify(d.sparkle.requiredPaths))' "$TOOLCHAIN_FILE")
+node "$ROOT/scripts/release/archive-contract.mjs" paths "$SPARKLE_DIR" "$SPARKLE_REQUIRED_PATHS" Sparkle
 
 # Extraction and execution happen only after the digest check above.
 mkdir -p "$DIST_DIR"
@@ -87,6 +103,7 @@ if [ -n "${GITHUB_PATH:-}" ]; then
 fi
 if [ -n "${GITHUB_ENV:-}" ]; then
   printf 'NSH_SOURCE=%s\n' "$NSH_SOURCE" >>"$GITHUB_ENV"
+  printf 'SPARKLE_HOME=%s\n' "$SPARKLE_DIR" >>"$GITHUB_ENV"
 fi
 
 echo "==> 已验证工具版本"
@@ -115,3 +132,4 @@ case "$ACTUAL_XCODE" in "Xcode $XCODE_VERSION"*) ;; *) version_error Xcode "$ACT
 echo "macOS runner $ACTUAL_MACOS; deployment target $MACOS_VERSION"
 echo "NSH source $ACTUAL_SOURCE_COMMIT"
 echo "NSH $NSH_VERSION 已安装到 $DIST_DIR"
+echo "Sparkle $SPARKLE_VERSION 已安装到 $SPARKLE_DIR"

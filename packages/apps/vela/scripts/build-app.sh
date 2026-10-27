@@ -14,6 +14,11 @@ case "$OUT" in
 esac
 APP="$OUT/Vela.app"
 CONTENTS="$APP/Contents"
+SPARKLE_ROOT=${SPARKLE_HOME:-${VELA_TOOLCHAIN_CACHE:-}/sparkle}
+test -n "$SPARKLE_ROOT" && test -d "$SPARKLE_ROOT/Sparkle.framework" || {
+  echo "Vela build requires verified SPARKLE_HOME (run prepare-ci-toolchain.sh first)" >&2
+  exit 127
+}
 
 rm -rf "$OUT"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Helpers" "$CONTENTS/Resources/nsh/assets"
@@ -22,6 +27,7 @@ sh "$ROOT/scripts/nsh.sh" build "$ROOT/macos/ui/App.tsx" --release -o "$OUT/ui"
 # Remap the build machine's paths so panic locations and debug info in the
 # shipped binary do not reveal the developer's home directory.
 export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$ROOT=/vela --remap-path-prefix=$HOME=/home/user"
+export RUSTFLAGS="$RUSTFLAGS -C link-arg=-Wl,-rpath,@executable_path/../Frameworks"
 cargo build --manifest-path "$ROOT/Cargo.toml" --locked --release --package vela-host
 go build -C "$ROOT/core" -trimpath -o "$CONTENTS/Helpers/vela-core" ./cmd/vela-core
 
@@ -42,6 +48,7 @@ xcrun actool "$ROOT/macos/app/AppIcon.icon" \
 cp "$ROOT/macos/app/Info.plist" "$CONTENTS/Info.plist"
 
 chmod 755 "$CONTENTS/MacOS/Vela" "$CONTENTS/Helpers/vela-core"
+sh "$ROOT/scripts/release/embed-sparkle.sh" "$APP" "$SPARKLE_ROOT" >/dev/null
 codesign --force --sign - "$CONTENTS/Helpers/vela-core"
 codesign --force --sign - "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"

@@ -19,6 +19,23 @@
       "peeledCommit": "669b62b11449b2ab787b7c82649a392cbff25b8f"
     }
   },
+  "sparkle": {
+    "version": "2.10.1",
+    "archive": {
+      "format": "tar.xz",
+      "file": "Sparkle-2.10.1.tar.xz",
+      "url": "https://github.com/sparkle-project/Sparkle/releases/download/2.10.1/Sparkle-2.10.1.tar.xz",
+      "sha256": "1a856d2a9edb8e628de88121d7be04cf0e2167f8641650b78fca00b14244cf27"
+    },
+    "requiredPaths": [
+      "Sparkle.framework/Versions/B/Sparkle",
+      "Sparkle.framework/Versions/B/Autoupdate",
+      "Sparkle.framework/Versions/B/Updater.app/Contents/MacOS/Updater",
+      "Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader",
+      "Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer",
+      "bin/sign_update"
+    ]
+  },
   "xcode": "27",
   "macos": "14.0",
   "architecture": "arm64"

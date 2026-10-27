@@ -53,10 +53,11 @@ macos/**          ->  ios/**                 禁止
 | 远程 Mac 管理          | 是                 | 是                 |
 | 设备重命名、登录与注销 | 是                 | 是                 |
 | 日志与诊断             | 是                 | 是                 |
+| 完整应用自动更新       | 是，稳定通道       | 否                 |
 
 ## 构建与验证
 
-前置条件见 `docs/development.md`（NSH `v0.2.0`、Rust `1.98.1`、Go `1.27.2`、Xcode）。NSH 的 Rust 集成需要源码 checkout：设置 `NSH_SOURCE`，未设置时脚本回退到 `~/.nsh/source`。
+前置条件见 `docs/development.md`（NSH `v0.2.0`、Sparkle `2.10.1`、Rust `1.98.1`、Go `1.27.2`、Xcode）。NSH 的 Rust 集成需要匹配源码 checkout；macOS App 组装需要 `SPARKLE_HOME` 指向经固定摘要校验的官方发行目录。
 
 ```sh
 pnpm -F vela build              # 界面 + 宿主 + Core

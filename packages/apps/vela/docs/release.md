@@ -17,6 +17,49 @@ release.json
 - `release.json` 记录版本、commit、组件、平台、架构、系统要求和签名状态。
 - GitHub Artifact Attestation 证明 ZIP 由本仓库的 GitHub Actions 从对应 tag 构建。
 
+## 应用内更新
+
+从 Vela 0.3.0 起，macOS 应用菜单提供“检查更新…”。Sparkle 在第二次启动时按其原生流程询问是否允许后台检查；即使允许，Vela 也不会静默强制安装。发现更新后，用户可以查看版本说明、稍后处理、立即安装并重启，或在正式退出时安装。关闭窗口或 `Cmd+W` 只隐藏 Vela，不会触发安装。
+
+稳定更新源固定为：
+
+```text
+https://raw.githubusercontent.com/thonatos/project-v/vela-updates/vela/macos/appcast.xml
+```
+
+稳定 feed 只包含最新的已公开、非 Prerelease Vela 版本。Draft Prerelease 不会被已安装客户端发现。0.2.0 及更早版本不含更新器，用户需要手动安装 0.3.0 一次，后续版本才可应用内更新。
+
+应用内更新替换完整 `Vela.app`，包括 Rust host、Go Core、NSH runtime、TSX UI 和资源；Vela 不使用远程 `.nshpkg` 代替完整产品更新。
+
+### 更新信任边界
+
+- Sparkle EdDSA 签名由客户端在解压前验证，用于证明 ZIP 来自持有 Vela 更新私钥的发布者且内容未被篡改。
+- `SHA256SUMS` 用于人工下载后的内容校验，GitHub Artifact Attestation 用于验证 GitHub Actions 构建来源；二者不能代替客户端更新签名。
+- 当前应用仍是 ad-hoc 签名且未经过 Apple 公证。Sparkle 签名不等于 Developer ID 签名或 Apple 公证，首次安装及某些更新后仍可能需要按下文处理 Gatekeeper。
+
+### 发布稳定 feed
+
+1. `vela-vX.Y.Z` tag workflow 完成构建、ZIP 往返校验、Artifact Attestation，并创建 Draft Prerelease；此阶段不读取更新私钥，也不改变稳定 feed。
+2. 维护者检查资产和版本说明后手动公开 Release。
+3. `release.published` workflow 在受保护的 `vela-stable-updates` environment 中校验公开状态、tag、标准清单、ZIP 摘要、bundle 版本/build 和构建证明。
+4. workflow 通过标准输入把 `VELA_UPDATE_PRIVATE_KEY` 交给固定版本的 Sparkle `sign_update`，生成最新稳定 appcast，并以 compare-and-swap 原子推进 `vela-updates` 分支。
+
+生产私钥不得写入仓库、日志、普通 CI 或 Artifact。公钥可公开并嵌入 `Info.plist`。私钥从维护者 Keychain 导出后，通过以下命令写入受保护 environment：
+
+```sh
+gh secret set VELA_UPDATE_PRIVATE_KEY \
+  --env vela-stable-updates \
+  < "$HOME/.vela-release-secrets/sparkle-ed25519.private"
+```
+
+本地 feed fixture 使用 `tests/fixtures/sparkle/` 中公开且不安全的测试种子，绝不能用于 Release。
+
+### 暂停和恢复
+
+若最新更新不应继续安装，将 `vela-updates` ref 恢复到不含该条目的有效 feed commit，或发布不含问题版本的新 feed；不要向客户端发布较低 build。已经安装问题版本的设备必须通过更高 Apple build 的修复版本恢复。
+
+feed 发布失败时，compare-and-swap 会保留上一份有效内容。修复 environment、权限或 Release 资产后可重跑 `release.published` workflow；重复发布同一 build 是幂等操作。
+
 ## 编写版本说明
 
 每个版本必须先添加独立的版本说明：
@@ -78,6 +121,7 @@ pnpm run verify:macos-release
 - 最低系统：macOS 14
 - 签名：ad-hoc
 - Apple 公证：无
+- 应用内更新：Sparkle 2.10.1，完整 ZIP，EdDSA 验证，稳定单通道
 - 系统权限：不请求 root，不安装 Network Extension 或 TUN，不修改系统代理、DNS 或路由
 
 发布自动化只创建 Draft Prerelease。维护者必须检查安装说明、资产摘要、构建证明与 smoke 结果后，才能在 GitHub 上手动公开。

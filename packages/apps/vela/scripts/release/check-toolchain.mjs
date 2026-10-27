@@ -20,10 +20,24 @@ const REQUIRED = {
   'nsh.archive.sha256': 'a189be8537422a147131c88d7fd39d73265a6aebfbb530287c36a393ff3953fc',
   'nsh.source.repository': 'https://github.com/longbridge/nsh.git',
   'nsh.source.peeledCommit': '669b62b11449b2ab787b7c82649a392cbff25b8f',
+  'sparkle.version': '2.10.1',
+  'sparkle.archive.format': 'tar.xz',
+  'sparkle.archive.file': 'Sparkle-2.10.1.tar.xz',
+  'sparkle.archive.url': 'https://github.com/sparkle-project/Sparkle/releases/download/2.10.1/Sparkle-2.10.1.tar.xz',
+  'sparkle.archive.sha256': '1a856d2a9edb8e628de88121d7be04cf0e2167f8641650b78fca00b14244cf27',
   xcode: '27',
   macos: '14.0',
   architecture: 'arm64',
 };
+
+const REQUIRED_SPARKLE_PATHS = [
+  'Sparkle.framework/Versions/B/Sparkle',
+  'Sparkle.framework/Versions/B/Autoupdate',
+  'Sparkle.framework/Versions/B/Updater.app/Contents/MacOS/Updater',
+  'Sparkle.framework/Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader',
+  'Sparkle.framework/Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer',
+  'bin/sign_update',
+];
 
 function nested(value, dottedPath) {
   return dottedPath.split('.').reduce((current, key) => current?.[key], value);
@@ -80,6 +94,13 @@ export function validateToolchain(declaration, configuration) {
     const actual = nested(declaration, field);
     if (actual !== expected)
       problems.push(`scripts/release/toolchain.json#${field}: ${actual ?? '<missing>'}（期望 ${expected}）`);
+  }
+  if (
+    !Array.isArray(declaration.sparkle?.requiredPaths) ||
+    declaration.sparkle.requiredPaths.length !== REQUIRED_SPARKLE_PATHS.length ||
+    declaration.sparkle.requiredPaths.some((value, index) => value !== REQUIRED_SPARKLE_PATHS[index])
+  ) {
+    problems.push('scripts/release/toolchain.json#sparkle.requiredPaths: 缺少或包含非预期路径');
   }
 
   const comparisons = [

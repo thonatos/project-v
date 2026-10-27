@@ -1,8 +1,8 @@
 {
   "name": "Vela",
   "id": "io.implements.vela.macos",
-  "version": "0.2.0",
-  "build": 2,
+  "version": "0.3.0",
+  "build": 3,
   "rust": "../host",
   "capabilities": {
     "clipboard": true

@@ -21,7 +21,11 @@ use nsh_platform_macos::{
     set_ui_sets,
 };
 use std::time::Duration;
-use std::{cell::RefCell, path::Path, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    path::Path,
+    rc::Rc,
+};
 
 mod smoke;
 
@@ -33,6 +37,26 @@ struct Running {
 
 thread_local! {
     static RUNNING: RefCell<Option<Running>> = const { RefCell::new(None) };
+    static TERMINATED: Cell<bool> = const { Cell::new(false) };
+}
+
+fn terminate_once() {
+    TERMINATED.with(|terminated| {
+        if terminated.replace(true) {
+            return;
+        }
+        crate::supervisor::Global::shutdown(Duration::from_secs(3));
+        RUNNING.with(|slot| {
+            if let Some(running) = slot.borrow_mut().take() {
+                unsafe { NSProcessInfo::processInfo().endActivity(&running.activity) };
+                running.view.stop();
+            }
+        });
+        eprintln!(
+            "VELA_LIFECYCLE terminated core={:?}",
+            crate::supervisor::Global::identity()
+        );
+    });
 }
 
 define_class!(
@@ -44,6 +68,15 @@ define_class!(
     unsafe impl NSObjectProtocol for Delegate {}
 
     unsafe impl NSApplicationDelegate for Delegate {
+        #[unsafe(method(applicationDidFinishLaunching:))]
+        fn did_finish_launching(&self, _notification: &NSNotification) {
+            if let Some(mtm) = MainThreadMarker::new()
+                && let Err(error) = crate::updater::start(mtm)
+            {
+                eprintln!("VELA_UPDATE unavailable: {error}");
+            }
+        }
+
         #[unsafe(method(applicationShouldTerminateAfterLastWindowClosed:))]
         fn terminate_after_last_window(&self, _sender: &NSApplication) -> bool {
             false
@@ -63,13 +96,7 @@ define_class!(
 
         #[unsafe(method(applicationWillTerminate:))]
         fn will_terminate(&self, _notification: &NSNotification) {
-            crate::supervisor::Global::shutdown(Duration::from_secs(3));
-            RUNNING.with(|slot| {
-                if let Some(running) = slot.borrow_mut().take() {
-                    unsafe { NSProcessInfo::processInfo().endActivity(&running.activity) };
-                    running.view.stop();
-                }
-            });
+            terminate_once();
         }
     }
 
@@ -263,5 +290,27 @@ mod tests {
         lifecycle.quit();
         lifecycle.reopen();
         assert!(!lifecycle.visible);
+    }
+
+    #[test]
+    fn close_does_not_cleanup_but_termination_is_idempotent() {
+        #[derive(Default)]
+        struct Cleanup {
+            calls: usize,
+            terminated: bool,
+        }
+        impl Cleanup {
+            fn terminate(&mut self) {
+                if !self.terminated {
+                    self.terminated = true;
+                    self.calls += 1;
+                }
+            }
+        }
+        let mut cleanup = Cleanup::default();
+        assert_eq!(cleanup.calls, 0);
+        cleanup.terminate();
+        cleanup.terminate();
+        assert_eq!(cleanup.calls, 1);
     }
 }

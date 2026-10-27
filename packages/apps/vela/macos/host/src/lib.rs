@@ -9,6 +9,8 @@ pub mod protocol;
 #[cfg(target_os = "macos")]
 pub mod runner;
 pub mod supervisor;
+#[cfg(target_os = "macos")]
+pub mod updater;
 
 use nsh_core::ui::prelude::*;
 
@@ -89,6 +91,13 @@ impl CoreBridge {
     #[must_use]
     pub fn set_performance_hud(enabled: bool) -> bool {
         runner::set_performance_hud(enabled)
+    }
+
+    /// Opens Sparkle's native manual update check.
+    #[cfg(target_os = "macos")]
+    #[must_use]
+    pub fn check_for_updates() -> bool {
+        updater::check_for_updates()
     }
 }
 
