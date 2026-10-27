@@ -54,7 +54,7 @@ jobs:
     name: Build macOS Desktop arm64
     needs: prepare
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 70
     permissions:
       contents: read
     env:
@@ -81,7 +81,7 @@ jobs:
         run: node scripts/release/check-version.mjs --tag "$GITHUB_REF_NAME"
 
       - name: Verify, build, smoke-test, package and describe macOS
-        timeout-minutes: 35
+        timeout-minutes: 55
         uses: ./.github/actions/vela/build-macos
         with:
           version: ${{ needs.prepare.outputs.version }}

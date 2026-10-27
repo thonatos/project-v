@@ -130,7 +130,8 @@ assert.match(prepare, /permissions:\n      contents: read/);
 
 const builder = job(release, 'build-macos-desktop');
 assert.match(builder, /runs-on: xcode-27/);
-assert.match(builder, /name: Verify, build, smoke-test, package and describe macOS\n\s+timeout-minutes: 35/);
+assert.match(builder, /timeout-minutes: 70/);
+assert.match(builder, /name: Verify, build, smoke-test, package and describe macOS\n\s+timeout-minutes: 55/);
 assert.match(builder, /permissions:\n      contents: read/);
 assert.match(builder, /uses: \.\/\.github\/actions\/vela\/setup-toolchain/);
 assert.match(builder, /uses: \.\/\.github\/actions\/vela\/build-macos/);
