@@ -1,15 +1,18 @@
 # telegram-private-chat Specification
 
 ## Purpose
+
 定义 DeepSeek Harness 的 Telegram 私聊插件运行时行为：通过 `node-telegram-bot-api` 接入单个 Bot，以 Bot API long polling 接收和发送私聊消息，将单个 Bot 绑定到一个 Workspace 并按私聊用户持久化 Harness Session 路由与模型选择，限制 Owner 私聊访问，支持基础命令、模型切换、媒体、出站类型映射、Harness 交互路由、代理与生命周期管理以及凭据保护。
+
 ## Requirements
+
 ### Requirement: 插件单次注册与启动
 
-系统 SHALL 与 dsh `0.2.0-rc.2` 的插件清单、Loader 配置和客户端模块协议兼容。已安装插件 SHALL 保留包内 bundle patch，使 dsh 自动注册插件；常规启动不得重复应用同一 patch，最终插件树 MUST 只包含一个 `id: dsh-telegram`。插件的非敏感设置 SHALL 由该 Loader entry 的 Config 提供，并可从 Plugin Manager 中该 package 的 `dsh-telegram` row 配置页编辑。经操作者明确批准，验收 MAY 通过临时 overlay 将 web profile 短时绑定到全部 IPv4 接口；该例外 MUST 配置受信 LAN authority、禁止公网转发，并在验收结束后停止进程和删除 overlay。
+系统 SHALL 与 dsh `0.2.1-rc.5` 的插件清单、Loader 配置和客户端模块协议兼容。已安装插件 SHALL 保留包内 bundle patch，使 dsh 自动注册插件；常规启动不得重复应用同一 patch，最终插件树 MUST 只包含一个 `id: dsh-telegram`。插件的非敏感设置 SHALL 由该 Loader entry 的 Config 提供，并可从 Plugin Manager 中该 package 的 `dsh-telegram` row 配置页编辑。经操作者明确批准，验收 MAY 将 web profile 绑定到一个具体的受信私有 LAN 地址；该启动 MUST 配置匹配的 trusted host authority、拒绝 wildcard 地址、禁止公网转发，并在不再需要局域网访问时停止进程。
 
 #### Scenario: 已安装插件正常启动
 
-- **GIVEN** dsh `0.2.0-rc.2` profile 已安装 `@implementsio/dsh-telegram`，且包清单声明 `dsh.bundle.patch`
+- **GIVEN** dsh `0.2.1-rc.5` profile 已安装 `@implementsio/dsh-telegram`，且包清单声明 `dsh.bundle.patch`
 - **WHEN** 用户运行 `dsh web` 或 `dsh --profile web`
 - **THEN** 系统 SHALL 通过包内 patch 自动注册并加载一次 `dsh-telegram`
 
@@ -45,27 +48,27 @@
 
 #### Scenario: 从 Plugin Manager 打开设置
 
-- **GIVEN** dsh `0.2.0-rc.2` Web 已加载插件及其客户端模块
+- **GIVEN** dsh `0.2.1-rc.5` Web 已加载插件及其客户端模块
 - **WHEN** 用户在 Plugin Manager 中打开 `@implementsio/dsh-telegram` 的 `dsh-telegram` row 配置
 - **THEN** 系统 SHALL 展示该 Loader entry 的当前非敏感配置、Workspace 选项和 Bot Token 脱敏状态，并允许在 Host 可写时保存
 
 #### Scenario: 拒绝不兼容的宿主组合
 
-- **GIVEN** 插件运行所需的 dsh `0.2.0-rc.2` Loader、Settings 或 Agent 能力不存在
+- **GIVEN** 插件运行所需的 dsh `0.2.1-rc.5` Loader、Settings 或 Agent 能力不存在
 - **WHEN** Host 尝试加载或启用插件
 - **THEN** 系统 SHALL 明确报告宿主不兼容或缺失服务，不得启动部分初始化的 Telegram 客户端
 
 #### Scenario: 通过 web profile 提供局域网访问
 
 - **GIVEN** 验收主机已连接受信私有局域网，且已探测到当前非 loopback IPv4 地址
-- **WHEN** 操作者明确批准高风险例外，并通过不落库的临时 overlay 将 `dsh web` 的 webserver 绑定到 `0.0.0.0`，同时传入监听端口和匹配的 LAN trusted host authority
-- **THEN** 同一受信局域网中的浏览器 SHALL 能通过该地址访问 dsh Web 和 Telegram row 配置页，且 profile 永久配置和仓库文件 MUST NOT 被该 overlay 修改
+- **WHEN** 操作者明确批准局域网访问，并通过 `--host <lan-ip>` 将 `dsh web` 绑定到当前主机的具体私有 LAN 地址，同时传入监听端口和匹配的 LAN trusted host authority
+- **THEN** 同一受信局域网中的浏览器 SHALL 能通过该地址和启动时生成的 token URL 访问 dsh Web 和 Telegram row 配置页，且 profile 永久配置和仓库文件 MUST NOT 被修改
 
 #### Scenario: 拒绝不安全的网络暴露
 
 - **GIVEN** 操作者准备执行局域网验收
-- **WHEN** 尚未获得明确授权，或计划使用公网地址、端口转发、不匹配的 trusted host authority、持久化 all-interface 配置
-- **THEN** 验收流程 SHALL 拒绝继续；已获授权的临时 all-interface 例外也 MUST 在验收结束后立即撤销
+- **WHEN** 尚未获得明确授权，或计划使用公网地址、wildcard 地址、端口转发、不匹配的 trusted host authority
+- **THEN** 验收流程 SHALL 拒绝继续；已获授权的具体 LAN 地址监听也 MUST 在不再需要局域网访问时停止
 
 ### Requirement: 单 Bot 私聊连接
 
@@ -167,7 +170,7 @@
 #### Scenario: 兼容缺少 preset 记录的旧 Session
 
 - **GIVEN** Session 由旧版插件创建且没有 Agent preset metadata 或 projection
-- **WHEN** dsh `0.2.0-rc.2` Runtime 尝试恢复它
+- **WHEN** dsh `0.2.1-rc.5` Runtime 尝试恢复它
 - **THEN** 系统 SHALL 使用当前可用的默认 preset 恢复，或在无法安全恢复时使旧绑定失效并新建 Session，不得挂载未验证的 preset
 
 ### Requirement: 基础媒体消息
@@ -197,6 +200,7 @@
 ### Requirement: 基础命令
 
 系统 SHALL 支持 `/new`、`/status`、`/stop`、`/help`、`/workspace` 和 `/model`，并在 Bot 启动时注册到三个标准 scope。命令菜单、帮助和错误提示 MUST 派生自同一有序定义；命令展示不得放宽 Owner 私聊限制。未知斜杠命令 MUST 被拒绝。除按行分片的模型清单外，控制命令结果 MUST 使用结构化 Telegram card。
+
 #### Scenario: 注册命令菜单
 
 - **GIVEN** Bot 身份和 webhook 状态已验证
@@ -357,7 +361,7 @@
 
 ### Requirement: 凭据保护
 
-系统 SHALL 将 Bot Token 存储在 Harness credentials 中，其他非敏感配置存储在 dsh `0.2.0-rc.2` Loader Settings 中，日志和状态接口不得输出 Token 原文。Plugin Manager 中的 Telegram row 配置页 SHALL 使用当前 credentials RPC 读写脱敏凭据状态，并通过 Host 配置表单原子提交非敏感字段。保存启用状态前 MUST 确认 Token 已配置；失败反馈 SHALL 可操作且不得泄露凭据。
+系统 SHALL 将 Bot Token 存储在 Harness credentials 中，其他非敏感配置存储在 dsh `0.2.1-rc.5` Loader Settings 中，日志和状态接口不得输出 Token 原文。Plugin Manager 中的 Telegram row 配置页 SHALL 使用当前 credentials RPC 读写脱敏凭据状态，并通过 Host 配置表单原子提交非敏感字段。保存启用状态前 MUST 确认 Token 已配置；失败反馈 SHALL 可操作且不得泄露凭据。
 
 #### Scenario: 缺少登录材料
 

@@ -293,8 +293,8 @@ export class TelegramRuntime {
       await stream.finalize();
       if (this.#cancelledChats.has(chatId)) return;
       const events = this.#finalAssistantEvents(handle.agent.session, messageCount);
-      // dsh 0.1.5-rc.1 的最终消息可能已写入 Session，但 agent-scoped
-      // session/event 未送达。仅在本 turn 没有流式正文时用最终消息补发，避免重复。
+      // 最终消息可能已写入 Session，但 agent-scoped session/event 未送达。
+      // 仅在本 turn 没有流式正文时用最终消息补发，避免重复。
       if (!stream.hasTextOutput) {
         const text = events
           .filter((event) => event.type === 'text')

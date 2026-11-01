@@ -2,7 +2,7 @@
 
 Telegram Bot private-chat plugin for DeepSeek Harness.
 
-Version `1.0.0-dsh.0.2.0-rc.2` targets dsh `0.2.0-rc.2` and pins `node-telegram-bot-api` `2.1.0` (Bot API 10.3). It does not support the previous dsh `0.1.5-rc.1` settings and Agent lifecycle contracts; upgrade or roll back dsh and this plugin together.
+Version `2.0.0-dsh.0.2.1-rc.5` targets dsh `0.2.1-rc.5` and pins `node-telegram-bot-api` `2.1.0` (Bot API 10.3). It does not support the previous dsh `0.2.0-rc.2` host contracts; upgrade or roll back dsh and this plugin together.
 
 Direct `@deepseek-ai/dsh-*` dependencies are pinned to the exact dsh core version rather than a range. The plugin imports `installModelSelection`, the storage-domain API, and the dsh Client configuration contracts; bump them with dsh so Cordis, Agent, storage, and Client services resolve as one graph.
 
@@ -13,9 +13,10 @@ The package version keeps an independent, monotonically increasing plugin core a
 ```text
 dsh-telegram <plugin-core>-dsh.<dsh-version>
 1.0.0-dsh.0.2.0-rc.2 -> dsh 0.2.0-rc.2
+2.0.0-dsh.0.2.1-rc.5 -> dsh 0.2.1-rc.5
 ```
 
-Plugin-only fixes increment the plugin core while retaining the dsh suffix. For example, the next fix for the same host is `1.0.1-dsh.0.2.0-rc.2`. When the target dsh version changes, increment the plugin core again and replace the suffix; never reset or decrement the plugin core. The machine-readable source of truth remains the exact `engines.dsh` value, and direct dsh package dependencies MUST stay pinned to that same version.
+Plugin-only fixes increment the plugin core while retaining the dsh suffix. For example, the next fix for the same host is `2.0.1-dsh.0.2.1-rc.5`. When the target dsh version changes, increment the plugin core again and replace the suffix; never reset or decrement the plugin core. The machine-readable source of truth remains the exact `engines.dsh` value, and direct dsh package dependencies MUST stay pinned to that same version.
 
 Session bindings stay in the `telegram_bindings` domain at version `1`. The provider, model, and reasoning-effort fields are optional, so records written before they existed still validate, and older code reading a newer record drops the extra keys. Do not bump that version to add an optional field: the domain uses the default `single` layout, whose backend rejects any version stamp mismatch outright, and `compatibleVersions` applies only to `per-record` layout.
 
@@ -51,13 +52,13 @@ The linked-profile and explicit-patch modes are mutually exclusive. Before start
 
 The configuration UI is on the package's `dsh-telegram` row in Plugin Manager. Non-sensitive fields are stored in Loader Settings; the Bot Token is written only through Harness credentials. Configure the Token, Owner user ID, Workspace, and optional proxy there.
 
-The target dsh release cannot bind an explicit LAN IP: its CLI rejects `0.0.0.0` while the webserver schema accepts only loopback or all interfaces. For an explicitly approved, short-lived LAN acceptance window, create a temporary Loader overlay outside the profile and repository that overrides the existing `webserver` row to `host: 0.0.0.0`, then start with the LAN authority:
+The target dsh release accepts a concrete local interface address and rejects wildcard addresses. For an explicitly approved LAN session, discover the current private IPv4 address and bind only that interface with a matching trusted authority. This optional step is not part of unattended compatibility smoke testing:
 
 ```bash
-dsh --profile web --patch <temporary-overlay.yml> --port 3080 --trusted-host <lan-ip>:3080 --no-open
+dsh --profile web --host <lan-ip> --port 3080 --trusted-host <lan-ip>:3080 --no-open
 ```
 
-This bypasses the CLI safety check and exposes an Agent/tool-capable Web service on every IPv4 interface. Use the tokenized URL only on a trusted network, never configure public/router forwarding, and stop the process immediately after acceptance. Delete the temporary overlay, then remove only this link and verify the profile returned to its recorded state:
+This exposes an Agent/tool-capable Web service on the selected private interface over plain HTTP. Use the tokenized URL only on a trusted network, never configure public/router forwarding, and stop the process when LAN access is no longer needed. Do not use `0.0.0.0` or another wildcard address. After local-link acceptance, remove only this link and verify the profile returned to its recorded state:
 
 ```bash
 dsh plugin --profile web unlink @implementsio/dsh-telegram
@@ -108,4 +109,4 @@ Configured proxies are fixed per plugin rather than inherited from process proxy
 
 ## Rollback
 
-Disable Telegram and stop `dsh web` before rollback so two pollers never consume the same Bot. Restore dsh `0.1.5-rc.1` and plugin `0.4.x` together. Credentials and `telegram_bindings` remain in place; the old schema ignores the optional reasoning-effort field. Do not mix dsh `0.2.0-rc.2` with the old plugin or the new plugin with the old dsh.
+Disable Telegram and stop `dsh web` before rollback so two pollers never consume the same Bot. Restore dsh `0.2.0-rc.2` and plugin `1.0.0-dsh.0.2.0-rc.2` together. Credentials and version 1 `telegram_bindings` remain in place. Do not mix either plugin version with the other dsh host version.

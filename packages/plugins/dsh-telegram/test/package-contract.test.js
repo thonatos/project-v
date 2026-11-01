@@ -13,6 +13,7 @@ import { defineDomain, descriptorOf, domainTable } from '@deepseek-ai/dsh-storag
 const require = createRequire(import.meta.url);
 const packagePath = new URL('../package.json', import.meta.url);
 const execFileAsync = promisify(execFile);
+const TARGET_DSH_VERSION = '0.2.1-rc.5';
 
 test('uses the target dsh public runtime exports', () => {
   assert.equal(typeof installModelSelection, 'function');
@@ -26,6 +27,7 @@ test('maps the package prerelease suffix to the exact dsh compatibility target',
   const suffix = metadata.version.match(/-dsh\.(.+)$/)?.[1];
 
   assert.ok(suffix, 'package version must carry a dsh compatibility suffix');
+  assert.equal(metadata.engines.dsh, TARGET_DSH_VERSION);
   assert.equal(suffix, metadata.engines.dsh);
   assert.equal(metadata.dependencies['@deepseek-ai/dsh-agent'], metadata.engines.dsh);
   assert.equal(metadata.dependencies['@deepseek-ai/dsh-storage-domain'], metadata.engines.dsh);
@@ -38,6 +40,8 @@ test('resolves every declared dsh client injection package', async () => {
   for (const packageName of metadata.dsh.client.inject) {
     const injected = JSON.parse(await readFile(require.resolve(`${packageName}/package.json`), 'utf8'));
     assert.equal(injected.name, packageName);
+    assert.equal(metadata.devDependencies[packageName], TARGET_DSH_VERSION);
+    assert.equal(injected.version, TARGET_DSH_VERSION);
     assert.match(injected.exports?.['./client']?.default ?? '', /^\.\/lib\/client\.js$/);
   }
 });

@@ -8,7 +8,7 @@ const commands = [
   'pnpm -F @implementsio/dsh-telegram build',
   link,
   'dsh --profile web --dump-config',
-  'dsh --profile web --patch <temporary-overlay.yml> --port 3080 --trusted-host <lan-ip>:3080 --no-open',
+  'dsh --profile web --host <lan-ip> --port 3080 --trusted-host <lan-ip>:3080 --no-open',
   'dsh plugin --profile web unlink @implementsio/dsh-telegram',
 ];
 const forbidden = [/\b(?:npm|pnpm)\s+publish\b/u, /\bdsh\s+plugin\s+--profile\s+web\s+add\b/u];
@@ -27,7 +27,7 @@ console.log(
       commands,
       preconditions: [
         'dsh --profile web --dump-config contains exactly one id: dsh-telegram row',
-        'all-interface temporary overlay has explicit user approval and no public port forwarding',
+        'concrete private-interface binding has explicit user approval and no public port forwarding',
       ],
       forbidden: ['npm publish', 'pnpm publish', 'dsh plugin --profile web add'],
     },
