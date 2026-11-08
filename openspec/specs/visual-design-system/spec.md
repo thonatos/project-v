@@ -4,43 +4,29 @@
 定义站点颜色、排版、间距、组件状态和响应式呈现的视觉设计体系，使所有页面形成一致、可维护且可访问的产品体验。
 
 ## Requirements
+
 ### Requirement: 分层深色主题
-系统 SHALL 采用 dark-first 分层深色配色，通过多级表面色（bg-base、surface-1、surface-2、glass）营造纵深，并提供 violet→fuchsia 主色渐变作为全站品牌色。
+系统 SHALL 采用高对比 dark-first 配色，以克制的表面层级、文字和分隔线组织页面，并允许项目专页通过语义 token 覆盖自己的主题色。
 
 #### Scenario: 全站默认深色
-- **WHEN** 用户访问站点任意页面
-- **THEN** 页面 body 背景为深色 bg-base，文字为高对比浅色，卡片使用分层表面色
+- **GIVEN** 用户访问站点任意页面
+- **WHEN** 页面渲染
+- **THEN** 页面 SHALL 使用深色背景、高对比文字和清晰分隔边界
 
 #### Scenario: 主色渐变可复用
-- **WHEN** 组件需要品牌强调（hero 文字、按钮、辉光）
-- **THEN** 系统提供 violet→fuchsia 渐变 token 供其引用
-
-### Requirement: 玻璃拟态卡片
-系统 SHALL 以玻璃拟态/分层表面替代原白底+边框卡片，提供柔和阴影与主色辉光两类阴影 token。
-
-#### Scenario: 卡片视觉层次
-- **WHEN** 列表页渲染文章/分类卡片
-- **THEN** 卡片使用分层表面色填充与柔和阴影，而非纯描边
-
-#### Scenario: 悬停反馈
-- **WHEN** 用户悬停可交互卡片
-- **THEN** 卡片表面提升一档并呈现主色辉光过渡
-
-### Requirement: 分类色彩编码
-系统 SHALL 为每个文档分类稳定映射一种主题色（至少 6 色：violet/cyan/amber/emerald/rose/indigo），同一分类名始终得到同一颜色。
-
-#### Scenario: 分类稳定着色
-- **WHEN** 同一分类在不同页面出现
-- **THEN** 该分类始终呈现相同的主题色（左边条/色块/标签色）
+- **GIVEN** 项目具有自己的品牌色
+- **WHEN** 用户访问项目专页
+- **THEN** 页面 SHALL 在统一站点外壳中使用项目语义色而不改变导航结构
 
 ### Requirement: 统一动效与形状 token
-系统 SHALL 统一圆角、阴影、辉光与动效缓动曲线，使不同页面风格差异下仍保持一致"手感"。
+系统 SHALL 使用有限的形状、颜色和动效 token 保持交互一致，并将动效限定为辅助表达状态或关系。
 
 #### Scenario: 一致的交互过渡
-- **WHEN** 任意可交互元素触发过渡
-- **THEN** 其缓动曲线与时长遵循统一 token
+- **GIVEN** 交互元素需要状态反馈
+- **WHEN** hover、focus 或 active 状态发生
+- **THEN** 反馈 SHALL 使用统一颜色、线条和过渡规则
 
 #### Scenario: 尊重减少动效偏好
-- **WHEN** 用户系统开启 `prefers-reduced-motion`
-- **THEN** 动画时长与滚动行为被降级为近乎无动画
-
+- **GIVEN** 用户系统开启 `prefers-reduced-motion`
+- **WHEN** 页面包含非必要动画
+- **THEN** 动画 SHALL 停止，同时保留内容与状态表达

@@ -6,19 +6,22 @@
 ## Requirements
 
 ### Requirement: 文档页面全屏宽度
-系统 SHALL 使用全屏宽度布局显示文档内容。
+系统 SHALL 让 Docs 索引与详情共用 max-w-7xl 页面骨架、220px 分类栏和统一外边距；详情正文在剩余宽度内按 TOC 是否存在分配空间。
 
 #### Scenario: 桌面端全屏布局
-- **WHEN** 用户在桌面端访问文档页面
-- **THEN** 文档内容区域使用 `w-full` 或接近全屏宽度（移除 max-w-3xl 限制）
+- **GIVEN** 用户在桌面端访问 Docs 索引或详情
+- **WHEN** 页面渲染
+- **THEN** 两类页面 SHALL 使用相同的外层宽度、分类栏宽度、列间距与正文左边界
 
 #### Scenario: 内容边距保持
-- **WHEN** 文档内容区域使用全屏宽度
-- **THEN** 保持适当边距（px-4 sm:px-6 lg:px-8）确保阅读舒适
+- **GIVEN** Docs 页面使用统一骨架
+- **WHEN** 页面在支持的视口中渲染
+- **THEN** 内容 SHALL 保持响应式水平与垂直边距
 
 #### Scenario: 移动端布局
-- **WHEN** 用户在移动端访问文档页面
-- **THEN** 保持响应式布局，内容区域适应屏幕宽度
+- **GIVEN** 用户在移动端访问 Docs 页面
+- **WHEN** 页面渲染
+- **THEN** 内容 SHALL 适应屏幕宽度且不产生页面级水平溢出
 
 ### Requirement: TOC 侧边栏布局
 系统 SHALL 在文档页面右侧显示 TOC 侧边栏。

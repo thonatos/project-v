@@ -6,19 +6,24 @@
 ## Requirements
 
 ### Requirement: Reduced Motion 支持
-系统 SHALL 尊重用户的 `prefers-reduced-motion` 设置，为需要减少动画的用户禁用过渡效果。
+
+系统 SHALL 尊重 `prefers-reduced-motion`，禁用非必要过渡和 Vela 连接示意中的移动效果，同时保留所有信息、状态与操作。
 
 #### Scenario: 用户偏好减少动画
-- **WHEN** 用户系统设置 `prefers-reduced-motion: reduce`
-- **THEN** 所有 CSS transition 效果被禁用（transition: none）
+- **GIVEN** 用户系统设置 `prefers-reduced-motion: reduce`
+- **WHEN** 用户访问任意页面
+- **THEN** 非必要 CSS transition 与移动动画 SHALL 被禁用
+- **THEN** Vela 工作方式 SHALL 以静态连接示意完整呈现
 
 #### Scenario: 用户无特殊偏好
-- **WHEN** 用户系统未设置 `prefers-reduced-motion: reduce`
-- **THEN** 保持原有的 transition 效果
+- **GIVEN** 用户系统未设置减少动画
+- **WHEN** 用户查看 Vela 连接示意或交互状态
+- **THEN** 页面 MAY 使用一次集中的轻量动效辅助表达连接关系和状态变化
 
 #### Scenario: Hover 状态保持
-- **WHEN** 用户偏好减少动画
-- **THEN** hover 状态的颜色变化仍然生效（仅禁用 transition 动画）
+- **GIVEN** 用户偏好减少动画
+- **WHEN** 用户 hover 或聚焦交互元素
+- **THEN** 颜色、线条和焦点标记 SHALL 仍然生效，仅取消其过渡动画
 
 ### Requirement: 触摸优化
 系统 SHALL 添加触摸交互优化，减少触摸延迟并防止意外行为。

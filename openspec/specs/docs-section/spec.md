@@ -4,6 +4,7 @@
 定义站点文档区域的内容组织、入口展示和详情访问行为，使用户能够发现、浏览并区分正式文档与其他内容类型。
 
 ## Requirements
+
 ### Requirement: Docs 分类树
 
 系统 SHALL 在 Docs 区（`/docs` 与 `/docs/:slug`）提供左侧分类树，按 `category` 分组列出全部 docs 文档，支持导航到具体文章。
@@ -25,31 +26,43 @@
 
 ### Requirement: Docs 列表页
 
-系统 SHALL 提供 `/docs` 路由，采用「左侧分类树 + 右侧按分类分组的卡片」布局展示全部 docs 文档。
+系统 SHALL 提供 `/docs` 路由，采用左侧分类树与右侧紧凑文档索引展示全部 `type: docs` 内容，并排除 Blog 与 Projects。
 
 #### Scenario: 访问 Docs 列表
 
+- **GIVEN** 站点存在多个分类下的 Docs 内容
 - **WHEN** 用户访问 `/docs`
-- **THEN** 右侧内容区 SHALL 按 `category` 分组展示 docs 文档卡片，与文章页共用同一分类树骨架
+- **THEN** 右侧内容区 SHALL 按 `category` 分组展示标题、摘要和更新时间
+- **THEN** 页面 SHALL 与文档详情共用分类树
+
+#### Scenario: Docs 不混入其他内容
+
+- **GIVEN** 站点同时存在 Blog 和 Projects 内容
+- **WHEN** 用户访问 `/docs`
+- **THEN** 页面 SHALL 只展示 `type: docs` 内容
 
 #### Scenario: Docs 为空
 
-- **WHEN** 不存在任何 docs 文档
+- **GIVEN** 不存在任何 Docs 内容
+- **WHEN** 用户访问 `/docs`
 - **THEN** 页面 SHALL 展示空状态提示，而非报错
 
 ### Requirement: Docs 文章三栏布局
 
-系统 SHALL 将 `/docs/:slug` 中 `type: docs` 文章渲染为三栏布局：左侧分类树 + 正文 + 右侧 TOC。
+系统 SHALL 将 `/docs/:slug` 中 `type: docs` 内容渲染为左侧分类树、正文和右侧 TOC 的阅读布局，并将日期表达为最近更新信息。
 
 #### Scenario: 打开 docs 文章
 
-- **WHEN** 用户打开一篇 docs 文章
-- **THEN** 页面 SHALL 同时展示左侧分类树、正文（含标题/日期/标签）与右侧 TOC
+- **GIVEN** slug 对应一篇 Docs 内容
+- **WHEN** 用户打开 `/docs/:slug`
+- **THEN** 页面 SHALL 同时展示分类树、正文和可用的 TOC
+- **THEN** 标题区 SHALL 显示最近更新信息而非突出发布时序
 
 #### Scenario: 无 TOC 时的布局
 
-- **WHEN** 文章不含可提取的标题（TOC 为空）
-- **THEN** 页面 SHALL 正常展示分类树与正文，不出现空白 TOC 列错位
+- **GIVEN** Docs 内容不含可提取的标题
+- **WHEN** 用户打开该文档
+- **THEN** 页面 SHALL 正常展示分类树与正文且不出现空白 TOC 列错位
 
 ### Requirement: 落地页 Docs 分区
 
@@ -59,4 +72,3 @@
 
 - **WHEN** 用户访问 `/`
 - **THEN** Docs 分区 SHALL 按 `category` 概览 docs 内容，并含「查看全部」跳转到 `/docs`
-
