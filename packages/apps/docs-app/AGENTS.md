@@ -19,14 +19,14 @@
 
 ## 验证入口
 
-| 变更类型 | 命令                         | 期望结果                      |
-| -------- | ---------------------------- | ----------------------------- |
-| 开发     | `pnpm -F docs-app dev`       | 本地可访问文章页              |
-| 构建     | `pnpm -F docs-app build`     | 退出码 0，`build/client` 生成 |
-| 类型     | `pnpm -F docs-app typecheck` | 退出码 0                      |
-| 生产预览 | `pnpm -F docs-app start`     | 本地以构建产物启动            |
+| 变更类型 | 命令                         | 期望结果                        |
+| -------- | ---------------------------- | ------------------------------- |
+| 开发     | `pnpm -F docs-app dev`       | 本地可访问文章页                |
+| 构建     | `pnpm -F docs-app build`     | 退出码 0，`build/client` 生成   |
+| 类型     | `pnpm -F docs-app typecheck` | 退出码 0                        |
+| 生产预览 | `pnpm -F docs-app start`     | 本地以构建产物启动              |
 | 自动部署 | push `main`                  | Cloudflare connected build 成功 |
-| 人工补发 | `pnpm -F docs-app deploy`    | `wrangler deploy` 成功        |
+| 人工补发 | `pnpm -F docs-app deploy`    | `wrangler deploy` 成功          |
 
 本应用没有自动化测试；页面行为以构建、类型检查与目标视口的人工验证为准。路由或导航改动还需直接访问规范 URL 和历史迁移 URL。
 
@@ -34,9 +34,9 @@
 
 ## CI 映射
 
-| 路径          | workflow                  | 必过门                                                      |
-| ------------- | ------------------------- | ----------------------------------------------------------- |
-| `packages/**` | `nodejs-ci.yml` → `build` | `pnpm check`、`pnpm test`、`pnpm -r --filter '!vela' build` |
+| 路径          | workflow                   | 必过门                                                                 |
+| ------------- | -------------------------- | ---------------------------------------------------------------------- |
+| `packages/**` | `nodejs-ci.yml` → `build`  | `pnpm check`、`pnpm test`、`pnpm -r --filter '!vela' build`            |
 | 部署          | Cloudflare connected build | push `main` 后构建并执行 `wrangler deploy`；不属于 GitHub Actions gate |
 
 ## 发布与验收
