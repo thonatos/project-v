@@ -36,6 +36,10 @@
 
 ### 4. 归档前核对
 
+- 使用 change status 中的 `artifactPaths.specs.existingOutputPaths` 检查 delta spec。存在未同步 delta 时直接同步全部主规格，不询问是否同步。
+- 同步后运行 `openspec validate --specs --strict`；只有严格校验通过才能归档。同步阻塞或校验失败时停止，不得改用跳过同步归档。
+- delta 已同步且 artifacts、tasks 完整时直接归档，不重复询问是否同步或是否归档。
+- `--skip-specs` 只适用于没有 delta spec 且声明 `skip_specs: true` 的纯流程、工具或文档 change，不能绕过同步失败。
 - 逐条复核 `Delivery Impact`：标“需要”的已完成，标“不需要”的仍成立。
 - 对本次改过的文档逐条确认：引用的路径存在、脚本名存在、包地图与实际目录一致。
 - 版本项逐包复核；`NONE` 的理由仍成立。

@@ -34,6 +34,10 @@ operations:
       - 勾选任务前确认它引用的命令刚刚真实执行过
   archive:
     guidance:
+      - 有 delta spec 且主规格未同步时，直接同步全部 delta，再运行 openspec validate --specs --strict；不要询问是否同步
+      - 只有主规格严格校验通过才能归档；同步阻塞或校验失败时停止，不得用跳过同步继续归档
+      - delta 已同步且 artifacts 与 tasks 完整时直接归档，不要重复询问是否同步或是否归档
+      - skip_specs 或 --skip-specs 只适用于没有 delta spec 的纯流程、工具或文档 change
       - 复核 Delivery Impact 每条结论仍成立，包括每个受影响包的版本判定
       - 对本次改过的文档逐条核对：路径存在、脚本名存在、包地图与实际目录一致
       - 无关漂移只报告，不擅自扩大范围
