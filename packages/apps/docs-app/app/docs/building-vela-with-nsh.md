@@ -3,8 +3,8 @@ title: 用 NSH 构建 macOS + iOS 双端应用：Vela
 date: 2026-10-25
 description: Vela 用一套 TSX 界面、Rust 宿主和共享 Go Core，把 Mac 上的本地服务带到 iPhone
 tags: [nsh, rust, tsx, macos, ios, tailscale, go]
-type: docs
-category: App Development
+type: blog
+category: engineering
 layout: reading
 ---
 

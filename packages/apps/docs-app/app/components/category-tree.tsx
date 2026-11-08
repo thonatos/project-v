@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { FolderTree, X } from 'lucide-react';
 import type { DocCategory } from '~/lib/docs';
@@ -58,11 +58,26 @@ export function DesktopCategoryTree({ categories, activeSlug }: CategoryTreeProp
 export function MobileCategoryTree({ categories, activeSlug }: CategoryTreeProps) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
+
+  const close = () => setIsOpen(false);
 
   // Close drawer on route change
   useEffect(() => {
-    setIsOpen(false);
+    close();
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (isOpen) {
+      wasOpenRef.current = true;
+      closeRef.current?.focus();
+    } else if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [isOpen]);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -83,7 +98,7 @@ export function MobileCategoryTree({ categories, activeSlug }: CategoryTreeProps
     }
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsOpen(false);
+        close();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -97,6 +112,7 @@ export function MobileCategoryTree({ categories, activeSlug }: CategoryTreeProps
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
         className="fixed bottom-5 left-5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-lg transition-colors hover:bg-[var(--color-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] lg:hidden"
@@ -107,7 +123,12 @@ export function MobileCategoryTree({ categories, activeSlug }: CategoryTreeProps
       </button>
 
       <div
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-full bg-[var(--color-bg)] shadow-xl transform transition-transform duration-300 ease-in-out ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="文档分类目录"
+        aria-hidden={!isOpen}
+        inert={!isOpen ? true : undefined}
+        className={`overscroll-contain lg:hidden fixed inset-y-0 left-0 z-50 w-full bg-[var(--color-bg)] shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -115,8 +136,9 @@ export function MobileCategoryTree({ categories, activeSlug }: CategoryTreeProps
           <div className="flex items-center justify-between h-14 px-4 border-b border-[var(--color-border-subtle)]">
             <h2 className="text-sm font-semibold text-[var(--color-primary)]">Docs</h2>
             <button
+              ref={closeRef}
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={close}
               className="flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
               aria-label="关闭分类目录"
             >
@@ -124,7 +146,7 @@ export function MobileCategoryTree({ categories, activeSlug }: CategoryTreeProps
             </button>
           </div>
           <nav className="flex-1 overflow-y-auto p-4">
-            <TreeNav categories={categories} activeSlug={activeSlug} />
+            <TreeNav categories={categories} activeSlug={activeSlug} onNavigate={close} />
           </nav>
         </div>
       </div>

@@ -2,7 +2,8 @@ import { Link } from 'react-router';
 import type { Route } from './+types/docs.$slug';
 import { getDocBySlug, getDocCategories } from '~/lib/docs';
 import { DocLayout } from '~/components/doc-layout';
-import { TagChip } from '~/components/tag-chip';
+import { LegacyRoute } from '~/components/legacy-route';
+import { pageTitle } from '~/lib/seo';
 
 export async function loader({ params }: Route.LoaderArgs) {
   const doc = await getDocBySlug(params.slug);
@@ -13,11 +14,30 @@ export async function loader({ params }: Route.LoaderArgs) {
   return { ...doc, categories };
 }
 
-export function meta({ data }: Route.MetaArgs) {
-  return [{ title: `ρV - ${data?.title ?? '文档'}` }, { name: 'description', content: data?.description ?? '' }];
+export function meta({ loaderData }: Route.MetaArgs) {
+  if (loaderData?.type === 'blog') {
+    return [
+      { title: pageTitle(loaderData.title, '页面已迁移') },
+      { name: 'description', content: `这篇文章已迁移到 ${loaderData.href}` },
+    ];
+  }
+  return [
+    { title: pageTitle(loaderData?.title ?? '文档', 'Docs') },
+    { name: 'description', content: loaderData?.description ?? '' },
+  ];
 }
 
 export default function DocPage({ loaderData }: Route.ComponentProps) {
+  if (loaderData.type === 'blog') {
+    return (
+      <LegacyRoute
+        destination={loaderData.href}
+        title="这篇文章已移至 Blog"
+        description="Docs 与 Blog 现在使用各自的地址。你可以通过下面的链接继续阅读。"
+      />
+    );
+  }
+
   return (
     <DocLayout
       toc={loaderData.toc}
@@ -26,15 +46,11 @@ export default function DocPage({ loaderData }: Route.ComponentProps) {
       layout={loaderData.layout}
     >
       <header className="doc-header-card">
-        <time className="text-sm text-[var(--color-text-muted)] mb-2 block">{loaderData.date}</time>
+        <p className="section-kicker">{loaderData.category}</p>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text)]">{loaderData.title}</h1>
-        {loaderData.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {loaderData.tags.map((tag) => (
-              <TagChip key={tag} name={tag} href={`/tags/${tag}`} />
-            ))}
-          </div>
-        )}
+        <time className="mt-3 block text-sm text-[var(--color-text-muted)]" dateTime={loaderData.date}>
+          最近更新 {loaderData.date}
+        </time>
       </header>
 
       <article className="prose max-w-none">

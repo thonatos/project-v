@@ -8,11 +8,14 @@ export const links: LinksFunction = () => [
   { rel: 'icon', href: '/favicon.ico', type: 'image/x-icon' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-  { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' },
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+  },
 ];
 
 export function meta() {
-  return [{ title: 'ρV' }, { name: 'description', content: 'undefined project' }];
+  return [{ title: 'ρV' }, { name: 'description', content: '一个用于沉淀知识、分享思考与呈现项目的公开站点。' }];
 }
 
 export default function App() {
@@ -21,7 +24,7 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0a0a0f" />
+        <meta name="theme-color" content="#111216" />
         <Meta />
         <Links />
       </head>
@@ -44,7 +47,7 @@ export function ErrorBoundary() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0a0a0f" />
+        <meta name="theme-color" content="#111216" />
         <title>出错了 - ρV</title>
         <Meta />
         <Links />

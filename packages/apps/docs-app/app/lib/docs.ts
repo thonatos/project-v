@@ -11,12 +11,12 @@ import rehypeStringify from 'rehype-stringify';
 import type { Root, Heading, Code, Text as MdastText } from 'mdast';
 import type { Element, Root as HastRoot, Text as HastText } from 'hast';
 import { visit } from 'unist-util-visit';
+import type { BlogCategory } from './content';
 
 const docsDir = path.join(process.cwd(), 'app/docs');
 
 export type DocType = 'blog' | 'docs';
 export type DocLayout = 'reading' | 'wide';
-
 const DEFAULT_CATEGORY = 'Uncategorized';
 
 interface DocFrontmatter {
@@ -25,7 +25,7 @@ interface DocFrontmatter {
   description: string;
   tags?: string[];
   type?: DocType;
-  category?: string;
+  category: string;
   layout?: DocLayout;
 }
 
@@ -38,6 +38,7 @@ interface TocItem {
 
 export interface Doc {
   slug: string;
+  href: string;
   title: string;
   date: string;
   description: string;
@@ -45,7 +46,7 @@ export interface Doc {
   toc: TocItem[];
   tags: string[];
   type: DocType;
-  category?: string;
+  category: string;
   layout: DocLayout;
 }
 
@@ -81,12 +82,16 @@ function normalizeFrontmatter(data: Record<string, unknown>, slug: string): DocF
     type = 'blog';
   }
 
-  const category =
-    type === 'docs'
-      ? typeof data.category === 'string' && data.category.trim()
-        ? data.category.trim()
-        : DEFAULT_CATEGORY
-      : undefined;
+  let category: string;
+  if (type === 'docs') {
+    category = typeof data.category === 'string' && data.category.trim() ? data.category.trim() : DEFAULT_CATEGORY;
+  } else if (data.category === 'engineering' || data.category === 'markets') {
+    category = data.category;
+  } else {
+    throw new Error(
+      `[docs] "${slug}" must declare frontmatter "category" as "engineering" or "markets" when type is "blog"`,
+    );
+  }
 
   const layout: DocLayout = data.layout === 'wide' ? 'wide' : 'reading';
 
@@ -267,6 +272,7 @@ export async function getDocBySlug(slug: string): Promise<Doc | null> {
 
   return {
     slug,
+    href: frontmatter.type === 'docs' ? `/docs/${slug}` : `/blog/${slug}`,
     title: frontmatter.title || slug,
     date: frontmatter.date,
     description: frontmatter.description,
@@ -288,39 +294,21 @@ export async function getAllDocs(): Promise<Doc[]> {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export interface TagInfo {
-  name: string;
-  count: number;
-}
-
-export async function getAllTags(): Promise<TagInfo[]> {
+/** Historical tag slugs kept only so old public URLs can be pre-rendered as migration pages. */
+export async function getLegacyTags(): Promise<string[]> {
   const docs = await getAllDocs();
-  const tagMap = new Map<string, number>();
-
-  for (const doc of docs) {
-    for (const tag of doc.tags) {
-      const count = tagMap.get(tag) || 0;
-      tagMap.set(tag, count + 1);
-    }
-  }
-
-  const tags: TagInfo[] = [];
-  for (const [name, count] of tagMap.entries()) {
-    tags.push({ name, count });
-  }
-
-  return tags.sort((a, b) => b.count - a.count);
-}
-
-export async function getDocsByTag(tag: string): Promise<Doc[]> {
-  const docs = await getAllDocs();
-  return docs.filter((doc) => doc.tags.includes(tag));
+  return Array.from(new Set(docs.flatMap((doc) => doc.tags))).sort((a, b) => a.localeCompare(b));
 }
 
 // Filter docs by content type (already sorted by date desc via getAllDocs)
 export async function getDocsByType(type: DocType): Promise<Doc[]> {
   const docs = await getAllDocs();
   return docs.filter((doc) => doc.type === type);
+}
+
+export async function getBlogByCategory(category: BlogCategory): Promise<Doc[]> {
+  const docs = await getDocsByType('blog');
+  return docs.filter((doc) => doc.category === category);
 }
 
 export interface DocCategory {
@@ -344,64 +332,4 @@ export async function getDocCategories(): Promise<DocCategory[]> {
   }
 
   return Array.from(groupMap.entries()).map(([category, categoryDocs]) => ({ category, docs: categoryDocs }));
-}
-
-// ---- 知识图谱数据 ----
-
-export interface GraphNode {
-  id: string;
-  label: string;
-  kind: 'doc' | 'tag';
-  /** 文章节点的分类（用于着色）；标签节点为该标签文章计数 */
-  group?: string;
-  weight: number;
-}
-
-export interface GraphEdge {
-  source: string;
-  target: string;
-  weight: number;
-}
-
-export interface GraphData {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
-
-/**
- * 构建首页知识图谱：文章与标签为节点，文章-标签关系为边。
- * 在服务端（loader/prerender）计算并序列化传给客户端渲染。
- * 为控制规模，仅纳入被至少一篇文章使用的标签，边为「文章→其标签」。
- */
-export async function getGraphData(): Promise<GraphData> {
-  const docs = await getAllDocs();
-  const nodes: GraphNode[] = [];
-  const edges: GraphEdge[] = [];
-  const tagCount = new Map<string, number>();
-
-  for (const doc of docs) {
-    for (const tag of doc.tags) {
-      tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
-    }
-  }
-
-  for (const doc of docs) {
-    const docId = `doc:${doc.slug}`;
-    nodes.push({
-      id: docId,
-      label: doc.title,
-      kind: 'doc',
-      group: doc.type === 'docs' ? doc.category || DEFAULT_CATEGORY : 'Blog',
-      weight: 1 + doc.tags.length,
-    });
-    for (const tag of doc.tags) {
-      edges.push({ source: docId, target: `tag:${tag}`, weight: 1 });
-    }
-  }
-
-  for (const [tag, count] of tagCount.entries()) {
-    nodes.push({ id: `tag:${tag}`, label: tag, kind: 'tag', weight: count });
-  }
-
-  return { nodes, edges };
 }

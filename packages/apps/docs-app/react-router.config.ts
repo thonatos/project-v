@@ -1,18 +1,21 @@
 import type { Config } from '@react-router/dev/config';
-import { getDocSlugs, getAllTags } from './app/lib/docs';
+import { getAllDocs, getLegacyTags } from './app/lib/docs';
 
 export default {
   ssr: false,
   async prerender() {
-    const slugs = await getDocSlugs();
-    const tags = await getAllTags();
+    const docs = await getAllDocs();
+    const tags = await getLegacyTags();
     return [
       '/',
       '/blog',
       '/docs',
+      '/projects',
+      '/projects/vela',
       '/tags',
-      ...slugs.map((slug) => `/docs/${slug}`),
-      ...tags.map((tag) => `/tags/${tag.name}`),
+      ...docs.filter((doc) => doc.type === 'docs').map((doc) => doc.href),
+      ...docs.filter((doc) => doc.type === 'blog').flatMap((doc) => [doc.href, `/docs/${doc.slug}`]),
+      ...tags.map((tag) => `/tags/${tag}`),
     ];
   },
 } satisfies Config;

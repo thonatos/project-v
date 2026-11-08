@@ -4,6 +4,7 @@ date: 2026-05-31
 description: TSLA.US 基本面 + K 线量价综合分析报告
 tags: [finance, kline, analysis, TSLA.US, US]
 type: blog
+category: markets
 ---
 
 本报告基于 Longbridge API 获取的 TSLA.US 报价/财报/新闻与 K 线数据（2026-05-01 至 2026-05-31，15m 周期），整合基本面与量价技术分析，并给出综合研判。

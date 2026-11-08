@@ -107,9 +107,10 @@ export function MobileTOCMenuButton() {
 
   return (
     <button
+      id="toc-menu-button"
       type="button"
       onClick={() => setIsOpen(!isOpen)}
-      className="fixed right-12 top-3 z-50 flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] lg:hidden"
+      className="fixed right-5 bottom-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-1)] text-[var(--color-text)] shadow-lg transition-colors hover:border-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] lg:hidden"
       aria-label={isOpen ? '关闭目录' : '打开目录'}
       aria-expanded={isOpen}
     >
@@ -121,6 +122,20 @@ export function MobileTOCMenuButton() {
 // Mobile TOC Drawer - full screen slide-in from right (no backdrop)
 export function MobileTOCDrawer() {
   const { isOpen, setIsOpen, activeId, items } = useTOC();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
+
+  const close = () => setIsOpen(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      wasOpenRef.current = true;
+      closeRef.current?.focus();
+    } else if (wasOpenRef.current) {
+      wasOpenRef.current = false;
+      document.getElementById('toc-menu-button')?.focus();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -129,7 +144,7 @@ export function MobileTOCDrawer() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsOpen(false);
+        close();
       }
     };
 
@@ -145,7 +160,7 @@ export function MobileTOCDrawer() {
     <li key={item.id}>
       <a
         href={`#${item.id}`}
-        onClick={() => setIsOpen(false)}
+        onClick={close}
         className={`block text-base py-3 px-4 transition-colors hover:bg-[var(--color-bg-subtle)] rounded-lg ${
           level > 0 ? 'pl-8' : ''
         } ${activeId !== null && activeId === item.id ? 'text-[var(--color-primary)] font-medium bg-[var(--color-bg-subtle)]' : 'text-[var(--color-text)]'}`}
@@ -162,7 +177,12 @@ export function MobileTOCDrawer() {
     <>
       {/* Drawer panel - full width, no backdrop */}
       <div
-        className={`lg:hidden fixed inset-y-0 right-0 z-50 w-full bg-[var(--color-bg)] shadow-xl transform transition-transform duration-300 ease-in-out ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="本页目录"
+        aria-hidden={!isOpen}
+        inert={!isOpen ? true : undefined}
+        className={`overscroll-contain lg:hidden fixed inset-y-0 right-0 z-50 w-full bg-[var(--color-bg)] shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -171,8 +191,9 @@ export function MobileTOCDrawer() {
           <div className="flex items-center justify-between h-14 px-4 border-b border-[var(--color-border-subtle)]">
             <h2 className="text-sm font-semibold text-[var(--color-primary)]">目录</h2>
             <button
+              ref={closeRef}
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={close}
               className="flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-text)]"
               aria-label="关闭目录"
             >
