@@ -25,7 +25,8 @@
 | 构建     | `pnpm -F docs-app build`     | 退出码 0，`build/client` 生成 |
 | 类型     | `pnpm -F docs-app typecheck` | 退出码 0                      |
 | 生产预览 | `pnpm -F docs-app start`     | 本地以构建产物启动            |
-| 部署     | `pnpm -F docs-app deploy`    | 手动 `wrangler deploy` 成功   |
+| 自动部署 | push `main`                  | Cloudflare connected build 成功 |
+| 人工补发 | `pnpm -F docs-app deploy`    | `wrangler deploy` 成功        |
 
 本应用没有自动化测试；页面行为以构建、类型检查与目标视口的人工验证为准。路由或导航改动还需直接访问规范 URL 和历史迁移 URL。
 
@@ -36,9 +37,10 @@
 | 路径          | workflow                  | 必过门                                                      |
 | ------------- | ------------------------- | ----------------------------------------------------------- |
 | `packages/**` | `nodejs-ci.yml` → `build` | `pnpm check`、`pnpm test`、`pnpm -r --filter '!vela' build` |
-| 部署          | 无 CI gate                | 手动 `wrangler deploy`                                      |
+| 部署          | Cloudflare connected build | push `main` 后构建并执行 `wrangler deploy`；不属于 GitHub Actions gate |
 
 ## 发布与验收
 
 - 包版本不构成交付契约（见 `docs/5.2`）；判定为 `NONE` 并写理由。
+- push `main` 会触发 Cloudflare connected build；本地 deploy 脚本只用于自动发布失败后的人工补发或配置验证。
 - 部署后在目标 URL 检查 Docs、Blog、Projects、历史迁移页与移动端视口；不能只凭本地构建判断已完成。

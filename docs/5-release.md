@@ -7,7 +7,7 @@
 | `vela`                                                                  | GitHub Release + stable appcast | tag `vela-v<major>.<minor>.<patch>` 后人工公开 | macOS `.zip`、校验资产、Draft Prerelease；公开后推进 `vela-updates` |
 | `artusx-api`（Node）                                                    | 阿里云镜像                      | push `main`                                    | `registry.cn-hongkong.aliyuncs.com/suyi/artusx-api:latest`          |
 | `go/`（artusx-api）                                                     | 阿里云镜像                      | push `main` 且 `go/**` 变更                    | `registry.cn-hongkong.aliyuncs.com/suyi/artusx-api-golang:latest`   |
-| `docs-app`                                                              | Cloudflare Workers              | 手动                                           | `wrangler deploy`                                                   |
+| `docs-app`                                                              | Cloudflare Workers              | push `main` 触发 connected build；人工补发     | `build/client` 静态资源，由 `wrangler deploy` 发布                  |
 | `remix-api` / `remix-flow`                                              | Cloudflare Workers              | 手动                                           | `wrangler deploy --minify`                                          |
 | `i18n-studio`                                                           | 自托管 Docker                   | 手动                                           | 镜像与数据卷，见 `packages/apps/i18n-studio/app/docs/deployment.md` |
 | `@implementsio/dsh-telegram`                                            | npm                             | 手动                                           | 公开包                                                              |
@@ -68,7 +68,7 @@
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Vela               | 不向客户端发布较低 build；将 `vela-updates` ref 恢复到不含问题条目的有效 feed 以停止新发现，并发布更高 build 的修复版本。手动 Release 下载路径始终保留 |
 | Docker 镜像        | 重新部署上一版镜像 digest；需要重建时从回滚后的 commit 重新构建                                                                                        |
-| Cloudflare Workers | 在 Cloudflare 侧回滚部署，或从回滚后的 commit 重新 `wrangler deploy`                                                                                   |
+| Cloudflare Workers | 在 Cloudflare 侧回滚部署；docs-app 可从修复或回滚后的 commit 重新触发 connected build，其他应用或人工补发可重新 `wrangler deploy`                       |
 | npm                | `npm deprecate` 标记问题版本，随后发布 patch                                                                                                           |
 | 文档 / 配置        | `git revert` 对应提交；不影响运行时                                                                                                                    |
 

@@ -36,7 +36,8 @@ Vela 的 iOS 构建、签名、Simulator 与真机验收不在 CI 中执行，�
 
 这些是当前事实，不是待办清单；相关 change 需要决定“新增 gate”还是“记录缺口”。
 
-- `docs-app`、`remix-api`、`remix-flow`、`i18n-studio`、`react-app` 没有部署 gate：构建由 `nodejs-ci` 聚合覆盖，部署是手动 `wrangler deploy` 或 Docker。
+- `docs-app` 没有 GitHub Actions 部署 gate：构建由 `nodejs-ci` 聚合覆盖，push `main` 后由 Cloudflare connected build 独立构建并执行 `wrangler deploy`；必须在 Cloudflare 侧确认发布结果。
+- `remix-api`、`remix-flow`、`i18n-studio`、`react-app` 没有部署 gate：部署仍是手动 `wrangler deploy`、Docker 或仅本地构建。
 - `packages/apps/artusx-api` 的镜像在每次 push `main` 时重建，没有 `paths` 过滤。
 - Docker 镜像只在 push `main` 构建，PR 不验证 Dockerfile。
 - `packages/apps/vela/core` 是独立 Go module，不在 `golang-ci` 的 `go/**` 路径内；它的 Go 测试由 `vela-ci` 覆盖。
@@ -47,7 +48,7 @@ Vela 的 iOS 构建、签名、Simulator 与真机验收不在 CI 中执行，�
 
 | 目标 | 方式 | 触发 |
 | --- | --- | --- |
-| Cloudflare Workers | `pnpm -F <pkg> deploy`（`wrangler deploy`） | 手动：`docs-app`、`remix-api`、`remix-flow` |
+| Cloudflare Workers | connected build 或 `pnpm -F <pkg> deploy`（`wrangler deploy`） | push `main`：`docs-app`；手动补发：`docs-app`；手动：`remix-api`、`remix-flow` |
 | 阿里云镜像仓库 | GitHub Actions 构建并推送 `:latest` | push `main`：`artusx-api`（Node / Go） |
 | 自托管 Docker | 构建镜像后部署 | 手动：`i18n-studio` |
 | GitHub Releases | tag `vela-v*` → Draft Prerelease → 人工公开 | 手动打 tag |
