@@ -10,8 +10,8 @@
 
 - [x] 2.1 运行 `openspec validate fix-docs-app-cloudflare-deploy --strict`、`pnpm -F docs-app typecheck`、`pnpm -F docs-app build` 与 `git diff --check`，确认退出码均为 0；按 `docs/4-ci-cd.md` 记录本次只改 docs-app 配置和文档，不新增 GitHub Actions gate。
 - [x] 2.2 版本评估：`packages/apps/docs-app` 判定 `NONE`，不更新版本来源文件，因为 `docs/5-release.md` 规定该包不构成版本契约；发布评估独立执行，不打 tag。
-- [ ] 2.3 提交并 push `main`，确认 Cloudflare connected build 对新 SHA 成功完成且日志不再报告 Worker 名称或兼容日期错误；若失败则停止生产验收并按错误修复，不把 GitHub CI 成功视为发布完成。
-- [ ] 2.4 在 Cloudflare 报告成功后直接访问生产环境的 `/`、`/docs`、`/blog`、`/projects`、`/projects/vela`、一个旧 Blog `/docs/:slug`、`/tags` 与一个 `/tags/:tag`，确认页面可加载、迁移目标正确且浏览器控制台无错误。
+- [x] 2.3 提交并 push `main`，确认 Cloudflare connected build 对新 SHA 成功完成且日志不再报告 Worker 名称或兼容日期错误；若失败则停止生产验收并按错误修复，不把 GitHub CI 成功视为发布完成。
+- [x] 2.4 在 Cloudflare 报告成功后直接访问生产环境的 `/`、`/docs`、`/blog`、`/projects`、`/projects/vela`、一个旧 Blog `/docs/:slug`、`/tags` 与一个 `/tags/:tag`，确认页面可加载、迁移目标正确且浏览器控制台无错误。
 
 ## Workflow follow-up
 
