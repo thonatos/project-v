@@ -2,14 +2,16 @@
 
 ## 3.1 分层与入口
 
-| 范围 | 入口 | 覆盖内容 |
-| --- | --- | --- |
-| 根 workspace | `pnpm test`（`vp test run`） | `vite.config.ts` 声明的项目：`i18n-studio`、`gpm`、`dsh-telegram` |
-| `go/` | `cd go && go test ./...` | 根 Go module 的单元与集成测试 |
-| `vela` | `pnpm -F vela test` | Rust workspace、Go core，以及 `*.test.mjs` 行为测试 |
-| `vela` 跨平台 | `pnpm -F vela verify` | 聚合门禁：common、macOS 与必要的发布检查 |
+| 范围          | 入口                         | 覆盖内容                                                          |
+| ------------- | ---------------------------- | ----------------------------------------------------------------- |
+| 根 workspace  | `pnpm test`（`vp test run`） | `vite.config.ts` 声明的项目：`i18n-studio`、`gpm`、`dsh-telegram` |
+| `go/`         | `cd go && go test ./...`     | 根 Go module 的单元与集成测试                                     |
+| `vela`        | `pnpm -F vela test`          | Rust workspace、Go core，以及 `*.test.mjs` 行为测试               |
+| `vela` 跨平台 | `pnpm -F vela verify`        | 聚合门禁：common、macOS 与必要的发布检查                          |
 
 没有自动化测试的包：`docs-app`、`react-app`、`react-component`、`remix-api`、`remix-flow`、`artusx-api`、`libs/bot`、`libs/utils`。这些包的改动依赖构建、类型检查与人工行为验证，不要假装它们有测试覆盖。
+
+`docs-app` 的功能测试、页面调试与人工 review 默认使用持续运行的 `pnpm -F docs-app dev`，通过 HMR 观察改动，不为每次样式或文案调整重复构建和重启服务。最终交付前仍须运行 `pnpm -F docs-app typecheck` 与 `pnpm -F docs-app build`；只有需要核对生产构建产物本身时才使用 `pnpm -F docs-app start`。
 
 `vela` 的专项测试还包括：`cargo test --manifest-path Cargo.toml --locked --workspace`、`node shared/ui/version.test.mjs`、`node shared/ui/flows.test.mjs`、`node macos/ui/tests/desktop-layout.test.mjs` 等；以 `pnpm -F vela run` 为准。
 
@@ -33,13 +35,13 @@
 
 ## 3.3 证据类型
 
-| 变更 | 可接受的证据 |
-| --- | --- |
-| 逻辑 / 数据 | 测试命令与退出码、用例名、失败前后对比 |
-| Web UI | 解析后的 bounds、目标视口截图、可访问状态、部署 URL 上的实际表现 |
-| Vela macOS / iOS | 目标平台交互或 Core 行为；Vela UI 不以截图或视觉基线作为验收方式 |
+| 变更                | 可接受的证据                                                                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 逻辑 / 数据         | 测试命令与退出码、用例名、失败前后对比                                                                                                     |
+| Web UI              | 解析后的 bounds、目标视口截图、可访问状态、部署 URL 上的实际表现                                                                           |
+| Vela macOS / iOS    | 目标平台交互或 Core 行为；Vela UI 不以截图或视觉基线作为验收方式                                                                           |
 | Vela macOS 自动更新 | feed/签名/防降级使用 fixture 与真实 Sparkle signer；菜单、下载、安装、helper 清理和 relaunch 使用正式 Vela host 的目标 macOS 双 build 验收 |
-| 发布 / 部署 | workflow job 结果、Release 资产清单、目标环境上的可复现命令输出 |
+| 发布 / 部署         | workflow job 结果、Release 资产清单、目标环境上的可复现命令输出                                                                            |
 
 约束：
 
