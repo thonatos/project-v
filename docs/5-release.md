@@ -7,7 +7,7 @@
 | `vela`                                                                  | GitHub Release + stable appcast | tag `vela-v<major>.<minor>.<patch>` 后人工公开 | macOS `.zip`、校验资产、Draft Prerelease；公开后推进 `vela-updates` |
 | `artusx-api`（Node）                                                    | 阿里云镜像                      | push `main`                                    | `registry.cn-hongkong.aliyuncs.com/suyi/artusx-api:latest`          |
 | `go/`（artusx-api）                                                     | 阿里云镜像                      | push `main` 且 `go/**` 变更                    | `registry.cn-hongkong.aliyuncs.com/suyi/artusx-api-golang:latest`   |
-| `docs-app`                                                              | Cloudflare Workers              | push `main` 触发 connected build；人工补发     | `build/client` 静态资源，由 `wrangler deploy` 发布                  |
+| `docs-app`                                                              | Cloudflare Workers              | 命中 Cloudflare 触发范围的 `main` 更新；人工补发 | `build/client` 静态资源，由 `wrangler deploy` 发布                  |
 | `remix-api` / `remix-flow`                                              | Cloudflare Workers              | 手动                                           | `wrangler deploy --minify`                                          |
 | `i18n-studio`                                                           | 自托管 Docker                   | 手动                                           | 镜像与数据卷，见 `packages/apps/i18n-studio/app/docs/deployment.md` |
 | `@implementsio/dsh-telegram`                                            | npm                             | 手动                                           | 公开包                                                              |

@@ -81,13 +81,18 @@
 - **THEN** 构建产物包含 CSS、JS 等静态资源
 
 ### Requirement: 生产环境静态站点部署
-系统 SHALL 将 `build/client/` 作为名为 `docs-app` 的 Cloudflare Worker 静态资源部署，并使用配置中固定的有效兼容日期；push `main` SHALL 触发 connected build，人工部署命令 SHALL 使用同一份配置。
+系统 SHALL 将 `build/client/` 作为名为 `docs-app` 的 Cloudflare Worker 静态资源部署，并使用配置中固定的有效兼容日期；命中 Cloudflare 触发范围的 `main` 更新 SHALL 触发 connected build，人工部署命令 SHALL 使用同一份配置。
 
 #### Scenario: 部署静态站点
-- **GIVEN** `main` 包含有效的 docs-app Worker 配置和成功的生产构建
+- **GIVEN** `main` 更新命中 Cloudflare connected build 触发范围，且包含有效的 docs-app Worker 配置和成功的生产构建
 - **WHEN** Cloudflare connected build 执行 `wrangler deploy`
 - **THEN** 平台 SHALL 将 `build/client/` 发布到名为 `docs-app` 的 Worker
 - **THEN** Wrangler SHALL 不报告 Worker 名称不匹配或缺少兼容日期
+
+#### Scenario: 未命中自动部署范围
+- **GIVEN** `main` 更新未命中 Cloudflare connected build 触发范围
+- **WHEN** 维护者检查该提交的 checks
+- **THEN** 未注册 `Workers Builds: docs-app` SHALL 表示未触发自动部署，而非部署失败
 
 #### Scenario: 页面无 API 调用
 - **GIVEN** docs-app 已成功部署
